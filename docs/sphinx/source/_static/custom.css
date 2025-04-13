@@ -1,0 +1,67 @@
+/* Custom styles for ZTOQ documentation */
+
+/* Improve readability */
+.wy-nav-content {
+    max-width: 1000px;
+}
+
+/* Better code blocks */
+div[class^="highlight"] {
+    border-radius: 5px;
+    border: 1px solid #e1e4e5;
+}
+
+/* C4 diagram styling */
+.c4-diagram {
+    margin: 20px 0;
+    padding: 10px;
+    border: 1px solid #e1e4e5;
+    border-radius: 5px;
+    background-color: #f8f8f8;
+}
+
+/* ADR styling */
+.adr {
+    margin: 20px 0;
+    padding: 15px;
+    border-left: 5px solid #2980b9;
+    background-color: #f8f8f8;
+}
+
+.adr h2 {
+    color: #2980b9;
+    margin-top: 0;
+}
+
+/* Status badges */
+.status-accepted {
+    background-color: #5cb85c;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 80%;
+}
+
+.status-proposed {
+    background-color: #f0ad4e;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 80%;
+}
+
+.status-deprecated {
+    background-color: #d9534f;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 80%;
+}
+
+.status-superseded {
+    background-color: #777;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 80%;
+}

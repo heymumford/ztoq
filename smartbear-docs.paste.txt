@@ -1,0 +1,3399 @@
+Zephyr Cloud API (2)
+Download OpenAPI specification:Download
+
+URL: https://smartbear.atlassian.net/servicedesk/customer/portal/42
+Introduction
+This is the Zephyr Cloud API. If you are looking for the Server API, please refer to the documentation for more information.
+
+This API uses the OpenAPI specification. If you want to generate clients for different languages, please use the link above to download the API specification and use it with your preferred tools.
+
+For feature requests or general support, please head to our support site.
+
+Authentication
+The API authentication is based on JSON Web Token (JWT), which is a key for accessing the API. Authenticating using JWT requires the following steps:
+
+Generate a key
+Make authenticated requests
+Generate a Key
+For accessing the API, you must generate an access key in Jira. To generate an access token, click on your profile picture at the page bottom left, and choose the option “Zephyr API keys". For more information, please check out the documentation.
+
+Accessing the API
+The API is available at the following base URL:
+
+https://api.zephyrscale.smartbear.com/v2
+For example, the final URL for retrieving test cases would be:
+
+https://api.zephyrscale.smartbear.com/v2/testcases
+For EU region, the API can be accessed at the following base URL:
+
+https://eu.api.zephyrscale.smartbear.com/v2
+Making Authenticated Requests
+To authenticate subsequent API requests, you must provide a valid token in an HTTP header, which is the key generated on the previous step:
+
+Authorization: Bearer {bearer_token}
+Representing Users
+Previous API definitions used Atlassian User Keys to identify users. This parameter is deprecated because of privacy changes. Use Atlassian Account ID instead.
+
+Atlassian Account IDs are globally unique opaque identifiers for identifying a user. Every Atlassian Account has a ID which is assigned when the account is created and is immutable. Account IDs contain no personally identifiable information and are only used to retrieve user information ondemand. This API does not return any user information other than the Account ID (with the exception of the deprecated user keys during the deprecation period).
+
+Test Cases
+Operations related to test cases.
+No operations are enabled on archived test cases.
+
+Get test cases
+Retrieves all test cases. Query parameters can be used to filter the results.
+
+Authorizations:
+AccessToken
+query Parameters
+projectKey	
+string([A-Z][A-Z_0-9]+)
+Jira project key filter
+
+folderId	
+integer <int64> >= 1
+Folder ID filter
+
+maxResults	
+integer <int64> >= 1
+Default: 10
+A hint as to the maximum number of results to return in each call. Note that the server reserves the right to impose a maxResults limit that is lower than the value that a client provides, due to lack or resources or any other condition. When this happens, your results will be truncated. Callers should always check the returned maxResults to determine the value that is effectively being used.
+
+startAt	
+integer <int64> >= 0
+Default: 0
+Zero-indexed starting position. Should be a multiple of maxResults.
+
+Responses
+200 OK
+default An error has occurred. Please check the code and the error message.
+
+get
+/testcases
+Response samples
+200default
+Content type
+application/json
+
+Copy
+Expand allCollapse all
+{
+"next": "string",
+"startAt": 0,
+"maxResults": 1,
+"total": 1,
+"isLast": true,
+"values": [
+{}
+]
+}
+Create test case
+Creates a test case. Fields priorityName and statusName will be set to default values if not informed. Default values are usually “Normal” for priorityName and “Draft” for statusName. All required test case custom fields should be present in the request.
+
+Authorizations:
+AccessToken
+Request Body schema: application/json
+required
+Test Case Input
+
+projectKey
+required
+string (ProjectKey) ([A-Z][A-Z_0-9]+)
+Jira project key.
+
+name
+required
+string (EntityName) ^(?!\\s*$).+
+objective	
+string (Objective)
+A description of the objective.
+
+precondition	
+string (Precondition)
+Any conditions that need to be met.
+
+estimatedTime	
+integer <int64> >= 0
+Estimated duration in milliseconds.
+
+componentId	
+integer <int64> >= 0
+ID of a component from Jira.
+
+priorityName	
+string (PriorityName) [ 1 .. 255 ] characters
+The priority name.
+
+statusName	
+string (StatusName) [ 1 .. 255 ] characters
+The status name.
+
+folderId	
+integer <int64> >= 1
+ID of a folder to place the entity within.
+
+ownerId	
+string (JiraUserAccountId) ^[-:a-zA-Z0-9]{1,128}$
+Atlassian Account ID of the Jira user.
+
+labels	
+Array of strings (Labels)
+Array of labels associated to this entity.
+
+customFields	
+object (CustomFields)
+Multi-line text fields should denote a new line with the <br> syntax. Dates should be in the format 'yyyy-MM-dd'. Users should provided by the user ID.
+
+Responses
+201 Created
+default An error has occurred. Please check the code and the error message.
+
+post
+/testcases
+Request samples
+Payload
+Content type
+application/json
+
+Copy
+Expand allCollapse all
+{
+"projectKey": "TIS",
+"name": "Check axial pump",
+"objective": "To ensure the axial pump can be enabled",
+"precondition": "Latest version of the axial pump available",
+"estimatedTime": 138000,
+"componentId": 10001,
+"priorityName": "Critical",
+"statusName": "In Progress",
+"folderId": 1,
+"ownerId": "5b10a2844c20165700ede21g",
+"labels": [
+"Regression",
+"Performance",
+"Automated"
+],
+"customFields": {
+"Build Number": 20,
+"Release Date": "2020-01-01",
+"Pre-Condition(s)": "User should have logged in. <br> User should have navigated to the administration panel.",
+"Implemented": false,
+"Category": [],
+"Tester": "fa2e582e-5e15-521e-92e3-47e6ca2e7256"
+}
+}
+Response samples
+201default
+Content type
+application/json
+
+Copy
+{
+"id": 1,
+"self": "string",
+"key": "string"
+}
+Get test case
+Returns a test case for the given key.
+
+Authorizations:
+AccessToken
+path Parameters
+testCaseKey
+required
+string(.+-T[0-9]+)
+The key of the test case. Test case keys are of the format [A-Z]+-T[0-9]+
+
+Responses
+200 OK
+default An error has occurred. Please check the code and the error message.
+
+get
+/testcases/{testCaseKey}
+Response samples
+200default
+Content type
+application/json
+
+Copy
+Expand allCollapse all
+{
+"id": 1,
+"key": "SA-T10",
+"name": "Check axial pump",
+"project": {
+"id": 10005,
+"self": "https://<api-base-url>/projects/10005"
+},
+"createdOn": "2018-05-15T13:15:13Z",
+"objective": "To ensure the axial pump can be enabled",
+"precondition": "Latest version of the axial pump available",
+"estimatedTime": 138000,
+"labels": [
+"Regression",
+"Performance",
+"Automated"
+],
+"component": {
+"id": 10001,
+"self": "https://<jira-instance>.atlassian.net/rest/api/2/component/10001"
+},
+"priority": {
+"id": 10002,
+"self": "https://<api-base-url>/priorities/10002"
+},
+"status": {
+"id": 10000,
+"self": "https://<api-base-url>/statuses/10000"
+},
+"folder": {
+"id": 100006,
+"self": "https://<api-base-url>/folders/10006"
+},
+"owner": {
+"self": "https://<jira-instance>.atlassian.net/rest/api/2/user?accountId=5b10a2844c20165700ede21g",
+"accountId": "5b10a2844c20165700ede21g"
+},
+"testScript": {
+"self": "https://<api-base-url>/testCases/PROJ-T1/testscript"
+},
+"customFields": {
+"Build Number": 20,
+"Release Date": "2020-01-01",
+"Pre-Condition(s)": "User should have logged in. <br> User should have navigated to the administration panel.",
+"Implemented": false,
+"Category": [],
+"Tester": "fa2e582e-5e15-521e-92e3-47e6ca2e7256"
+},
+"links": {
+"self": "string",
+"issues": [],
+"webLinks": []
+}
+}
+Update test case
+Updates an existing test case. Please take into account that for each non-specified field the value will be cleared. If the project has test case custom fields, all custom fields should be present in the request. To leave any of them blank, please set them null if they are not required custom fields.
+
+Authorizations:
+AccessToken
+path Parameters
+testCaseKey
+required
+string(.+-T[0-9]+)
+The key of the test case. Test case keys are of the format [A-Z]+-T[0-9]+
+
+Request Body schema: application/json
+required
+Test Case Update
+
+id
+required
+integer <int64> (EntityId) >= 1
+key
+required
+string.+-T[0-9]+
+The teste case key
+
+name
+required
+string (EntityName) ^(?!\\s*$).+
+project
+required
+object (ProjectLink)
+createdOn	
+string <date-time> (CreatedOn)
+Data and time test case was created. Format: yyyy-MM-dd'T'HH:mm:ss'Z'. This field is read-only, cannot be updated.
+
+objective	
+string (Objective)
+A description of the objective.
+
+precondition	
+string (Precondition)
+Any conditions that need to be met.
+
+estimatedTime	
+integer <int64> >= 0
+Estimated duration in milliseconds.
+
+labels	
+Array of strings (Labels)
+Array of labels associated to this entity.
+
+component	
+object (JiraComponent)
+priority
+required
+object (PriorityLink)
+status
+required
+object (StatusLink)
+folder	
+object (FolderLink)
+owner	
+object (JiraUserLink)
+testScript	
+object (TestCaseTestScriptLink)
+customFields	
+object (CustomFields)
+Multi-line text fields should denote a new line with the <br> syntax. Dates should be in the format 'yyyy-MM-dd'. Users should provided by the user ID.
+
+links	
+object (TestCaseLinkList)
+This property is ignored on updates.
+
+Responses
+200 OK
+default An error has occurred. Please check the code and the error message.
+
+put
+/testcases/{testCaseKey}
+Request samples
+Payload
+Content type
+application/json
+
+Copy
+Expand allCollapse all
+{
+"id": 1,
+"key": "SA-T10",
+"name": "Check axial pump",
+"project": {
+"id": 10005,
+"self": "https://<api-base-url>/projects/10005"
+},
+"createdOn": "2018-05-15T13:15:13Z",
+"objective": "To ensure the axial pump can be enabled",
+"precondition": "Latest version of the axial pump available",
+"estimatedTime": 138000,
+"labels": [
+"Regression",
+"Performance",
+"Automated"
+],
+"component": {
+"id": 10001,
+"self": "https://<jira-instance>.atlassian.net/rest/api/2/component/10001"
+},
+"priority": {
+"id": 10002,
+"self": "https://<api-base-url>/priorities/10002"
+},
+"status": {
+"id": 10000,
+"self": "https://<api-base-url>/statuses/10000"
+},
+"folder": {
+"id": 100006,
+"self": "https://<api-base-url>/folders/10006"
+},
+"owner": {
+"self": "https://<jira-instance>.atlassian.net/rest/api/2/user?accountId=5b10a2844c20165700ede21g",
+"accountId": "5b10a2844c20165700ede21g"
+},
+"testScript": {
+"self": "https://<api-base-url>/testCases/PROJ-T1/testscript"
+},
+"customFields": {
+"Build Number": 20,
+"Release Date": "2020-01-01",
+"Pre-Condition(s)": "User should have logged in. <br> User should have navigated to the administration panel.",
+"Implemented": false,
+"Category": [],
+"Tester": "fa2e582e-5e15-521e-92e3-47e6ca2e7256"
+},
+"links": {
+"self": "string",
+"issues": [],
+"webLinks": []
+}
+}
+Response samples
+default
+Content type
+application/json
+
+Copy
+{
+"errorCode": 400,
+"message": "projectKey must not be null"
+}
+Get links
+Returns links for a test case with specified key.
+
+Authorizations:
+AccessToken
+path Parameters
+testCaseKey
+required
+string(.+-T[0-9]+)
+The key of the test case. Test case keys are of the format [A-Z]+-T[0-9]+
+
+Responses
+200 OK
+default An error has occurred. Please check the code and the error message.
+
+get
+/testcases/{testCaseKey}/links
+Response samples
+200default
+Content type
+application/json
+
+Copy
+Expand allCollapse all
+{
+"self": "string",
+"issues": [
+{}
+],
+"webLinks": [
+{}
+]
+}
+Create issue link
+Creates a link between a test case and a Jira issue.
+
+Authorizations:
+AccessToken
+path Parameters
+testCaseKey
+required
+string(.+-T[0-9]+)
+The key of the test case. Test case keys are of the format [A-Z]+-T[0-9]+
+
+Request Body schema: application/json
+required
+Issue Link Input
+
+issueId
+required
+integer <int64> >= 1
+The issue ID
+
+Responses
+201 Created
+default An error has occurred. Please check the code and the error message.
+
+post
+/testcases/{testCaseKey}/links/issues
+Request samples
+Payload
+Content type
+application/json
+
+Copy
+{
+"issueId": 10100
+}
+Response samples
+201default
+Content type
+application/json
+
+Copy
+{
+"id": 1,
+"self": "string"
+}
+Create web link
+Creates a link between a test case and a generic URL.
+
+Authorizations:
+AccessToken
+path Parameters
+testCaseKey
+required
+string(.+-T[0-9]+)
+The key of the test case. Test case keys are of the format [A-Z]+-T[0-9]+
+
+Request Body schema: application/json
+required
+Web Link Input
+
+description	
+string
+The link description
+
+url
+required
+string <url>
+The web link URL
+
+Responses
+201 Created
+default An error has occurred. Please check the code and the error message.
+
+post
+/testcases/{testCaseKey}/links/weblinks
+Request samples
+Payload
+Content type
+application/json
+
+Copy
+{
+"description": "A link to atlassian.com",
+"url": "https://atlassian.com"
+}
+Response samples
+201default
+Content type
+application/json
+
+Copy
+{
+"id": 1,
+"self": "string"
+}
+Get versions
+Returns all test case versions for a test case with specified key. Response is ordered by most recent first.
+
+Authorizations:
+AccessToken
+path Parameters
+testCaseKey
+required
+string(.+-T[0-9]+)
+The key of the test case. Test case keys are of the format [A-Z]+-T[0-9]+
+
+query Parameters
+maxResults	
+integer <int64> >= 1
+Default: 10
+A hint as to the maximum number of results to return in each call. Note that the server reserves the right to impose a maxResults limit that is lower than the value that a client provides, due to lack or resources or any other condition. When this happens, your results will be truncated. Callers should always check the returned maxResults to determine the value that is effectively being used.
+
+startAt	
+integer <int64> >= 0
+Default: 0
+Zero-indexed starting position. Should be a multiple of maxResults.
+
+Responses
+200 OK
+default An error has occurred. Please check the code and the error message.
+
+get
+/testcases/{testCaseKey}/versions
+Response samples
+200default
+Content type
+application/json
+
+Copy
+Expand allCollapse all
+{
+"next": "string",
+"startAt": 0,
+"maxResults": 1,
+"total": 1,
+"isLast": true,
+"values": [
+{}
+]
+}
+Get version
+Retrieves a specific version of a test case.
+
+Authorizations:
+AccessToken
+path Parameters
+testCaseKey
+required
+string(.+-T[0-9]+)
+The key of the test case. Test case keys are of the format [A-Z]+-T[0-9]+
+
+version
+required
+integer <int64>
+Version of the test case to retrieve.
+
+Responses
+200 OK
+default An error has occurred. Please check the code and the error message.
+
+get
+/testcases/{testCaseKey}/versions/{version}
+Response samples
+200default
+Content type
+application/json
+
+Copy
+Expand allCollapse all
+{
+"id": 1,
+"key": "SA-T10",
+"name": "Check axial pump",
+"project": {
+"id": 10005,
+"self": "https://<api-base-url>/projects/10005"
+},
+"createdOn": "2018-05-15T13:15:13Z",
+"objective": "To ensure the axial pump can be enabled",
+"precondition": "Latest version of the axial pump available",
+"estimatedTime": 138000,
+"labels": [
+"Regression",
+"Performance",
+"Automated"
+],
+"component": {
+"id": 10001,
+"self": "https://<jira-instance>.atlassian.net/rest/api/2/component/10001"
+},
+"priority": {
+"id": 10002,
+"self": "https://<api-base-url>/priorities/10002"
+},
+"status": {
+"id": 10000,
+"self": "https://<api-base-url>/statuses/10000"
+},
+"folder": {
+"id": 100006,
+"self": "https://<api-base-url>/folders/10006"
+},
+"owner": {
+"self": "https://<jira-instance>.atlassian.net/rest/api/2/user?accountId=5b10a2844c20165700ede21g",
+"accountId": "5b10a2844c20165700ede21g"
+},
+"testScript": {
+"self": "https://<api-base-url>/testCases/PROJ-T1/testscript"
+},
+"customFields": {
+"Build Number": 20,
+"Release Date": "2020-01-01",
+"Pre-Condition(s)": "User should have logged in. <br> User should have navigated to the administration panel.",
+"Implemented": false,
+"Category": [],
+"Tester": "fa2e582e-5e15-521e-92e3-47e6ca2e7256"
+},
+"links": {
+"self": "string",
+"issues": [],
+"webLinks": []
+}
+}
+Get test script
+Returns the test script for the given test case
+
+Authorizations:
+AccessToken
+path Parameters
+testCaseKey
+required
+string(.+-T[0-9]+)
+The key of the test case. Test case keys are of the format [A-Z]+-T[0-9]+
+
+Responses
+200 OK
+default An error has occurred. Please check the code and the error message.
+
+get
+/testcases/{testCaseKey}/testscript
+Response samples
+200default
+Content type
+application/json
+
+Copy
+{
+"type": "plain",
+"text": "e.g. Attempt to login to the application",
+"id": 1
+}
+Create test script
+Creates or updates the test script for a test case. If the test case currently has a sequence of test steps assigned to it, these will be implicitly removed.
+
+Authorizations:
+AccessToken
+path Parameters
+testCaseKey
+required
+string(.+-T[0-9]+)
+The key of the test case. Test case keys are of the format [A-Z]+-T[0-9]+
+
+Request Body schema: application/json
+required
+Test Script Input
+
+type
+required
+string
+Enum: "plain" "bdd"
+Test scripts can be in plain text or bdd format. BDD type can support remote execution on a build system via API plugin. To create a step-by-step test script, you should first create a plain text test script then use the POST /testcases/{testCaseKey}/teststeps endpoint.
+
+text
+required
+string non-empty
+Responses
+201 Created
+default An error has occurred. Please check the code and the error message.
+
+post
+/testcases/{testCaseKey}/testscript
+Request samples
+Payload
+Content type
+application/json
+
+Copy
+{
+"type": "plain",
+"text": "e.g. Attempt to login to the application"
+}
+Response samples
+201default
+Content type
+application/json
+
+Copy
+{
+"id": 1,
+"self": "string"
+}
+Get test steps
+Returns the test steps for the given test case. Provides a paged response, with 100 items per page.
+
+Authorizations:
+AccessToken
+path Parameters
+testCaseKey
+required
+string(.+-T[0-9]+)
+The key of the test case. Test case keys are of the format [A-Z]+-T[0-9]+
+
+query Parameters
+maxResults	
+integer <int64> >= 1
+Default: 10
+A hint as to the maximum number of results to return in each call. Note that the server reserves the right to impose a maxResults limit that is lower than the value that a client provides, due to lack or resources or any other condition. When this happens, your results will be truncated. Callers should always check the returned maxResults to determine the value that is effectively being used.
+
+startAt	
+integer <int64> >= 0
+Default: 0
+Zero-indexed starting position. Should be a multiple of maxResults.
+
+Responses
+200 OK
+default An error has occurred. Please check the code and the error message.
+
+get
+/testcases/{testCaseKey}/teststeps
+Response samples
+200default
+Content type
+application/json
+
+Copy
+Expand allCollapse all
+{
+"next": "string",
+"startAt": 0,
+"maxResults": 1,
+"total": 1,
+"isLast": true,
+"values": [
+{}
+]
+}
+Post test steps
+Assigns a series of test steps to a test case, appending them to any existing sequence of test steps. A maximum of 100 steps can be posted per request. Consumers should not attempt to parallelize this operation, as the order of the steps is defined by the input order. If this endpoint is called on a test case that already has a plain text or BDD test script, that test script will implicitly be removed. All required step custom fields should be present in the request.
+
+Authorizations:
+AccessToken
+path Parameters
+testCaseKey
+required
+string(.+-T[0-9]+)
+The key of the test case. Test case keys are of the format [A-Z]+-T[0-9]+
+
+Request Body schema: application/json
+required
+Test Step Input
+
+mode
+required
+string
+Valid values: "APPEND", "OVERWRITE".
+OVERWRITE deletes and recreates the test steps and associated custom field values using the provided input. Attachments for existing steps are kept, but those for missing steps are deleted permanently
+APPEND only adds extra steps to your test steps.
+
+items
+required
+Array of objects (TestStep)
+The list of test steps. Each step should be an object containing inline or testCase. They should only include one of these fields at a time.
+
+Responses
+201 Created
+default An error has occurred. Please check the code and the error message.
+
+post
+/testcases/{testCaseKey}/teststeps
+Request samples
+Payload
+Content type
+application/json
+
+Copy
+Expand allCollapse all
+{
+"mode": "APPEND",
+"items": [
+{}
+]
+}
+Response samples
+201default
+Content type
+application/json
+
+Copy
+{
+"id": 1,
+"self": "string"
+}
+Test Cycles
+Operations related to test cycles.
+
+Get test cycles
+Returns all test cycles. Query parameters can be used to filter by project and folder.
+
+Authorizations:
+AccessToken
+query Parameters
+projectKey	
+string([A-Z][A-Z_0-9]+)
+Jira project key filter
+
+folderId	
+integer <int64> >= 1
+Folder ID filter
+
+jiraProjectVersionId	
+integer <int64> >= 1
+JiraProjectVersion ID filter
+
+maxResults	
+integer <int64> >= 1
+Default: 10
+A hint as to the maximum number of results to return in each call. Note that the server reserves the right to impose a maxResults limit that is lower than the value that a client provides, due to lack or resources or any other condition. When this happens, your results will be truncated. Callers should always check the returned maxResults to determine the value that is effectively being used.
+
+startAt	
+integer <int64> >= 0
+Default: 0
+Zero-indexed starting position. Should be a multiple of maxResults.
+
+Responses
+200 OK
+default An error has occurred. Please check the code and the error message.
+
+get
+/testcycles
+Response samples
+200default
+Content type
+application/json
+
+Copy
+Expand allCollapse all
+{
+"next": "string",
+"startAt": 0,
+"maxResults": 1,
+"total": 1,
+"isLast": true,
+"values": [
+{}
+]
+}
+Create a Test Cycle
+Creates a Test Cycle. All required test cycle custom fields should be present in the request.
+
+Authorizations:
+AccessToken
+Request Body schema: application/json
+required
+Test Cycle Input
+
+projectKey
+required
+string (ProjectKey) ([A-Z][A-Z_0-9]+)
+Jira project key.
+
+name
+required
+string (EntityName) ^(?!\\s*$).+
+description	
+string (EntityDescription)
+Description outlining the scope.
+
+plannedStartDate	
+string <date-time> (PlannedStartDate)
+Planned start date of the test cycle. Format: yyyy-MM-dd'T'HH:mm:ss'Z'
+
+plannedEndDate	
+string <date-time> (PlannedEndDate)
+The planned end date of the test cycle. Format: yyyy-MM-dd'T'HH:mm:ss'Z'
+
+jiraProjectVersion	
+integer <int64> (JiraProjectVersionId) >= 1
+ID of the version from Jira.
+
+statusName	
+string (StatusName) [ 1 .. 255 ] characters
+The status name.
+
+folderId	
+integer <int64> >= 1
+ID of a folder to place the entity within.
+
+ownerId	
+string (JiraUserAccountId) ^[-:a-zA-Z0-9]{1,128}$
+Atlassian Account ID of the Jira user.
+
+customFields	
+object (CustomFields)
+Multi-line text fields should denote a new line with the <br> syntax. Dates should be in the format 'yyyy-MM-dd'. Users should provided by the user ID.
+
+Responses
+201 Created
+default An error has occurred. Please check the code and the error message.
+
+post
+/testcycles
+Request samples
+Payload
+Content type
+application/json
+
+Copy
+Expand allCollapse all
+{
+"projectKey": "TIS",
+"name": "Check axial pump",
+"description": "Regression test cycle 1 to ensure no breaking changes",
+"plannedStartDate": "2018-05-19T13:15:13Z",
+"plannedEndDate": "2018-05-20T13:15:13Z",
+"jiraProjectVersion": 10000,
+"statusName": "In Progress",
+"folderId": 1,
+"ownerId": "5b10a2844c20165700ede21g",
+"customFields": {
+"Build Number": 20,
+"Release Date": "2020-01-01",
+"Pre-Condition(s)": "User should have logged in. <br> User should have navigated to the administration panel.",
+"Implemented": false,
+"Category": [],
+"Tester": "fa2e582e-5e15-521e-92e3-47e6ca2e7256"
+}
+}
+Response samples
+201default
+Content type
+application/json
+
+Copy
+{
+"id": 1,
+"self": "string",
+"key": "string"
+}
+Get test cycle
+Returns a test cycle for the given key.
+
+Authorizations:
+AccessToken
+path Parameters
+testCycleIdOrKey
+required
+string([0-9]+)|(.+-R[0-9]+)
+The ID or key of the test cycle. Test cycle keys are of the format [A-Z]+-R[0-9]+
+
+Responses
+200 OK
+default An error has occurred. Please check the code and the error message.
+
+get
+/testcycles/{testCycleIdOrKey}
+Response samples
+200default
+Content type
+application/json
+
+Copy
+Expand allCollapse all
+{
+"id": 1,
+"key": "SA-R40",
+"name": "Sprint 1 Regression Test Cycle",
+"project": {
+"id": 10005,
+"self": "https://<api-base-url>/projects/10005"
+},
+"jiraProjectVersion": {
+"id": 10000,
+"self": "https://<jira-instance>.atlassian.net/rest/api/2/version/10000"
+},
+"status": {
+"id": 10000,
+"self": "https://<api-base-url>/statuses/10000"
+},
+"folder": {
+"id": 100006,
+"self": "https://<api-base-url>/folders/10006"
+},
+"description": "Regression test cycle 1 to ensure no breaking changes",
+"plannedStartDate": "2018-05-19T13:15:13Z",
+"plannedEndDate": "2018-05-20T13:15:13Z",
+"owner": {
+"self": "https://<jira-instance>.atlassian.net/rest/api/2/user?accountId=5b10a2844c20165700ede21g",
+"accountId": "5b10a2844c20165700ede21g"
+},
+"customFields": {
+"Build Number": 20,
+"Release Date": "2020-01-01",
+"Pre-Condition(s)": "User should have logged in. <br> User should have navigated to the administration panel.",
+"Implemented": false,
+"Category": [],
+"Tester": "fa2e582e-5e15-521e-92e3-47e6ca2e7256"
+},
+"links": {
+"self": "string",
+"issues": [],
+"webLinks": [],
+"testPlans": []
+}
+}
+Update test cycle
+Updates an existing test cycle. Please take into account that for each non-specified field the value will be cleared. If the project has test cycle custom fields, all custom fields should be present in the request. To leave any of them blank, please set them null if they are not required custom fields.
+
+Authorizations:
+AccessToken
+path Parameters
+testCycleIdOrKey
+required
+string([0-9]+)|(.+-R[0-9]+)
+The ID or key of the test cycle. Test cycle keys are of the format [A-Z]+-R[0-9]+
+
+Request Body schema: application/json
+required
+Test Cycle Update
+
+id
+required
+integer <int64> (EntityId) >= 1
+key
+required
+string.+-[R|C][0-9]+
+Unique key of the test cycle
+
+name
+required
+string^(?!\s*$).+
+Name of the Test Cycle
+
+project
+required
+object (ProjectLink)
+jiraProjectVersion	
+object (JiraProjectVersion)
+status
+required
+object (StatusLink)
+folder	
+object (FolderLink)
+description	
+string (EntityDescription)
+Description outlining the scope.
+
+plannedStartDate	
+string <date-time> (TestCycleUpdatePlannedStartDate)
+Planned start date of the test cycle. This field cannot be blank. Setting it as null or excluding it from the request will leave the field values unchanged. Format: yyyy-MM-dd'T'HH:mm:ss'Z'
+
+plannedEndDate	
+string <date-time> (TestCycleUpdatePlannedEndDate)
+The planned end date of the test cycle. This field cannot be blank. Setting it as null or excluding it from the request will leave the field values unchanged. Format: yyyy-MM-dd'T'HH:mm:ss'Z'
+
+owner	
+object (JiraUserLink)
+customFields	
+object (CustomFields)
+Multi-line text fields should denote a new line with the <br> syntax. Dates should be in the format 'yyyy-MM-dd'. Users should provided by the user ID.
+
+links	
+object (TestCycleLinkList)
+This property is ignored on updates.
+
+Responses
+200 OK
+default An error has occurred. Please check the code and the error message.
+
+put
+/testcycles/{testCycleIdOrKey}
+Request samples
+Payload
+Content type
+application/json
+
+Copy
+Expand allCollapse all
+{
+"id": 1,
+"key": "SA-R40",
+"name": "Sprint 1 Regression Test Cycle",
+"project": {
+"id": 10005,
+"self": "https://<api-base-url>/projects/10005"
+},
+"jiraProjectVersion": {
+"id": 10000,
+"self": "https://<jira-instance>.atlassian.net/rest/api/2/version/10000"
+},
+"status": {
+"id": 10000,
+"self": "https://<api-base-url>/statuses/10000"
+},
+"folder": {
+"id": 100006,
+"self": "https://<api-base-url>/folders/10006"
+},
+"description": "Regression test cycle 1 to ensure no breaking changes",
+"plannedStartDate": "2018-05-19T13:15:13Z",
+"plannedEndDate": "2018-05-20T13:15:13Z",
+"owner": {
+"self": "https://<jira-instance>.atlassian.net/rest/api/2/user?accountId=5b10a2844c20165700ede21g",
+"accountId": "5b10a2844c20165700ede21g"
+},
+"customFields": {
+"Build Number": 20,
+"Release Date": "2020-01-01",
+"Pre-Condition(s)": "User should have logged in. <br> User should have navigated to the administration panel.",
+"Implemented": false,
+"Category": [],
+"Tester": "fa2e582e-5e15-521e-92e3-47e6ca2e7256"
+},
+"links": {
+"self": "string",
+"issues": [],
+"webLinks": [],
+"testPlans": []
+}
+}
+Response samples
+default
+Content type
+application/json
+
+Copy
+{
+"errorCode": 400,
+"message": "projectKey must not be null"
+}
+Get links
+Returns links for a test cycle with specified key.
+
+Authorizations:
+AccessToken
+path Parameters
+testCycleIdOrKey
+required
+string([0-9]+)|(.+-R[0-9]+)
+The ID or key of the test cycle. Test cycle keys are of the format [A-Z]+-R[0-9]+
+
+Responses
+200 OK
+default An error has occurred. Please check the code and the error message.
+
+get
+/testcycles/{testCycleIdOrKey}/links
+Response samples
+200default
+Content type
+application/json
+
+Copy
+Expand allCollapse all
+{
+"self": "string",
+"issues": [
+{}
+],
+"webLinks": [
+{}
+],
+"testPlans": [
+{}
+]
+}
+Create issue link
+Creates a link between a test cycle and a Jira issue.
+
+Authorizations:
+AccessToken
+path Parameters
+testCycleIdOrKey
+required
+string([0-9]+)|(.+-R[0-9]+)
+The ID or key of the test cycle. Test cycle keys are of the format [A-Z]+-R[0-9]+
+
+Request Body schema: application/json
+required
+Issue Link Input
+
+issueId
+required
+integer <int64> >= 1
+The issue ID
+
+Responses
+201 Created
+default An error has occurred. Please check the code and the error message.
+
+post
+/testcycles/{testCycleIdOrKey}/links/issues
+Request samples
+Payload
+Content type
+application/json
+
+Copy
+{
+"issueId": 10100
+}
+Response samples
+default
+Content type
+application/json
+
+Copy
+{
+"errorCode": 400,
+"message": "projectKey must not be null"
+}
+Create web link
+Creates a link between a test cycle and a generic URL.
+
+Authorizations:
+AccessToken
+path Parameters
+testCycleIdOrKey
+required
+string([0-9]+)|(.+-R[0-9]+)
+The ID or key of the test cycle. Test cycle keys are of the format [A-Z]+-R[0-9]+
+
+Request Body schema: application/json
+required
+Web Link Input
+
+description	
+string
+The link description
+
+url
+required
+string <url>
+The web link URL
+
+Responses
+201 Created
+default An error has occurred. Please check the code and the error message.
+
+post
+/testcycles/{testCycleIdOrKey}/links/weblinks
+Request samples
+Payload
+Content type
+application/json
+
+Copy
+{
+"description": "A link to atlassian.com",
+"url": "https://atlassian.com"
+}
+Response samples
+default
+Content type
+application/json
+
+Copy
+{
+"errorCode": 400,
+"message": "projectKey must not be null"
+}
+Test Plans
+Get test plans
+Retrieves all test plans. Query parameters can be used to filter the results.
+
+Authorizations:
+AccessToken
+query Parameters
+projectKey	
+string([A-Z][A-Z_0-9]+)
+Jira project key filter
+
+maxResults	
+integer <int64> >= 1
+Default: 10
+A hint as to the maximum number of results to return in each call. Note that the server reserves the right to impose a maxResults limit that is lower than the value that a client provides, due to lack or resources or any other condition. When this happens, your results will be truncated. Callers should always check the returned maxResults to determine the value that is effectively being used.
+
+startAt	
+integer <int64> >= 0
+Default: 0
+Zero-indexed starting position. Should be a multiple of maxResults.
+
+Responses
+200 OK
+default An error has occurred. Please check the code and the error message.
+
+get
+/testplans
+Response samples
+200default
+Content type
+application/json
+
+Copy
+Expand allCollapse all
+{
+"next": "string",
+"startAt": 0,
+"maxResults": 1,
+"total": 1,
+"isLast": true,
+"values": [
+{}
+]
+}
+Create test plan
+Creates a test plan. All required test plan custom fields should be present in the request.
+
+Authorizations:
+AccessToken
+Request Body schema: application/json
+required
+Test Case Input
+
+projectKey
+required
+string (ProjectKey) ([A-Z][A-Z_0-9]+)
+Jira project key.
+
+name
+required
+string (EntityName) ^(?!\\s*$).+
+objective	
+string (Objective)
+A description of the objective.
+
+folderId	
+integer <int64> >= 1
+ID of a folder to place the entity within.
+
+statusName	
+string (StatusName) [ 1 .. 255 ] characters
+The status name.
+
+ownerId	
+string (JiraUserAccountId) ^[-:a-zA-Z0-9]{1,128}$
+Atlassian Account ID of the Jira user.
+
+labels	
+Array of strings (Labels)
+Array of labels associated to this entity.
+
+customFields	
+object (CustomFields)
+Multi-line text fields should denote a new line with the <br> syntax. Dates should be in the format 'yyyy-MM-dd'. Users should provided by the user ID.
+
+Responses
+201 Created
+default An error has occurred. Please check the code and the error message.
+
+post
+/testplans
+Request samples
+Payload
+Content type
+application/json
+
+Copy
+Expand allCollapse all
+{
+"projectKey": "TIS",
+"name": "Check axial pump",
+"objective": "To ensure the axial pump can be enabled",
+"folderId": 1,
+"statusName": "In Progress",
+"ownerId": "5b10a2844c20165700ede21g",
+"labels": [
+"Regression",
+"Performance",
+"Automated"
+],
+"customFields": {
+"Build Number": 20,
+"Release Date": "2020-01-01",
+"Pre-Condition(s)": "User should have logged in. <br> User should have navigated to the administration panel.",
+"Implemented": false,
+"Category": [],
+"Tester": "fa2e582e-5e15-521e-92e3-47e6ca2e7256"
+}
+}
+Response samples
+201default
+Content type
+application/json
+
+Copy
+{
+"id": 1,
+"self": "string",
+"key": "string"
+}
+Get test plan
+Returns a test plan for the given id or key.
+
+Authorizations:
+AccessToken
+path Parameters
+testPlanIdOrKey
+required
+string([0-9]+)|(.+-P[0-9]+)
+The ID or key of the test plan. Test plan keys are of the format [A-Z]+-P[0-9]+
+
+Responses
+200 OK
+default An error has occurred. Please check the code and the error message.
+
+get
+/testplans/{testPlanIdOrKey}
+Response samples
+200default
+Content type
+application/json
+
+Copy
+Expand allCollapse all
+{
+"id": 1,
+"key": "SA-P10",
+"name": "Check axial pump",
+"objective": "To ensure the axial pump can be enabled",
+"project": {
+"id": 10005,
+"self": "https://<api-base-url>/projects/10005"
+},
+"status": {
+"id": 10000,
+"self": "https://<api-base-url>/statuses/10000"
+},
+"folder": {
+"id": 100006,
+"self": "https://<api-base-url>/folders/10006"
+},
+"owner": {
+"self": "https://<jira-instance>.atlassian.net/rest/api/2/user?accountId=5b10a2844c20165700ede21g",
+"accountId": "5b10a2844c20165700ede21g"
+},
+"customFields": {
+"Build Number": 20,
+"Release Date": "2020-01-01",
+"Pre-Condition(s)": "User should have logged in. <br> User should have navigated to the administration panel.",
+"Implemented": false,
+"Category": [],
+"Tester": "fa2e582e-5e15-521e-92e3-47e6ca2e7256"
+},
+"labels": [
+"Regression",
+"Performance",
+"Automated"
+],
+"links": {
+"webLinks": [],
+"issues": [],
+"testCycles": []
+}
+}
+Create web link
+Creates a link between a test plan and a generic URL.
+
+Authorizations:
+AccessToken
+path Parameters
+testPlanIdOrKey
+required
+string([0-9]+)|(.+-P[0-9]+)
+The ID or key of the test plan. Test plan keys are of the format [A-Z]+-P[0-9]+
+
+Request Body schema: application/json
+required
+Web Link Input
+
+description
+required
+string
+The link description
+
+url
+required
+string <url>
+The web link URL
+
+Responses
+201 Created
+default An error has occurred. Please check the code and the error message.
+
+post
+/testplans/{testPlanIdOrKey}/links/weblinks
+Request samples
+Payload
+Content type
+application/json
+
+Copy
+{
+"description": "A link to atlassian.com",
+"url": "https://atlassian.com"
+}
+Response samples
+201default
+Content type
+application/json
+
+Copy
+{
+"id": 1,
+"self": "string"
+}
+Create issue link
+Creates a link between a test plan and a Jira issue.
+
+Authorizations:
+AccessToken
+path Parameters
+testPlanIdOrKey
+required
+string([0-9]+)|(.+-P[0-9]+)
+The ID or key of the test plan. Test plan keys are of the format [A-Z]+-P[0-9]+
+
+Request Body schema: application/json
+required
+Issue Link Input
+
+issueId
+required
+integer <int64> >= 1
+The issue ID
+
+Responses
+201 Created
+default An error has occurred. Please check the code and the error message.
+
+post
+/testplans/{testPlanIdOrKey}/links/issues
+Request samples
+Payload
+Content type
+application/json
+
+Copy
+{
+"issueId": 10100
+}
+Response samples
+201default
+Content type
+application/json
+
+Copy
+{
+"id": 1,
+"self": "string"
+}
+Create test cycle link
+Creates a link between a test plan and a test cycle.
+
+Authorizations:
+AccessToken
+path Parameters
+testPlanIdOrKey
+required
+string([0-9]+)|(.+-P[0-9]+)
+The ID or key of the test plan. Test plan keys are of the format [A-Z]+-P[0-9]+
+
+Request Body schema: application/json
+required
+Test Cycle Link Input
+
+testCycleIdOrKey
+required
+string([0-9]+)|(.+-R[0-9]+)
+The ID or key of the test cycle. Test cycle keys are of the format [A-Z]+-R[0-9]+
+
+Responses
+201 Created
+default An error has occurred. Please check the code and the error message.
+
+post
+/testplans/{testPlanIdOrKey}/links/testcycles
+Request samples
+Payload
+Content type
+application/json
+
+Copy
+{
+"testCycleIdOrKey": "(0)|(.-R0)"
+}
+Response samples
+201default
+Content type
+application/json
+
+Copy
+{
+"id": 1,
+"self": "string"
+}
+Test Executions
+Operations related to test executions.
+
+Get test executions
+Returns all test executions. Query parameters can be used to filter by project and folder.
+
+Authorizations:
+AccessToken
+query Parameters
+projectKey	
+string([A-Z][A-Z_0-9]+)
+Jira project key filter
+
+testCycle	
+string([0-9]+)|(.+-R[0-9]+)
+Test cycle key filter.
+
+testCase	
+string([0-9]+)|(.+-T[0-9]+)
+Test case key filter.
+
+actualEndDateAfter	
+string <date-time>
+Filter for 'Actual End Date' after the given time. Format: yyyy-MM-dd'T'HH:mm:ss'Z'
+
+actualEndDateBefore	
+string <date-time>
+Filter for 'Actual End Date' before the given time. Format: yyyy-MM-dd'T'HH:mm:ss'Z'
+
+includeStepLinks	
+boolean
+Default: false
+If true, execution step issue links will be included in the response
+
+jiraProjectVersionId	
+integer <int64> >= 1
+JiraProjectVersion ID filter
+
+onlyLastExecutions	
+boolean
+Default: false
+If true, includes only the last execution of each test cycle item (test case), and all ad-hoc test executions.
+
+maxResults	
+integer <int64> >= 1
+Default: 10
+A hint as to the maximum number of results to return in each call. Note that the server reserves the right to impose a maxResults limit that is lower than the value that a client provides, due to lack or resources or any other condition. When this happens, your results will be truncated. Callers should always check the returned maxResults to determine the value that is effectively being used.
+
+startAt	
+integer <int64> >= 0
+Default: 0
+Zero-indexed starting position. Should be a multiple of maxResults.
+
+Responses
+200 OK
+default An error has occurred. Please check the code and the error message.
+
+get
+/testexecutions
+Response samples
+200default
+Content type
+application/json
+
+Copy
+Expand allCollapse all
+{
+"next": "string",
+"startAt": 0,
+"maxResults": 1,
+"total": 1,
+"isLast": true,
+"values": [
+{}
+]
+}
+Create test execution
+Creates a test execution. All required test execution custom fields should be present in the request.
+
+Authorizations:
+AccessToken
+Request Body schema: application/json
+required
+Web Link Input
+
+projectKey
+required
+string([A-Z][A-Z_0-9]+)
+Jira project key.
+
+testCaseKey
+required
+string(.+-T[0-9]+)
+Key of test case the execution applies to. NOTE: Test cases with call to test, parameters and test data are not supported.
+
+testCycleKey
+required
+string([0-9]+)|(.+-R[0-9]+)
+Key of test cycle the execution applies to.
+
+statusName
+required
+string (StatusName) [ 1 .. 255 ] characters
+The status name.
+
+testScriptResults	
+Array of objects (TestScriptResultInput)
+environmentName	
+string
+Environment assigned to the test case.
+
+actualEndDate	
+string <date-time> (ActualEndDate)
+The actual end date of the test cycle. Format: yyyy-MM-dd'T'HH:mm:ss'Z'
+
+executionTime	
+integer <int64> >= 0
+Actual test execution time in milliseconds.
+
+executedById	
+string (JiraUserAccountId) ^[-:a-zA-Z0-9]{1,128}$
+Atlassian Account ID of the Jira user.
+
+assignedToId	
+string (JiraUserAccountId) ^[-:a-zA-Z0-9]{1,128}$
+Atlassian Account ID of the Jira user.
+
+comment	
+string (Comment)
+Comment added against overall test case execution.
+
+customFields	
+object (CustomFields)
+Multi-line text fields should denote a new line with the <br> syntax. Dates should be in the format 'yyyy-MM-dd'. Users should provided by the user ID.
+
+Responses
+201 Created
+default An error has occurred. Please check the code and the error message.
+
+post
+/testexecutions
+Request samples
+Payload
+Content type
+application/json
+
+Copy
+Expand allCollapse all
+{
+"projectKey": "TIS",
+"testCaseKey": "SA-T10",
+"testCycleKey": "SA-R10",
+"statusName": "In Progress",
+"testScriptResults": [
+{}
+],
+"environmentName": "Chrome Latest Version",
+"actualEndDate": "2018-05-20T13:15:13Z",
+"executionTime": 120000,
+"executedById": "5b10a2844c20165700ede21g",
+"assignedToId": "5b10a2844c20165700ede21g",
+"comment": "Test failed user could not login",
+"customFields": {
+"Build Number": 20,
+"Release Date": "2020-01-01",
+"Pre-Condition(s)": "User should have logged in. <br> User should have navigated to the administration panel.",
+"Implemented": false,
+"Category": [],
+"Tester": "fa2e582e-5e15-521e-92e3-47e6ca2e7256"
+}
+}
+Response samples
+default
+Content type
+application/json
+
+Copy
+{
+"errorCode": 400,
+"message": "projectKey must not be null"
+}
+Get test execution
+Returns a test execution for the given ID.
+
+Authorizations:
+AccessToken
+path Parameters
+testExecutionIdOrKey
+required
+string([0-9]+)|(.+-E[0-9]+)
+The ID or key of the test execution. Test execution keys are of the format [A-Z]+-E[0-9]+
+
+query Parameters
+includeStepLinks	
+boolean
+Default: false
+If true, execution step issue links will be included in the response
+
+Responses
+200 OK
+default An error has occurred. Please check the code and the error message.
+
+get
+/testexecutions/{testExecutionIdOrKey}
+Response samples
+200default
+Content type
+application/json
+
+Copy
+Expand allCollapse all
+{
+"id": 1,
+"key": "SA-E10",
+"project": {
+"id": 10005,
+"self": "https://<api-base-url>/projects/10005"
+},
+"testCase": {
+"id": 10002,
+"self": "https://<api-base-url>/testcases/PROJ-T1/versions/1"
+},
+"environment": {
+"id": 10005,
+"self": "https://example.com/rest/api/v2/environment/10005"
+},
+"jiraProjectVersion": {
+"id": 10000,
+"self": "https://<jira-instance>.atlassian.net/rest/api/2/version/10000"
+},
+"testExecutionStatus": {
+"id": 10000,
+"self": "https://<api-base-url>/statuses/10000"
+},
+"actualEndDate": "2018-05-20T13:15:13Z",
+"estimatedTime": 138000,
+"executionTime": 120000,
+"executedById": "5b10a2844c20165700ede21g",
+"assignedToId": "5b10a2844c20165700ede21g",
+"comment": "Test failed user could not login",
+"automated": true,
+"testCycle": {
+"id": 10010,
+"self": "https://<api-base-url>/testcycles/10010"
+},
+"customFields": {
+"Build Number": 20,
+"Release Date": "2020-01-01",
+"Pre-Condition(s)": "User should have logged in. <br> User should have navigated to the administration panel.",
+"Implemented": false,
+"Category": [],
+"Tester": "fa2e582e-5e15-521e-92e3-47e6ca2e7256"
+},
+"links": {
+"self": "string",
+"issues": []
+}
+}
+Update test execution
+Update the test execution.
+
+Authorizations:
+AccessToken
+path Parameters
+testExecutionIdOrKey
+required
+string([0-9]+)|(.+-E[0-9]+)
+The ID or key of the test execution. Test execution keys are of the format [A-Z]+-E[0-9]+
+
+Request Body schema: application/json
+required
+Test Execution Update
+
+statusName	
+string (StatusName) [ 1 .. 255 ] characters
+The status name.
+
+environmentName	
+string
+Environment assigned to the test case.
+
+actualEndDate	
+string <date-time> (ActualEndDate)
+The actual end date of the test cycle. Format: yyyy-MM-dd'T'HH:mm:ss'Z'
+
+executionTime	
+integer <int64> >= 0
+Actual test execution time in milliseconds.
+
+executedById	
+string (JiraUserAccountId) ^[-:a-zA-Z0-9]{1,128}$
+Atlassian Account ID of the Jira user.
+
+assignedToId	
+string (JiraUserAccountId) ^[-:a-zA-Z0-9]{1,128}$
+Atlassian Account ID of the Jira user.
+
+comment	
+string (Comment)
+Comment added against overall test case execution.
+
+Responses
+200 OK
+default An error has occurred. Please check the code and the error message.
+
+put
+/testexecutions/{testExecutionIdOrKey}
+Request samples
+Payload
+Content type
+application/json
+
+Copy
+{
+"statusName": "In Progress",
+"environmentName": "Chrome Latest Version",
+"actualEndDate": "2018-05-20T13:15:13Z",
+"executionTime": 120000,
+"executedById": "5b10a2844c20165700ede21g",
+"assignedToId": "5b10a2844c20165700ede21g",
+"comment": "Test failed user could not login"
+}
+Response samples
+default
+Content type
+application/json
+
+Copy
+{
+"errorCode": 400,
+"message": "projectKey must not be null"
+}
+Get test steps
+Returns the test steps for the given test execution. Provides a paged response.
+
+Authorizations:
+AccessToken
+path Parameters
+testExecutionIdOrKey
+required
+string([0-9]+)|(.+-E[0-9]+)
+The ID or key of the test execution. Test execution keys are of the format [A-Z]+-E[0-9]+
+
+query Parameters
+maxResults	
+integer <int64> >= 1
+Default: 10
+A hint as to the maximum number of results to return in each call. Note that the server reserves the right to impose a maxResults limit that is lower than the value that a client provides, due to lack or resources or any other condition. When this happens, your results will be truncated. Callers should always check the returned maxResults to determine the value that is effectively being used.
+
+startAt	
+integer <int64> >= 0
+Default: 0
+Zero-indexed starting position. Should be a multiple of maxResults.
+
+testDataRowNumber	
+integer <int64> >= 0
+The id of the test data row to retrieve.
+
+Responses
+200 OK
+
+get
+/testexecutions/{testExecutionIdOrKey}/teststeps
+Response samples
+200
+Content type
+application/json
+
+Copy
+Expand allCollapse all
+{
+"next": "string",
+"startAt": 0,
+"maxResults": 1,
+"total": 1,
+"isLast": true,
+"values": [
+{}
+]
+}
+Update test steps
+Updates the test steps for the given test execution.
+
+Authorizations:
+AccessToken
+path Parameters
+testExecutionIdOrKey
+required
+string([0-9]+)|(.+-E[0-9]+)
+The ID or key of the test execution. Test execution keys are of the format [A-Z]+-E[0-9]+
+
+Request Body schema: application/json
+required
+Test Steps Update
+
+steps	
+Array of objects (TestStepUpdate)
+Responses
+200 OK
+404 Not Found
+409 Conflict
+422 Unprocessable Content
+default An error has occurred. Please check the code and the error message.
+
+put
+/testexecutions/{testExecutionIdOrKey}/teststeps
+Request samples
+Payload
+Content type
+application/json
+
+Copy
+Expand allCollapse all
+{
+"steps": [
+{}
+]
+}
+Response samples
+404409422default
+Content type
+application/json
+
+Copy
+{
+"errorCode": 404,
+"message": "Test execution does not exist or you do not have access to it"
+}
+Sync test execution
+Sync test execution with content of test case script
+
+Authorizations:
+AccessToken
+path Parameters
+testExecutionIdOrKey
+required
+string([0-9]+)|(.+-E[0-9]+)
+The ID or key of the test execution. Test execution keys are of the format [A-Z]+-E[0-9]+
+
+Responses
+200 OK
+404 Not Found
+409 Conflict
+default An error has occurred. Please check the code and the error message.
+
+post
+/testexecutions/{testExecutionIdOrKey}/teststeps/sync
+Response samples
+200404409default
+Content type
+application/json
+
+Copy
+{
+"self": "string"
+}
+Get links
+Returns links for a test execution with specified ID.
+
+Authorizations:
+AccessToken
+path Parameters
+testExecutionIdOrKey
+required
+string([0-9]+)|(.+-E[0-9]+)
+The ID or key of the test execution. Test execution keys are of the format [A-Z]+-E[0-9]+
+
+Responses
+200 OK
+default An error has occurred. Please check the code and the error message.
+
+get
+/testexecutions/{testExecutionIdOrKey}/links
+Response samples
+200default
+Content type
+application/json
+
+Copy
+Expand allCollapse all
+{
+"self": "string",
+"issues": [
+{}
+]
+}
+Create issue link
+Creates a link between a test execution and a Jira issue.
+
+Authorizations:
+AccessToken
+path Parameters
+testExecutionIdOrKey
+required
+string([0-9]+)|(.+-E[0-9]+)
+The ID or key of the test execution. Test execution keys are of the format [A-Z]+-E[0-9]+
+
+Request Body schema: application/json
+required
+Issue Link Input
+
+issueId
+required
+integer <int64> >= 1
+The issue ID
+
+Responses
+201 Created
+default An error has occurred. Please check the code and the error message.
+
+post
+/testexecutions/{testExecutionIdOrKey}/links/issues
+Request samples
+Payload
+Content type
+application/json
+
+Copy
+{
+"issueId": 10100
+}
+Response samples
+default
+Content type
+application/json
+
+Copy
+{
+"errorCode": 400,
+"message": "projectKey must not be null"
+}
+Folders
+Operations related to folders.
+
+Get folders
+Returns all folder.
+
+Authorizations:
+AccessToken
+query Parameters
+maxResults	
+integer <int64> >= 1
+Default: 10
+A hint as to the maximum number of results to return in each call. Note that the server reserves the right to impose a maxResults limit that is lower than the value that a client provides, due to lack or resources or any other condition. When this happens, your results will be truncated. Callers should always check the returned maxResults to determine the value that is effectively being used.
+
+startAt	
+integer <int64> >= 0
+Default: 0
+Zero-indexed starting position. Should be a multiple of maxResults.
+
+projectKey	
+string([A-Z][A-Z_0-9]+)
+Jira project key filter
+
+folderType	
+string (FolderType)
+Folder type filter. Either "TEST_CASE", "TEST_PLAN" or "TEST_CYCLE"
+
+Responses
+200 OK
+default An error has occurred. Please check the code and the error message.
+
+get
+/folders
+Response samples
+200default
+Content type
+application/json
+
+Copy
+Expand allCollapse all
+{
+"next": "string",
+"startAt": 0,
+"maxResults": 1,
+"total": 1,
+"isLast": true,
+"values": [
+{}
+]
+}
+Create folder
+Creates a folder.
+
+Authorizations:
+AccessToken
+Request Body schema: application/json
+required
+FolderInput
+
+parentId	
+integer <int64> >= 1
+Folder ID of the parent folder. Must be null for root folders.
+
+name
+required
+string [ 1 .. 255 ] characters
+Folder name.
+
+projectKey
+required
+string (ProjectKey) ([A-Z][A-Z_0-9]+)
+Jira project key.
+
+folderType
+required
+string (FolderType)
+Valid values: "TEST_CASE", "TEST_PLAN", "TEST_CYCLE"
+
+Responses
+201 Created
+default An error has occurred. Please check the code and the error message.
+
+post
+/folders
+Request samples
+Payload
+Content type
+application/json
+
+Copy
+{
+"parentId": 1,
+"name": "string",
+"projectKey": "TIS",
+"folderType": "string"
+}
+Response samples
+201default
+Content type
+application/json
+
+Copy
+{
+"id": 1,
+"self": "string"
+}
+Get folder
+Returns a folder for the given ID.
+
+Authorizations:
+AccessToken
+path Parameters
+folderId
+required
+integer <int64> >= 1
+Folder ID
+
+Responses
+200 OK
+default An error has occurred. Please check the code and the error message.
+
+get
+/folders/{folderId}
+Response samples
+200default
+Content type
+application/json
+
+Copy
+Expand allCollapse all
+{
+"id": 1,
+"parentId": 1,
+"name": "Check axial pump",
+"index": 1,
+"folderType": "string",
+"project": {
+"id": 10005,
+"self": "https://<api-base-url>/projects/10005"
+}
+}
+Statuses
+Operations related to statuses.
+
+Get statuses
+Returns all statuses.
+
+Authorizations:
+AccessToken
+query Parameters
+maxResults	
+integer <int64> >= 1
+Default: 10
+A hint as to the maximum number of results to return in each call. Note that the server reserves the right to impose a maxResults limit that is lower than the value that a client provides, due to lack or resources or any other condition. When this happens, your results will be truncated. Callers should always check the returned maxResults to determine the value that is effectively being used.
+
+startAt	
+integer <int64> >= 0
+Default: 0
+Zero-indexed starting position. Should be a multiple of maxResults.
+
+projectKey	
+string([A-Z][A-Z_0-9]+)
+Jira project key filter
+
+statusType	
+string (StatusType)
+Valid values: "TEST_CASE", "TEST_PLAN", "TEST_CYCLE", "TEST_EXECUTION"
+
+Responses
+200 OK
+default An error has occurred. Please check the code and the error message.
+
+get
+/statuses
+Response samples
+200default
+Content type
+application/json
+
+Copy
+Expand allCollapse all
+{
+"next": "string",
+"startAt": 0,
+"maxResults": 1,
+"total": 1,
+"isLast": true,
+"values": [
+{}
+]
+}
+Create a status
+Creates a status.
+
+Authorizations:
+AccessToken
+Request Body schema: application/json
+required
+Status Input
+
+projectKey
+required
+string (ProjectKey) ([A-Z][A-Z_0-9]+)
+Jira project key.
+
+name
+required
+string (StatusName) [ 1 .. 255 ] characters
+The status name.
+
+type
+required
+string (StatusType)
+Valid values: "TEST_CASE", "TEST_PLAN", "TEST_CYCLE", "TEST_EXECUTION"
+
+description	
+string (StatusDescription) [ 1 .. 255 ] characters
+The status description.
+
+color	
+string (EntityColor) #([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})
+A color in hexadecimal format
+
+Responses
+201 Created
+default An error has occurred. Please check the code and the error message.
+
+post
+/statuses
+Request samples
+Payload
+Content type
+application/json
+
+Copy
+{
+"projectKey": "TIS",
+"name": "In Progress",
+"type": "string",
+"description": "An important status",
+"color": "#FFF or #FFFFFF"
+}
+Response samples
+201default
+Content type
+application/json
+
+Copy
+{
+"id": 1,
+"self": "string"
+}
+Get status
+Returns a status for the given ID.
+
+Authorizations:
+AccessToken
+path Parameters
+statusId
+required
+integer <int64> >= 1
+Responses
+200 OK
+404 Not Found
+default An error has occurred. Please check the code and the error message.
+
+get
+/statuses/{statusId}
+Response samples
+200404default
+Content type
+application/json
+
+Copy
+Expand allCollapse all
+{
+"id": 1,
+"project": {
+"id": 10005,
+"self": "https://<api-base-url>/projects/10005"
+},
+"name": "Check axial pump",
+"description": "Regression test cycle 1 to ensure no breaking changes",
+"index": 1,
+"color": "string",
+"archived": false,
+"default": false
+}
+Update status
+Update an existing status. Please take into account that for each non-specified field the value will be cleared.
+
+Authorizations:
+AccessToken
+path Parameters
+statusId
+required
+integer <int64> >= 1
+Request Body schema: application/json
+required
+Status Input
+
+id
+required
+integer <int64> (EntityId) >= 1
+project
+required
+object (ProjectLink)
+name
+required
+string (StatusName) [ 1 .. 255 ] characters
+The status name.
+
+description	
+string (StatusDescription) [ 1 .. 255 ] characters
+The status description.
+
+index
+required
+integer <int64> (Index) >= 0
+archived
+required
+boolean
+default
+required
+boolean
+color	
+string (EntityColor) #([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})
+A color in hexadecimal format
+
+Responses
+200 OK
+default An error has occurred. Please check the code and the error message.
+
+put
+/statuses/{statusId}
+Request samples
+Payload
+Content type
+application/json
+
+Copy
+Expand allCollapse all
+{
+"id": 1,
+"project": {
+"id": 10005,
+"self": "https://<api-base-url>/projects/10005"
+},
+"name": "In Progress",
+"description": "An important status",
+"index": 1,
+"archived": true,
+"default": true,
+"color": "#FFF or #FFFFFF"
+}
+Response samples
+default
+Content type
+application/json
+
+Copy
+{
+"errorCode": 400,
+"message": "projectKey must not be null"
+}
+Priorities
+Operations related to priorities.
+
+Get priorities
+Returns all priorities.
+
+Authorizations:
+AccessToken
+query Parameters
+maxResults	
+integer <int64> >= 1
+Default: 10
+A hint as to the maximum number of results to return in each call. Note that the server reserves the right to impose a maxResults limit that is lower than the value that a client provides, due to lack or resources or any other condition. When this happens, your results will be truncated. Callers should always check the returned maxResults to determine the value that is effectively being used.
+
+startAt	
+integer <int64> >= 0
+Default: 0
+Zero-indexed starting position. Should be a multiple of maxResults.
+
+projectKey	
+string([A-Z][A-Z_0-9]+)
+Jira project key filter
+
+Responses
+200 OK
+default An error has occurred. Please check the code and the error message.
+
+get
+/priorities
+Response samples
+200default
+Content type
+application/json
+
+Copy
+Expand allCollapse all
+{
+"next": "string",
+"startAt": 0,
+"maxResults": 1,
+"total": 1,
+"isLast": true,
+"values": [
+{}
+]
+}
+Create a priority
+Creates a priority.
+
+Authorizations:
+AccessToken
+Request Body schema: application/json
+required
+Priority Input
+
+projectKey
+required
+string (ProjectKey) ([A-Z][A-Z_0-9]+)
+Jira project key.
+
+name
+required
+string (PriorityName) [ 1 .. 255 ] characters
+The priority name.
+
+description	
+string (PriorityDescription) [ 1 .. 255 ] characters
+The priority description.
+
+color	
+string (EntityColor) #([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})
+A color in hexadecimal format
+
+Responses
+201 Created
+default An error has occurred. Please check the code and the error message.
+
+post
+/priorities
+Request samples
+Payload
+Content type
+application/json
+
+Copy
+{
+"projectKey": "TIS",
+"name": "Critical",
+"description": "Top level priority",
+"color": "#FFF or #FFFFFF"
+}
+Response samples
+201default
+Content type
+application/json
+
+Copy
+{
+"id": 1,
+"self": "string"
+}
+Get priority
+Returns a priority for the given ID.
+
+Authorizations:
+AccessToken
+path Parameters
+priorityId
+required
+integer <int64> >= 1
+Responses
+200 OK
+404 Not Found
+default An error has occurred. Please check the code and the error message.
+
+get
+/priorities/{priorityId}
+Response samples
+200404default
+Content type
+application/json
+
+Copy
+Expand allCollapse all
+{
+"id": 1,
+"project": {
+"id": 10005,
+"self": "https://<api-base-url>/projects/10005"
+},
+"name": "Critical",
+"description": "Top level priority",
+"index": 1,
+"color": "#FFF",
+"default": false
+}
+Update priority
+Update an existing priority. Please take into account that for each non-specified field the value will be cleared.
+
+Authorizations:
+AccessToken
+path Parameters
+priorityId
+required
+integer <int64> >= 1
+Request Body schema: application/json
+required
+Priority Input
+
+id
+required
+integer <int64> (EntityId) >= 1
+project
+required
+object (ProjectLink)
+name
+required
+string (PriorityName) [ 1 .. 255 ] characters
+The priority name.
+
+description	
+string (PriorityDescription) [ 1 .. 255 ] characters
+The priority description.
+
+index
+required
+integer <int64> (Index) >= 0
+default
+required
+boolean
+color	
+string (EntityColor) #([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})
+A color in hexadecimal format
+
+Responses
+200 OK
+default An error has occurred. Please check the code and the error message.
+
+put
+/priorities/{priorityId}
+Request samples
+Payload
+Content type
+application/json
+
+Copy
+Expand allCollapse all
+{
+"id": 1,
+"project": {
+"id": 10005,
+"self": "https://<api-base-url>/projects/10005"
+},
+"name": "Critical",
+"description": "Top level priority",
+"index": 1,
+"default": true,
+"color": "#FFF or #FFFFFF"
+}
+Response samples
+default
+Content type
+application/json
+
+Copy
+{
+"errorCode": 400,
+"message": "projectKey must not be null"
+}
+Environments
+Operations related to environments.
+
+Get environments
+Returns all environments.
+
+Authorizations:
+AccessToken
+query Parameters
+projectKey	
+string([A-Z][A-Z_0-9]+)
+Jira project key filter
+
+maxResults	
+integer <int64> >= 1
+Default: 10
+A hint as to the maximum number of results to return in each call. Note that the server reserves the right to impose a maxResults limit that is lower than the value that a client provides, due to lack or resources or any other condition. When this happens, your results will be truncated. Callers should always check the returned maxResults to determine the value that is effectively being used.
+
+startAt	
+integer <int64> >= 0
+Default: 0
+Zero-indexed starting position. Should be a multiple of maxResults.
+
+Responses
+200 OK
+default An error has occurred. Please check the code and the error message.
+
+get
+/environments
+Response samples
+200default
+Content type
+application/json
+
+Copy
+Expand allCollapse all
+{
+"next": "string",
+"startAt": 0,
+"maxResults": 1,
+"total": 1,
+"isLast": true,
+"values": [
+{}
+]
+}
+Create an environment
+Creates an environment.
+
+Authorizations:
+AccessToken
+Request Body schema: application/json
+required
+Environment Input
+
+projectKey
+required
+string (ProjectKey) ([A-Z][A-Z_0-9]+)
+Jira project key.
+
+name
+required
+string (EnvironmentName) [ 1 .. 255 ] characters
+The environment name.
+
+description	
+string (EnvironmentDescription) [ 1 .. 255 ] characters
+The environment description.
+
+Responses
+201 Created
+400 Bad Request
+default An error has occurred. Please check the code and the error message.
+
+post
+/environments
+Request samples
+Payload
+Content type
+application/json
+
+Copy
+{
+"projectKey": "TIS",
+"name": "Development",
+"description": "New development environment"
+}
+Response samples
+201400default
+Content type
+application/json
+
+Copy
+{
+"id": 1,
+"self": "string"
+}
+Get environment
+Returns an environment for the given ID.
+
+Authorizations:
+AccessToken
+path Parameters
+environmentId
+required
+integer <int64> >= 1
+Responses
+200 OK
+404 Not Found
+default An error has occurred. Please check the code and the error message.
+
+get
+/environments/{environmentId}
+Response samples
+200404default
+Content type
+application/json
+
+Copy
+Expand allCollapse all
+{
+"id": 1,
+"project": {
+"id": 10005,
+"self": "https://<api-base-url>/projects/10005"
+},
+"name": "Check axial pump",
+"description": "Regression test cycle 1 to ensure no breaking changes",
+"index": 1,
+"archived": false
+}
+Update an environment
+Update an existing environment. Please take into account that for each non-specified field the value will be cleared.
+
+Authorizations:
+AccessToken
+path Parameters
+environmentId
+required
+integer <int64> >= 1
+Request Body schema: application/json
+required
+Environment Input
+
+id
+required
+integer <int64> (EntityId) >= 1
+project
+required
+object (ProjectLink)
+name
+required
+string (EnvironmentName) [ 1 .. 255 ] characters
+The environment name.
+
+description	
+string (EnvironmentDescription) [ 1 .. 255 ] characters
+The environment description.
+
+index
+required
+integer <int64> (Index) >= 0
+Responses
+200 OK
+400 Bad Request
+default An error has occurred. Please check the code and the error message.
+
+put
+/environments/{environmentId}
+Request samples
+Payload
+Content type
+application/json
+
+Copy
+Expand allCollapse all
+{
+"id": 1,
+"project": {
+"id": 10005,
+"self": "https://<api-base-url>/projects/10005"
+},
+"name": "Development",
+"description": "New development environment",
+"index": 1
+}
+Response samples
+400default
+Content type
+application/json
+Example
+
+DuplicatedNameError
+DuplicatedNameError
+
+Copy
+{
+"errorCode": 400,
+"message": "An environment with this name already exists."
+}
+Projects
+Operations related to projects.
+
+Get projects
+Returns all projects.
+
+Authorizations:
+AccessToken
+query Parameters
+maxResults	
+integer <int64> >= 1
+Default: 10
+A hint as to the maximum number of results to return in each call. Note that the server reserves the right to impose a maxResults limit that is lower than the value that a client provides, due to lack or resources or any other condition. When this happens, your results will be truncated. Callers should always check the returned maxResults to determine the value that is effectively being used.
+
+startAt	
+integer <int64> >= 0
+Default: 0
+Zero-indexed starting position. Should be a multiple of maxResults.
+
+Responses
+200 OK
+default An error has occurred. Please check the code and the error message.
+
+get
+/projects
+Response samples
+200default
+Content type
+application/json
+
+Copy
+Expand allCollapse all
+{
+"next": "string",
+"startAt": 0,
+"maxResults": 1,
+"total": 1,
+"isLast": true,
+"values": [
+{}
+]
+}
+Get project
+Returns a project for the given ID or key.
+
+Authorizations:
+AccessToken
+path Parameters
+projectIdOrKey
+required
+string([0-9]+)|([A-Z][A-Z_0-9]+)
+The ID or key of the Jira project
+
+Responses
+200 OK
+default An error has occurred. Please check the code and the error message.
+
+get
+/projects/{projectIdOrKey}
+Response samples
+200default
+Content type
+application/json
+
+Copy
+{
+"id": 0,
+"jiraProjectId": 0,
+"key": "string",
+"enabled": true
+}
+Links
+Operations related to links.
+
+Delete link
+Deletes a link for the given ID.
+
+Authorizations:
+AccessToken
+path Parameters
+linkId
+required
+integer <int64> >= 1
+Responses
+200 OK
+default An error has occurred. Please check the code and the error message.
+
+delete
+/links/{linkId}
+Response samples
+default
+Content type
+application/json
+
+Copy
+{
+"errorCode": 400,
+"message": "projectKey must not be null"
+}
+Issue Links
+Operations related to coverage of issue links.
+
+Get test cases
+Get test case keys and versions linked to the given Jira issue.
+
+Authorizations:
+AccessToken
+path Parameters
+issueKey
+required
+string.+-[0-9]+
+The key of the Jira issue
+
+Responses
+200 OK
+default An error has occurred. Please check the code and the error message.
+
+get
+/issuelinks/{issueKey}/testcases
+Response samples
+200default
+Content type
+application/json
+
+Copy
+Expand allCollapse all
+[
+{
+"key": "PROJ-42",
+"version": 1,
+"self": "https://<api-base-url>/testcases/PROJ-42/versions/1"
+}
+]
+Get test cycles
+Get test cycle IDs linked to the given Jira issue.
+
+Authorizations:
+AccessToken
+path Parameters
+issueKey
+required
+string.+-[0-9]+
+The key of the Jira issue
+
+Responses
+200 OK
+default An error has occurred. Please check the code and the error message.
+
+get
+/issuelinks/{issueKey}/testcycles
+Response samples
+200default
+Content type
+application/json
+
+Copy
+Expand allCollapse all
+[
+{
+"id": 1,
+"self": "https://<api-base-url>/testcycles/1"
+}
+]
+Get test plans
+Get test plan IDs linked to the given Jira issue.
+
+Authorizations:
+AccessToken
+path Parameters
+issueKey
+required
+string.+-[0-9]+
+The key of the Jira issue
+
+Responses
+200 OK
+default An error has occurred. Please check the code and the error message.
+
+get
+/issuelinks/{issueKey}/testplans
+Response samples
+200default
+Content type
+application/json
+
+Copy
+Expand allCollapse all
+[
+{
+"id": 1,
+"self": "https://<api-base-url>/testplans/1"
+}
+]
+Get test executions
+Get test execution IDs linked to the given Jira issue.
+
+Authorizations:
+AccessToken
+path Parameters
+issueKey
+required
+string.+-[0-9]+
+The key of the Jira issue
+
+Responses
+200 OK
+default An error has occurred. Please check the code and the error message.
+
+get
+/issuelinks/{issueKey}/executions
+Response samples
+200default
+Content type
+application/json
+
+Copy
+Expand allCollapse all
+[
+{
+"id": 1,
+"self": "https://<api-base-url>/testexecutions/1"
+}
+]
+Automations
+Operations related to test case automations.
+
+Custom format
+Create results using Zephyr's custom results format.
+
+Authorizations:
+AccessToken
+query Parameters
+projectKey
+required
+string([A-Z][A-Z_0-9]+)
+Jira project key filter
+
+autoCreateTestCases	
+boolean
+Default: false
+Indicate if test cases should be created if non existent.
+
+header Parameters
+content-length
+required
+integer
+The content-length header indicates the size of the message body, in bytes. https://datatracker.ietf.org/doc/html/rfc7230#section-3.3.2
+
+Request Body schema: multipart/form-data
+required
+The zip file containing custom execution results. The max file size is 10MB. Optionally, you can send a testCycle part in your form data to customize the created test cycle.
+
+file
+required
+string <binary>
+testCycle	
+object (AutomationTestCycleInput)
+Pass this object as a JSON in your form-data alongside the file. Make sure you set the type of this object as application/json otherwise the object will be ignored.
+
+Responses
+200 OK
+default An error has occurred. Please check the code and the error message.
+
+post
+/automations/executions/custom
+Response samples
+200default
+Content type
+application/json
+
+Copy
+Expand allCollapse all
+{
+"testCycle": {
+"id": 1,
+"url": "string",
+"key": "(0)|(.-R0)"
+}
+}
+Cucumber format
+Create results using the Cucumber results format.
+
+Authorizations:
+AccessToken
+query Parameters
+projectKey
+required
+string([A-Z][A-Z_0-9]+)
+Jira project key filter
+
+autoCreateTestCases	
+boolean
+Default: false
+Indicate if test cases should be created if non existent.
+
+header Parameters
+content-length
+required
+integer
+The content-length header indicates the size of the message body, in bytes. https://datatracker.ietf.org/doc/html/rfc7230#section-3.3.2
+
+Request Body schema: multipart/form-data
+required
+The zip file containing Cucumber execution results as one or more files. The max file size is 2MB. Optionally, you can send a testCycle part in your form data to customize the created test cycle.
+
+file
+required
+string <binary>
+testCycle	
+object (AutomationTestCycleInput)
+Pass this object as a JSON in your form-data alongside the file. Make sure you set the type of this object as application/json otherwise the object will be ignored.
+
+Responses
+200 OK
+default An error has occurred. Please check the code and the error message.
+
+post
+/automations/executions/cucumber
+Response samples
+200default
+Content type
+application/json
+
+Copy
+Expand allCollapse all
+{
+"testCycle": {
+"id": 1,
+"url": "string",
+"key": "(0)|(.-R0)"
+}
+}
+JUnit XML format
+Create results using the JUnit XML results format. Optionally, you can send a testCycle part in your form data to customize the created test cycle.
+
+Authorizations:
+AccessToken
+query Parameters
+projectKey
+required
+string([A-Z][A-Z_0-9]+)
+Jira project key filter
+
+autoCreateTestCases	
+boolean
+Default: false
+Indicate if test cases should be created if non existent.
+
+header Parameters
+content-length
+required
+integer
+The content-length header indicates the size of the message body, in bytes. https://datatracker.ietf.org/doc/html/rfc7230#section-3.3.2
+
+Request Body schema: multipart/form-data
+required
+The zip or single file containing JUnit execution results. The max file size is 10MB
+
+file
+required
+string <binary>
+testCycle	
+object (AutomationTestCycleInput)
+Pass this object as a JSON in your form-data alongside the file. Make sure you set the type of this object as application/json otherwise the object will be ignored.
+
+Responses
+200 OK
+default An error has occurred. Please check the code and the error message.
+
+post
+/automations/executions/junit
+Response samples
+200default
+Content type
+application/json
+
+Copy
+Expand allCollapse all
+{
+"testCycle": {
+"id": 1,
+"url": "string",
+"key": "(0)|(.-R0)"
+}
+}
+Retrieve a zip file containing Cucumber Feature Files that matches the query passed as parameter.
+Authorizations:
+AccessToken
+query Parameters
+projectKey
+required
+string([A-Z][A-Z_0-9]+)
+Jira project key filter
+
+header Parameters
+Accept
+required
+string
+Value: "application/zip"
+Responses
+200 A Zip file containing BDD feature files
+default An error has occurred. Please check the code and the error message.
+
+get
+/automations/testcases
+Response samples
+default
+Content type
+application/json
+
+Copy
+{
+"errorCode": 400,
+"message": "projectKey must not be null"
+}
+Healthcheck
+Check the health of this API
+Authorizations:
+AccessToken
+Responses
+200 OK
+default An error has occurred. Please check the code and the error message.
+
+get
+/healthcheck
+Response samples
+default
+Content type
+application/json
+
+Copy
+{
+"errorCode": 400,
+"message": "projectKey must not be null"
+}

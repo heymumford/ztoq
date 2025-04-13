@@ -1,0 +1,32 @@
+# Placeholder for QTest OpenAPI specification
+# This file will be replaced with the actual specification when available
+
+openapi: 3.0.0
+info:
+  title: QTest API
+  description: API specification for QTest test management tool
+  version: 1.0.0
+  
+# Placeholder paths
+paths:
+  /projects:
+    get:
+      summary: Get all projects
+      description: Returns a list of all available projects
+      responses:
+        '200':
+          description: Successful operation
+          
+  /projects/{projectId}/test-cases:
+    get:
+      summary: Get all test cases for a project
+      description: Returns a list of test cases for the specified project
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful operation
