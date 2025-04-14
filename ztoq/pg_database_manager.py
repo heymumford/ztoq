@@ -33,13 +33,13 @@ from ztoq.database_manager import DatabaseManager as SQLiteDatabaseManager
 from ztoq.data_fetcher import FetchResult
 from ztoq.models import (
     Case,
-        CycleInfo,
-        Environment,
-        Execution,
-        Folder,
-        Priority,
-        Project,
-        Status
+    CycleInfo,
+    Environment,
+    Execution,
+    Folder,
+    Priority,
+    Project,
+    Status
 )
 from ztoq.validation import ValidationIssue, ValidationLevel, ValidationPhase, ValidationScope
 

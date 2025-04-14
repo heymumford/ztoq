@@ -22,13 +22,13 @@ from typing import Any
 from ztoq.data_fetcher import FetchResult
 from ztoq.models import (
     Case,
-        CycleInfo,
-        Environment,
-        Execution,
-        Folder,
-        Priority,
-        Project,
-        Status,
+    CycleInfo,
+    Environment,
+    Execution,
+    Folder,
+    Priority,
+    Project,
+    Status,
 )
 
 logger = logging.getLogger(__name__)
@@ -39,7 +39,7 @@ class DatabaseManager:
     Manages SQL database operations for Zephyr test data.
 
     This class provides methods for creating database schema, inserting data,
-            and retrieving data from a SQL database. It uses SQLite by default but
+    and retrieving data from a SQL database. It uses SQLite by default but
     can be extended to support other SQL databases.
     """
 

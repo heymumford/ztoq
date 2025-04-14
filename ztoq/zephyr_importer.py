@@ -25,15 +25,13 @@ from ztoq.models import ZephyrConfig
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
-        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-        handlers=[logging.StreamHandler(sys.stdout), logging.FileHandler("zephyr_import.log")],
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    handlers=[logging.StreamHandler(sys.stdout), logging.FileHandler("zephyr_import.log")],
 )
 logger = logging.getLogger(__name__)
 
 
 @dataclass
-
-
 class ImportConfig:
     """Configuration for the import process."""
 

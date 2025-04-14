@@ -23,9 +23,9 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional, Set, Tuple, Union
-        from ztoq.validation_rules import get_built_in_rules
-            import requests.exceptions
-            import httpx
+from ztoq.validation_rules import get_built_in_rules
+import requests.exceptions
+import httpx
 
 logger = logging.getLogger("ztoq.validation")
 

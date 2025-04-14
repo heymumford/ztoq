@@ -1681,10 +1681,10 @@ class MigrationReportGenerator:
         for bar in bars:
             height = bar.get_height()
             ax.annotate(f"{height:.1f}",
-                           xy=(bar.get_x() + bar.get_width() / 2, height),
-                           xytext=(0, 3),
-                           textcoords="offset points",
-                           ha='center', va='bottom')
+                       xy=(bar.get_x() + bar.get_width() / 2, height),
+                       xytext=(0, 3),
+                       textcoords="offset points",
+                       ha='center', va='bottom')
 
         plt.tight_layout()
 

@@ -550,17 +550,13 @@ class MigrationDashboardData:
 
 # Flask routes
 @app.route('/')
-
-
 def index():
     """Render the dashboard page."""
     return render_template('dashboard.html',
-                              project_key=project_key,
-                              refresh_interval=refresh_interval)
+                           project_key=project_key,
+                           refresh_interval=refresh_interval)
 
 @app.route('/api/status')
-
-
 def get_status():
     """API endpoint to get migration status data."""
     data_provider = MigrationDashboardData(db_url, project_key)
@@ -568,8 +564,6 @@ def get_status():
     return jsonify(summary)
 
 @app.route('/api/entities')
-
-
 def get_entities():
     """API endpoint to get entity count data."""
     data_provider = MigrationDashboardData(db_url, project_key)
@@ -577,8 +571,6 @@ def get_entities():
     return jsonify(entity_counts)
 
 @app.route('/api/batches')
-
-
 def get_batches():
     """API endpoint to get batch statistics data."""
     data_provider = MigrationDashboardData(db_url, project_key)
@@ -586,8 +578,6 @@ def get_batches():
     return jsonify(batch_stats)
 
 @app.route('/api/activity')
-
-
 def get_activity():
     """API endpoint to get recent activity data."""
     limit = request.args.get('limit', default=10, type=int)
@@ -596,8 +586,6 @@ def get_activity():
     return jsonify(activity)
 
 @app.route('/api/validation')
-
-
 def get_validation():
     """API endpoint to get validation statistics."""
     data_provider = MigrationDashboardData(db_url, project_key)
@@ -605,8 +593,6 @@ def get_validation():
     return jsonify(validation_stats)
 
 @app.route('/api/validation/issues')
-
-
 def get_validation_issues():
     """API endpoint to get validation issues with filtering."""
     level = request.args.get('level')
@@ -682,7 +668,6 @@ def get_all_data():
             "activity": data_provider.get_recent_activity(),
             "validation": data_provider.get_validation_statistics()
     })
-
 
 def create_dashboard_templates():
     """Create HTML templates for the dashboard."""

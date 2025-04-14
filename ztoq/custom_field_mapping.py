@@ -16,7 +16,7 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional, Union
 from ztoq.models import CustomField, CustomFieldType
 from ztoq.qtest_models import QTestCustomField
-                    from dateutil import parser
+from dateutil import parser
 
 logger = logging.getLogger("ztoq.custom_field_mapping")
 
