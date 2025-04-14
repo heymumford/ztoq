@@ -5,8 +5,6 @@
 ### Phase 1: Core Infrastructure
 
 #### Test Foundations
-- [ ] **[TEST-INFRA-1]** Setup test pyramid structure (unit, integration, acceptance)
-- [ ] **[TEST-INFRA-2]** Create base test fixtures and factories
 - [ ] **[TEST-INFRA-3]** Implement test harness for API mocking
 
 #### Unit Tests First
@@ -264,6 +262,8 @@
 - [ ] **[ANTIFRAGILE-13]** Document barbell strategy for feature development
 
 ## In Progress
+- [ ] **[TEST-INFRA-1]** Setup test pyramid structure (unit, integration, acceptance) *(Working on test structure standardization)*
+- [ ] **[TEST-INFRA-2]** Create base test fixtures and factories *(Developing foundational test patterns)*
 - [ ] **[TEST-UNIT-15]** Write unit tests for qTest mock server endpoints *(Implementing test cases for mock services)*
 - [ ] **[MOCK-4]** Build mock server for qTest API endpoints *(Implementation complete, needs testing)*
 - [ ] **[TEST-UNIT-21]** Write unit tests for qTest entity models *(Creating comprehensive test suite)*
