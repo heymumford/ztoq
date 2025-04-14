@@ -606,5 +606,19 @@ PROJECT
 └── Environments
 ```
 
+## Further Resources
+
+- [Project Structure](docs/project-structure.md) - Learn about our standardized directory organization
+- [Open Source Philosophy](docs/open-source-philosophy.md) - Explore our approach to open source and why it matters
+- [Kanban History](docs/kanban-history.md) - Review our development journey and the reasoning behind key decisions
+
+## Why Open Source Matters
+
+We believe that test data migration tools should be built with care, not rushed as one-off scripts. By embracing open source principles, we've created a more robust, maintainable, and educational solution that serves both immediate needs and long-term value.
+
+This repository demonstrates how thoughtful design and investment in quality can transform a utility task into a capability that benefits the entire testing community. Learn more in our [Open Source Philosophy](docs/open-source-philosophy.md) document.
+
 ---
 *Copyright (c) 2025 Eric C. Mumford (@heymumford) - Licensed under [MIT License](LICENSE)*
+
+#datamigration #testmanagement #zephyrscale #qtest #pythontool #etl #testautomation #dataextraction #apiclient #testtoolmigration #opensource #pythonapi #testdataintegration

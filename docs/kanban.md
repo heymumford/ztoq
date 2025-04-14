@@ -1,5 +1,7 @@
 # Zephyr to qTest Migration - Kanban Board
 
+> For a historical record of completed work with reasoning and lessons learned, see [Kanban History](kanban-history.md)
+
 ## Backlog
 
 ### Phase 1: Core Infrastructure
