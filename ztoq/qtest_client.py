@@ -14,6 +14,7 @@ import json
 import logging
 import os
 import time
+import base64
 from pathlib import Path
 from typing import Any, Generic, TypeVar, cast
 import requests
@@ -244,9 +245,20 @@ class QTestClient:
         """Authenticate with qTest API and obtain an access token."""
         # If bearer token is already provided in config, use it directly
         if hasattr(self.config, 'bearer_token') and self.config.bearer_token:
-            self.auth_token = self.config.bearer_token
-            self.headers["Authorization"] = f"Bearer {self.auth_token}"
+            token = self.config.bearer_token.strip()
+
+            # Handle case where token already includes "bearer" prefix
+            if token.lower().startswith("bearer "):
+                # Extract just the token part, removing "bearer "
+                self.auth_token = token[7:].strip()
+                self.headers["Authorization"] = f"bearer {self.auth_token}"
+            else:
+                # Use token as-is
+                self.auth_token = token
+                self.headers["Authorization"] = f"bearer {self.auth_token}"
+
             logger.info(f"Using provided bearer token for {self.api_type} API")
+            logger.debug(f"Authorization header: {self.headers['Authorization']}")
             return
 
         # Otherwise, use username/password to obtain a token
@@ -260,6 +272,17 @@ class QTestClient:
         endpoint = auth_endpoints.get(self.api_type, "/oauth/token")
         url = f"{self.config.base_url}{endpoint}"
 
+        # Common headers for token request
+        auth_headers = {
+            "Content-Type": "application/x-www-form-urlencoded",
+            "Cache-Control": "no-cache"
+        }
+
+        # Add basic auth header with client name (any string)
+        client_name_encoded = base64.b64encode(b"ztoq-client:").decode('utf-8')
+        auth_headers["Authorization"] = f"Basic {client_name_encoded}"
+
+        # Prepare form data for token request
         auth_data = {
             "grant_type": "password",
             "username": self.config.username,
@@ -269,28 +292,42 @@ class QTestClient:
         # For Parameters API which uses a different format
         if self.api_type == "parameters":
             auth_data = {"email": self.config.username, "password": self.config.password}
+            auth_headers["Content-Type"] = "application/json"
 
         logger.debug(f"Authenticating with {self.api_type} API at {url}")
 
         try:
-            response = requests.post(
-                url=url, headers={"Content-Type": "application/json"}, json=auth_data
-            )
+            if self.api_type == "parameters":
+                # Parameters API uses JSON
+                response = requests.post(
+                    url=url, headers=auth_headers, json=auth_data
+                )
+            else:
+                # Manager API uses form data
+                response = requests.post(
+                    url=url, headers=auth_headers, data=auth_data
+                )
+
             response.raise_for_status()
             data = response.json()
 
-            # Different token responses per API type
-            if self.api_type == "parameters":
-                self.auth_token = data.get("access_token")
-                self.headers["Authorization"] = f"Bearer {self.auth_token}"
-            else:
-                self.auth_token = data.get("access_token")
-                self.headers["Authorization"] = f"Bearer {self.auth_token}"
+            # Get token from response
+            token_type = data.get("token_type", "bearer").lower()
+            self.auth_token = data.get("access_token")
+            if not self.auth_token:
+                raise ValueError("No access token returned from authentication endpoint")
+
+            # Set authorization header with proper token format
+            self.headers["Authorization"] = f"{token_type} {self.auth_token}"
 
             logger.info(f"Successfully authenticated with {self.api_type} API")
+            logger.debug(f"Token type: {token_type}, expires in: {data.get('expires_in', 'unknown')} seconds")
 
         except requests.exceptions.RequestException as e:
             logger.error(f"Authentication failed: {e}")
+            if hasattr(e, 'response') and e.response is not None:
+                logger.error(f"Response status: {e.response.status_code}")
+                logger.error(f"Response body: {e.response.text}")
             raise
 
     def _make_request(
@@ -301,6 +338,8 @@ class QTestClient:
             json_data: dict[str, Any] | None = None,
             files: dict[str, Any] | None = None,
             headers: dict[str, str] | None = None,
+            _retry_count: int = 0,
+            _max_retries: int = 3,
         ) -> dict[str, Any]:
         """Make a request to the qTest API.
 
@@ -311,10 +350,17 @@ class QTestClient:
             json_data: JSON request body
             files: Files to upload (for multipart/form-data requests)
             headers: Optional headers to override default headers
+            _retry_count: Internal retry counter to prevent infinite loops
+            _max_retries: Maximum number of retries for authentication
 
         Returns:
             API response as dictionary
         """
+        # Check retry limit
+        if _retry_count >= _max_retries:
+            logger.error(f"Maximum retry limit reached ({_max_retries}). Authentication failed.")
+            raise ValueError(f"Authentication failed after {_max_retries} attempts. Check your credentials.")
+
         # Check rate limits
         if self.rate_limit_remaining <= 0:
             wait_time = max(0, self.rate_limit_reset - time.time())
@@ -386,10 +432,29 @@ class QTestClient:
 
             # Check if token expired and re-authenticate
             if response.status_code == 401:
-                logger.info("Authentication token expired. Re-authenticating...")
-                self._authenticate()
-                # Retry the request with new token
-                return self._make_request(method, endpoint, params, json_data, files, headers)
+                if _retry_count < _max_retries:
+                    logger.info(f"Authentication failed (attempt {_retry_count + 1}/{_max_retries}). Re-authenticating...")
+
+                    # Increment retry counter
+                    _retry_count += 1
+
+                    # Reset token to force re-authentication
+                    self.auth_token = None
+                    self._authenticate()
+
+                    # Update headers with the new token if custom headers weren't provided
+                    if not headers:
+                        request_headers = self.headers
+
+                    # Retry the request with new token and incremented retry counter
+                    return self._make_request(
+                        method, endpoint, params, json_data, files, headers,
+                        _retry_count=_retry_count, _max_retries=_max_retries
+                    )
+                else:
+                    # Max retries reached
+                    logger.error(f"Authentication failed after {_max_retries} attempts")
+                    response.raise_for_status()
 
             # Handle errors with detailed logging
             response.raise_for_status()
@@ -481,6 +546,21 @@ class QTestClient:
 
         projects_data = response.get("items", [])
         return [QTestProject(**project) for project in projects_data]
+
+    def get_current_user_permission(self, project_id: int = None) -> dict[str, Any]:
+        """
+        Get current user permissions for a project.
+
+        Args:
+            project_id: Optional project ID (uses config project_id if not specified)
+
+        Returns:
+            Dict containing user permissions for the project
+        """
+        project_id = project_id or self.config.project_id
+        endpoint = f"/projects/{project_id}/user-profiles/current"
+
+        return self._make_request("GET", endpoint)
 
     def get_test_cases(
         self, module_id: int | None = None
@@ -657,6 +737,33 @@ class QTestClient:
             client=self, endpoint=endpoint, model_class=QTestParameter, params=query_data
         )
 
+    def revoke_token(self) -> bool:
+        """
+        Revoke (logout) the current authentication token.
+
+        Returns:
+            bool: True if token was successfully revoked, False otherwise
+        """
+        logger.info("Revoking qTest API token")
+
+        if not self.auth_token:
+            logger.warning("No token to revoke")
+            return False
+
+        endpoint = "/oauth/revoke"
+
+        try:
+            # Make request to revoke token
+            self._make_request("POST", endpoint)
+            # Clear the token
+            self.auth_token = None
+            self.headers.pop("Authorization", None)
+            logger.info("Token successfully revoked")
+            return True
+        except Exception as e:
+            logger.error(f"Failed to revoke token: {str(e)}")
+            return False
+
     def verify_api_token(self) -> bool:
         """
         Verify that the API token is valid by making a simple API call.
@@ -678,6 +785,32 @@ class QTestClient:
         except Exception as e:
             logger.error(f"qTest API token verification failed: {str(e)}")
             return False
+
+    def get_token_status(self) -> dict[str, Any]:
+        """
+        Get the status of the current authentication token.
+
+        Returns:
+            Dict with token status information:
+            - expiration: timestamp when token expires
+            - validityInMilliseconds: how long the token will be valid
+        """
+        logger.info("Getting token status")
+
+        if not self.auth_token:
+            logger.warning("No token available")
+            return {"error": "No token available"}
+
+        endpoint = "/oauth/status"
+
+        try:
+            # Make request to get token status
+            response = self._make_request("GET", endpoint)
+            logger.info(f"Token status retrieved successfully")
+            return response
+        except Exception as e:
+            logger.error(f"Failed to get token status: {str(e)}")
+            return {"error": str(e)}
 
     def check_api_health(self) -> dict[str, Any]:
         """
@@ -1040,6 +1173,47 @@ class QTestClient:
         return QTestPaginatedIterator[QTestPulseConstant](
             client=self, endpoint=endpoint, model_class=QTestPulseConstant, params=params
         )
+
+    def download_attachment(self, attachment_id: int, file_path: str) -> bool:
+        """
+        Download an attachment by ID and save it to the specified file path.
+
+        Args:
+            attachment_id: ID of the attachment to download
+            file_path: Local file path to save the attachment to
+
+        Returns:
+            True if download successful, False otherwise
+        """
+        endpoint = f"/attachments/{attachment_id}"
+
+        logger.info(f"Downloading attachment {attachment_id} to {file_path}")
+
+        try:
+            # Make binary request
+            response = requests.get(
+                url=f"{self.config.base_url}/api/v3{endpoint}",
+                headers=self.headers,
+                stream=True
+            )
+
+            response.raise_for_status()
+
+            # Check content type
+            content_type = response.headers.get('Content-Type', 'application/octet-stream')
+            logger.debug(f"Attachment content type: {content_type}")
+
+            # Save file
+            with open(file_path, 'wb') as f:
+                for chunk in response.iter_content(chunk_size=8192):
+                    f.write(chunk)
+
+            logger.info(f"Attachment downloaded successfully to {file_path}")
+            return True
+
+        except Exception as e:
+            logger.error(f"Failed to download attachment: {e}")
+            return False
 
     def get_pulse_constant(self, constant_id: int) -> QTestPulseConstant:
         """Get a specific Pulse constant.
