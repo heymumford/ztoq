@@ -98,11 +98,12 @@ def verify_zephyr_token(timeout_seconds=15):
         # Reset the alarm
         signal.alarm(0)
 
-def verify_qtest_token(timeout_seconds=15):
+def verify_qtest_token(timeout_seconds=15, no_verify_ssl=False):
     """Verify the qTest API token from environment variables.
 
     Args:
         timeout_seconds: Maximum time to wait for verification in seconds
+        no_verify_ssl: If True, SSL certificate verification will be disabled
 
     Returns:
         bool: True if token is valid, False otherwise
@@ -168,12 +169,21 @@ def verify_qtest_token(timeout_seconds=15):
             # Override default timeout to ensure we don't hang
             client = QTestClient(config)
 
+            # If requested, disable SSL verification warnings
+            if no_verify_ssl:
+                logger.warning("SSL certificate verification is disabled for client verification")
+                import urllib3
+                urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
             # Temporarily replace requests.request with a version that has a timeout
             original_request = requests.request
 
             def request_with_timeout(*args, **kwargs):
                 if 'timeout' not in kwargs:
                     kwargs['timeout'] = (5.0, 10.0)
+                # Add verify parameter if not already present
+                if 'verify' not in kwargs:
+                    kwargs['verify'] = not no_verify_ssl
                 return original_request(*args, **kwargs)
 
             # Monkey patch requests.request temporarily
@@ -214,7 +224,15 @@ def verify_qtest_token(timeout_seconds=15):
                         safe_headers['Authorization'] = "****"
                 logger.debug(f"Headers: {safe_headers}")
 
-                response = requests.get(url=url, headers=headers, timeout=(5.0, 10.0))
+                # Check if SSL verification should be disabled
+                verify_ssl = not getattr(args, 'no_verify_ssl', False)
+                if not verify_ssl:
+                    logger.warning("SSL certificate verification is disabled")
+                    # Suppress the InsecureRequestWarning that comes with verify=False
+                    import urllib3
+                    urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+                response = requests.get(url=url, headers=headers, timeout=(5.0, 10.0), verify=verify_ssl)
 
                 if response.status_code == 200:
                     logger.info("✅ qTest API token is valid and working correctly.")
@@ -261,6 +279,7 @@ def main():
     parser.add_argument("--timeout", type=int, default=30, help="Timeout in seconds for each verification")
     parser.add_argument("--skip-zephyr", action="store_true", help="Skip Zephyr token verification")
     parser.add_argument("--skip-qtest", action="store_true", help="Skip qTest token verification")
+    parser.add_argument("--no-verify-ssl", action="store_true", help="Disable SSL certificate verification (use with caution)")
 
     args = parser.parse_args()
 
@@ -309,7 +328,10 @@ def main():
 
     # Verify qTest token if not skipped
     if not args.skip_qtest:
-        qtest_valid = verify_qtest_token(timeout_seconds=args.timeout)
+        qtest_valid = verify_qtest_token(
+            timeout_seconds=args.timeout,
+            no_verify_ssl=args.no_verify_ssl
+        )
     else:
         logger.info("⏩ Skipping qTest token verification")
 
