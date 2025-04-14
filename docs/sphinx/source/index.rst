@@ -36,7 +36,7 @@ Features
    open-source-decisions
    adrs/index
    c4_lucidchart
-   
+
 Indices and tables
 ==================
 

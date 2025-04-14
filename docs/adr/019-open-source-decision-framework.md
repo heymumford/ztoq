@@ -17,13 +17,13 @@ We will adopt a structured, evidence-based approach to open source decisions, re
 ### Key Principles
 
 1. **Strategic Alignment**: Open source decisions must align with business objectives rather than ideological preferences.
-   
+
 2. **Value Protection**: Core components that represent key competitive advantages should generally remain proprietary unless there's an overriding strategic reason to open them.
-   
+
 3. **Community Potential**: Components should be considered for open sourcing when they have genuine potential for community enhancement or when commoditizing them benefits the organization.
-   
+
 4. **Resource Commitment**: Open source is not "free" - it requires significant investment in documentation, community management, and governance.
-   
+
 5. **Evidence Over Assumptions**: Decisions should consider empirical evidence rather than assuming universal benefits.
 
 ### Decision Framework for Executives
@@ -86,11 +86,31 @@ When open sourcing is approved:
 - Organizations will likely maintain a mix of open and closed source components
 - Different components will warrant different decisions based on their strategic context
 
+## AI-Assisted Research Methodology
+
+The analysis behind this framework was developed using a rigorous, scientific approach to AI-assisted research:
+
+1. **Falsifiable Hypothesis Formulation**: 
+   - Initial open source beliefs were converted into falsifiable hypotheses
+   - Example: "Open source code has higher quality than proprietary code" → "Projects that transition from closed to open source demonstrate measurable improvements in code quality metrics within 12 months"
+
+2. **Balanced Evidence Collection**:
+   - Evidence was deliberately gathered that supported, contradicted, and provided neutral perspectives on each hypothesis
+   - Research included both academic studies and industry experiences, avoiding confirmation bias
+
+3. **Systematic Evaluation**:
+   - Hypotheses were tested against the collected evidence
+   - Conclusions were drawn based on the weight of evidence, not preconceived beliefs
+   - Contextual factors that influence outcomes were identified
+
+This scientifically valid approach to AI-assisted research enabled a more objective assessment of open source benefits and challenges, leading to a nuanced decision framework rather than a one-size-fits-all recommendation.
+
 ## References
 
-1. Mumford, E.C. (2025). "Open Source vs. Proprietary Software: Navigating the Modern Decision Landscape"
+1. Mumford, E.C. (2025). "Open Source vs. Proprietary Software: Navigating the Modern Decision Landscape" [internal document]
 2. The Linux Foundation. (2023). "The State of Open Source Software"
 3. Open Source Initiative. (2024). "The Open Source Definition"
+4. Shearer, E. & Gottlieb, M. (2024). "Conducting Scientific Research with Large Language Models: Best Practices and Methodologies"
 
 ---
 *Copyright (c) 2025 Eric C. Mumford (@heymumford) - Licensed under [MIT License](../../../LICENSE)*

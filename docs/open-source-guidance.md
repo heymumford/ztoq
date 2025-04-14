@@ -1,6 +1,6 @@
 # Open Source Decision Guidance
 
-This document provides practical guidance for engineering teams on when and how to propose open sourcing components of enterprise projects. It builds on the framework established in [ADR-019: Open Source Decision Framework](adr/019-open-source-decision-framework.md) and Eric Mumford's analysis "Open Source vs. Proprietary Software: Navigating the Modern Decision Landscape."
+This document provides practical guidance for engineering teams on when and how to propose open sourcing components of enterprise projects. It builds on the framework established in [ADR-019: Open Source Decision Framework](adr/019-open-source-decision-framework.md) and Eric Mumford's analysis "Open Source vs. Proprietary Software: Navigating the Modern Decision Landscape" (available in `docs/upload/open-source-economic-realities.pdf`).
 
 ## When to Consider Open Sourcing
 
@@ -110,10 +110,29 @@ Be prepared to address these frequent executive concerns:
 - Outcome: Competitors integrated the algorithm into more polished products
 - Lesson: Core differentiating capabilities generally shouldn't be open sourced
 
+## Scientifically Valid AI-Assisted Research
+
+The framework and guidance presented here are based on research conducted using a scientifically valid approach to AI-assisted research:
+
+1. **Converting Beliefs to Falsifiable Hypotheses**:
+   - When using AI for research, it's critical to convert initial beliefs into falsifiable hypotheses
+   - Example: Instead of "Open source projects have better security," formulate as "Open source projects demonstrate fewer critical vulnerabilities per 1000 lines of code compared to equivalent proprietary projects"
+   
+2. **Gathering Balanced Evidence**:
+   - Deliberately collect evidence supporting, contradicting, and providing neutral perspectives on each hypothesis
+   - This avoids confirmation bias and ensures scientific validity
+   
+3. **Systematic Evaluation**:
+   - Test hypotheses against evidence rather than cherry-picking supportive data
+   - Draw conclusions based on the full body of evidence
+
+This approach is the only scientifically valid way to use AI as a research tool, ensuring that recommendations are based on rigorous analysis rather than reinforcing existing beliefs.
+
 ## Further Reading
 
-- Mumford, E.C. (2025). "Open Source vs. Proprietary Software: Navigating the Modern Decision Landscape"
+- Mumford, E.C. (2025). "Open Source vs. Proprietary Software: Navigating the Modern Decision Landscape" (`docs/upload/open-source-economic-realities.pdf`)
 - [ADR-019: Open Source Decision Framework](adr/019-open-source-decision-framework.md)
+- Shearer, E. & Gottlieb, M. (2024). "Conducting Scientific Research with Large Language Models: Best Practices and Methodologies"
 - [Google's Open Source Documentation](https://opensource.google/documentation/)
 - [Red Hat's Open Source Participation Guidelines](https://www.redhat.com/en/about/open-source-participation-guidelines)
 
