@@ -10,11 +10,11 @@ Test generation utilities for Zephyr Scale API testing.
 This module provides tools for generating test cases based on OpenAPI specifications.
 """
 
-import logging
-import json
 import base64
-from typing import Dict, Any, List, Optional, Tuple, Set, Union
+import json
+import logging
 from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 from ztoq.openapi_parser import ZephyrApiSpecWrapper, load_openapi_spec
 
@@ -44,7 +44,7 @@ class ZephyrTestGenerator:
         Returns:
             Configured ZephyrTestGenerator
         """
-        logger.info(f"Creating test generator from OpenAPI spec: {spec_path}")
+        logger.info("Creating test generator from OpenAPI spec: {spec_path}")
         spec = load_openapi_spec(spec_path)
         spec_wrapper = ZephyrApiSpecWrapper(spec)
         return cls(spec_wrapper)
@@ -156,7 +156,7 @@ class ZephyrTestGenerator:
         """
         tests = []
         endpoint_info = self.spec_wrapper.get_endpoint_info(path, method)
-        operation_id = endpoint_info.get("operation_id", f"{method.lower()}_{path}")
+        operation_id = endpoint_info.get("operation_id", "{method.lower()}_{path}")
 
         # Only generate custom field tests for POST/PUT endpoints
         if method.lower() not in ["post", "put", "patch"]:
@@ -257,7 +257,7 @@ class ZephyrTestGenerator:
         """
         field = {
             "id": f"cf-{field_type}-1",
-            "name": f"{field_type.capitalize()} Field",
+            "name": "{field_type.capitalize()} Field",
             "type": field_type,
         }
 
@@ -295,7 +295,7 @@ class ZephyrTestGenerator:
         """
         tests = []
         endpoint_info = self.spec_wrapper.get_endpoint_info(path, method)
-        operation_id = endpoint_info.get("operation_id", f"{method.lower()}_{path}")
+        operation_id = endpoint_info.get("operation_id", "{method.lower()}_{path}")
 
         # Only generate attachment tests for specific endpoints
         if not (
@@ -307,7 +307,7 @@ class ZephyrTestGenerator:
         file_types = [
             {"name": "text", "filename": "test.txt", "content_type": "text/plain"},
             {"name": "image", "filename": "test.png", "content_type": "image/png"},
-            {"name": "pdf", "filename": "test.pdf", "content_type": "application/pdf"},
+            {"name": "pd", "filename": "test.pd", "content_type": "application/pdf"},
             {"name": "binary", "filename": "test.bin", "content_type": "application/octet-stream"},
         ]
 
@@ -388,7 +388,7 @@ class ZephyrTestGenerator:
             Test case definition
         """
         endpoint_info = self.spec_wrapper.get_endpoint_info(path, method)
-        operation_id = endpoint_info.get("operation_id", f"{method.lower()}_{path}")
+        operation_id = endpoint_info.get("operation_id", "{method.lower()}_{path}")
 
         # Generate mock request data
         request_data = {}
@@ -405,8 +405,9 @@ class ZephyrTestGenerator:
                 param_schema = param.get("schema", {})
                 params[param_name] = self.spec_wrapper.generate_mock_data(param_schema)
 
-        # Generate expected response
-        expected_response = self.spec_wrapper.generate_mock_response(path, method)
+        # Generate expected response (for reference)
+        # Uncomment if needed later
+        # expected_response = self.spec_wrapper.generate_mock_response(path, method)
 
         return {
             "name": f"test_{operation_id}_happy_path",
@@ -431,7 +432,7 @@ class ZephyrTestGenerator:
         """
         tests = []
         endpoint_info = self.spec_wrapper.get_endpoint_info(path, method)
-        operation_id = endpoint_info.get("operation_id", f"{method.lower()}_{path}")
+        operation_id = endpoint_info.get("operation_id", "{method.lower()}_{path}")
 
         # Get required parameters
         required_params = [
@@ -527,7 +528,7 @@ class ZephyrTestGenerator:
         """
         tests = []
         endpoint_info = self.spec_wrapper.get_endpoint_info(path, method)
-        operation_id = endpoint_info.get("operation_id", f"{method.lower()}_{path}")
+        operation_id = endpoint_info.get("operation_id", "{method.lower()}_{path}")
 
         # Get all defined response codes
         responses = endpoint_info.get("responses", {})
@@ -555,7 +556,7 @@ class ZephyrTestGenerator:
                 elif status_code == "403":
                     test["auth"] = "invalid"  # Invalid auth
                 elif status_code == "404":
-                    test["path"] = f"{path}/nonexistent"  # Nonexistent resource
+                    test["path"] = "{path}/nonexistent"  # Nonexistent resource
 
             tests.append(test)
 
@@ -573,7 +574,7 @@ class ZephyrTestGenerator:
         """
         tests = []
         endpoint_info = self.spec_wrapper.get_endpoint_info(path, method)
-        operation_id = endpoint_info.get("operation_id", f"{method.lower()}_{path}")
+        operation_id = endpoint_info.get("operation_id", "{method.lower()}_{path}")
 
         # Get request schema
         request_schema = self.spec_wrapper.get_request_schema(path, method)
@@ -648,7 +649,7 @@ class ZephyrTestGenerator:
         Returns:
             Dictionary mapping endpoint identifiers to test definitions
         """
-        logger.info("Generating test suite" + (f" for tag: {tag}" if tag else ""))
+        logger.info("Generating test suite" + (" for tag: {tag}" if tag else ""))
 
         # Get endpoints to test
         endpoints = []
@@ -660,7 +661,7 @@ class ZephyrTestGenerator:
         # Generate tests for each endpoint
         test_suite = {}
         for path, method in endpoints:
-            endpoint_id = f"{method.upper()} {path}"
+            endpoint_id = "{method.upper()} {path}"
             tests = self.generate_endpoint_tests(path, method)
             test_suite[endpoint_id] = tests
 
@@ -681,7 +682,7 @@ class ZephyrTestGenerator:
         with open(output_path, "w") as f:
             json.dump(test_suite, f, indent=2)
 
-        logger.info(f"Exported test suite to {output_path}")
+        logger.info("Exported test suite to {output_path}")
 
     def generate_test_function(self, test: Dict[str, Any]) -> str:
         """Generate a pytest function for a test case.
@@ -707,7 +708,7 @@ class ZephyrTestGenerator:
             params_str = json.dumps(test["params"], indent=4).replace("\n", "\n    ")
             lines.append(f"    params = {params_str}")
         else:
-            lines.append(f"    params = {{}}")
+            lines.append("    params = {}")
 
         # Set up request data if needed
         if "request_data" in test and test["request_data"]:
@@ -724,11 +725,11 @@ class ZephyrTestGenerator:
             # For base64 content, decode it to binary
             if "content" in file_upload:
                 lines.append("    # Base64 encoded content")
-                lines.append(f"    import base64")
+                lines.append("    import base64")
                 lines.append(f"    content = base64.b64decode('{file_upload['content']}')")
 
             # Set up multipart files dict
-            lines.append(f"    files = {{'file': (filename, content, content_type)}}")
+            lines.append("    files = {'file': (filename, content, content_type)}")
 
             # Add step_id if provided (for test step attachments)
             if "step_id" in file_upload:
@@ -739,12 +740,12 @@ class ZephyrTestGenerator:
         if "auth" in test:
             if test["auth"] is False:
                 lines.append("    # Test without authentication")
-                lines.append(f"    saved_token = zephyr_client.headers['Authorization']")
-                lines.append(f"    zephyr_client.headers['Authorization'] = ''")
+                lines.append("    saved_token = zephyr_client.headers['Authorization']")
+                lines.append("    zephyr_client.headers['Authorization'] = ''")
             elif test["auth"] == "invalid":
                 lines.append("    # Test with invalid authentication")
-                lines.append(f"    saved_token = zephyr_client.headers['Authorization']")
-                lines.append(f"    zephyr_client.headers['Authorization'] = 'Bearer invalid_token'")
+                lines.append("    saved_token = zephyr_client.headers['Authorization']")
+                lines.append("    zephyr_client.headers['Authorization'] = 'Bearer invalid_token'")
 
         # Set up the expected status code
         expected_status = test.get("expected_status", 200)
@@ -753,24 +754,24 @@ class ZephyrTestGenerator:
         if expected_status < 400:
             # Success case
             lines.append("    try:")
-            lines.append(f"        # Make API request")
-            lines.append(f"        response = zephyr_client._make_request(")
+            lines.append("        # Make API request")
+            lines.append("        response = zephyr_client._make_request(")
             lines.append(f"            '{method.upper()}',")
             lines.append(f"            '{path}',")
-            lines.append(f"            params=params,")
+            lines.append("            params=params,")
 
             # Add appropriate parameters based on what's in the test
             if "request_data" in test and test["request_data"]:
-                lines.append(f"            json_data=data,")
+                lines.append("            json_data=data,")
             if "file_upload" in test:
-                lines.append(f"            files=files,")
+                lines.append("            files=files,")
                 # For file uploads, use multipart header
                 lines.append(
-                    f"            headers={{'Authorization': zephyr_client.headers['Authorization']}},"
+                    "            headers={'Authorization': zephyr_client.headers['Authorization']},"
                 )
 
             lines.append(f"            validate={test.get('validate_schema', True)}")
-            lines.append(f"        )")
+            lines.append("        )")
             lines.append("        # Check response")
             lines.append("        assert response is not None")
 
@@ -779,7 +780,7 @@ class ZephyrTestGenerator:
                 lines.append("        # Validate attachment response")
                 lines.append("        assert 'id' in response")
                 lines.append("        assert 'filename' in response")
-                lines.append(f"        assert response['filename'] == filename")
+                lines.append("        assert response['filename'] == filename")
 
             # Add custom field validation if relevant
             if "request_data" in test and "customFields" in test["request_data"]:
@@ -789,36 +790,36 @@ class ZephyrTestGenerator:
 
             lines.append("    except Exception as e:")
             lines.append(
-                f"        pytest.fail(f'Expected successful response but got error: {{e}}')"
+                "        pytest.fail(f'Expected successful response but got error: {e}')"
             )
         else:
             # Error case
-            lines.append(f"    with pytest.raises(requests.exceptions.HTTPError) as excinfo:")
+            lines.append("    with pytest.raises(requests.exceptions.HTTPError) as excinfo:")
             lines.append(f"        # Make API request expecting {expected_status} error")
-            lines.append(f"        zephyr_client._make_request(")
+            lines.append("        zephyr_client._make_request(")
             lines.append(f"            '{method.upper()}',")
             lines.append(f"            '{path}',")
-            lines.append(f"            params=params,")
+            lines.append("            params=params,")
 
             # Add appropriate parameters based on what's in the test
             if "request_data" in test and test["request_data"]:
-                lines.append(f"            json_data=data,")
+                lines.append("            json_data=data,")
             if "file_upload" in test:
-                lines.append(f"            files=files,")
+                lines.append("            files=files,")
                 # For file uploads, use multipart header
                 lines.append(
-                    f"            headers={{'Authorization': zephyr_client.headers['Authorization']}},"
+                    "            headers={'Authorization': zephyr_client.headers['Authorization']},"
                 )
 
             lines.append(f"            validate={test.get('validate_schema', False)}")
-            lines.append(f"        )")
-            lines.append(f"    # Verify expected status code")
+            lines.append("        )")
+            lines.append("    # Verify expected status code")
             lines.append(f"    assert excinfo.value.response.status_code == {expected_status}")
 
         # Restore auth if needed
         if "auth" in test:
-            lines.append(f"    # Restore authentication")
-            lines.append(f"    zephyr_client.headers['Authorization'] = saved_token")
+            lines.append("    # Restore authentication")
+            lines.append("    zephyr_client.headers['Authorization'] = saved_token")
 
         return "\n".join(lines)
 
@@ -829,7 +830,7 @@ class ZephyrTestGenerator:
             output_path: Path to save the pytest file
             tag: Optional tag to filter endpoints
         """
-        logger.info(f"Generating pytest file for" + (f" tag: {tag}" if tag else " all endpoints"))
+        logger.info("Generating pytest file for" + (" tag: {tag}" if tag else " all endpoints"))
 
         test_suite = self.generate_test_suite(tag)
 
@@ -863,7 +864,7 @@ class ZephyrTestGenerator:
 
         # Add test functions
         for endpoint_id, tests in test_suite.items():
-            lines.append(f"# Tests for {endpoint_id}")
+            lines.append("# Tests for {endpoint_id}")
             for test in tests:
                 lines.append(self.generate_test_function(test))
                 lines.append("")  # Empty line between functions
@@ -871,4 +872,4 @@ class ZephyrTestGenerator:
         with open(output_path, "w") as f:
             f.write("\n".join(lines))
 
-        logger.info(f"Generated pytest file at {output_path}")
+        logger.info("Generated pytest file at {output_path}")

@@ -9,8 +9,9 @@ from pathlib import Path
 from unittest.mock import patch, mock_open
 from ztoq.openapi_parser import load_openapi_spec, validate_zephyr_spec, extract_api_endpoints
 
-
 @pytest.mark.unit
+
+
 class TestOpenAPIParser:
     def test_load_openapi_spec_missing_file(self):
         """Test loading a missing file raises FileNotFoundError."""
@@ -40,25 +41,25 @@ class TestOpenAPIParser:
         """Test validating a valid Zephyr Scale API spec."""
         valid_spec = {
             "openapi": "3.0.0",
-            "info": {
+                "info": {
                 "title": "Zephyr Scale API",
-                "version": "1.0.0",
-            },
-            "paths": {},
-        }
+                    "version": "1.0.0",
+                },
+                "paths": {},
+            }
 
         assert validate_zephyr_spec(valid_spec) is True
 
         # Test with description instead of title
         valid_spec_desc = {
             "openapi": "3.0.0",
-            "info": {
+                "info": {
                 "title": "Some API",
-                "description": "The Zephyr Scale API allows you to...",
-                "version": "1.0.0",
-            },
-            "paths": {},
-        }
+                    "description": "The Zephyr Scale API allows you to...",
+                    "version": "1.0.0",
+                },
+                "paths": {},
+            }
 
         assert validate_zephyr_spec(valid_spec_desc) is True
 
@@ -66,12 +67,12 @@ class TestOpenAPIParser:
         """Test validating an invalid Zephyr Scale API spec."""
         invalid_spec = {
             "openapi": "3.0.0",
-            "info": {
+                "info": {
                 "title": "Some Other API",
-                "version": "1.0.0",
-            },
-            "paths": {},
-        }
+                    "version": "1.0.0",
+                },
+                "paths": {},
+            }
 
         assert validate_zephyr_spec(invalid_spec) is False
 
@@ -80,9 +81,9 @@ class TestOpenAPIParser:
             "swagger": "2.0",  # Using older format
             "info": {
                 "title": "Zephyr Scale API",
-                "version": "1.0.0",
-            },
-        }
+                    "version": "1.0.0",
+                },
+            }
 
         assert validate_zephyr_spec(not_openapi) is False
 
@@ -90,66 +91,66 @@ class TestOpenAPIParser:
         """Test extracting API endpoints from an OpenAPI spec."""
         spec = {
             "openapi": "3.0.0",
-            "info": {
+                "info": {
                 "title": "Zephyr Scale API",
-                "version": "1.0.0",
-            },
-            "paths": {
+                    "version": "1.0.0",
+                },
+                "paths": {
                 "/testcases": {
                     "get": {
                         "summary": "Get test cases",
-                        "description": "Get all test cases",
-                        "parameters": [],
-                        "responses": {},
-                    },
-                    "post": {
+                            "description": "Get all test cases",
+                            "parameters": [],
+                            "responses": {},
+                        },
+                        "post": {
                         "summary": "Create test case",
-                        "description": "Create a new test case",
-                        "parameters": [],
-                        "responses": {},
+                            "description": "Create a new test case",
+                            "parameters": [],
+                            "responses": {},
+                        },
                     },
-                },
-                "/testcases/{id}": {
+                    "/testcases/{id}": {
                     "get": {
                         "summary": "Get test case by ID",
-                        "description": "Get a specific test case",
-                        "parameters": [
+                            "description": "Get a specific test case",
+                            "parameters": [
                             {
                                 "name": "id",
-                                "in": "path",
-                                "required": True,
-                                "schema": {"type": "string"},
-                            }
+                                    "in": "path",
+                                    "required": True,
+                                    "schema": {"type": "string"},
+                                }
                         ],
-                        "responses": {},
-                    },
-                    "put": {
+                            "responses": {},
+                        },
+                        "put": {
                         "summary": "Update test case",
-                        "description": "Update an existing test case",
-                        "parameters": [],
-                        "responses": {},
-                    },
-                    "delete": {
+                            "description": "Update an existing test case",
+                            "parameters": [],
+                            "responses": {},
+                        },
+                        "delete": {
                         "summary": "Delete test case",
-                        "description": "Delete a test case",
-                        "parameters": [],
-                        "responses": {},
+                            "description": "Delete a test case",
+                            "parameters": [],
+                            "responses": {},
+                        },
                     },
-                },
-                # Non-HTTP method property should be ignored
+                    # Non-HTTP method property should be ignored
                 "/testexecutions": {
                     "get": {
                         "summary": "Get test executions",
-                        "description": "Get all test executions",
-                        "parameters": [],
-                        "responses": {},
-                    },
-                    "parameters": [  # This should be ignored
+                            "description": "Get all test executions",
+                            "parameters": [],
+                            "responses": {},
+                        },
+                        "parameters": [  # This should be ignored
                         {"name": "projectKey", "in": "query", "schema": {"type": "string"}}
                     ],
+                    },
                 },
-            },
-        }
+            }
 
         endpoints = extract_api_endpoints(spec)
 

@@ -7,21 +7,21 @@ See LICENSE file for details.
 import pytest
 from pathlib import Path
 from unittest.mock import patch, MagicMock
-
 from ztoq.models import ZephyrConfig, TestCase, Project
 from ztoq.zephyr_client import ZephyrClient, PaginatedIterator
 
-
 @pytest.mark.unit
+
+
 class TestZephyrClient:
     @pytest.fixture
     def config(self):
         """Create a test Zephyr configuration."""
         return ZephyrConfig(
             base_url="https://api.zephyrscale.example.com/v2",
-            api_token="test-token",
-            project_key="TEST",
-        )
+                api_token="test-token",
+                project_key="TEST",
+            )
 
     @pytest.fixture
     def client(self, config):
@@ -33,8 +33,8 @@ class TestZephyrClient:
         assert client.config == config
         assert client.headers == {
             "Authorization": f"Bearer {config.api_token}",
-            "Content-Type": "application/json",
-        }
+                "Content-Type": "application/json",
+            }
         assert client.rate_limit_remaining == 1000
         assert client.rate_limit_reset == 0
 
@@ -46,8 +46,8 @@ class TestZephyrClient:
         mock_response.json.return_value = {"key": "value"}
         mock_response.headers = {
             "X-Rate-Limit-Remaining": "950",
-            "X-Rate-Limit-Reset": "1633046400",
-        }
+                "X-Rate-Limit-Reset": "1633046400",
+            }
         mock_request.return_value = mock_response
 
         # Make request
@@ -57,12 +57,12 @@ class TestZephyrClient:
         assert result == {"key": "value"}
         mock_request.assert_called_once_with(
             method="GET",
-            url="https://api.zephyrscale.example.com/v2/test-endpoint",
-            headers=client.headers,
-            params={"param": "value", "projectKey": "TEST"},
-            json=None,
-            files=None,
-        )
+                url="https://api.zephyrscale.example.com/v2/test-endpoint",
+                headers=client.headers,
+                params={"param": "value", "projectKey": "TEST"},
+                json=None,
+                files=None,
+            )
         assert client.rate_limit_remaining == 950
         assert client.rate_limit_reset == 1633046400
 
@@ -73,8 +73,8 @@ class TestZephyrClient:
         mock_response = MagicMock()
         mock_response.json.return_value = [
             {"id": "1", "key": "PROJ1", "name": "Project 1"},
-            {"id": "2", "key": "PROJ2", "name": "Project 2"},
-        ]
+                {"id": "2", "key": "PROJ2", "name": "Project 2"},
+            ]
         mock_request.return_value = mock_response
 
         # Call the method
@@ -98,22 +98,22 @@ class TestZephyrClient:
         mock_data = [
             {
                 "totalCount": 3,
-                "startAt": 0,
-                "maxResults": 2,
-                "isLast": False,
-                "values": [
+                    "startAt": 0,
+                    "maxResults": 2,
+                    "isLast": False,
+                    "values": [
                     {"id": "1", "key": "TEST-TC-1", "name": "Test Case 1"},
-                    {"id": "2", "key": "TEST-TC-2", "name": "Test Case 2"},
-                ],
-            },
-            {
+                        {"id": "2", "key": "TEST-TC-2", "name": "Test Case 2"},
+                    ],
+                },
+                {
                 "totalCount": 3,
-                "startAt": 2,
-                "maxResults": 2,
-                "isLast": True,
-                "values": [{"id": "3", "key": "TEST-TC-3", "name": "Test Case 3"}],
-            },
-        ]
+                    "startAt": 2,
+                    "maxResults": 2,
+                    "isLast": True,
+                    "values": [{"id": "3", "key": "TEST-TC-3", "name": "Test Case 3"}],
+                },
+            ]
         # Setup mock to return paginated data
         client._make_request = MagicMock()
         client._make_request.side_effect = lambda method, endpoint, params=None, **kwargs: (
@@ -134,7 +134,7 @@ class TestZephyrClient:
         # Verify we got the correct number of calls and results
         assert client._make_request.call_count == 2  # Two calls should be made
         # Instead of checking call parameters which might be unpredictable in test env,
-        # verify results are correct
+            # verify results are correct
         assert test_cases[0].key == "TEST-TC-1"
         assert test_cases[1].key == "TEST-TC-2"
         assert test_cases[2].key == "TEST-TC-3"
@@ -145,26 +145,26 @@ class TestZephyrClient:
         mock_custom_fields = [
             {
                 "id": "cf1",
-                "name": "Requirements",
-                "type": "text",
-                "options": None,
-                "entityTypes": ["testCase"],
-            },
-            {
+                    "name": "Requirements",
+                    "type": "text",
+                    "options": None,
+                    "entityTypes": ["testCase"],
+                },
+                {
                 "id": "cf2",
-                "name": "Automated",
-                "type": "checkbox",
-                "options": None,
-                "entityTypes": ["testCase"],
-            },
-            {
+                    "name": "Automated",
+                    "type": "checkbox",
+                    "options": None,
+                    "entityTypes": ["testCase"],
+                },
+                {
                 "id": "cf3",
-                "name": "Test Type",
-                "type": "dropdown",
-                "options": ["Unit", "Integration", "E2E"],
-                "entityTypes": ["testCase"],
-            },
-        ]
+                    "name": "Test Type",
+                    "type": "dropdown",
+                    "options": ["Unit", "Integration", "E2E"],
+                    "entityTypes": ["testCase"],
+                },
+            ]
 
         # Setup mock
         client._make_request = MagicMock(return_value={"values": mock_custom_fields})
@@ -191,12 +191,12 @@ class TestZephyrClient:
         # Mock response
         mock_response = {
             "id": "att123",
-            "filename": "test_attachment.txt",
-            "contentType": "text/plain",
-            "size": 12,
-            "createdBy": "user123",
-            "createdOn": "2023-01-01T12:00:00Z",
-        }
+                "filename": "test_attachment.txt",
+                "contentType": "text/plain",
+                "size": 12,
+                "createdBy": "user123",
+                "createdOn": "2023-01-01T12:00:00Z",
+            }
 
         # Setup mock
         client._make_request = MagicMock(return_value=mock_response)
@@ -226,21 +226,21 @@ class TestZephyrClient:
         mock_attachments = [
             {
                 "id": "att1",
-                "filename": "document.pdf",
-                "contentType": "application/pdf",
-                "size": 1024,
-                "createdBy": "user123",
-                "createdOn": "2023-01-01T12:00:00Z",
-            },
-            {
+                    "filename": "document.pdf",
+                    "contentType": "application/pdf",
+                    "size": 1024,
+                    "createdBy": "user123",
+                    "createdOn": "2023-01-01T12:00:00Z",
+                },
+                {
                 "id": "att2",
-                "filename": "screenshot.png",
-                "contentType": "image/png",
-                "size": 2048,
-                "createdBy": "user123",
-                "createdOn": "2023-01-01T12:30:00Z",
-            },
-        ]
+                    "filename": "screenshot.png",
+                    "contentType": "image/png",
+                    "size": 2048,
+                    "createdBy": "user123",
+                    "createdOn": "2023-01-01T12:30:00Z",
+                },
+            ]
 
         # Setup mock
         client._make_request = MagicMock(return_value={"values": mock_attachments})
@@ -288,9 +288,9 @@ class TestZephyrClient:
         # Setup mock
         mock_load_spec.return_value = {
             "openapi": "3.0.0",
-            "info": {"title": "Zephyr Scale API", "version": "1.0.0"},
-            "paths": {},
-        }
+                "info": {"title": "Zephyr Scale API", "version": "1.0.0"},
+                "paths": {},
+            }
 
         # Create client from spec
         spec_path = Path("test-spec.yml")
@@ -303,6 +303,8 @@ class TestZephyrClient:
 
 
 @pytest.mark.unit
+
+
 class TestPaginatedIterator:
     @pytest.fixture
     def client(self):
@@ -318,32 +320,32 @@ class TestPaginatedIterator:
         mock_data = [
             {
                 "totalCount": 5,
-                "startAt": 0,
-                "maxResults": 2,
-                "isLast": False,
-                "values": [
+                    "startAt": 0,
+                    "maxResults": 2,
+                    "isLast": False,
+                    "values": [
                     {"id": "1", "key": "TC-1", "name": "Test 1"},
-                    {"id": "2", "key": "TC-2", "name": "Test 2"},
-                ],
-            },
-            {
+                        {"id": "2", "key": "TC-2", "name": "Test 2"},
+                    ],
+                },
+                {
                 "totalCount": 5,
-                "startAt": 2,
-                "maxResults": 2,
-                "isLast": False,
-                "values": [
+                    "startAt": 2,
+                    "maxResults": 2,
+                    "isLast": False,
+                    "values": [
                     {"id": "3", "key": "TC-3", "name": "Test 3"},
-                    {"id": "4", "key": "TC-4", "name": "Test 4"},
-                ],
-            },
-            {
+                        {"id": "4", "key": "TC-4", "name": "Test 4"},
+                    ],
+                },
+                {
                 "totalCount": 5,
-                "startAt": 4,
-                "maxResults": 2,
-                "isLast": True,
-                "values": [{"id": "5", "key": "TC-5", "name": "Test 5"}],
-            },
-        ]
+                    "startAt": 4,
+                    "maxResults": 2,
+                    "isLast": True,
+                    "values": [{"id": "5", "key": "TC-5", "name": "Test 5"}],
+                },
+            ]
 
         # Mock the client's _make_request method
         client._make_request = MagicMock()
@@ -370,7 +372,7 @@ class TestPaginatedIterator:
         # Verify we got the correct number of calls and correct results
         assert client._make_request.call_count == 3  # Three calls should be made
         # Instead of checking call parameters which might be unpredictable in test env,
-        # we'll check that we got the expected results
+            # we'll check that we got the expected results
         assert items[0].key == "TC-1"
         assert items[1].key == "TC-2"
         assert items[2].key == "TC-3"

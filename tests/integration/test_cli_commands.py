@@ -8,12 +8,12 @@ import pytest
 import json
 from unittest.mock import patch, MagicMock
 from typer.testing import CliRunner
-
 from ztoq.cli import app
 from ztoq.models import Project, TestCase
 
-
 @pytest.mark.integration
+
+
 class TestCLICommands:
     @pytest.fixture
     def runner(self):
@@ -25,16 +25,16 @@ class TestCLICommands:
         """Mock OpenAPI spec loading."""
         valid_spec = {
             "openapi": "3.0.0",
-            "info": {"title": "Zephyr Scale API", "version": "1.0.0"},
-            "paths": {
+                "info": {"title": "Zephyr Scale API", "version": "1.0.0"},
+                "paths": {
                 "/testcases": {
                     "get": {
                         "summary": "Get test cases",
-                        "description": "Get all test cases",
-                    }
+                            "description": "Get all test cases",
+                        }
                 }
             },
-        }
+            }
         with patch("ztoq.cli.load_openapi_spec", return_value=valid_spec):
             yield valid_spec
 
@@ -49,9 +49,9 @@ class TestCLICommands:
         """Test the validate command with an invalid spec."""
         invalid_spec = {
             "openapi": "3.0.0",
-            "info": {"title": "Some Other API", "version": "1.0.0"},
-            "paths": {},
-        }
+                "info": {"title": "Some Other API", "version": "1.0.0"},
+                "paths": {},
+            }
         with patch("ztoq.cli.load_openapi_spec", return_value=invalid_spec):
             with patch("ztoq.cli.Path.exists", return_value=True):
                 result = runner.invoke(app, ["validate", "z-openapi.yml"])
@@ -81,22 +81,22 @@ class TestCLICommands:
         mock_client = MagicMock()
         mock_client.get_projects.return_value = [
             Project(id="1", key="PROJ1", name="Project 1"),
-            Project(id="2", key="PROJ2", name="Project 2"),
-        ]
+                Project(id="2", key="PROJ2", name="Project 2"),
+            ]
         mock_client_class.from_openapi_spec.return_value = mock_client
 
         with patch("ztoq.cli.Path.exists", return_value=True):
             result = runner.invoke(
                 app,
-                [
+                    [
                     "get-projects",
-                    "z-openapi.yml",
-                    "--base-url",
-                    "https://api.example.com",
-                    "--api-token",
-                    "test-token",
-                ],
-            )
+                        "z-openapi.yml",
+                        "--base-url",
+                        "https://api.example.com",
+                        "--api-token",
+                        "test-token",
+                    ],
+                )
 
             assert result.exit_code == 0
             assert "Found 2 projects" in result.stdout
@@ -110,8 +110,8 @@ class TestCLICommands:
         mock_client = MagicMock()
         test_cases = [
             TestCase(id="1", key="TEST-TC-1", name="Test Case 1", status="Draft"),
-            TestCase(id="2", key="TEST-TC-2", name="Test Case 2", status="Ready"),
-        ]
+                TestCase(id="2", key="TEST-TC-2", name="Test Case 2", status="Ready"),
+            ]
         # Use a side effect to properly handle the iterator behavior
         mock_client.get_test_cases.return_value.__iter__.return_value = iter(test_cases)
         mock_client_class.from_openapi_spec.return_value = mock_client
@@ -122,21 +122,21 @@ class TestCLICommands:
         with patch("ztoq.cli.Path.exists", return_value=True):
             result = runner.invoke(
                 app,
-                [
+                    [
                     "get-test-cases",
-                    "z-openapi.yml",
-                    "--base-url",
-                    "https://api.example.com",
-                    "--api-token",
-                    "test-token",
-                    "--project-key",
-                    "TEST",
-                    "--output-file",
-                    str(output_file),
-                    "--limit",
-                    "2",
-                ],
-            )
+                        "z-openapi.yml",
+                        "--base-url",
+                        "https://api.example.com",
+                        "--api-token",
+                        "test-token",
+                        "--project-key",
+                        "TEST",
+                        "--output-file",
+                        str(output_file),
+                        "--limit",
+                        "2",
+                    ],
+                )
 
             assert result.exit_code == 0
             assert "Found 2 test cases" in result.stdout
@@ -159,13 +159,13 @@ class TestCLICommands:
         mock_export_manager = MagicMock()
         mock_export_manager.export_project.return_value = {
             "test_cases": 10,
-            "test_cycles": 5,
-            "test_executions": 20,
-            "folders": 3,
-            "statuses": 4,
-            "priorities": 3,
-            "environments": 2,
-        }
+                "test_cycles": 5,
+                "test_executions": 20,
+                "folders": 3,
+                "statuses": 4,
+                "priorities": 3,
+                "environments": 2,
+            }
         mock_export_manager_class.return_value = mock_export_manager
 
         output_dir = tmp_path / "export"
@@ -173,23 +173,23 @@ class TestCLICommands:
         with patch("ztoq.cli.Path.exists", return_value=True):
             result = runner.invoke(
                 app,
-                [
+                    [
                     "export-project",
-                    "z-openapi.yml",
-                    "--base-url",
-                    "https://api.example.com",
-                    "--api-token",
-                    "test-token",
-                    "--project-key",
-                    "TEST",
-                    "--output-dir",
-                    str(output_dir),
-                    "--format",
-                    "json",
-                    "--concurrency",
-                    "2",
-                ],
-            )
+                        "z-openapi.yml",
+                        "--base-url",
+                        "https://api.example.com",
+                        "--api-token",
+                        "test-token",
+                        "--project-key",
+                        "TEST",
+                        "--output-dir",
+                        str(output_dir),
+                        "--format",
+                        "json",
+                        "--concurrency",
+                        "2",
+                    ],
+                )
 
             assert result.exit_code == 0
             assert "Export Summary for TEST" in result.stdout

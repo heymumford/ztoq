@@ -20,8 +20,8 @@ from pathlib import Path
 from datetime import datetime
 from contextlib import contextmanager
 from ztoq.models import (
-    Project, Case, CycleInfo, Execution, Folder, Status, 
-    Priority, Environment, CustomField, CaseStep, Attachment
+    Project, Case, CycleInfo, Execution, Folder, Status,
+        Priority, Environment, CustomField, CaseStep, Attachment
 )
 from ztoq.data_fetcher import FetchResult
 
@@ -32,7 +32,7 @@ class DatabaseManager:
     Manages SQL database operations for Zephyr test data.
 
     This class provides methods for creating database schema, inserting data,
-    and retrieving data from a SQL database. It uses SQLite by default but
+        and retrieving data from a SQL database. It uses SQLite by default but
     can be extended to support other SQL databases.
     """
 
@@ -57,7 +57,7 @@ class DatabaseManager:
         Context manager for database connections.
 
         This ensures that connections are properly closed after use,
-        even if an error occurs.
+            even if an error occurs.
 
         Yields:
             SQLite connection object
@@ -79,8 +79,8 @@ class DatabaseManager:
         Creates all necessary database tables if they don't exist.
 
         This method establishes the schema for storing all Zephyr test data,
-        including tables for projects, test cases, test cycles, test executions,
-        folders, statuses, priorities, environments, and their relationships.
+            including tables for projects, test cases, test cycles, test executions,
+            folders, statuses, priorities, environments, and their relationships.
         """
         with self.get_connection() as conn:
             cursor = conn.cursor()
@@ -90,9 +90,9 @@ class DatabaseManager:
                 """
             CREATE TABLE IF NOT EXISTS projects (
                 id TEXT PRIMARY KEY,
-                key TEXT UNIQUE NOT NULL,
-                name TEXT NOT NULL,
-                description TEXT
+                    key TEXT UNIQUE NOT NULL,
+                    name TEXT NOT NULL,
+                    description TEXT
             )
             """
             )
@@ -102,12 +102,12 @@ class DatabaseManager:
                 """
             CREATE TABLE IF NOT EXISTS folders (
                 id TEXT PRIMARY KEY,
-                name TEXT NOT NULL,
-                folder_type TEXT NOT NULL,
-                parent_id TEXT,
-                project_key TEXT NOT NULL,
-                FOREIGN KEY (parent_id) REFERENCES folders(id) ON DELETE CASCADE,
-                FOREIGN KEY (project_key) REFERENCES projects(key) ON DELETE CASCADE
+                    name TEXT NOT NULL,
+                    folder_type TEXT NOT NULL,
+                    parent_id TEXT,
+                    project_key TEXT NOT NULL,
+                    FOREIGN KEY (parent_id) REFERENCES folders(id) ON DELETE CASCADE,
+                    FOREIGN KEY (project_key) REFERENCES projects(key) ON DELETE CASCADE
             )
             """
             )
@@ -117,12 +117,12 @@ class DatabaseManager:
                 """
             CREATE TABLE IF NOT EXISTS statuses (
                 id TEXT PRIMARY KEY,
-                name TEXT NOT NULL,
-                description TEXT,
-                color TEXT,
-                type TEXT NOT NULL,
-                project_key TEXT NOT NULL,
-                FOREIGN KEY (project_key) REFERENCES projects(key) ON DELETE CASCADE
+                    name TEXT NOT NULL,
+                    description TEXT,
+                    color TEXT,
+                    type TEXT NOT NULL,
+                    project_key TEXT NOT NULL,
+                    FOREIGN KEY (project_key) REFERENCES projects(key) ON DELETE CASCADE
             )
             """
             )
@@ -132,12 +132,12 @@ class DatabaseManager:
                 """
             CREATE TABLE IF NOT EXISTS priorities (
                 id TEXT PRIMARY KEY,
-                name TEXT NOT NULL,
-                description TEXT,
-                color TEXT,
-                rank INTEGER NOT NULL,
-                project_key TEXT NOT NULL,
-                FOREIGN KEY (project_key) REFERENCES projects(key) ON DELETE CASCADE
+                    name TEXT NOT NULL,
+                    description TEXT,
+                    color TEXT,
+                    rank INTEGER NOT NULL,
+                    project_key TEXT NOT NULL,
+                    FOREIGN KEY (project_key) REFERENCES projects(key) ON DELETE CASCADE
             )
             """
             )
@@ -147,10 +147,10 @@ class DatabaseManager:
                 """
             CREATE TABLE IF NOT EXISTS environments (
                 id TEXT PRIMARY KEY,
-                name TEXT NOT NULL,
-                description TEXT,
-                project_key TEXT NOT NULL,
-                FOREIGN KEY (project_key) REFERENCES projects(key) ON DELETE CASCADE
+                    name TEXT NOT NULL,
+                    description TEXT,
+                    project_key TEXT NOT NULL,
+                    FOREIGN KEY (project_key) REFERENCES projects(key) ON DELETE CASCADE
             )
             """
             )
@@ -160,27 +160,27 @@ class DatabaseManager:
                 """
             CREATE TABLE IF NOT EXISTS test_cases (
                 id TEXT PRIMARY KEY,
-                key TEXT UNIQUE NOT NULL,
-                name TEXT NOT NULL,
-                objective TEXT,
-                precondition TEXT,
-                description TEXT,
-                status TEXT,
-                priority_id TEXT,
-                priority_name TEXT,
-                folder_id TEXT,
-                folder_name TEXT,
-                owner TEXT,
-                owner_name TEXT,
-                component TEXT,
-                component_name TEXT,
-                created_on TEXT,
-                created_by TEXT,
-                updated_on TEXT,
-                updated_by TEXT,
-                version TEXT,
-                estimated_time INTEGER,
-                labels TEXT, -- JSON array
+                    key TEXT UNIQUE NOT NULL,
+                    name TEXT NOT NULL,
+                    objective TEXT,
+                    precondition TEXT,
+                    description TEXT,
+                    status TEXT,
+                    priority_id TEXT,
+                    priority_name TEXT,
+                    folder_id TEXT,
+                    folder_name TEXT,
+                    owner TEXT,
+                    owner_name TEXT,
+                    component TEXT,
+                    component_name TEXT,
+                    created_on TEXT,
+                    created_by TEXT,
+                    updated_on TEXT,
+                    updated_by TEXT,
+                    version TEXT,
+                    estimated_time INTEGER,
+                    labels TEXT, -- JSON array
                 steps TEXT, -- JSON array
                 custom_fields TEXT, -- JSON array
                 links TEXT, -- JSON array
@@ -188,9 +188,9 @@ class DatabaseManager:
                 versions TEXT, -- JSON array
                 attachments TEXT, -- JSON array
                 project_key TEXT NOT NULL,
-                FOREIGN KEY (priority_id) REFERENCES priorities(id) ON DELETE SET NULL,
-                FOREIGN KEY (folder_id) REFERENCES folders(id) ON DELETE SET NULL,
-                FOREIGN KEY (project_key) REFERENCES projects(key) ON DELETE CASCADE
+                    FOREIGN KEY (priority_id) REFERENCES priorities(id) ON DELETE SET NULL,
+                    FOREIGN KEY (folder_id) REFERENCES folders(id) ON DELETE SET NULL,
+                    FOREIGN KEY (project_key) REFERENCES projects(key) ON DELETE CASCADE
             )
             """
             )
@@ -200,25 +200,25 @@ class DatabaseManager:
                 """
             CREATE TABLE IF NOT EXISTS test_cycles (
                 id TEXT PRIMARY KEY,
-                key TEXT UNIQUE NOT NULL,
-                name TEXT NOT NULL,
-                description TEXT,
-                status TEXT,
-                status_name TEXT,
-                folder_id TEXT,
-                folder_name TEXT,
-                owner TEXT,
-                owner_name TEXT,
-                created_on TEXT,
-                created_by TEXT,
-                updated_on TEXT,
-                updated_by TEXT,
-                custom_fields TEXT, -- JSON array
+                    key TEXT UNIQUE NOT NULL,
+                    name TEXT NOT NULL,
+                    description TEXT,
+                    status TEXT,
+                    status_name TEXT,
+                    folder_id TEXT,
+                    folder_name TEXT,
+                    owner TEXT,
+                    owner_name TEXT,
+                    created_on TEXT,
+                    created_by TEXT,
+                    updated_on TEXT,
+                    updated_by TEXT,
+                    custom_fields TEXT, -- JSON array
                 links TEXT, -- JSON array
                 attachments TEXT, -- JSON array
                 project_key TEXT NOT NULL,
-                FOREIGN KEY (folder_id) REFERENCES folders(id) ON DELETE SET NULL,
-                FOREIGN KEY (project_key) REFERENCES projects(key) ON DELETE CASCADE
+                    FOREIGN KEY (folder_id) REFERENCES folders(id) ON DELETE SET NULL,
+                    FOREIGN KEY (project_key) REFERENCES projects(key) ON DELETE CASCADE
             )
             """
             )
@@ -228,24 +228,24 @@ class DatabaseManager:
                 """
             CREATE TABLE IF NOT EXISTS test_plans (
                 id TEXT PRIMARY KEY,
-                key TEXT UNIQUE NOT NULL,
-                name TEXT NOT NULL,
-                description TEXT,
-                status TEXT,
-                status_name TEXT,
-                folder_id TEXT,
-                folder_name TEXT,
-                owner TEXT,
-                owner_name TEXT,
-                created_on TEXT,
-                created_by TEXT,
-                updated_on TEXT,
-                updated_by TEXT,
-                custom_fields TEXT, -- JSON array
+                    key TEXT UNIQUE NOT NULL,
+                    name TEXT NOT NULL,
+                    description TEXT,
+                    status TEXT,
+                    status_name TEXT,
+                    folder_id TEXT,
+                    folder_name TEXT,
+                    owner TEXT,
+                    owner_name TEXT,
+                    created_on TEXT,
+                    created_by TEXT,
+                    updated_on TEXT,
+                    updated_by TEXT,
+                    custom_fields TEXT, -- JSON array
                 links TEXT, -- JSON array
                 project_key TEXT NOT NULL,
-                FOREIGN KEY (folder_id) REFERENCES folders(id) ON DELETE SET NULL,
-                FOREIGN KEY (project_key) REFERENCES projects(key) ON DELETE CASCADE
+                    FOREIGN KEY (folder_id) REFERENCES folders(id) ON DELETE SET NULL,
+                    FOREIGN KEY (project_key) REFERENCES projects(key) ON DELETE CASCADE
             )
             """
             )
@@ -255,31 +255,31 @@ class DatabaseManager:
                 """
             CREATE TABLE IF NOT EXISTS test_executions (
                 id TEXT PRIMARY KEY,
-                test_case_key TEXT NOT NULL,
-                cycle_id TEXT NOT NULL,
-                cycle_name TEXT,
-                status TEXT NOT NULL,
-                status_name TEXT,
-                environment_id TEXT,
-                environment_name TEXT,
-                executed_by TEXT,
-                executed_by_name TEXT,
-                executed_on TEXT,
-                created_on TEXT,
-                created_by TEXT,
-                updated_on TEXT,
-                updated_by TEXT,
-                actual_time INTEGER,
-                comment TEXT,
-                steps TEXT, -- JSON array
+                    test_case_key TEXT NOT NULL,
+                    cycle_id TEXT NOT NULL,
+                    cycle_name TEXT,
+                    status TEXT NOT NULL,
+                    status_name TEXT,
+                    environment_id TEXT,
+                    environment_name TEXT,
+                    executed_by TEXT,
+                    executed_by_name TEXT,
+                    executed_on TEXT,
+                    created_on TEXT,
+                    created_by TEXT,
+                    updated_on TEXT,
+                    updated_by TEXT,
+                    actual_time INTEGER,
+                    comment TEXT,
+                    steps TEXT, -- JSON array
                 custom_fields TEXT, -- JSON array
                 links TEXT, -- JSON array
                 attachments TEXT, -- JSON array
                 project_key TEXT NOT NULL,
-                FOREIGN KEY (test_case_key) REFERENCES test_cases(key) ON DELETE CASCADE,
-                FOREIGN KEY (cycle_id) REFERENCES test_cycles(id) ON DELETE CASCADE,
-                FOREIGN KEY (environment_id) REFERENCES environments(id) ON DELETE SET NULL,
-                FOREIGN KEY (project_key) REFERENCES projects(key) ON DELETE CASCADE
+                    FOREIGN KEY (test_case_key) REFERENCES test_cases(key) ON DELETE CASCADE,
+                    FOREIGN KEY (cycle_id) REFERENCES test_cycles(id) ON DELETE CASCADE,
+                    FOREIGN KEY (environment_id) REFERENCES environments(id) ON DELETE SET NULL,
+                    FOREIGN KEY (project_key) REFERENCES projects(key) ON DELETE CASCADE
             )
             """
             )
@@ -324,7 +324,7 @@ class DatabaseManager:
         Serialize an object for database storage.
 
         This function handles serialization of Pydantic models, datetime objects,
-        lists, and dictionaries to JSON-compatible formats.
+            lists, and dictionaries to JSON-compatible formats.
 
         Args:
             obj: The object to serialize
@@ -349,7 +349,7 @@ class DatabaseManager:
         Serialize a value for database storage.
 
         This function handles conversion of Python objects to database-friendly formats,
-        including JSON serialization for complex objects.
+            including JSON serialization for complex objects.
 
         Args:
             value: The value to serialize
@@ -379,8 +379,8 @@ class DatabaseManager:
                 INSERT OR REPLACE INTO projects (id, key, name, description)
                 VALUES (?, ?, ?, ?)
                 """,
-                (project.id, project.key, project.name, project.description),
-            )
+                    (project.id, project.key, project.name, project.description),
+                )
             conn.commit()
 
     def save_folder(self, folder: Folder, project_key: str) -> None:
@@ -398,8 +398,8 @@ class DatabaseManager:
                 INSERT OR REPLACE INTO folders (id, name, folder_type, parent_id, project_key)
                 VALUES (?, ?, ?, ?, ?)
                 """,
-                (folder.id, folder.name, folder.folder_type, folder.parent_id, project_key),
-            )
+                    (folder.id, folder.name, folder.folder_type, folder.parent_id, project_key),
+                )
             conn.commit()
 
     def save_status(self, status: Status, project_key: str) -> None:
@@ -417,15 +417,15 @@ class DatabaseManager:
                 INSERT OR REPLACE INTO statuses (id, name, description, color, type, project_key)
                 VALUES (?, ?, ?, ?, ?, ?)
                 """,
-                (
+                    (
                     status.id,
-                    status.name,
-                    status.description,
-                    status.color,
-                    status.type,
-                    project_key,
-                ),
-            )
+                        status.name,
+                        status.description,
+                        status.color,
+                        status.type,
+                        project_key,
+                    ),
+                )
             conn.commit()
 
     def save_priority(self, priority: Priority, project_key: str) -> None:
@@ -443,15 +443,15 @@ class DatabaseManager:
                 INSERT OR REPLACE INTO priorities (id, name, description, color, rank, project_key)
                 VALUES (?, ?, ?, ?, ?, ?)
                 """,
-                (
+                    (
                     priority.id,
-                    priority.name,
-                    priority.description,
-                    priority.color,
-                    priority.rank,
-                    project_key,
-                ),
-            )
+                        priority.name,
+                        priority.description,
+                        priority.color,
+                        priority.rank,
+                        project_key,
+                    ),
+                )
             conn.commit()
 
     def save_environment(self, environment: Environment, project_key: str) -> None:
@@ -469,8 +469,8 @@ class DatabaseManager:
                 INSERT OR REPLACE INTO environments (id, name, description, project_key)
                 VALUES (?, ?, ?, ?)
                 """,
-                (environment.id, environment.name, environment.description, project_key),
-            )
+                    (environment.id, environment.name, environment.description, project_key),
+                )
             conn.commit()
 
     def save_test_case(self, test_case: Case, project_key: str) -> None:
@@ -551,46 +551,46 @@ class DatabaseManager:
                 """
                 INSERT OR REPLACE INTO test_cases (
                     id, key, name, objective, precondition, description, status,
-                    priority_id, priority_name, folder_id, folder_name, owner, owner_name,
-                    component, component_name, created_on, created_by, updated_on, updated_by,
-                    version, estimated_time, labels, steps, custom_fields, links, scripts,
-                    versions, attachments, project_key
+                        priority_id, priority_name, folder_id, folder_name, owner, owner_name,
+                        component, component_name, created_on, created_by, updated_on, updated_by,
+                        version, estimated_time, labels, steps, custom_fields, links, scripts,
+                        versions, attachments, project_key
                 ) VALUES (
                     ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
                 )
                 """,
-                (
+                    (
                     test_case.id,
-                    test_case.key,
-                    test_case.name,
-                    test_case.objective,
-                    test_case.precondition,
-                    test_case.description,
-                    test_case.status,
-                    priority_id,
-                    test_case.priority_name,
-                    test_case.folder,
-                    test_case.folder_name,
-                    test_case.owner,
-                    test_case.owner_name,
-                    test_case.component,
-                    test_case.component_name,
-                    self._serialize_value(test_case.created_on),
-                    test_case.created_by,
-                    self._serialize_value(test_case.updated_on),
-                    test_case.updated_by,
-                    test_case.version,
-                    test_case.estimated_time,
-                    labels_json,
-                    steps_json,
-                    custom_fields_json,
-                    links_json,
-                    scripts_json,
-                    versions_json,
-                    attachments_json,
-                    project_key,
-                ),
-            )
+                        test_case.key,
+                        test_case.name,
+                        test_case.objective,
+                        test_case.precondition,
+                        test_case.description,
+                        test_case.status,
+                        priority_id,
+                        test_case.priority_name,
+                        test_case.folder,
+                        test_case.folder_name,
+                        test_case.owner,
+                        test_case.owner_name,
+                        test_case.component,
+                        test_case.component_name,
+                        self._serialize_value(test_case.created_on),
+                        test_case.created_by,
+                        self._serialize_value(test_case.updated_on),
+                        test_case.updated_by,
+                        test_case.version,
+                        test_case.estimated_time,
+                        labels_json,
+                        steps_json,
+                        custom_fields_json,
+                        links_json,
+                        scripts_json,
+                        versions_json,
+                        attachments_json,
+                        project_key,
+                    ),
+                )
             conn.commit()
 
     def save_test_cycle(self, test_cycle: CycleInfo, project_key: str) -> None:
@@ -631,33 +631,33 @@ class DatabaseManager:
                 """
                 INSERT OR REPLACE INTO test_cycles (
                     id, key, name, description, status, status_name, folder_id, folder_name,
-                    owner, owner_name, created_on, created_by, updated_on, updated_by,
-                    custom_fields, links, attachments, project_key
+                        owner, owner_name, created_on, created_by, updated_on, updated_by,
+                        custom_fields, links, attachments, project_key
                 ) VALUES (
                     ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
                 )
                 """,
-                (
+                    (
                     test_cycle.id,
-                    test_cycle.key,
-                    test_cycle.name,
-                    test_cycle.description,
-                    test_cycle.status,
-                    test_cycle.status_name,
-                    test_cycle.folder,
-                    test_cycle.folder_name,
-                    test_cycle.owner,
-                    test_cycle.owner_name,
-                    self._serialize_value(test_cycle.created_on),
-                    test_cycle.created_by,
-                    self._serialize_value(test_cycle.updated_on),
-                    test_cycle.updated_by,
-                    custom_fields_json,
-                    links_json,
-                    attachments_json,
-                    project_key,
-                ),
-            )
+                        test_cycle.key,
+                        test_cycle.name,
+                        test_cycle.description,
+                        test_cycle.status,
+                        test_cycle.status_name,
+                        test_cycle.folder,
+                        test_cycle.folder_name,
+                        test_cycle.owner,
+                        test_cycle.owner_name,
+                        self._serialize_value(test_cycle.created_on),
+                        test_cycle.created_by,
+                        self._serialize_value(test_cycle.updated_on),
+                        test_cycle.updated_by,
+                        custom_fields_json,
+                        links_json,
+                        attachments_json,
+                        project_key,
+                    ),
+                )
             conn.commit()
 
     def save_test_execution(self, test_execution: Execution, project_key: str) -> None:
@@ -706,39 +706,39 @@ class DatabaseManager:
                 """
                 INSERT OR REPLACE INTO test_executions (
                     id, test_case_key, cycle_id, cycle_name, status, status_name,
-                    environment_id, environment_name, executed_by, executed_by_name,
-                    executed_on, created_on, created_by, updated_on, updated_by,
-                    actual_time, comment, steps, custom_fields, links, attachments,
-                    project_key
+                        environment_id, environment_name, executed_by, executed_by_name,
+                        executed_on, created_on, created_by, updated_on, updated_by,
+                        actual_time, comment, steps, custom_fields, links, attachments,
+                        project_key
                 ) VALUES (
                     ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
                 )
                 """,
-                (
+                    (
                     test_execution.id,
-                    test_execution.test_case_key,
-                    test_execution.cycle_id,
-                    test_execution.cycle_name,
-                    test_execution.status,
-                    test_execution.status_name,
-                    test_execution.environment,
-                    test_execution.environment_name,
-                    test_execution.executed_by,
-                    test_execution.executed_by_name,
-                    self._serialize_value(test_execution.executed_on),
-                    self._serialize_value(test_execution.created_on),
-                    test_execution.created_by,
-                    self._serialize_value(test_execution.updated_on),
-                    test_execution.updated_by,
-                    test_execution.actual_time,
-                    test_execution.comment,
-                    steps_json,
-                    custom_fields_json,
-                    links_json,
-                    attachments_json,
-                    project_key,
-                ),
-            )
+                        test_execution.test_case_key,
+                        test_execution.cycle_id,
+                        test_execution.cycle_name,
+                        test_execution.status,
+                        test_execution.status_name,
+                        test_execution.environment,
+                        test_execution.environment_name,
+                        test_execution.executed_by,
+                        test_execution.executed_by_name,
+                        self._serialize_value(test_execution.executed_on),
+                        self._serialize_value(test_execution.created_on),
+                        test_execution.created_by,
+                        self._serialize_value(test_execution.updated_on),
+                        test_execution.updated_by,
+                        test_execution.actual_time,
+                        test_execution.comment,
+                        steps_json,
+                        custom_fields_json,
+                        links_json,
+                        attachments_json,
+                        project_key,
+                    ),
+                )
             conn.commit()
 
     def save_project_data(
@@ -775,13 +775,13 @@ class DatabaseManager:
                     INSERT OR IGNORE INTO projects (id, key, name, description)
                     VALUES (?, ?, ?, ?)
                     """,
-                    (
+                        (
                         f"placeholder_{project_key}",
-                        project_key,
-                        f"Project {project_key}",
-                        f"Placeholder project for {project_key}",
-                    ),
-                )
+                            project_key,
+                            f"Project {project_key}",
+                            f"Placeholder project for {project_key}",
+                        ),
+                    )
                 conn.commit()
                 counts["project"] = 1
 

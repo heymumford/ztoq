@@ -12,17 +12,18 @@ from ztoq.zephyr_client import ZephyrClient
 from ztoq.storage import SQLiteStorage, JSONStorage
 from ztoq.exporter import ZephyrExporter, ZephyrExportManager
 
-
 @pytest.mark.unit
+
+
 class TestZephyrExporter:
     @pytest.fixture
     def config(self):
         """Create a test Zephyr configuration."""
         return ZephyrConfig(
             base_url="https://api.zephyrscale.example.com/v2",
-            api_token="test-token",
-            project_key="TEST",
-        )
+                api_token="test-token",
+                project_key="TEST",
+            )
 
     @pytest.fixture
     def client(self, config):
@@ -96,17 +97,17 @@ class TestZephyrExporter:
     @patch("ztoq.storage.JSONStorage.save_test_executions")
     def test_export_all(
         self,
-        mock_save_execs,
-        mock_save_cycles,
-        mock_save_cases,
-        mock_save_envs,
-        mock_save_priorities,
-        mock_save_statuses,
-        mock_save_folders,
-        mock_save_project,
-        json_exporter,
-        client,
-    ):
+            mock_save_execs,
+            mock_save_cycles,
+            mock_save_cases,
+            mock_save_envs,
+            mock_save_priorities,
+            mock_save_statuses,
+            mock_save_folders,
+            mock_save_project,
+            json_exporter,
+            client,
+        ):
         """Test exporting all data."""
         # Mock client methods with proper serializable objects
         project = MagicMock()
@@ -178,8 +179,8 @@ class TestZephyrExporter:
         ]
         execution2.custom_fields = [
             CustomField(id="cf1", name="Test Environment", type="text", value="Production"),
-            CustomField(id="cf2", name="Priority Fix", type="checkbox", value=True),
-        ]
+                CustomField(id="cf2", name="Priority Fix", type="checkbox", value=True),
+            ]
 
         test_executions = [execution1, execution2]
         client.get_test_executions.return_value = test_executions
@@ -196,26 +197,28 @@ class TestZephyrExporter:
 
 
 @pytest.mark.unit
+
+
 class TestZephyrExportManager:
     @pytest.fixture
     def config(self):
         """Create a test Zephyr configuration."""
         return ZephyrConfig(
             base_url="https://api.zephyrscale.example.com/v2",
-            api_token="test-token",
-            project_key="TEST",
-        )
+                api_token="test-token",
+                project_key="TEST",
+            )
 
     @pytest.fixture
     def export_manager(self, config, tmp_path):
         """Create a ZephyrExportManager instance."""
         return ZephyrExportManager(
             config=config,
-            output_format="json",
-            output_dir=tmp_path / "exports",
-            spec_path=None,
-            concurrency=2,
-        )
+                output_format="json",
+                output_dir=tmp_path / "exports",
+                spec_path=None,
+                concurrency=2,
+            )
 
     def test_export_project(self, export_manager):
         """Test exporting a project."""
@@ -251,8 +254,8 @@ class TestZephyrExportManager:
             with patch.object(export_manager, "export_project") as mock_export_project:
                 mock_export_project.side_effect = [
                     {"test_cases": 10},
-                    {"test_cases": 20},
-                ]
+                        {"test_cases": 20},
+                    ]
                 # Callback for progress tracking
                 progress_callback = MagicMock()
                 # Export all projects
@@ -284,8 +287,8 @@ class TestZephyrExportManager:
             with patch.object(export_manager, "export_project") as mock_export_project:
                 mock_export_project.side_effect = [
                     {"test_cases": 10},
-                    Exception("Export failed"),
-                ]
+                        Exception("Export failed"),
+                    ]
                 # Callback for progress tracking
                 progress_callback = MagicMock()
                 # Export all projects

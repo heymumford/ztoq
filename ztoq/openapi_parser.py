@@ -108,12 +108,12 @@ def extract_api_endpoints(spec: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
                 endpoint_id = f"{method.upper()} {path}"
                 endpoints[endpoint_id] = {
                     "path": path,
-                    "method": method,
-                    "summary": details.get("summary", ""),
-                    "description": details.get("description", ""),
-                    "parameters": details.get("parameters", []),
-                    "responses": details.get("responses", {}),
-                }
+                        "method": method,
+                        "summary": details.get("summary", ""),
+                        "description": details.get("description", ""),
+                        "parameters": details.get("parameters", []),
+                        "responses": details.get("responses", {}),
+                    }
                 logger.debug(f"Found endpoint: {endpoint_id} - {details.get('summary', '')}")
 
     logger.info(f"Extracted {len(endpoints)} endpoints from OpenAPI spec")
@@ -156,16 +156,16 @@ class ZephyrApiSpecWrapper:
                     key = (path, method.lower())
                     endpoints[key] = {
                         "path": path,
-                        "method": method.lower(),
-                        "operation_id": method_info.get("operationId"),
-                        "summary": method_info.get("summary", ""),
-                        "description": method_info.get("description", ""),
-                        "parameters": method_info.get("parameters", []),
-                        "request_body": method_info.get("requestBody", {}),
-                        "responses": method_info.get("responses", {}),
-                        "tags": method_info.get("tags", []),
-                        "security": method_info.get("security", []),
-                    }
+                            "method": method.lower(),
+                            "operation_id": method_info.get("operationId"),
+                            "summary": method_info.get("summary", ""),
+                            "description": method_info.get("description", ""),
+                            "parameters": method_info.get("parameters", []),
+                            "request_body": method_info.get("requestBody", {}),
+                            "responses": method_info.get("responses", {}),
+                            "tags": method_info.get("tags", []),
+                            "security": method_info.get("security", []),
+                        }
 
         return endpoints
 
@@ -500,55 +500,55 @@ class ZephyrApiSpecWrapper:
         custom_fields = [
             # Text field
             {"id": "cf-text-1", "name": "Text Field", "type": "text", "value": "Sample text value"},
-            # Paragraph field
+                # Paragraph field
             {
                 "id": "cf-paragraph-1",
-                "name": "Paragraph Field",
-                "type": "paragraph",
-                "value": "This is a longer paragraph value that spans multiple lines\nand contains more detailed information.",
-            },
-            # Checkbox field
+                    "name": "Paragraph Field",
+                    "type": "paragraph",
+                    "value": "This is a longer paragraph value that spans multiple lines\nand contains more detailed information.",
+                },
+                # Checkbox field
             {"id": "cf-checkbox-1", "name": "Checkbox Field", "type": "checkbox", "value": True},
-            # Dropdown field
+                # Dropdown field
             {
                 "id": "cf-dropdown-1",
-                "name": "Dropdown Field",
-                "type": "dropdown",
-                "value": "Option 2",
-            },
-            # Numeric field
+                    "name": "Dropdown Field",
+                    "type": "dropdown",
+                    "value": "Option 2",
+                },
+                # Numeric field
             {"id": "cf-numeric-1", "name": "Numeric Field", "type": "numeric", "value": 123.45},
-            # Multiple select
+                # Multiple select
             {
                 "id": "cf-multiselect-1",
-                "name": "Multi-Select Field",
-                "type": "multipleSelect",
-                "value": ["Option A", "Option C"],
-            },
-            # Table field
+                    "name": "Multi-Select Field",
+                    "type": "multipleSelect",
+                    "value": ["Option A", "Option C"],
+                },
+                # Table field
             {
                 "id": "cf-table-1",
-                "name": "Table Field",
-                "type": "table",
-                "value": [
+                    "name": "Table Field",
+                    "type": "table",
+                    "value": [
                     {"Column 1": "Row 1 Value 1", "Column 2": "Row 1 Value 2"},
-                    {"Column 1": "Row 2 Value 1", "Column 2": "Row 2 Value 2"},
-                ],
-            },
-            # File field (with base64 encoded content)
+                        {"Column 1": "Row 2 Value 1", "Column 2": "Row 2 Value 2"},
+                    ],
+                },
+                # File field (with base64 encoded content)
             {
                 "id": "cf-file-1",
-                "name": "File Field",
-                "type": "file",
-                "value": {
+                    "name": "File Field",
+                    "type": "file",
+                    "value": {
                     "id": "att-1",
-                    "filename": "test_file.txt",
-                    "contentType": "text/plain",
-                    "size": 1024,
-                    "content": base64.b64encode(b"Mock file content").decode("utf-8"),
+                        "filename": "test_file.txt",
+                        "contentType": "text/plain",
+                        "size": 1024,
+                        "content": base64.b64encode(b"Mock file content").decode("utf-8"),
+                    },
                 },
-            },
-        ]
+            ]
 
         # Randomly select 3-5 custom fields
         num_fields = min(5, len(custom_fields))
@@ -564,46 +564,46 @@ class ZephyrApiSpecWrapper:
             # Text file
             {
                 "id": "att-text-1",
-                "filename": "document.txt",
-                "contentType": "text/plain",
-                "size": 2048,
-                "createdOn": datetime.now().isoformat(),
-                "createdBy": "tester1",
-                "content": base64.b64encode(b"Sample text file content").decode("utf-8"),
-            },
-            # Image file
+                    "filename": "document.txt",
+                    "contentType": "text/plain",
+                    "size": 2048,
+                    "createdOn": datetime.now().isoformat(),
+                    "createdBy": "tester1",
+                    "content": base64.b64encode(b"Sample text file content").decode("utf-8"),
+                },
+                # Image file
             {
                 "id": "att-img-1",
-                "filename": "screenshot.png",
-                "contentType": "image/png",
-                "size": 24576,
-                "createdOn": datetime.now().isoformat(),
-                "createdBy": "tester2",
-                "content": base64.b64encode(b"Mock image binary data").decode("utf-8"),
-            },
-            # PDF file
+                    "filename": "screenshot.png",
+                    "contentType": "image/png",
+                    "size": 24576,
+                    "createdOn": datetime.now().isoformat(),
+                    "createdBy": "tester2",
+                    "content": base64.b64encode(b"Mock image binary data").decode("utf-8"),
+                },
+                # PDF file
             {
                 "id": "att-pdf-1",
-                "filename": "report.pdf",
-                "contentType": "application/pdf",
-                "size": 102400,
-                "createdOn": datetime.now().isoformat(),
-                "createdBy": "tester1",
-                "content": base64.b64encode(b"Mock PDF binary data").decode("utf-8"),
-            },
-            # CSV file
+                    "filename": "report.pdf",
+                    "contentType": "application/pdf",
+                    "size": 102400,
+                    "createdOn": datetime.now().isoformat(),
+                    "createdBy": "tester1",
+                    "content": base64.b64encode(b"Mock PDF binary data").decode("utf-8"),
+                },
+                # CSV file
             {
                 "id": "att-csv-1",
-                "filename": "data.csv",
-                "contentType": "text/csv",
-                "size": 5120,
-                "createdOn": datetime.now().isoformat(),
-                "createdBy": "tester3",
-                "content": base64.b64encode(b"id,name,value\n1,test1,100\n2,test2,200").decode(
+                    "filename": "data.csv",
+                    "contentType": "text/csv",
+                    "size": 5120,
+                    "createdOn": datetime.now().isoformat(),
+                    "createdBy": "tester3",
+                    "content": base64.b64encode(b"id,name,value\n1,test1,100\n2,test2,200").decode(
                     "utf-8"
                 ),
-            },
-        ]
+                },
+            ]
 
         # Randomly select 1-3 attachments
         num_attachments = min(3, len(attachment_types))
@@ -624,12 +624,12 @@ class ZephyrApiSpecWrapper:
 
             step = {
                 "id": f"step-{i+1}",
-                "index": i,
-                "description": f"Test step {i+1}: Perform action {random.choice(['A', 'B', 'C'])}",
-                "expectedResult": f"Expected result for step {i+1}",
-                "data": f"Test data for step {i+1}",
-                "status": random.choice(["PASS", "FAIL", "BLOCKED", "NOT_EXECUTED", None]),
-            }
+                    "index": i,
+                    "description": f"Test step {i+1}: Perform action {random.choice(['A', 'B', 'C'])}",
+                    "expectedResult": f"Expected result for step {i+1}",
+                    "data": f"Test data for step {i+1}",
+                    "status": random.choice(["PASS", "FAIL", "BLOCKED", "NOT_EXECUTED", None]),
+                }
 
             # Add actual result for executed steps
             if step["status"] in ["PASS", "FAIL", "BLOCKED"]:
@@ -702,11 +702,11 @@ class ZephyrApiSpecWrapper:
 
     def validate_parameters(
         self,
-        path: str,
-        method: str,
-        query_params: Dict[str, Any],
-        path_params: Dict[str, Any] = None,
-    ) -> Tuple[bool, Optional[str]]:
+            path: str,
+            method: str,
+            query_params: Dict[str, Any],
+            path_params: Dict[str, Any] = None,
+        ) -> Tuple[bool, Optional[str]]:
         """Validate request parameters against the schema.
 
         Args:
@@ -780,9 +780,9 @@ class ZephyrApiSpecWrapper:
 
         output = [
             f"class {schema_name}(BaseModel):",
-            f'    """Generated model for {schema_name}."""',
-            "",
-        ]
+                f'    """Generated model for {schema_name}."""',
+                "",
+            ]
 
         properties = schema.get("properties", {})
         required = schema.get("required", [])

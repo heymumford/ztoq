@@ -1,0 +1,153 @@
+Here is a canonical data schema suitable for migrating data from Zephyr to qTest. The schema below captures the essential elements from both APIs, ensuring data compatibility, maintainability, and extensibility.
+
+## Canonical Data Schema (SQL Schema Format):
+
+### Projects
+```sql
+CREATE TABLE Project (
+    project_id VARCHAR PRIMARY KEY,
+    project_key VARCHAR UNIQUE NOT NULL,
+    name VARCHAR NOT NULL,
+    description TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+### Folders (Modules in qTest)
+```sql
+CREATE TABLE Folder (
+    folder_id BIGINT PRIMARY KEY,
+    project_id VARCHAR REFERENCES Project(project_id),
+    parent_folder_id BIGINT REFERENCES Folder(folder_id),
+    name VARCHAR NOT NULL,
+    type VARCHAR CHECK(type IN ('TEST_CASE', 'TEST_PLAN', 'TEST_CYCLE')),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+### Test Cases
+```sql
+CREATE TABLE TestCase (
+    test_case_id BIGINT PRIMARY KEY,
+    project_id VARCHAR REFERENCES Project(project_id),
+    folder_id BIGINT REFERENCES Folder(folder_id),
+    key VARCHAR UNIQUE NOT NULL,
+    name VARCHAR NOT NULL,
+    objective TEXT,
+    precondition TEXT,
+    estimated_time_ms BIGINT,
+    priority VARCHAR,
+    status VARCHAR,
+    owner_id VARCHAR,
+    created_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+### Test Steps
+```sql
+CREATE TABLE TestStep (
+    step_id BIGINT PRIMARY KEY,
+    test_case_id BIGINT REFERENCES TestCase(test_case_id),
+    step_order INT NOT NULL,
+    description TEXT NOT NULL,
+    expected_result TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+### Test Cycles
+```sql
+CREATE TABLE TestCycle (
+    test_cycle_id BIGINT PRIMARY KEY,
+    project_id VARCHAR REFERENCES Project(project_id),
+    folder_id BIGINT REFERENCES Folder(folder_id),
+    key VARCHAR UNIQUE NOT NULL,
+    name VARCHAR NOT NULL,
+    description TEXT,
+    planned_start_date TIMESTAMP,
+    planned_end_date TIMESTAMP,
+    status VARCHAR,
+    owner_id VARCHAR,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+### Test Executions
+```sql
+CREATE TABLE TestExecution (
+    execution_id BIGINT PRIMARY KEY,
+    test_cycle_id BIGINT REFERENCES TestCycle(test_cycle_id),
+    test_case_id BIGINT REFERENCES TestCase(test_case_id),
+    status VARCHAR NOT NULL,
+    executed_by_id VARCHAR,
+    assigned_to_id VARCHAR,
+    execution_time_ms BIGINT,
+    actual_end_date TIMESTAMP,
+    environment VARCHAR,
+    comment TEXT,
+    automated BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+### Custom Fields (Generic Key-Value Approach)
+```sql
+CREATE TABLE CustomField (
+    custom_field_id SERIAL PRIMARY KEY,
+    object_type VARCHAR CHECK(object_type IN ('TestCase', 'TestCycle', 'TestExecution')),
+    object_id BIGINT NOT NULL,
+    field_name VARCHAR NOT NULL,
+    field_value TEXT,
+    UNIQUE(object_type, object_id, field_name)
+);
+```
+
+### Attachments
+```sql
+CREATE TABLE Attachment (
+    attachment_id SERIAL PRIMARY KEY,
+    related_type VARCHAR CHECK(related_type IN ('TestCase', 'TestExecution', 'TestStep')),
+    related_id BIGINT NOT NULL,
+    attachment_name VARCHAR NOT NULL,
+    attachment_blob BYTEA,
+    attachment_url VARCHAR,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+---
+
+## Mapping Explanation (Zephyr ↔ qTest Compatibility)
+
+| Canonical Entity | Zephyr Source                         | qTest Target                     |
+|------------------|---------------------------------------|----------------------------------|
+| Project          | Project Key & Name                    | Project                          |
+| Folder           | Folder                                | Module/TestSuite                 |
+| TestCase         | Test Case (Objective, Preconditions)  | Test Case                        |
+| TestStep         | Test Steps                            | Test Steps                       |
+| TestCycle        | Test Cycle                            | Test Cycle                       |
+| TestExecution    | Test Execution                        | Test Run & Test Log              |
+| CustomField      | Custom Fields (Generic structure)     | Custom Fields                    |
+| Attachment       | Binary attachments (files, images)    | Attachments                      |
+
+---
+
+## Parallel and Optimized Strategy
+
+- **Parallelization**:  
+  - Use Python `asyncio`, `aiohttp` to extract Zephyr data concurrently.
+  - Concurrently transform and load data using `concurrent.futures`.
+- **Batch Processing**:  
+  - Utilize qTest batch APIs (`/auto-test-logs`) for bulk uploads.
+- **Attachments**:  
+  - Parallel binary blob uploads leveraging qTest's blob API (`POST /blob-handles`).
+- **Future-Proofing (Snowflake)**:  
+  - The above schema directly translates into a Snowflake warehouse structure, facilitating later data migration with standard ETL tools.
+
+This canonical schema structure will support robust, flexible, and scalable data transfer and management, aligning precisely with Zephyr input requirements and qTest API targets.

@@ -8,11 +8,10 @@ See LICENSE file for details.
 Pydantic models for qTest API objects.
 """
 
-from typing import Any, List, Dict, Optional, Union
+from typing import Any, List, Dict, Optional
 from datetime import datetime
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field
 import base64
-
 
 class QTestConfig(BaseModel):
     """Configuration for qTest API."""
@@ -21,7 +20,6 @@ class QTestConfig(BaseModel):
     username: str
     password: str
     project_id: int
-
 
 class QTestPaginatedResponse(BaseModel):
     """Represents a paginated response from the qTest API."""
@@ -34,7 +32,6 @@ class QTestPaginatedResponse(BaseModel):
     total: int
     is_last: bool
 
-
 class QTestLink(BaseModel):
     """Represents a link in qTest."""
 
@@ -46,7 +43,6 @@ class QTestLink(BaseModel):
 
     model_config = {"populate_by_name": True}
 
-
 class QTestCustomField(BaseModel):
     """Represents a custom field in qTest."""
 
@@ -57,7 +53,6 @@ class QTestCustomField(BaseModel):
     is_required: Optional[bool] = Field(None, alias="required")
 
     model_config = {"populate_by_name": True}
-
 
 class QTestAttachment(BaseModel):
     """Represents a file attachment in qTest."""
@@ -76,11 +71,10 @@ class QTestAttachment(BaseModel):
         encoded = base64.b64encode(binary_data).decode("utf-8")
         return {
             "name": name,
-            "contentType": content_type,
-            "size": len(binary_data),
-            "data": encoded,
-        }
-
+                "contentType": content_type,
+                "size": len(binary_data),
+                "data": encoded,
+            }
 
 class QTestProject(BaseModel):
     """Represents a qTest project."""
@@ -94,7 +88,6 @@ class QTestProject(BaseModel):
 
     model_config = {"populate_by_name": True}
 
-
 class QTestModule(BaseModel):
     """Represents a qTest module."""
 
@@ -105,7 +98,6 @@ class QTestModule(BaseModel):
     pid: Optional[str] = None
 
     model_config = {"populate_by_name": True}
-
 
 class QTestField(BaseModel):
     """Represents a field in qTest."""
@@ -120,7 +112,6 @@ class QTestField(BaseModel):
 
     model_config = {"populate_by_name": True}
 
-
 class QTestStep(BaseModel):
     """Represents a test step in qTest."""
 
@@ -132,7 +123,6 @@ class QTestStep(BaseModel):
 
     model_config = {"populate_by_name": True}
 
-
 class QTestAutomationSettings(BaseModel):
     """Represents automation settings for a test case in qTest."""
 
@@ -140,7 +130,6 @@ class QTestAutomationSettings(BaseModel):
     framework_id: Optional[int] = Field(None, alias="frameworkId")
 
     model_config = {"populate_by_name": True}
-
 
 class QTestTestCase(BaseModel):
     """Represents a test case in qTest."""
@@ -163,7 +152,6 @@ class QTestTestCase(BaseModel):
 
     model_config = {"populate_by_name": True}
 
-
 class QTestRelease(BaseModel):
     """Represents a release in qTest."""
 
@@ -175,7 +163,6 @@ class QTestRelease(BaseModel):
     end_date: Optional[datetime] = Field(None, alias="endDate")
 
     model_config = {"populate_by_name": True}
-
 
 class QTestTestCycle(BaseModel):
     """Represents a test cycle in qTest."""
@@ -192,7 +179,6 @@ class QTestTestCycle(BaseModel):
 
     model_config = {"populate_by_name": True}
 
-
 class QTestTestRun(BaseModel):
     """Represents a test run in qTest."""
 
@@ -207,7 +193,6 @@ class QTestTestRun(BaseModel):
 
     model_config = {"populate_by_name": True}
 
-
 class QTestTestLog(BaseModel):
     """Represents a test log in qTest."""
 
@@ -219,7 +204,6 @@ class QTestTestLog(BaseModel):
     properties: Optional[List[QTestCustomField]] = Field(default_factory=list)
 
     model_config = {"populate_by_name": True}
-
 
 class QTestTestExecution(BaseModel):
     """Represents a test execution in qTest."""
@@ -235,7 +219,6 @@ class QTestTestExecution(BaseModel):
 
     model_config = {"populate_by_name": True}
 
-
 class QTestParameterValue(BaseModel):
     """Represents a parameter value in qTest Parameters."""
 
@@ -244,7 +227,6 @@ class QTestParameterValue(BaseModel):
     parameter_id: Optional[int] = Field(None, alias="parameterId")
 
     model_config = {"populate_by_name": True}
-
 
 class QTestParameter(BaseModel):
     """Represents a parameter in qTest Parameters."""
@@ -258,7 +240,6 @@ class QTestParameter(BaseModel):
 
     model_config = {"populate_by_name": True}
 
-
 class QTestDatasetRow(BaseModel):
     """Represents a dataset row in qTest Parameters."""
 
@@ -267,7 +248,6 @@ class QTestDatasetRow(BaseModel):
     values: Dict[str, Any] = Field(default_factory=dict)
 
     model_config = {"populate_by_name": True}
-
 
 class QTestDataset(BaseModel):
     """Represents a dataset in qTest Parameters."""

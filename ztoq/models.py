@@ -10,7 +10,6 @@ from enum import Enum
 import base64
 from pydantic import BaseModel, Field, field_validator
 
-
 class ZephyrConfig(BaseModel):
     """Configuration for Zephyr Scale API."""
 
@@ -105,12 +104,12 @@ class Attachment(BaseModel):
         encoded = base64.b64encode(binary_data).decode("utf-8")
         return cls(
             filename=filename,
-            contentType=content_type,
-            size=len(binary_data),
-            content=encoded,
-            createdOn=datetime.now(),
-            createdBy="system",
-        )
+                contentType=content_type,
+                size=len(binary_data),
+                content=encoded,
+                createdOn=datetime.now(),
+                createdBy="system",
+            )
 
 
 class CaseStep(BaseModel):

@@ -13,8 +13,7 @@ import logging
 import json
 import os
 from ztoq.models import ZephyrConfig, Project, Case, CycleInfo, Plan, Execution, Folder, Status, Priority, Environment, Attachment, PaginatedResponse
-from ztoq.openapi_parser import load_openapi_spec
-
+from ztoq.openapi_parser import load_openapi_spec, ZephyrApiSpecWrapper
 
 T = TypeVar("T")
 
@@ -60,12 +59,12 @@ class PaginatedIterator(Generic[T]):
 
     def __init__(
         self,
-        client: "ZephyrClient",
-        endpoint: str,
-        model_class: Type[T],
-        params: Optional[Dict[str, Any]] = None,
-        page_size: int = 100,
-    ):
+            client: "ZephyrClient",
+            endpoint: str,
+            model_class: Type[T],
+            params: Optional[Dict[str, Any]] = None,
+            page_size: int = 100,
+        ):
         """Initialize the paginated iterator.
 
         Args:
@@ -164,8 +163,8 @@ class ZephyrClient:
         self.config = config
         self.headers = {
             "Authorization": f"Bearer {config.api_token}",
-            "Content-Type": "application/json",
-        }
+                "Content-Type": "application/json",
+            }
         self.rate_limit_remaining = 1000  # Default high value
         self.rate_limit_reset = 0
 
@@ -179,15 +178,15 @@ class ZephyrClient:
 
     def _make_request(
         self,
-        method: str,
-        endpoint: str,
-        params: Optional[Dict[str, Any]] = None,
-        json_data: Optional[Dict[str, Any]] = None,
-        handle_pagination: bool = False,
-        files: Optional[Dict[str, Any]] = None,
-        headers: Optional[Dict[str, str]] = None,
-        validate: bool = True,
-    ) -> Dict[str, Any]:
+            method: str,
+            endpoint: str,
+            params: Optional[Dict[str, Any]] = None,
+            json_data: Optional[Dict[str, Any]] = None,
+            handle_pagination: bool = False,
+            files: Optional[Dict[str, Any]] = None,
+            headers: Optional[Dict[str, str]] = None,
+            validate: bool = True,
+        ) -> Dict[str, Any]:
         """Make a request to the Zephyr API.
 
         Args:
@@ -274,12 +273,12 @@ class ZephyrClient:
             # Make the request
             response = requests.request(
                 method=method,
-                url=url,
-                headers=request_headers,
-                params=params,
-                json=json_data,
-                files=files,
-            )
+                    url=url,
+                    headers=request_headers,
+                    params=params,
+                    json=json_data,
+                    files=files,
+                )
 
             # Calculate request duration
             duration = time.time() - start_time
@@ -562,11 +561,11 @@ class ZephyrClient:
 
     def upload_attachment(
         self,
-        entity_type: str,
-        entity_id: str,
-        file_path: Union[str, Path],
-        project_key: Optional[str] = None,
-    ) -> Attachment:
+            entity_type: str,
+            entity_id: str,
+            file_path: Union[str, Path],
+            project_key: Optional[str] = None,
+        ) -> Attachment:
         """Upload a file attachment to a test case, step, or execution.
 
         Args:
@@ -597,7 +596,7 @@ class ZephyrClient:
         # Set up multipart headers (don't use default JSON headers)
         headers = {
             "Authorization": self.headers["Authorization"],
-            # Let requests set the correct Content-Type with boundary
+                # Let requests set the correct Content-Type with boundary
         }
 
         # Build endpoint based on entity type
@@ -691,7 +690,7 @@ class ZephyrClient:
         client = cls(config=config, log_level=log_level)
 
         # Create a spec wrapper that provides validation and utilities
-        from ztoq.openapi_parser import ZephyrApiSpecWrapper
+
 
         client.spec_wrapper = ZephyrApiSpecWrapper(spec)
 

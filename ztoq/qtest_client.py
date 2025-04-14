@@ -17,29 +17,26 @@ import os
 import time
 from typing import Dict, Any, List, Optional, Union, TypeVar, Generic, Type, cast
 from pathlib import Path
-from datetime import datetime
-import base64
-
 from ztoq.qtest_models import (
-    QTestConfig,
-    QTestProject,
-    QTestTestCase,
-    QTestTestCycle,
-    QTestTestExecution,
-    QTestRelease,
-    QTestModule,
-    QTestAttachment,
-    QTestCustomField,
-    QTestParameter,
-    QTestDataset,
-    QTestPaginatedResponse,
+
+QTestConfig,
+        QTestProject,
+        QTestTestCase,
+        QTestTestCycle,
+        QTestTestExecution,
+        QTestRelease,
+        QTestModule,
+        QTestAttachment,
+        QTestCustomField,
+        QTestParameter,
+        QTestDataset,
+        QTestPaginatedResponse,
 )
 
 T = TypeVar("T")
 
 # Configure module logger
 logger = logging.getLogger("ztoq.qtest_client")
-
 
 def configure_logging(level=None):
     """Configure logging for the qTest client.
@@ -69,22 +66,20 @@ def configure_logging(level=None):
     # Log the configuration
     logger.debug(f"Logging configured with level: {level}")
 
-
 # Initialize logging with default settings
 configure_logging()
-
 
 class QTestPaginatedIterator(Generic[T]):
     """Iterator for paginated API responses."""
 
     def __init__(
         self,
-        client: "QTestClient",
-        endpoint: str,
-        model_class: Type[T],
-        params: Optional[Dict[str, Any]] = None,
-        page_size: int = 50,
-    ):
+            client: "QTestClient",
+            endpoint: str,
+            model_class: Type[T],
+            params: Optional[Dict[str, Any]] = None,
+            page_size: int = 50,
+        ):
         """Initialize the paginated iterator.
 
         Args:
@@ -179,22 +174,22 @@ class QTestPaginatedIterator(Generic[T]):
         if self.client.api_type == "manager":
             self.current_page = QTestPaginatedResponse(
                 items=response.get("items", []),
-                page=response.get("page", 0),
-                page_size=response.get("pageSize", 0),
-                total=response.get("total", 0),
-                is_last=response.get("page", 0) * response.get("pageSize", 0)
+                    page=response.get("page", 0),
+                    page_size=response.get("pageSize", 0),
+                    total=response.get("total", 0),
+                    is_last=response.get("page", 0) * response.get("pageSize", 0)
                 + len(response.get("items", []))
                 >= response.get("total", 0),
-            )
+                )
         else:
             self.current_page = QTestPaginatedResponse(
                 items=response.get("data", []),
-                offset=response.get("offset", 0),
-                limit=response.get("limit", 0),
-                total=response.get("total", 0),
-                is_last=response.get("offset", 0) + len(response.get("data", []))
+                    offset=response.get("offset", 0),
+                    limit=response.get("limit", 0),
+                    total=response.get("total", 0),
+                    is_last=response.get("offset", 0) + len(response.get("data", []))
                 >= response.get("total", 0),
-            )
+                )
 
         self.item_index = 0
 
@@ -202,7 +197,6 @@ class QTestPaginatedIterator(Generic[T]):
             f"Received page {page_number + 1} with {len(self.current_page.items)} items, "
             f"total: {self.current_page.total}, isLast: {self.current_page.is_last}"
         )
-
 
 class QTestClient:
     """Client for interacting with the qTest APIs."""
@@ -226,8 +220,8 @@ class QTestClient:
         # API base endpoints vary by type
         self.api_endpoints = {
             "manager": "api/v3",
-            "parameters": "api/v1",
-            "pulse": "",  # Pulse uses root path
+                "parameters": "api/v1",
+                "pulse": "",  # Pulse uses root path
             "scenario": "",  # Scenario uses root path
         }
 
@@ -246,19 +240,19 @@ class QTestClient:
         """Authenticate with qTest API and obtain an access token."""
         auth_endpoints = {
             "manager": "/oauth/token",
-            "parameters": "/oauth/v1/token-login",
-            "pulse": "/oauth/token",
-            "scenario": "/oauth/token",
-        }
+                "parameters": "/oauth/v1/token-login",
+                "pulse": "/oauth/token",
+                "scenario": "/oauth/token",
+            }
 
         endpoint = auth_endpoints.get(self.api_type, "/oauth/token")
         url = f"{self.config.base_url}{endpoint}"
 
         auth_data = {
             "grant_type": "password",
-            "username": self.config.username,
-            "password": self.config.password,
-        }
+                "username": self.config.username,
+                "password": self.config.password,
+            }
 
         # For Parameters API which uses a different format
         if self.api_type == "parameters":
@@ -289,13 +283,13 @@ class QTestClient:
 
     def _make_request(
         self,
-        method: str,
-        endpoint: str,
-        params: Optional[Dict[str, Any]] = None,
-        json_data: Optional[Dict[str, Any]] = None,
-        files: Optional[Dict[str, Any]] = None,
-        headers: Optional[Dict[str, str]] = None,
-    ) -> Dict[str, Any]:
+            method: str,
+            endpoint: str,
+            params: Optional[Dict[str, Any]] = None,
+            json_data: Optional[Dict[str, Any]] = None,
+            files: Optional[Dict[str, Any]] = None,
+            headers: Optional[Dict[str, str]] = None,
+        ) -> Dict[str, Any]:
         """Make a request to the qTest API.
 
         Args:
@@ -354,12 +348,12 @@ class QTestClient:
             # Make the request
             response = requests.request(
                 method=method,
-                url=url,
-                headers=request_headers,
-                params=params,
-                json=json_data,
-                files=files,
-            )
+                    url=url,
+                    headers=request_headers,
+                    params=params,
+                    json=json_data,
+                    files=files,
+                )
 
             # Calculate request duration
             duration = time.time() - start_time

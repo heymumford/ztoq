@@ -31,7 +31,7 @@ Total: 0/18 tests passed (18 failed, 0 skipped)
 - List available API endpoints
 - Retrieve test cases, test cycles, and test plans
 - Download test executions and results
-- Export data to JSON or SQLite
+- Export data to JSON, SQLite or SQL database (PostgreSQL/SQLite with canonical schema)
 - Support for projects, folders, statuses, priorities, and environments
 - Handle pagination for large datasets
 - Support for concurrent requests
@@ -47,7 +47,7 @@ ztoq/
 ├── models.py         # Pydantic models for Zephyr data
 ├── openapi_parser.py # Parser for OpenAPI spec and API spec wrapper
 ├── zephyr_client.py  # Client for Zephyr Scale API
-├── storage.py        # Storage adapters (JSON/SQLite)
+├── storage.py        # Storage adapters (JSON/SQLite/Canonical SQL)
 ├── exporter.py       # Data export orchestration
 ├── test_generator.py # Test case generator from OpenAPI spec
 └── cli.py            # Typer CLI commands
@@ -144,7 +144,7 @@ poetry run ztoq export-all z-openapi.yml \
   --base-url https://api.atlassian.com/ex/jira/your-instance/rest/zephyr/1.0 \
   --api-token YOUR_TOKEN \
   --output-dir ./zephyr-data \
-  --format sqlite \
+  --format sql \  # Options: json, sqlite, sql
   --projects PROJECT1,PROJECT2
 ```
 
@@ -281,6 +281,27 @@ section in the documentation for instructions on creating and embedding C4 model
 
 ## Additional Documentation
 
+### CLI Database Commands
+
+The tool provides dedicated database commands for working with the canonical SQL schema:
+
+```bash
+# Initialize the database schema
+poetry run ztoq db init --db-type sqlite
+
+# Show database statistics for a project
+poetry run ztoq db stats --project-key PROJECT
+
+# Run pending database migrations
+poetry run ztoq db migrate
+
+# Use PostgreSQL database
+poetry run ztoq db init --db-type postgresql \
+  --host localhost --port 5432 \
+  --username ztoq_user --password password \
+  --database ztoq_db
+```
+
 For more detailed information, see these documents in the `docs/` directory:
 
 - [OpenAPI Integration](docs/openapi-integration.md)
@@ -309,9 +330,49 @@ By default, data is exported to JSON files organized by entity type:
 - priorities.json
 - environments.json
 
-### SQLite Storage
+### SQL Database Storage
 
-For relational storage, use the SQLite option with `--format sqlite`. This creates tables for each entity type with appropriate relationships.
+For robust relational storage, the tool offers two SQL approaches:
+
+1. **Simple SQLite Storage**: Use the `--format sqlite` option for a basic relational database with all entity types.
+
+2. **Canonical SQL Schema**: Use the `--format sql` option to use a standardized canonical schema that works with both PostgreSQL and SQLite:
+
+```sql
+-- Key tables in the canonical schema
+CREATE TABLE Project (
+    project_id VARCHAR PRIMARY KEY,
+    project_key VARCHAR UNIQUE NOT NULL,
+    name VARCHAR NOT NULL,
+    description TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE TestCase (
+    test_case_id BIGINT PRIMARY KEY,
+    project_id VARCHAR REFERENCES Project(project_id),
+    folder_id BIGINT REFERENCES Folder(folder_id),
+    key VARCHAR UNIQUE NOT NULL,
+    name VARCHAR NOT NULL,
+    -- Additional fields...
+);
+
+CREATE TABLE CustomField (
+    custom_field_id SERIAL PRIMARY KEY,
+    object_type VARCHAR CHECK(object_type IN ('TestCase', 'TestCycle', 'TestExecution')),
+    object_id BIGINT NOT NULL,
+    field_name VARCHAR NOT NULL,
+    field_value TEXT,
+    UNIQUE(object_type, object_id, field_name)
+);
+```
+
+The canonical schema provides:
+- Compatibility with both Zephyr and qTest data models
+- Optimized database design with proper indexes
+- Connection pooling for high performance
+- Future compatibility with Snowflake data warehouse
 
 ## Object Hierarchy
 

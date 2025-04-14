@@ -9,7 +9,6 @@ from pathlib import Path
 from typing import List, Dict, Optional, Union, Callable
 from rich.progress import Progress
 from concurrent.futures import ThreadPoolExecutor, as_completed
-
 from ztoq.models import ZephyrConfig, TestExecution
 from ztoq.zephyr_client import ZephyrClient
 from ztoq.storage import SQLiteStorage, JSONStorage
@@ -22,11 +21,11 @@ class ZephyrExporter:
 
     def __init__(
         self,
-        client: ZephyrClient,
-        output_format: str = "json",
-        output_path: Optional[Path] = None,
-        concurrency: int = 2,
-    ):
+            client: ZephyrClient,
+            output_format: str = "json",
+            output_path: Optional[Path] = None,
+            concurrency: int = 2,
+        ):
         """Initialize the Zephyr exporter.
 
         Args:
@@ -139,8 +138,8 @@ class ZephyrExporter:
         if progress:
             exec_task = progress.add_task(
                 f"[yellow]Fetching executions for {len(test_cycles)} test cycles...",
-                total=len(test_cycles),
-            )
+                    total=len(test_cycles),
+                )
 
         if len(test_cycles) > 0:
             with ThreadPoolExecutor(max_workers=self.concurrency) as executor:
@@ -159,19 +158,19 @@ class ZephyrExporter:
                         if progress:
                             progress.update(
                                 exec_task,
-                                advance=1,
-                                description=(
+                                    advance=1,
+                                    description=(
                                     f"[yellow]{len(executions)} executions for cycle {cycle.name}"
                                 ),
-                            )
+                                )
                     except Exception as e:
                         logger.error(f"Error fetching executions for cycle {cycle.id}: {e}")
                         if progress:
                             progress.update(
                                 exec_task,
-                                advance=1,
-                                description=f"[red]Error with cycle {cycle.name}",
-                            )
+                                    advance=1,
+                                    description=f"[red]Error with cycle {cycle.name}",
+                                )
 
         counts["test_executions"] = len(all_executions)
 
@@ -212,12 +211,12 @@ class ZephyrExportManager:
 
     def __init__(
         self,
-        config: ZephyrConfig,
-        output_format: str = "json",
-        output_dir: Optional[Path] = None,
-        spec_path: Optional[Path] = None,
-        concurrency: int = 2,
-    ):
+            config: ZephyrConfig,
+            output_format: str = "json",
+            output_dir: Optional[Path] = None,
+            spec_path: Optional[Path] = None,
+            concurrency: int = 2,
+        ):
         """Initialize the export manager.
 
         Args:
@@ -266,19 +265,19 @@ class ZephyrExportManager:
         # Create exporter
         exporter = ZephyrExporter(
             client=client,
-            output_format=self.output_format,
-            output_path=output_path,
-            concurrency=self.concurrency,
-        )
+                output_format=self.output_format,
+                output_path=output_path,
+                concurrency=self.concurrency,
+            )
 
         # Run the export
         return exporter.export_all(progress=progress)
 
     def export_all_projects(
         self,
-        projects_to_export: Optional[List[str]] = None,
-        progress_callback: Optional[Callable[[str, str, int, int], None]] = None,
-    ) -> Dict[str, Dict[str, int]]:
+            projects_to_export: Optional[List[str]] = None,
+            progress_callback: Optional[Callable[[str, str, int, int], None]] = None,
+        ) -> Dict[str, Dict[str, int]]:
         """Export data for multiple projects.
 
         Args:

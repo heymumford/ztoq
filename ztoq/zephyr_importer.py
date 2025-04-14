@@ -11,14 +11,13 @@ This module provides a high-level interface for the entire import process,
 from authentication to data fetching to database storage.
 """
 
-import logging
 import argparse
+import logging
 import sys
-from pathlib import Path
-from typing import List, Optional, Dict, Any, Callable
 from dataclasses import dataclass
 from datetime import datetime
-
+from pathlib import Path
+from typing import List, Optional, Dict, Any
 from ztoq.models import ZephyrConfig
 from ztoq.data_fetcher import create_authenticated_client, fetch_projects, fetch_all_projects_data
 from ztoq.database_manager import DatabaseManager
@@ -94,8 +93,8 @@ class ImportProgress:
                 progress = (self.projects_completed / self.projects_total) * 100
                 print(
                     f"\rProjects: {self.projects_completed}/{self.projects_total} ({progress:.1f}%)",
-                    end="",
-                )
+                        end="",
+                    )
 
     def entity_callback(self, entity_type: str, project_key: str, success: bool) -> None:
         """

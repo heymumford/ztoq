@@ -11,13 +11,14 @@ from datetime import datetime
 from unittest.mock import MagicMock, patch
 from ztoq.models import (
     Project, Case, CycleInfo, Execution, Folder, Status,
-    Priority, Environment, CustomField, Link, CaseStep
+        Priority, Environment, CustomField, Link, CaseStep
 )
 from ztoq.data_fetcher import FetchResult
 from ztoq.database_manager import DatabaseManager
 
-
 @pytest.mark.unit
+
+
 class TestDatabaseManager:
     @pytest.fixture
     def db_path(self, tmp_path):
@@ -69,15 +70,15 @@ class TestDatabaseManager:
 
             expected_tables = [
                 "projects",
-                "folders",
-                "statuses",
-                "priorities",
-                "environments",
-                "test_cases",
-                "test_cycles",
-                "test_plans",
-                "test_executions",
-            ]
+                    "folders",
+                    "statuses",
+                    "priorities",
+                    "environments",
+                    "test_cases",
+                    "test_cycles",
+                    "test_plans",
+                    "test_executions",
+                ]
 
             for table in expected_tables:
                 assert table in tables
@@ -88,17 +89,17 @@ class TestDatabaseManager:
 
             expected_indexes = [
                 "idx_test_cases_project",
-                "idx_test_cycles_project",
-                "idx_test_plans_project",
-                "idx_test_executions_project",
-                "idx_test_executions_cycle",
-                "idx_test_executions_case",
-                "idx_folders_project",
-                "idx_folders_parent",
-                "idx_statuses_project",
-                "idx_priorities_project",
-                "idx_environments_project",
-            ]
+                    "idx_test_cycles_project",
+                    "idx_test_plans_project",
+                    "idx_test_executions_project",
+                    "idx_test_executions_cycle",
+                    "idx_test_executions_case",
+                    "idx_folders_project",
+                    "idx_folders_parent",
+                    "idx_statuses_project",
+                    "idx_priorities_project",
+                    "idx_environments_project",
+                ]
 
             for index in expected_indexes:
                 assert index in indexes
@@ -218,11 +219,11 @@ class TestDatabaseManager:
         # Create and save a status
         status = Status(
             id="status123",
-            name="Passed",
-            description="Test passed successfully",
-            color="#00FF00",
-            type="TEST_EXECUTION",
-        )
+                name="Passed",
+                description="Test passed successfully",
+                color="#00FF00",
+                type="TEST_EXECUTION",
+            )
 
         db_manager.save_status(status, "TEST")
 
@@ -313,36 +314,36 @@ class TestDatabaseManager:
         # Create test case with steps, links, and other complex fields
         test_case = Case(
             id="tc123",
-            key="TEST-1",
-            name="Test Login",
-            objective="Verify user login functionality",
-            precondition="User exists in the system",
-            description="Test the login functionality",
-            status="Active",
-            priority=priority,
-            priority_name="High",
-            folder="folder123",
-            folder_name="Test Cases",
-            created_on=datetime.now(),
-            created_by="user1",
-            labels=["regression", "smoke"],
-            steps=[
+                key="TEST-1",
+                name="Test Login",
+                objective="Verify user login functionality",
+                precondition="User exists in the system",
+                description="Test the login functionality",
+                status="Active",
+                priority=priority,
+                priority_name="High",
+                folder="folder123",
+                folder_name="Test Cases",
+                created_on=datetime.now(),
+                created_by="user1",
+                labels=["regression", "smoke"],
+                steps=[
                 CaseStep(
                     index=0,
-                    description="Navigate to login page",
-                    expected_result="Login page is displayed",
-                ),
-                CaseStep(
+                        description="Navigate to login page",
+                        expected_result="Login page is displayed",
+                    ),
+                    CaseStep(
                     index=1,
-                    description="Enter credentials and click login",
-                    expected_result="User is logged in successfully",
-                ),
-            ],
-            custom_fields=[
+                        description="Enter credentials and click login",
+                        expected_result="User is logged in successfully",
+                    ),
+                ],
+                custom_fields=[
                 CustomField(id="cf1", name="Test Type", type="text", value="Integration")
             ],
-            links=[Link(name="Requirements", url="https://example.com/req1", type="web")],
-        )
+                links=[Link(name="Requirements", url="https://example.com/req1", type="web")],
+            )
 
         # Save the test case
         db_manager.save_test_case(test_case, "TEST")
@@ -393,19 +394,19 @@ class TestDatabaseManager:
         db_manager.save_priority(priority, "TEST")
 
         # Since we can't directly modify the priority field validation,
-        # let's modify the DatabaseManager._serialize_value method for this test
+            # let's modify the DatabaseManager._serialize_value method for this test
         original_serialize_value = db_manager._serialize_value
 
         try:
             # Create a test case
             test_case = Case(
                 id="tc123",
-                key="TEST-1",
-                name="Test Login",
-                status="Active",
-                priority=priority,  # Use the actual priority object
+                    key="TEST-1",
+                    name="Test Login",
+                    status="Active",
+                    priority=priority,  # Use the actual priority object
                 priority_name="High",
-            )
+                )
 
             # Replace priority with dict just before processing
             # Use a mock to modify the behavior
@@ -442,21 +443,21 @@ class TestDatabaseManager:
         # Create a test cycle
         test_cycle = CycleInfo(
             id="cycle123",
-            key="TEST-C1",
-            name="Sprint 1 Testing",
-            description="Test cycle for Sprint 1",
-            status="Active",
-            status_name="Active",
-            folder="folder456",
-            folder_name="Test Cycles",
-            project_key="TEST",
-            owner="user1",
-            owner_name="Test User",
-            created_on=datetime.now(),
-            created_by="user1",
-            custom_fields=[CustomField(id="cf2", name="Sprint", type="text", value="Sprint 1")],
-            links=[Link(name="Sprint Board", url="https://example.com/sprint1", type="web")],
-        )
+                key="TEST-C1",
+                name="Sprint 1 Testing",
+                description="Test cycle for Sprint 1",
+                status="Active",
+                status_name="Active",
+                folder="folder456",
+                folder_name="Test Cycles",
+                project_key="TEST",
+                owner="user1",
+                owner_name="Test User",
+                created_on=datetime.now(),
+                created_by="user1",
+                custom_fields=[CustomField(id="cf2", name="Sprint", type="text", value="Sprint 1")],
+                links=[Link(name="Sprint Board", url="https://example.com/sprint1", type="web")],
+            )
 
         # Save the test cycle
         db_manager.save_test_cycle(test_cycle, "TEST")
@@ -510,31 +511,31 @@ class TestDatabaseManager:
         # The model field is actual_result, not actualResult
         step = CaseStep(
             index=0,
-            description="Navigate to login page",
-            expected_result="Login page is displayed",  # Note the snake_case here
+                description="Navigate to login page",
+                expected_result="Login page is displayed",  # Note the snake_case here
             actual_result="Login page was displayed",  # And here
             status="PASS",
-        )
+            )
 
         # Create a test execution
         test_execution = Execution(
             id="exec123",
-            testCaseKey="TEST-1",
-            cycleId="cycle123",
-            cycle_name="Sprint 1 Testing",
-            status="PASS",
-            status_name="Passed",
-            environment="env123",
-            environment_name="Production",
-            executed_by="user1",
-            executed_by_name="Test User",
-            executed_on=datetime.now(),
-            created_on=datetime.now(),
-            created_by="user1",
-            comment="Test passed without issues",
-            steps=[step],
-            custom_fields=[CustomField(id="cf3", name="Browser", type="text", value="Chrome")],
-        )
+                testCaseKey="TEST-1",
+                cycleId="cycle123",
+                cycle_name="Sprint 1 Testing",
+                status="PASS",
+                status_name="Passed",
+                environment="env123",
+                environment_name="Production",
+                executed_by="user1",
+                executed_by_name="Test User",
+                executed_on=datetime.now(),
+                created_on=datetime.now(),
+                created_by="user1",
+                comment="Test passed without issues",
+                steps=[step],
+                custom_fields=[CustomField(id="cf3", name="Browser", type="text", value="Chrome")],
+            )
 
         # Check that the step value is correct before serialization
         assert test_execution.steps[0].actual_result == "Login page was displayed"
@@ -580,53 +581,53 @@ class TestDatabaseManager:
         # Create sample data
         folders = [
             Folder(id="folder1", name="Test Cases", folderType="TEST_CASE", projectKey="TEST"),
-            Folder(
+                Folder(
                 id="folder2",
-                name="Test Cycles",
-                folderType="TEST_CYCLE",
-                projectKey="TEST",
-                parentId="folder1",
-            ),
-        ]
+                    name="Test Cycles",
+                    folderType="TEST_CYCLE",
+                    projectKey="TEST",
+                    parentId="folder1",
+                ),
+            ]
 
         statuses = [
             Status(id="status1", name="Passed", type="TEST_EXECUTION"),
-            Status(id="status2", name="Failed", type="TEST_EXECUTION"),
-        ]
+                Status(id="status2", name="Failed", type="TEST_EXECUTION"),
+            ]
 
         priorities = [
             Priority(id="priority1", name="High", rank=1),
-            Priority(id="priority2", name="Medium", rank=2),
-        ]
+                Priority(id="priority2", name="Medium", rank=2),
+            ]
 
         environments = [
             Environment(id="env1", name="Production"),
-            Environment(id="env2", name="Staging"),
-        ]
+                Environment(id="env2", name="Staging"),
+            ]
 
         test_cases = [
             Case(id="tc1", key="TEST-1", name="Test Login", folder="folder1"),
-            Case(id="tc2", key="TEST-2", name="Test Logout", folder="folder1"),
-        ]
+                Case(id="tc2", key="TEST-2", name="Test Logout", folder="folder1"),
+            ]
 
         test_cycles = [
             CycleInfo(
                 id="cycle1",
-                key="TEST-C1",
-                name="Sprint 1 Testing",
-                project_key="TEST",
-                folder="folder2",
-            )
+                    key="TEST-C1",
+                    name="Sprint 1 Testing",
+                    project_key="TEST",
+                    folder="folder2",
+                )
         ]
 
         test_executions = [
             Execution(
                 id="exec1",
-                testCaseKey="TEST-1",
-                cycleId="cycle1",
-                status="PASS",
-                environment="env1",
-            )
+                    testCaseKey="TEST-1",
+                    cycleId="cycle1",
+                    status="PASS",
+                    environment="env1",
+                )
         ]
 
         # Create fetch results
@@ -634,56 +635,56 @@ class TestDatabaseManager:
             "project": FetchResult(
                 entity_type="project", project_key="TEST", items=[project], count=1, success=True
             ),
-            "folders": FetchResult(
+                "folders": FetchResult(
                 entity_type="folders",
-                project_key="TEST",
-                items=folders,
-                count=len(folders),
-                success=True,
-            ),
-            "statuses": FetchResult(
+                    project_key="TEST",
+                    items=folders,
+                    count=len(folders),
+                    success=True,
+                ),
+                "statuses": FetchResult(
                 entity_type="statuses",
-                project_key="TEST",
-                items=statuses,
-                count=len(statuses),
-                success=True,
-            ),
-            "priorities": FetchResult(
+                    project_key="TEST",
+                    items=statuses,
+                    count=len(statuses),
+                    success=True,
+                ),
+                "priorities": FetchResult(
                 entity_type="priorities",
-                project_key="TEST",
-                items=priorities,
-                count=len(priorities),
-                success=True,
-            ),
-            "environments": FetchResult(
+                    project_key="TEST",
+                    items=priorities,
+                    count=len(priorities),
+                    success=True,
+                ),
+                "environments": FetchResult(
                 entity_type="environments",
-                project_key="TEST",
-                items=environments,
-                count=len(environments),
-                success=True,
-            ),
-            "test_cases": FetchResult(
+                    project_key="TEST",
+                    items=environments,
+                    count=len(environments),
+                    success=True,
+                ),
+                "test_cases": FetchResult(
                 entity_type="test_cases",
-                project_key="TEST",
-                items=test_cases,
-                count=len(test_cases),
-                success=True,
-            ),
-            "test_cycles": FetchResult(
+                    project_key="TEST",
+                    items=test_cases,
+                    count=len(test_cases),
+                    success=True,
+                ),
+                "test_cycles": FetchResult(
                 entity_type="test_cycles",
-                project_key="TEST",
-                items=test_cycles,
-                count=len(test_cycles),
-                success=True,
-            ),
-            "test_executions": FetchResult(
+                    project_key="TEST",
+                    items=test_cycles,
+                    count=len(test_cycles),
+                    success=True,
+                ),
+                "test_executions": FetchResult(
                 entity_type="test_executions",
-                project_key="TEST",
-                items=test_executions,
-                count=len(test_executions),
-                success=True,
-            ),
-        }
+                    project_key="TEST",
+                    items=test_executions,
+                    count=len(test_executions),
+                    success=True,
+                ),
+            }
 
         # Save all project data
         result = db_manager.save_project_data("TEST", fetch_results)
@@ -730,11 +731,11 @@ class TestDatabaseManager:
         fetch_results = {
             "test_cases": FetchResult(
                 entity_type="test_cases",
-                project_key="TEST",
-                items=test_cases,
-                count=len(test_cases),
-                success=True,
-            )
+                    project_key="TEST",
+                    items=test_cases,
+                    count=len(test_cases),
+                    success=True,
+                )
         }
 
         # Save project data
@@ -768,35 +769,35 @@ class TestDatabaseManager:
 
         test_cases2 = [
             Case(id="tc2", key="PROJ2-1", name="Test 1 for Project 2"),
-            Case(id="tc3", key="PROJ2-2", name="Test 2 for Project 2"),
-        ]
+                Case(id="tc3", key="PROJ2-2", name="Test 2 for Project 2"),
+            ]
 
         # Create fetch results for each project
         project1_results = {
             "project": FetchResult(
                 entity_type="project", project_key="PROJ1", items=[project1], count=1, success=True
             ),
-            "test_cases": FetchResult(
+                "test_cases": FetchResult(
                 entity_type="test_cases",
-                project_key="PROJ1",
-                items=test_cases1,
-                count=len(test_cases1),
-                success=True,
-            ),
-        }
+                    project_key="PROJ1",
+                    items=test_cases1,
+                    count=len(test_cases1),
+                    success=True,
+                ),
+            }
 
         project2_results = {
             "project": FetchResult(
                 entity_type="project", project_key="PROJ2", items=[project2], count=1, success=True
             ),
-            "test_cases": FetchResult(
+                "test_cases": FetchResult(
                 entity_type="test_cases",
-                project_key="PROJ2",
-                items=test_cases2,
-                count=len(test_cases2),
-                success=True,
-            ),
-        }
+                    project_key="PROJ2",
+                    items=test_cases2,
+                    count=len(test_cases2),
+                    success=True,
+                ),
+            }
 
         all_projects_data = {"PROJ1": project1_results, "PROJ2": project2_results}
 

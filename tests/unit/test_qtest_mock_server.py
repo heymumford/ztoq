@@ -9,11 +9,11 @@ import json
 from unittest.mock import MagicMock, patch
 import uuid
 from datetime import datetime
-
 from ztoq.qtest_mock_server import QTestMockServer
 
-
 @pytest.mark.unit
+
+
 class TestQTestMockServer:
     @pytest.fixture
     def mock_server(self):
@@ -106,14 +106,14 @@ class TestQTestMockServer:
         # Create test case data
         test_case_data = {
             "name": "New Test Case",
-            "description": "Description of new test case",
-            "precondition": "Precondition for test case",
-            "moduleId": list(mock_server.data["manager"]["modules"].keys())[0],
-            "steps": [
+                "description": "Description of new test case",
+                "precondition": "Precondition for test case",
+                "moduleId": list(mock_server.data["manager"]["modules"].keys())[0],
+                "steps": [
                 {"description": "Step 1", "expectedResult": "Result 1"},
-                {"description": "Step 2", "expectedResult": "Result 2"},
-            ],
-        }
+                    {"description": "Step 2", "expectedResult": "Result 2"},
+                ],
+            }
 
         # Create test case
         result = mock_server._handle_create_test_case(project_id, test_case_data)
@@ -187,11 +187,11 @@ class TestQTestMockServer:
         # Parameter data
         param_data = {
             "name": "New Parameter",
-            "description": "New parameter description",
-            "projectId": project_id,
-            "status": "ACTIVE",
-            "values": [{"value": "Value 1"}, {"value": "Value 2"}],
-        }
+                "description": "New parameter description",
+                "projectId": project_id,
+                "status": "ACTIVE",
+                "values": [{"value": "Value 1"}, {"value": "Value 2"}],
+            }
 
         # Create parameter
         result = mock_server._handle_create_parameter(param_data)
@@ -240,17 +240,17 @@ class TestQTestMockServer:
         # Rule data
         rule_data = {
             "name": "New Rule",
-            "description": "New rule description",
-            "projectId": project_id,
-            "enabled": True,
-            "conditions": [{"field": "status", "operator": "equals", "value": "PASS"}],
-            "actions": [
+                "description": "New rule description",
+                "projectId": project_id,
+                "enabled": True,
+                "conditions": [{"field": "status", "operator": "equals", "value": "PASS"}],
+                "actions": [
                 {
                     "type": "email",
-                    "configuration": {"to": "test@example.com", "subject": "Test passed"},
-                }
+                        "configuration": {"to": "test@example.com", "subject": "Test passed"},
+                    }
             ],
-        }
+            }
 
         # Create rule
         result = mock_server._handle_create_rule(rule_data)
@@ -289,20 +289,20 @@ class TestQTestMockServer:
         # Feature data
         feature_data = {
             "name": "New Feature",
-            "description": "New feature description",
-            "projectId": project_id,
-            "content": """
+                "description": "New feature description",
+                "projectId": project_id,
+                "content": """
             Feature: New Feature
               As a user
               I want to test a new feature
               So that I can verify it works
-              
+
               Scenario: First scenario
                 Given I am testing
                 When I perform an action
                 Then I expect a result
             """,
-        }
+            }
 
         # Create feature
         result = mock_server._handle_create_feature(feature_data)
@@ -326,10 +326,10 @@ class TestQTestMockServer:
         # Test authentication request
         auth_result = mock_server.handle_request(
             api_type="manager",
-            method="POST",
-            endpoint="/oauth/token",
-            data={"username": "test", "password": "test"},
-        )
+                method="POST",
+                endpoint="/oauth/token",
+                data={"username": "test", "password": "test"},
+            )
         assert "access_token" in auth_result
 
         # Test manager API request
@@ -342,10 +342,10 @@ class TestQTestMockServer:
         # Test parameters API request
         params_result = mock_server.handle_request(
             api_type="parameters",
-            method="POST",
-            endpoint="/parameters/query",
-            data={"projectId": project_id, "offset": 0, "limit": 10},
-        )
+                method="POST",
+                endpoint="/parameters/query",
+                data={"projectId": project_id, "offset": 0, "limit": 10},
+            )
         assert "data" in params_result
 
         # Test pulse API request
@@ -357,10 +357,10 @@ class TestQTestMockServer:
         # Test scenario API request
         features_result = mock_server.handle_request(
             api_type="scenario",
-            method="GET",
-            endpoint="/features",
-            params={"projectId": project_id},
-        )
+                method="GET",
+                endpoint="/features",
+                params={"projectId": project_id},
+            )
         assert "data" in features_result
 
         # Test unknown API type

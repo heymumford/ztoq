@@ -10,8 +10,9 @@ from typer.testing import CliRunner
 from ztoq.cli import app
 from ztoq.models import TestCase
 
-
 @pytest.mark.integration
+
+
 class TestCLI:
     @pytest.fixture
     def runner(self):
@@ -23,9 +24,9 @@ class TestCLI:
         """Mock the OpenAPI spec for testing."""
         valid_spec = {
             "openapi": "3.0.0",
-            "info": {"title": "Zephyr Scale API", "version": "1.0.0"},
-            "paths": {},
-        }
+                "info": {"title": "Zephyr Scale API", "version": "1.0.0"},
+                "paths": {},
+            }
         with patch("ztoq.openapi_parser.load_openapi_spec", return_value=valid_spec):
             yield
 
@@ -42,10 +43,10 @@ class TestCLI:
         mock_extract.return_value = {
             "GET /testcases": {
                 "path": "/testcases",
-                "method": "get",
-                "summary": "Get test cases",
-            },
-        }
+                    "method": "get",
+                    "summary": "Get test cases",
+                },
+            }
 
         with patch("ztoq.openapi_parser.Path.exists", return_value=True):
             result = runner.invoke(app, ["list-endpoints", "z-openapi.yml"])
@@ -61,24 +62,24 @@ class TestCLI:
         mock_client = MagicMock()
         mock_client.get_test_cases.return_value = [
             TestCase(id="1", key="TEST-TC-1", name="Test Case 1", status="Draft"),
-            TestCase(id="2", key="TEST-TC-2", name="Test Case 2", status="Ready"),
-        ]
+                TestCase(id="2", key="TEST-TC-2", name="Test Case 2", status="Ready"),
+            ]
         mock_client_factory.return_value = mock_client
 
         with patch("ztoq.openapi_parser.Path.exists", return_value=True):
             result = runner.invoke(
                 app,
-                [
+                    [
                     "get-test-cases",
-                    "z-openapi.yml",
-                    "--base-url",
-                    "https://api.example.com",
-                    "--api-token",
-                    "test-token",
-                    "--project-key",
-                    "TEST",
-                ],
-            )
+                        "z-openapi.yml",
+                        "--base-url",
+                        "https://api.example.com",
+                        "--api-token",
+                        "test-token",
+                        "--project-key",
+                        "TEST",
+                    ],
+                )
 
             assert result.exit_code == 0
             assert "Found 2 test cases" in result.stdout

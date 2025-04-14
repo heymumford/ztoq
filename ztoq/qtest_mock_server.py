@@ -29,26 +29,26 @@ class QTestMockServer:
         self.data = {
             "manager": {
                 "projects": [],
-                "modules": {},
-                "test_cases": {},
-                "test_steps": {},
-                "test_cycles": {},
-                "test_runs": {},
-                "test_logs": {},
-                "attachments": {},
-                "releases": {},
-                "custom_fields": {},
-                "users": {},
-            },
-            "parameters": {
+                    "modules": {},
+                    "test_cases": {},
+                    "test_steps": {},
+                    "test_cycles": {},
+                    "test_runs": {},
+                    "test_logs": {},
+                    "attachments": {},
+                    "releases": {},
+                    "custom_fields": {},
+                    "users": {},
+                },
+                "parameters": {
                 "parameters": {},
-                "parameter_values": {},
-                "datasets": {},
-                "dataset_rows": {},
-            },
-            "pulse": {"rules": {}, "actions": {}, "triggers": {}, "constants": {}},
-            "scenario": {"features": {}, "steps": {}},
-        }
+                    "parameter_values": {},
+                    "datasets": {},
+                    "dataset_rows": {},
+                },
+                "pulse": {"rules": {}, "actions": {}, "triggers": {}, "constants": {}},
+                "scenario": {"features": {}, "steps": {}},
+            }
 
         # Initialize with sample data
         self._initialize_sample_data()
@@ -58,12 +58,12 @@ class QTestMockServer:
         # Add sample project
         project = {
             "id": 12345,
-            "name": "Sample Project",
-            "description": "A sample project for testing",
-            "startDate": "2023-01-01T00:00:00Z",
-            "endDate": "2023-12-31T00:00:00Z",
-            "statusName": "Active",
-        }
+                "name": "Sample Project",
+                "description": "A sample project for testing",
+                "startDate": "2023-01-01T00:00:00Z",
+                "endDate": "2023-12-31T00:00:00Z",
+                "statusName": "Active",
+            }
         self.data["manager"]["projects"].append(project)
 
         # Add sample modules
@@ -92,45 +92,45 @@ class QTestMockServer:
         # Root module
         root_module = {
             "id": 101,
-            "name": "Root Module",
-            "description": "Root module for test cases",
-            "parentId": None,
-            "pid": "MD-1",
-            "projectId": project_id,
-            "path": "Root Module",
-        }
+                "name": "Root Module",
+                "description": "Root module for test cases",
+                "parentId": None,
+                "pid": "MD-1",
+                "projectId": project_id,
+                "path": "Root Module",
+            }
         self.data["manager"]["modules"][root_module["id"]] = root_module
 
         # Child modules
         child_modules = [
             {
                 "id": 102,
-                "name": "UI Tests",
-                "description": "UI test cases",
-                "parentId": 101,
-                "pid": "MD-2",
-                "projectId": project_id,
-                "path": "Root Module/UI Tests",
-            },
-            {
+                    "name": "UI Tests",
+                    "description": "UI test cases",
+                    "parentId": 101,
+                    "pid": "MD-2",
+                    "projectId": project_id,
+                    "path": "Root Module/UI Tests",
+                },
+                {
                 "id": 103,
-                "name": "API Tests",
-                "description": "API test cases",
-                "parentId": 101,
-                "pid": "MD-3",
-                "projectId": project_id,
-                "path": "Root Module/API Tests",
-            },
-            {
+                    "name": "API Tests",
+                    "description": "API test cases",
+                    "parentId": 101,
+                    "pid": "MD-3",
+                    "projectId": project_id,
+                    "path": "Root Module/API Tests",
+                },
+                {
                 "id": 104,
-                "name": "Performance Tests",
-                "description": "Performance test cases",
-                "parentId": 101,
-                "pid": "MD-4",
-                "projectId": project_id,
-                "path": "Root Module/Performance Tests",
-            },
-        ]
+                    "name": "Performance Tests",
+                    "description": "Performance test cases",
+                    "parentId": 101,
+                    "pid": "MD-4",
+                    "projectId": project_id,
+                    "path": "Root Module/Performance Tests",
+                },
+            ]
 
         for module in child_modules:
             self.data["manager"]["modules"][module["id"]] = module
@@ -141,156 +141,156 @@ class QTestMockServer:
         ui_test_cases = [
             {
                 "id": 201,
-                "name": "Login Test",
-                "description": "Test login functionality",
-                "precondition": "User is registered",
-                "pid": "TC-1",
-                "parentId": None,
-                "moduleId": 102,
-                "priorityId": 1,
-                "creatorId": 1,
-                "projectId": project_id,
-                "properties": [
+                    "name": "Login Test",
+                    "description": "Test login functionality",
+                    "precondition": "User is registered",
+                    "pid": "TC-1",
+                    "parentId": None,
+                    "moduleId": 102,
+                    "priorityId": 1,
+                    "creatorId": 1,
+                    "projectId": project_id,
+                    "properties": [
                     {"id": 1, "name": "Automation Status", "type": "STRING", "value": "Automated"}
                 ],
-                "steps": [
+                    "steps": [
                     {
                         "id": 301,
-                        "description": "Navigate to login page",
-                        "expectedResult": "Login page is displayed",
-                        "order": 1,
-                    },
-                    {
+                            "description": "Navigate to login page",
+                            "expectedResult": "Login page is displayed",
+                            "order": 1,
+                        },
+                        {
                         "id": 302,
-                        "description": "Enter valid credentials",
-                        "expectedResult": "Credentials accepted",
-                        "order": 2,
-                    },
-                    {
+                            "description": "Enter valid credentials",
+                            "expectedResult": "Credentials accepted",
+                            "order": 2,
+                        },
+                        {
                         "id": 303,
-                        "description": "Click login button",
-                        "expectedResult": "User is logged in and redirected to dashboard",
-                        "order": 3,
-                    },
-                ],
-                "createdDate": "2023-01-15T10:00:00Z",
-                "lastModifiedDate": "2023-01-15T10:00:00Z",
-            },
-            {
+                            "description": "Click login button",
+                            "expectedResult": "User is logged in and redirected to dashboard",
+                            "order": 3,
+                        },
+                    ],
+                    "createdDate": "2023-01-15T10:00:00Z",
+                    "lastModifiedDate": "2023-01-15T10:00:00Z",
+                },
+                {
                 "id": 202,
-                "name": "Registration Test",
-                "description": "Test user registration",
-                "precondition": "User is not registered",
-                "pid": "TC-2",
-                "parentId": None,
-                "moduleId": 102,
-                "priorityId": 1,
-                "creatorId": 1,
-                "projectId": project_id,
-                "properties": [
+                    "name": "Registration Test",
+                    "description": "Test user registration",
+                    "precondition": "User is not registered",
+                    "pid": "TC-2",
+                    "parentId": None,
+                    "moduleId": 102,
+                    "priorityId": 1,
+                    "creatorId": 1,
+                    "projectId": project_id,
+                    "properties": [
                     {
                         "id": 1,
-                        "name": "Automation Status",
-                        "type": "STRING",
-                        "value": "Not Automated",
-                    }
+                            "name": "Automation Status",
+                            "type": "STRING",
+                            "value": "Not Automated",
+                        }
                 ],
-                "steps": [
+                    "steps": [
                     {
                         "id": 304,
-                        "description": "Navigate to registration page",
-                        "expectedResult": "Registration page is displayed",
-                        "order": 1,
-                    },
-                    {
+                            "description": "Navigate to registration page",
+                            "expectedResult": "Registration page is displayed",
+                            "order": 1,
+                        },
+                        {
                         "id": 305,
-                        "description": "Fill in registration form",
-                        "expectedResult": "Form is filled correctly",
-                        "order": 2,
-                    },
-                    {
+                            "description": "Fill in registration form",
+                            "expectedResult": "Form is filled correctly",
+                            "order": 2,
+                        },
+                        {
                         "id": 306,
-                        "description": "Submit registration form",
-                        "expectedResult": "User is registered and redirected to login page",
-                        "order": 3,
-                    },
-                ],
-                "createdDate": "2023-01-16T10:00:00Z",
-                "lastModifiedDate": "2023-01-16T10:00:00Z",
-            },
-        ]
+                            "description": "Submit registration form",
+                            "expectedResult": "User is registered and redirected to login page",
+                            "order": 3,
+                        },
+                    ],
+                    "createdDate": "2023-01-16T10:00:00Z",
+                    "lastModifiedDate": "2023-01-16T10:00:00Z",
+                },
+            ]
 
         # API test cases
         api_test_cases = [
             {
                 "id": 203,
-                "name": "Get User API Test",
-                "description": "Test Get User API",
-                "precondition": "API server is running",
-                "pid": "TC-3",
-                "parentId": None,
-                "moduleId": 103,
-                "priorityId": 2,
-                "creatorId": 1,
-                "projectId": project_id,
-                "properties": [
+                    "name": "Get User API Test",
+                    "description": "Test Get User API",
+                    "precondition": "API server is running",
+                    "pid": "TC-3",
+                    "parentId": None,
+                    "moduleId": 103,
+                    "priorityId": 2,
+                    "creatorId": 1,
+                    "projectId": project_id,
+                    "properties": [
                     {"id": 1, "name": "Automation Status", "type": "STRING", "value": "Automated"}
                 ],
-                "steps": [
+                    "steps": [
                     {
                         "id": 307,
-                        "description": "Send GET request to /api/users/{id}",
-                        "expectedResult": "Response status code is 200",
-                        "order": 1,
-                    },
-                    {
+                            "description": "Send GET request to /api/users/{id}",
+                            "expectedResult": "Response status code is 200",
+                            "order": 1,
+                        },
+                        {
                         "id": 308,
-                        "description": "Validate response body",
-                        "expectedResult": "Response contains valid user data",
-                        "order": 2,
-                    },
-                ],
-                "createdDate": "2023-01-17T10:00:00Z",
-                "lastModifiedDate": "2023-01-17T10:00:00Z",
-            },
-            {
+                            "description": "Validate response body",
+                            "expectedResult": "Response contains valid user data",
+                            "order": 2,
+                        },
+                    ],
+                    "createdDate": "2023-01-17T10:00:00Z",
+                    "lastModifiedDate": "2023-01-17T10:00:00Z",
+                },
+                {
                 "id": 204,
-                "name": "Create User API Test",
-                "description": "Test Create User API",
-                "precondition": "API server is running",
-                "pid": "TC-4",
-                "parentId": None,
-                "moduleId": 103,
-                "priorityId": 2,
-                "creatorId": 1,
-                "projectId": project_id,
-                "properties": [
+                    "name": "Create User API Test",
+                    "description": "Test Create User API",
+                    "precondition": "API server is running",
+                    "pid": "TC-4",
+                    "parentId": None,
+                    "moduleId": 103,
+                    "priorityId": 2,
+                    "creatorId": 1,
+                    "projectId": project_id,
+                    "properties": [
                     {"id": 1, "name": "Automation Status", "type": "STRING", "value": "Automated"}
                 ],
-                "steps": [
+                    "steps": [
                     {
                         "id": 309,
-                        "description": "Send POST request to /api/users with valid data",
-                        "expectedResult": "Response status code is 201",
-                        "order": 1,
-                    },
-                    {
+                            "description": "Send POST request to /api/users with valid data",
+                            "expectedResult": "Response status code is 201",
+                            "order": 1,
+                        },
+                        {
                         "id": 310,
-                        "description": "Validate response body",
-                        "expectedResult": "Response contains created user data",
-                        "order": 2,
-                    },
-                    {
+                            "description": "Validate response body",
+                            "expectedResult": "Response contains created user data",
+                            "order": 2,
+                        },
+                        {
                         "id": 311,
-                        "description": "Verify user was created in database",
-                        "expectedResult": "User exists in database",
-                        "order": 3,
-                    },
-                ],
-                "createdDate": "2023-01-18T10:00:00Z",
-                "lastModifiedDate": "2023-01-18T10:00:00Z",
-            },
-        ]
+                            "description": "Verify user was created in database",
+                            "expectedResult": "User exists in database",
+                            "order": 3,
+                        },
+                    ],
+                    "createdDate": "2023-01-18T10:00:00Z",
+                    "lastModifiedDate": "2023-01-18T10:00:00Z",
+                },
+            ]
 
         # Add all test cases to data store
         for tc in ui_test_cases + api_test_cases:
@@ -307,42 +307,42 @@ class QTestMockServer:
         # Add a release
         release = {
             "id": 401,
-            "name": "Release 1.0",
-            "description": "First release",
-            "pid": "RL-1",
-            "startDate": "2023-01-01T00:00:00Z",
-            "endDate": "2023-03-31T00:00:00Z",
-            "projectId": project_id,
-        }
+                "name": "Release 1.0",
+                "description": "First release",
+                "pid": "RL-1",
+                "startDate": "2023-01-01T00:00:00Z",
+                "endDate": "2023-03-31T00:00:00Z",
+                "projectId": project_id,
+            }
         self.data["manager"]["releases"][release["id"]] = release
 
         # Add test cycles
         test_cycles = [
             {
                 "id": 501,
-                "name": "Sprint 1 Test Cycle",
-                "description": "Tests for Sprint 1",
-                "pid": "CY-1",
-                "parentId": None,
-                "releaseId": 401,
-                "projectId": project_id,
-                "properties": [],
-                "startDate": "2023-01-01T00:00:00Z",
-                "endDate": "2023-01-15T00:00:00Z",
-            },
-            {
+                    "name": "Sprint 1 Test Cycle",
+                    "description": "Tests for Sprint 1",
+                    "pid": "CY-1",
+                    "parentId": None,
+                    "releaseId": 401,
+                    "projectId": project_id,
+                    "properties": [],
+                    "startDate": "2023-01-01T00:00:00Z",
+                    "endDate": "2023-01-15T00:00:00Z",
+                },
+                {
                 "id": 502,
-                "name": "Sprint 2 Test Cycle",
-                "description": "Tests for Sprint 2",
-                "pid": "CY-2",
-                "parentId": None,
-                "releaseId": 401,
-                "projectId": project_id,
-                "properties": [],
-                "startDate": "2023-01-16T00:00:00Z",
-                "endDate": "2023-01-31T00:00:00Z",
-            },
-        ]
+                    "name": "Sprint 2 Test Cycle",
+                    "description": "Tests for Sprint 2",
+                    "pid": "CY-2",
+                    "parentId": None,
+                    "releaseId": 401,
+                    "projectId": project_id,
+                    "properties": [],
+                    "startDate": "2023-01-16T00:00:00Z",
+                    "endDate": "2023-01-31T00:00:00Z",
+                },
+            ]
 
         for cycle in test_cycles:
             self.data["manager"]["test_cycles"][cycle["id"]] = cycle
@@ -351,29 +351,29 @@ class QTestMockServer:
         test_runs = [
             {
                 "id": 601,
-                "name": "Login Test - Sprint 1",
-                "description": "Login test for Sprint 1",
-                "pid": "TR-1",
-                "testCaseVersionId": 1,
-                "testCaseId": 201,
-                "testCycleId": 501,
-                "projectId": project_id,
-                "properties": [],
-                "status": "NOT_EXECUTED",
-            },
-            {
+                    "name": "Login Test - Sprint 1",
+                    "description": "Login test for Sprint 1",
+                    "pid": "TR-1",
+                    "testCaseVersionId": 1,
+                    "testCaseId": 201,
+                    "testCycleId": 501,
+                    "projectId": project_id,
+                    "properties": [],
+                    "status": "NOT_EXECUTED",
+                },
+                {
                 "id": 602,
-                "name": "Get User API Test - Sprint 1",
-                "description": "Get User API test for Sprint 1",
-                "pid": "TR-2",
-                "testCaseVersionId": 1,
-                "testCaseId": 203,
-                "testCycleId": 501,
-                "projectId": project_id,
-                "properties": [],
-                "status": "NOT_EXECUTED",
-            },
-        ]
+                    "name": "Get User API Test - Sprint 1",
+                    "description": "Get User API test for Sprint 1",
+                    "pid": "TR-2",
+                    "testCaseVersionId": 1,
+                    "testCaseId": 203,
+                    "testCycleId": 501,
+                    "projectId": project_id,
+                    "properties": [],
+                    "status": "NOT_EXECUTED",
+                },
+            ]
 
         for run in test_runs:
             self.data["manager"]["test_runs"][run["id"]] = run
@@ -383,29 +383,29 @@ class QTestMockServer:
         parameters = [
             {
                 "id": 701,
-                "name": "Browser",
-                "description": "Browser to run tests in",
-                "projectId": project_id,
-                "status": "ACTIVE",
-                "values": [
+                    "name": "Browser",
+                    "description": "Browser to run tests in",
+                    "projectId": project_id,
+                    "status": "ACTIVE",
+                    "values": [
                     {"id": 801, "value": "Chrome", "parameterId": 701},
-                    {"id": 802, "value": "Firefox", "parameterId": 701},
-                    {"id": 803, "value": "Edge", "parameterId": 701},
-                ],
-            },
-            {
+                        {"id": 802, "value": "Firefox", "parameterId": 701},
+                        {"id": 803, "value": "Edge", "parameterId": 701},
+                    ],
+                },
+                {
                 "id": 702,
-                "name": "Environment",
-                "description": "Test environment",
-                "projectId": project_id,
-                "status": "ACTIVE",
-                "values": [
+                    "name": "Environment",
+                    "description": "Test environment",
+                    "projectId": project_id,
+                    "status": "ACTIVE",
+                    "values": [
                     {"id": 804, "value": "Dev", "parameterId": 702},
-                    {"id": 805, "value": "QA", "parameterId": 702},
-                    {"id": 806, "value": "Staging", "parameterId": 702},
-                ],
-            },
-        ]
+                        {"id": 805, "value": "QA", "parameterId": 702},
+                        {"id": 806, "value": "Staging", "parameterId": 702},
+                    ],
+                },
+            ]
 
         for param in parameters:
             # Store parameter
@@ -421,31 +421,31 @@ class QTestMockServer:
         datasets = [
             {
                 "id": 901,
-                "name": "Login Test Data",
-                "description": "Test data for login scenarios",
-                "projectId": project_id,
-                "status": "ACTIVE",
-                "rows": [
+                    "name": "Login Test Data",
+                    "description": "Test data for login scenarios",
+                    "projectId": project_id,
+                    "status": "ACTIVE",
+                    "rows": [
                     {
                         "id": 1001,
-                        "datasetId": 901,
-                        "values": {
+                            "datasetId": 901,
+                            "values": {
                             "username": "user1",
-                            "password": "password1",
-                            "expected_result": "success",
+                                "password": "password1",
+                                "expected_result": "success",
+                            },
                         },
-                    },
-                    {
+                        {
                         "id": 1002,
-                        "datasetId": 901,
-                        "values": {
+                            "datasetId": 901,
+                            "values": {
                             "username": "user2",
-                            "password": "wrong_password",
-                            "expected_result": "failure",
+                                "password": "wrong_password",
+                                "expected_result": "failure",
+                            },
                         },
-                    },
-                ],
-            }
+                    ],
+                }
         ]
 
         for dataset in datasets:
@@ -462,22 +462,22 @@ class QTestMockServer:
         rules = [
             {
                 "id": str(uuid.uuid4()),
-                "name": "JIRA Integration Rule",
-                "description": "Update JIRA when test fails",
-                "projectId": project_id,
-                "enabled": True,
-                "conditions": [{"field": "status", "operator": "equals", "value": "FAIL"}],
-                "actions": [
+                    "name": "JIRA Integration Rule",
+                    "description": "Update JIRA when test fails",
+                    "projectId": project_id,
+                    "enabled": True,
+                    "conditions": [{"field": "status", "operator": "equals", "value": "FAIL"}],
+                    "actions": [
                     {
                         "type": "jira",
-                        "configuration": {
+                            "configuration": {
                             "issueType": "Bug",
-                            "summary": "Test Failed: {{testCase.name}}",
-                            "description": "Test execution failed: {{testLog.note}}",
-                        },
-                    }
+                                "summary": "Test Failed: {{testCase.name}}",
+                                "description": "Test execution failed: {{testLog.note}}",
+                            },
+                        }
                 ],
-            }
+                }
         ]
 
         for rule in rules:
@@ -488,28 +488,28 @@ class QTestMockServer:
         features = [
             {
                 "id": str(uuid.uuid4()),
-                "name": "User Authentication",
-                "description": "User login and registration",
-                "projectId": project_id,
-                "content": """
+                    "name": "User Authentication",
+                    "description": "User login and registration",
+                    "projectId": project_id,
+                    "content": """
                 Feature: User Authentication
                   As a user
                   I want to authenticate with the system
                   So that I can access protected resources
-                  
+
                   Scenario: Successful login
                     Given I am on the login page
                     When I enter valid credentials
                     And I click the login button
                     Then I should be redirected to the dashboard
-                    
+
                   Scenario: Failed login
                     Given I am on the login page
                     When I enter invalid credentials
                     And I click the login button
                     Then I should see an error message
                 """,
-            }
+                }
         ]
 
         for feature in features:
@@ -518,14 +518,14 @@ class QTestMockServer:
     # API route handlers
     def handle_request(
         self,
-        api_type: str,
-        method: str,
-        endpoint: str,
-        params: Optional[Dict[str, Any]] = None,
-        data: Optional[Dict[str, Any]] = None,
-        headers: Optional[Dict[str, Any]] = None,
-        files: Optional[Dict[str, Any]] = None,
-    ) -> Dict[str, Any]:
+            api_type: str,
+            method: str,
+            endpoint: str,
+            params: Optional[Dict[str, Any]] = None,
+            data: Optional[Dict[str, Any]] = None,
+            headers: Optional[Dict[str, Any]] = None,
+            files: Optional[Dict[str, Any]] = None,
+        ) -> Dict[str, Any]:
         """Handle a request to the mock server."""
         logger.debug(f"Mock server handling {method} {endpoint} to {api_type} API")
         logger.debug(f"Params: {params}")
@@ -555,19 +555,19 @@ class QTestMockServer:
 
         return {
             "access_token": f"mock-token-{api_type}-{uuid.uuid4()}",
-            "token_type": "bearer",
-            "expires_in": token_ttl,
-            "expires_at": expires_at,
-        }
+                "token_type": "bearer",
+                "expires_in": token_ttl,
+                "expires_at": expires_at,
+            }
 
     def _handle_manager_request(
         self,
-        method: str,
-        endpoint: str,
-        params: Optional[Dict[str, Any]] = None,
-        data: Optional[Dict[str, Any]] = None,
-        files: Optional[Dict[str, Any]] = None,
-    ) -> Dict[str, Any]:
+            method: str,
+            endpoint: str,
+            params: Optional[Dict[str, Any]] = None,
+            data: Optional[Dict[str, Any]] = None,
+            files: Optional[Dict[str, Any]] = None,
+        ) -> Dict[str, Any]:
         """Handle qTest Manager API requests."""
         params = params or {}
         data = data or {}
@@ -645,11 +645,11 @@ class QTestMockServer:
 
     def _handle_parameters_request(
         self,
-        method: str,
-        endpoint: str,
-        params: Optional[Dict[str, Any]] = None,
-        data: Optional[Dict[str, Any]] = None,
-    ) -> Dict[str, Any]:
+            method: str,
+            endpoint: str,
+            params: Optional[Dict[str, Any]] = None,
+            data: Optional[Dict[str, Any]] = None,
+        ) -> Dict[str, Any]:
         """Handle qTest Parameters API requests."""
         params = params or {}
         data = data or {}
@@ -700,11 +700,11 @@ class QTestMockServer:
 
     def _handle_pulse_request(
         self,
-        method: str,
-        endpoint: str,
-        params: Optional[Dict[str, Any]] = None,
-        data: Optional[Dict[str, Any]] = None,
-    ) -> Dict[str, Any]:
+            method: str,
+            endpoint: str,
+            params: Optional[Dict[str, Any]] = None,
+            data: Optional[Dict[str, Any]] = None,
+        ) -> Dict[str, Any]:
         """Handle qTest Pulse API requests."""
         params = params or {}
         data = data or {}
@@ -726,11 +726,11 @@ class QTestMockServer:
 
     def _handle_scenario_request(
         self,
-        method: str,
-        endpoint: str,
-        params: Optional[Dict[str, Any]] = None,
-        data: Optional[Dict[str, Any]] = None,
-    ) -> Dict[str, Any]:
+            method: str,
+            endpoint: str,
+            params: Optional[Dict[str, Any]] = None,
+            data: Optional[Dict[str, Any]] = None,
+        ) -> Dict[str, Any]:
         """Handle qTest Scenario API requests."""
         params = params or {}
         data = data or {}
@@ -771,10 +771,10 @@ class QTestMockServer:
 
         return {
             "page": page,
-            "pageSize": page_size,
-            "total": len(projects),
-            "items": paginated_projects,
-        }
+                "pageSize": page_size,
+                "total": len(projects),
+                "items": paginated_projects,
+            }
 
     def _handle_get_test_cases(self, project_id: int, params: Dict[str, Any]) -> Dict[str, Any]:
         """Handle GET /projects/{projectId}/test-cases request."""
@@ -801,10 +801,10 @@ class QTestMockServer:
 
         return {
             "page": page,
-            "pageSize": page_size,
-            "total": len(test_cases),
-            "items": paginated_test_cases,
-        }
+                "pageSize": page_size,
+                "total": len(test_cases),
+                "items": paginated_test_cases,
+            }
 
     def _handle_get_test_case(self, test_case_id: int) -> Dict[str, Any]:
         """Handle GET /projects/{projectId}/test-cases/{testCaseId} request."""
@@ -821,20 +821,20 @@ class QTestMockServer:
         # Create new test case
         test_case = {
             "id": test_case_id,
-            "name": data.get("name", ""),
-            "description": data.get("description", ""),
-            "precondition": data.get("precondition", ""),
-            "pid": f"TC-{test_case_id}",
-            "parentId": data.get("parentId"),
-            "moduleId": data.get("moduleId"),
-            "priorityId": data.get("priorityId", 1),
-            "creatorId": data.get("creatorId", 1),
-            "projectId": project_id,
-            "properties": data.get("properties", []),
-            "steps": [],
-            "createdDate": datetime.now().isoformat(),
-            "lastModifiedDate": datetime.now().isoformat(),
-        }
+                "name": data.get("name", ""),
+                "description": data.get("description", ""),
+                "precondition": data.get("precondition", ""),
+                "pid": f"TC-{test_case_id}",
+                "parentId": data.get("parentId"),
+                "moduleId": data.get("moduleId"),
+                "priorityId": data.get("priorityId", 1),
+                "creatorId": data.get("creatorId", 1),
+                "projectId": project_id,
+                "properties": data.get("properties", []),
+                "steps": [],
+                "createdDate": datetime.now().isoformat(),
+                "lastModifiedDate": datetime.now().isoformat(),
+            }
 
         # Add steps if provided
         if "steps" in data:
@@ -842,11 +842,11 @@ class QTestMockServer:
                 step_id = max(self.data["manager"]["test_steps"].keys(), default=0) + 1
                 step = {
                     "id": step_id,
-                    "description": step_data.get("description", ""),
-                    "expectedResult": step_data.get("expectedResult", ""),
-                    "order": i + 1,
-                    "testCaseId": test_case_id,
-                }
+                        "description": step_data.get("description", ""),
+                        "expectedResult": step_data.get("expectedResult", ""),
+                        "order": i + 1,
+                        "testCaseId": test_case_id,
+                    }
                 self.data["manager"]["test_steps"][step_id] = step
                 test_case["steps"].append(step)
 
@@ -873,10 +873,10 @@ class QTestMockServer:
 
         return {
             "page": page,
-            "pageSize": page_size,
-            "total": len(modules),
-            "items": paginated_modules,
-        }
+                "pageSize": page_size,
+                "total": len(modules),
+                "items": paginated_modules,
+            }
 
     def _handle_get_module(self, module_id: int) -> Dict[str, Any]:
         """Handle GET /projects/{projectId}/modules/{moduleId} request."""
@@ -893,12 +893,12 @@ class QTestMockServer:
         # Create new module
         module = {
             "id": module_id,
-            "name": data.get("name", ""),
-            "description": data.get("description", ""),
-            "parentId": data.get("parentId"),
-            "pid": f"MD-{module_id}",
-            "projectId": project_id,
-        }
+                "name": data.get("name", ""),
+                "description": data.get("description", ""),
+                "parentId": data.get("parentId"),
+                "pid": f"MD-{module_id}",
+                "projectId": project_id,
+            }
 
         # Determine path
         if data.get("parentId") and data["parentId"] in self.data["manager"]["modules"]:
@@ -932,10 +932,10 @@ class QTestMockServer:
 
         return {
             "page": page,
-            "pageSize": page_size,
-            "total": len(test_cycles),
-            "items": paginated_test_cycles,
-        }
+                "pageSize": page_size,
+                "total": len(test_cycles),
+                "items": paginated_test_cycles,
+            }
 
     def _handle_get_test_cycle(self, test_cycle_id: int) -> Dict[str, Any]:
         """Handle GET /projects/{projectId}/test-cycles/{testCycleId} request."""
@@ -952,16 +952,16 @@ class QTestMockServer:
         # Create new test cycle
         test_cycle = {
             "id": test_cycle_id,
-            "name": data.get("name", ""),
-            "description": data.get("description", ""),
-            "pid": f"CY-{test_cycle_id}",
-            "parentId": data.get("parentId"),
-            "releaseId": data.get("releaseId"),
-            "projectId": project_id,
-            "properties": data.get("properties", []),
-            "startDate": data.get("startDate"),
-            "endDate": data.get("endDate"),
-        }
+                "name": data.get("name", ""),
+                "description": data.get("description", ""),
+                "pid": f"CY-{test_cycle_id}",
+                "parentId": data.get("parentId"),
+                "releaseId": data.get("releaseId"),
+                "projectId": project_id,
+                "properties": data.get("properties", []),
+                "startDate": data.get("startDate"),
+                "endDate": data.get("endDate"),
+            }
 
         # Store test cycle
         self.data["manager"]["test_cycles"][test_cycle_id] = test_cycle
@@ -984,13 +984,13 @@ class QTestMockServer:
         # Create new test log
         test_log = {
             "id": test_log_id,
-            "status": data.get("status", ""),
-            "executionDate": data.get("executionDate", datetime.now().isoformat()),
-            "note": data.get("note", ""),
-            "testRunId": test_run_id,
-            "attachments": data.get("attachments", []),
-            "testStepLogs": data.get("testStepLogs", []),
-        }
+                "status": data.get("status", ""),
+                "executionDate": data.get("executionDate", datetime.now().isoformat()),
+                "note": data.get("note", ""),
+                "testRunId": test_run_id,
+                "attachments": data.get("attachments", []),
+                "testStepLogs": data.get("testStepLogs", []),
+            }
 
         # Store test log
         self.data["manager"]["test_logs"][test_log_id] = test_log
@@ -1034,15 +1034,15 @@ class QTestMockServer:
         # Create attachment
         attachment = {
             "id": attachment_id,
-            "name": filename,
-            "contentType": content_type,
-            "size": len(content),
-            "createdDate": datetime.now().isoformat(),
-            "webUrl": f"https://qtest.example.com/attachment/{attachment_id}",
-            "objectType": object_type,
-            "objectId": object_id,
-            "projectId": project_id,
-        }
+                "name": filename,
+                "contentType": content_type,
+                "size": len(content),
+                "createdDate": datetime.now().isoformat(),
+                "webUrl": f"https://qtest.example.com/attachment/{attachment_id}",
+                "objectType": object_type,
+                "objectId": object_id,
+                "projectId": project_id,
+            }
 
         # Store attachment
         self.data["manager"]["attachments"][attachment_id] = attachment
@@ -1067,10 +1067,10 @@ class QTestMockServer:
         # Parameters API uses a different response format
         return {
             "offset": offset,
-            "limit": limit,
-            "total": len(parameters),
-            "data": paginated_parameters,
-        }
+                "limit": limit,
+                "total": len(parameters),
+                "data": paginated_parameters,
+            }
 
     def _handle_create_parameter(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """Handle POST /parameters/create request."""
@@ -1084,11 +1084,11 @@ class QTestMockServer:
         # Create parameter
         parameter = {
             "id": parameter_id,
-            "name": data.get("name", ""),
-            "description": data.get("description", ""),
-            "projectId": data.get("projectId"),
-            "status": data.get("status", "ACTIVE"),
-        }
+                "name": data.get("name", ""),
+                "description": data.get("description", ""),
+                "projectId": data.get("projectId"),
+                "status": data.get("status", "ACTIVE"),
+            }
 
         # Store parameter
         self.data["parameters"]["parameters"][parameter_id] = parameter
@@ -1103,9 +1103,9 @@ class QTestMockServer:
                 )
                 value = {
                     "id": value_id,
-                    "value": value_data.get("value", ""),
-                    "parameterId": parameter_id,
-                }
+                        "value": value_data.get("value", ""),
+                        "parameterId": parameter_id,
+                    }
                 self.data["parameters"]["parameter_values"][value_id] = value
 
         # Parameters API uses a different response format
@@ -1187,10 +1187,10 @@ class QTestMockServer:
 
         return {
             "offset": offset,
-            "limit": limit,
-            "total": len(datasets),
-            "data": paginated_datasets,
-        }
+                "limit": limit,
+                "total": len(datasets),
+                "data": paginated_datasets,
+            }
 
     def _handle_create_dataset(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """Handle POST /data-sets/create request."""
@@ -1204,11 +1204,11 @@ class QTestMockServer:
         # Create dataset
         dataset = {
             "id": dataset_id,
-            "name": data.get("name", ""),
-            "description": data.get("description", ""),
-            "projectId": data.get("projectId"),
-            "status": data.get("status", "ACTIVE"),
-        }
+                "name": data.get("name", ""),
+                "description": data.get("description", ""),
+                "projectId": data.get("projectId"),
+                "status": data.get("status", "ACTIVE"),
+            }
 
         # Store dataset
         self.data["parameters"]["datasets"][dataset_id] = dataset
@@ -1292,13 +1292,13 @@ class QTestMockServer:
         # Create rule
         rule = {
             "id": rule_id,
-            "name": data.get("name", ""),
-            "description": data.get("description", ""),
-            "projectId": data.get("projectId"),
-            "enabled": data.get("enabled", True),
-            "conditions": data.get("conditions", []),
-            "actions": data.get("actions", []),
-        }
+                "name": data.get("name", ""),
+                "description": data.get("description", ""),
+                "projectId": data.get("projectId"),
+                "enabled": data.get("enabled", True),
+                "conditions": data.get("conditions", []),
+                "actions": data.get("actions", []),
+            }
 
         # Store rule
         self.data["pulse"]["rules"][rule_id] = rule
@@ -1331,11 +1331,11 @@ class QTestMockServer:
         # Create feature
         feature = {
             "id": feature_id,
-            "name": data.get("name", ""),
-            "description": data.get("description", ""),
-            "projectId": data.get("projectId"),
-            "content": data.get("content", ""),
-        }
+                "name": data.get("name", ""),
+                "description": data.get("description", ""),
+                "projectId": data.get("projectId"),
+                "content": data.get("content", ""),
+            }
 
         # Store feature
         self.data["scenario"]["features"][feature_id] = feature

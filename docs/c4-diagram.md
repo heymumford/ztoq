@@ -28,9 +28,9 @@
                 ▼                                  
 ┌───────────────────────────────┐      ┌──────────────────────────┐
 │                               │      │                          │
-│   SQLite Database             │      │  qTest APIs              │
-│   (Intermediate Storage       │      │  (Manager, Parameters,   │
-│    & Migration State)         │      │   Pulse, Scenario)       │
+│   SQL Database               │      │  qTest APIs              │
+│   (Canonical Schema for      │      │  (Manager, Parameters,   │
+│    ETL & Migration State)    │      │   Pulse, Scenario)       │
 │                               │      │                          │
 └───────────────────────────────┘      └──────────────────────────┘
                                                    ▲
@@ -66,8 +66,8 @@
 │ ┌─────────────────────┐                       ┌────────────────────────┐            │
 │ │                     │                       │                        │            │
 │ │ Storage Module      │◄──────────────────────┤ Database Manager       │            │
-│ │ (SQLite             │                       │ (Handles SQL operations │            │
-│ │  implementation)    │                       │  and relationships)    │            │
+│ │ (Canonical SQL      │                       │ (SQLAlchemy ORM with   │            │
+│ │  schema with pools) │                       │  connection pooling)   │            │
 │ └─────────┬───────────┘                       └────────────────────────┘            │
 │           │                                                                         │
 │           │                                                                         │

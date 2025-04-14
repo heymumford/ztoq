@@ -1,0 +1,37 @@
+[flake8]
+max-line-length = 100
+exclude = 
+    venv/,
+    .git/,
+    __pycache__/,
+    *.egg-info/,
+    .pytest_cache/,
+    htmlcov/
+
+# Common ignores for our codebase
+# These are stylistic issues that we're choosing to ignore for now
+extend-ignore = 
+    # Docstrings and imports
+    E402,  # Module level import not at top of file (license headers and docstrings)
+    E304,  # Blank line found after function decorator
+
+    # Continuation line formatting
+    E121,  # continuation line under-indented for hanging indent
+    E122,  # continuation line missing indentation or outdented
+    E123,  # closing bracket does not match indentation of opening bracket's line
+    E125,  # continuation line with same indent as next logical line
+    E126,  # continuation line over-indented for hanging indent
+    E131,  # continuation line unaligned for hanging indent
+
+    # We prefer to allow binary operators at start of lines
+    W503   # line break before binary operator
+
+# Only report specific issues we really care about
+select =
+    # Critical issues to resolve:
+    F401,  # imported but unused
+    F821,  # undefined name
+    F841,  # local variable is assigned to but never used
+    
+    # Important but not critical:
+    E501   # line too long

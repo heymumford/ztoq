@@ -13,12 +13,12 @@ import json
 import tempfile
 from pathlib import Path
 from unittest.mock import patch, MagicMock
-
 from ztoq.test_generator import ZephyrTestGenerator
 from ztoq.openapi_parser import ZephyrApiSpecWrapper
 
-
 @pytest.fixture
+
+
 def mock_spec_wrapper():
     """Create a mock ZephyrApiSpecWrapper for testing."""
     mock_wrapper = MagicMock(spec=ZephyrApiSpecWrapper)
@@ -27,19 +27,19 @@ def mock_spec_wrapper():
     mock_wrapper.endpoints = {
         ("/testcases", "get"): {
             "path": "/testcases",
-            "method": "get",
-            "operation_id": "getTestCases",
-            "tags": ["test-cases"],
-            "parameters": [
+                "method": "get",
+                "operation_id": "getTestCases",
+                "tags": ["test-cases"],
+                "parameters": [
                 {
                     "name": "projectKey",
-                    "in": "query",
-                    "required": True,
-                    "schema": {"type": "string"},
-                }
+                        "in": "query",
+                        "required": True,
+                        "schema": {"type": "string"},
+                    }
             ],
-            "responses": {"200": {"description": "Success"}, "400": {"description": "Bad Request"}},
-        }
+                "responses": {"200": {"description": "Success"}, "400": {"description": "Bad Request"}},
+            }
     }
 
     # Setup mock methods
@@ -47,21 +47,23 @@ def mock_spec_wrapper():
     mock_wrapper.get_request_schema.return_value = None  # GET doesn't have request body
     mock_wrapper.get_response_schema.return_value = {
         "type": "object",
-        "properties": {
+            "properties": {
             "values": {"type": "array", "items": {"type": "object"}},
-            "total": {"type": "integer"},
-        },
-    }
+                "total": {"type": "integer"},
+            },
+        }
     mock_wrapper.generate_mock_data.return_value = {"test": "data"}
     mock_wrapper.generate_mock_response.return_value = {
         "values": [{"id": "1", "name": "Test"}],
-        "total": 1,
-    }
+            "total": 1,
+        }
 
     return mock_wrapper
 
 
 @pytest.fixture
+
+
 def test_generator(mock_spec_wrapper):
     """Create a test generator with mock wrapper."""
     return ZephyrTestGenerator(mock_spec_wrapper)
@@ -150,10 +152,10 @@ def test_export_test_suite_to_json(test_generator):
                 "GET /testcases": [
                     {
                         "name": "test_getTestCases_happy_path",
-                        "path": "/testcases",
-                        "method": "get",
-                        "expected_status": 200,
-                    }
+                            "path": "/testcases",
+                            "method": "get",
+                            "expected_status": 200,
+                        }
                 ]
             }
 
@@ -174,13 +176,13 @@ def test_generate_test_function(test_generator):
     """Test generation of a pytest function."""
     test = {
         "name": "test_getTestCases_happy_path",
-        "description": "Test happy path for GET /testcases",
-        "path": "/testcases",
-        "method": "get",
-        "params": {"projectKey": "TEST"},
-        "expected_status": 200,
-        "validate_schema": True,
-    }
+            "description": "Test happy path for GET /testcases",
+            "path": "/testcases",
+            "method": "get",
+            "params": {"projectKey": "TEST"},
+            "expected_status": 200,
+            "validate_schema": True,
+        }
 
     function_code = test_generator.generate_test_function(test)
 
@@ -206,13 +208,13 @@ def test_generate_test_function_error_case(test_generator):
     """Test generation of a pytest function for an error case."""
     test = {
         "name": "test_getTestCases_missing_param",
-        "description": "Test GET /testcases with missing parameter",
-        "path": "/testcases",
-        "method": "get",
-        "params": {},
-        "expected_status": 400,
-        "validate_schema": False,
-    }
+            "description": "Test GET /testcases with missing parameter",
+            "path": "/testcases",
+            "method": "get",
+            "params": {},
+            "expected_status": 400,
+            "validate_schema": False,
+        }
 
     function_code = test_generator.generate_test_function(test)
 
@@ -231,13 +233,13 @@ def test_generate_pytest_file(test_generator):
                 "GET /testcases": [
                     {
                         "name": "test_getTestCases_happy_path",
-                        "description": "Test happy path",
-                        "path": "/testcases",
-                        "method": "get",
-                        "params": {"projectKey": "TEST"},
-                        "expected_status": 200,
-                        "validate_schema": True,
-                    }
+                            "description": "Test happy path",
+                            "path": "/testcases",
+                            "method": "get",
+                            "params": {"projectKey": "TEST"},
+                            "expected_status": 200,
+                            "validate_schema": True,
+                        }
                 ]
             }
 
