@@ -19,12 +19,18 @@ Each API follows the qTest REST API conventions for endpoints, request formats,
 and response structures.
 """
 
+import copy
 import json
 import logging
+import random
 import re
+import time
 import uuid
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Union, Tuple
+
+# Global variable for test support
+DEBUG = False
 
 from pydantic import ValidationError
 
@@ -698,6 +704,499 @@ class QTestMockServer:
         for feature in features:
             self.data["scenario"]["features"][feature["id"]] = feature
 
+    # Custom field endpoints
+    def _handle_get_custom_fields(self, project_id: int, entity_type: str) -> List[Dict[str, Any]]:
+        """
+        Handle GET /projects/{projectId}/custom-fields endpoint.
+
+        Args:
+            project_id: The ID of the project
+            entity_type: The type of entity to get custom fields for (e.g., test-cases)
+
+        Returns:
+            List of custom fields
+        """
+        # Map entity_type path parameter to QTestCustomField.entityType
+        entity_type_map = {
+            "test-cases": "TEST_CASE",
+            "test-cycles": "TEST_CYCLE",
+            "test-runs": "TEST_RUN",
+            "test-logs": "TEST_LOG",
+            "requirements": "REQUIREMENT"
+        }
+
+        # Convert endpoint path to model entityType
+        model_entity_type = entity_type_map.get(entity_type)
+
+        if not model_entity_type:
+            return []
+
+        # Filter custom fields by project ID and entity type
+        custom_fields = [
+            cf for cf in self.data["manager"]["custom_fields"].values()
+            if cf.get("projectId") == project_id and cf.get("entityType") == model_entity_type
+        ]
+
+        return custom_fields
+
+    def _handle_create_custom_field(self, project_id: int, data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Handle POST /projects/{projectId}/custom-fields endpoint.
+
+        Args:
+            project_id: The ID of the project
+            data: The custom field data
+
+        Returns:
+            The created custom field data
+        """
+        # Add project ID if not provided
+        if "projectId" not in data:
+            data["projectId"] = project_id
+
+        # Validate custom field data if validation is enabled
+        if self.validation_mode:
+            is_valid, validated_data, error = self._validate_model(data, QTestCustomField)
+            if not is_valid:
+                return self._format_error_response(f"Invalid custom field data: {error}", 400)
+            data = validated_data.model_dump()
+
+        # Generate custom field ID
+        custom_field_id = max(self.data["manager"]["custom_fields"].keys(), default=0) + 1
+
+        # Create new custom field
+        custom_field = {
+            "id": custom_field_id,
+            "fieldName": data.get("fieldName", ""),
+            "fieldType": data.get("fieldType", "TEXT"),
+            "entityType": data.get("entityType", "TEST_CASE"),
+            "projectId": project_id,
+            "isRequired": data.get("isRequired", False),
+            "allowedValues": data.get("allowedValues", []),
+            "createdDate": datetime.now().isoformat(),
+            "lastModifiedDate": datetime.now().isoformat(),
+        }
+
+        # Store custom field
+        self.data["manager"]["custom_fields"][custom_field_id] = custom_field
+
+        # Log creation
+        logger.info(f"Created custom field: {custom_field_id} - {custom_field['fieldName']}")
+
+        return custom_field
+
+    def _handle_get_custom_field(self, custom_field_id: int) -> Dict[str, Any]:
+        """
+        Handle GET /projects/{projectId}/custom-fields/{customFieldId} endpoint.
+
+        Args:
+            custom_field_id: The ID of the custom field to retrieve
+
+        Returns:
+            The custom field data or an error message if not found
+        """
+        if custom_field_id in self.data["manager"]["custom_fields"]:
+            return self.data["manager"]["custom_fields"][custom_field_id]
+        else:
+            return self._format_error_response(f"Custom field not found: {custom_field_id}", 404)
+
+    def _handle_update_custom_field(self, custom_field_id: int, data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Handle PUT /projects/{projectId}/custom-fields/{customFieldId} endpoint.
+
+        Args:
+            custom_field_id: The ID of the custom field to update
+            data: The updated custom field data
+
+        Returns:
+            The updated custom field data or an error message if not found
+        """
+        if custom_field_id not in self.data["manager"]["custom_fields"]:
+            return self._format_error_response(f"Custom field not found: {custom_field_id}", 404)
+
+        # Get existing custom field
+        existing_field = self.data["manager"]["custom_fields"][custom_field_id]
+
+        # Create updated custom field by merging existing data with updates
+        updated_field = {**existing_field, **data}
+
+        # Update lastModifiedDate
+        updated_field["lastModifiedDate"] = datetime.now().isoformat()
+
+        # Validate if validation is enabled
+        if self.validation_mode:
+            is_valid, validated_data, error = self._validate_model(updated_field, QTestCustomField)
+            if not is_valid:
+                return self._format_error_response(f"Invalid custom field data: {error}", 400)
+            updated_field = validated_data.model_dump()
+
+        # Update custom field in data store
+        self.data["manager"]["custom_fields"][custom_field_id] = updated_field
+
+        # Log update
+        logger.info(f"Updated custom field: {custom_field_id} - {updated_field.get('fieldName', 'Unnamed')}")
+
+        return updated_field
+
+    def _handle_delete_custom_field(self, custom_field_id: int) -> Dict[str, Any]:
+        """
+        Handle DELETE /projects/{projectId}/custom-fields/{customFieldId} endpoint.
+
+        Args:
+            custom_field_id: The ID of the custom field to delete
+
+        Returns:
+            Success message or an error message if not found
+        """
+        if custom_field_id not in self.data["manager"]["custom_fields"]:
+            return self._format_error_response(f"Custom field not found: {custom_field_id}", 404)
+
+        # Delete custom field from data store
+        deleted_field = self.data["manager"]["custom_fields"].pop(custom_field_id)
+
+        # Log deletion
+        logger.info(f"Deleted custom field: {custom_field_id} - {deleted_field.get('fieldName', 'Unnamed')}")
+
+        return {"success": True, "message": f"Custom field {custom_field_id} deleted successfully"}
+
+    # Release management methods
+    def _handle_get_releases(self, project_id: int) -> Dict[str, Any]:
+        """
+        Handle GET /projects/{projectId}/releases endpoint.
+
+        Args:
+            project_id: The ID of the project
+
+        Returns:
+            Paginated list of releases
+        """
+        # Filter by project ID
+        releases = [
+            r for r in self.data["manager"]["releases"].values()
+            if r.get("projectId") == project_id
+        ]
+
+        # Apply default pagination
+        page = 1
+        page_size = 20
+
+        start = (page - 1) * page_size
+        end = start + page_size
+
+        paginated_releases = releases[start:end]
+
+        return {
+            "page": page,
+            "pageSize": page_size,
+            "total": len(releases),
+            "items": paginated_releases
+        }
+
+    def _handle_create_release(self, project_id: int, data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Handle POST /projects/{projectId}/releases endpoint.
+
+        Args:
+            project_id: The ID of the project
+            data: The release data
+
+        Returns:
+            The created release data
+        """
+        # Add project ID if not provided
+        if "projectId" not in data:
+            data["projectId"] = project_id
+
+        # Validate release data if validation is enabled
+        if self.validation_mode:
+            is_valid, validated_data, error = self._validate_model(data, QTestRelease)
+            if not is_valid:
+                return self._format_error_response(f"Invalid release data: {error}", 400)
+            data = validated_data.model_dump()
+
+        # Generate release ID
+        release_id = max(self.data["manager"]["releases"].keys(), default=0) + 1
+
+        # Create new release
+        release = {
+            "id": release_id,
+            "name": data.get("name", ""),
+            "description": data.get("description", ""),
+            "projectId": project_id,
+            "status": data.get("status", "ACTIVE"),
+            "startDate": data.get("startDate"),
+            "endDate": data.get("endDate"),
+            "createdDate": datetime.now().isoformat(),
+            "lastModifiedDate": datetime.now().isoformat(),
+        }
+
+        # Store release
+        self.data["manager"]["releases"][release_id] = release
+
+        # Log creation
+        logger.info(f"Created release: {release_id} - {release['name']}")
+
+        return release
+
+    def _handle_get_release(self, release_id: int) -> Dict[str, Any]:
+        """
+        Handle GET /projects/{projectId}/releases/{releaseId} endpoint.
+
+        Args:
+            release_id: The ID of the release to retrieve
+
+        Returns:
+            The release data or an error message if not found
+        """
+        if release_id in self.data["manager"]["releases"]:
+            return self.data["manager"]["releases"][release_id]
+        else:
+            return self._format_error_response(f"Release not found: {release_id}", 404)
+
+    def _handle_update_release(self, release_id: int, data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Handle PUT /projects/{projectId}/releases/{releaseId} endpoint.
+
+        Args:
+            release_id: The ID of the release to update
+            data: The updated release data
+
+        Returns:
+            The updated release data or an error message if not found
+        """
+        if release_id not in self.data["manager"]["releases"]:
+            return self._format_error_response(f"Release not found: {release_id}", 404)
+
+        # Get existing release
+        existing_release = self.data["manager"]["releases"][release_id]
+
+        # Create updated release by merging existing data with updates
+        updated_release = {**existing_release, **data}
+
+        # Update lastModifiedDate
+        updated_release["lastModifiedDate"] = datetime.now().isoformat()
+
+        # Validate if validation is enabled
+        if self.validation_mode:
+            is_valid, validated_data, error = self._validate_model(updated_release, QTestRelease)
+            if not is_valid:
+                return self._format_error_response(f"Invalid release data: {error}", 400)
+            updated_release = validated_data.model_dump()
+
+        # Update release in data store
+        self.data["manager"]["releases"][release_id] = updated_release
+
+        # Log update
+        logger.info(f"Updated release: {release_id} - {updated_release.get('name', 'Unnamed')}")
+
+        return updated_release
+
+    def _handle_delete_release(self, release_id: int) -> Dict[str, Any]:
+        """
+        Handle DELETE /projects/{projectId}/releases/{releaseId} endpoint.
+
+        Args:
+            release_id: The ID of the release to delete
+
+        Returns:
+            Success message or an error message if not found
+        """
+        if release_id not in self.data["manager"]["releases"]:
+            return self._format_error_response(f"Release not found: {release_id}", 404)
+
+        # Check for test cycles that use this release
+        test_cycles_using_release = [
+            tc for tc in self.data["manager"]["test_cycles"].values()
+            if tc.get("releaseId") == release_id
+        ]
+
+        if test_cycles_using_release:
+            return self._format_error_response(
+                f"Cannot delete release: {release_id} as it is used by {len(test_cycles_using_release)} test cycles",
+                400
+            )
+
+        # Delete release from data store
+        deleted_release = self.data["manager"]["releases"].pop(release_id)
+
+        # Log deletion
+        logger.info(f"Deleted release: {release_id} - {deleted_release.get('name', 'Unnamed')}")
+
+        return {"success": True, "message": f"Release {release_id} deleted successfully"}
+
+    # Dataset methods
+    def _handle_get_datasets(self, project_id: int) -> Dict[str, Any]:
+        """
+        Handle GET /data-sets (filtered by project ID) endpoint.
+
+        Args:
+            project_id: The project ID to filter by
+
+        Returns:
+            Datasets matching the query
+        """
+        # Filter by project ID
+        datasets = [
+            d for d in self.data["parameters"]["datasets"].values()
+            if d.get("projectId") == project_id
+        ]
+
+        return {
+            "status": "SUCCESS",
+            "data": datasets
+        }
+
+    def _handle_update_dataset(self, dataset_id: int, data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Handle PUT /data-sets/{datasetId} endpoint.
+
+        Args:
+            dataset_id: The ID of the dataset to update
+            data: The updated dataset data
+
+        Returns:
+            The updated dataset data or an error message
+        """
+        if dataset_id not in self.data["parameters"]["datasets"]:
+            return {"status": "ERROR", "message": f"Dataset not found: {dataset_id}"}
+
+        # Get existing dataset
+        existing_dataset = self.data["parameters"]["datasets"][dataset_id]
+
+        # Create updated dataset by merging existing data with updates
+        updated_dataset = {**existing_dataset, **data}
+
+        # Update lastModifiedDate
+        updated_dataset["lastModifiedDate"] = datetime.now().isoformat()
+
+        # Validate if validation is enabled
+        if self.validation_mode:
+            is_valid, validated_data, error = self._validate_model(updated_dataset, QTestDataset)
+            if not is_valid:
+                return {"status": "ERROR", "message": f"Invalid dataset data: {error}"}
+            updated_dataset = validated_data.model_dump()
+
+        # Update dataset in data store
+        self.data["parameters"]["datasets"][dataset_id] = updated_dataset
+
+        # Log update
+        logger.info(f"Updated dataset: {dataset_id} - {updated_dataset.get('name', 'Unnamed')}")
+
+        return {
+            "status": "SUCCESS",
+            "data": updated_dataset
+        }
+
+    def _handle_delete_dataset(self, dataset_id: int) -> Dict[str, Any]:
+        """
+        Handle DELETE /data-sets/{datasetId} endpoint.
+
+        Args:
+            dataset_id: The ID of the dataset to delete
+
+        Returns:
+            Success message or an error message
+        """
+        if dataset_id not in self.data["parameters"]["datasets"]:
+            return {"status": "ERROR", "message": f"Dataset not found: {dataset_id}"}
+
+        # Delete dataset rows first
+        self.data["parameters"]["dataset_rows"] = {
+            k: v for k, v in self.data["parameters"]["dataset_rows"].items()
+            if v.get("datasetId") != dataset_id
+        }
+
+        # Delete dataset from data store
+        deleted_dataset = self.data["parameters"]["datasets"].pop(dataset_id)
+
+        # Log deletion
+        logger.info(f"Deleted dataset: {dataset_id} - {deleted_dataset.get('name', 'Unnamed')}")
+
+        return {
+            "status": "SUCCESS",
+            "message": f"Dataset {dataset_id} deleted successfully"
+        }
+
+    def _handle_update_dataset_row(self, dataset_id: int, row_id: int, data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Handle PUT /data-sets/{datasetId}/rows/{rowId} endpoint.
+
+        Args:
+            dataset_id: The ID of the dataset
+            row_id: The ID of the row to update
+            data: The updated row data
+
+        Returns:
+            The updated row data or an error message
+        """
+        if dataset_id not in self.data["parameters"]["datasets"]:
+            return {"status": "ERROR", "message": f"Dataset not found: {dataset_id}"}
+
+        if row_id not in self.data["parameters"]["dataset_rows"]:
+            return {"status": "ERROR", "message": f"Dataset row not found: {row_id}"}
+
+        # Check if row belongs to dataset
+        row = self.data["parameters"]["dataset_rows"][row_id]
+        if row.get("datasetId") != dataset_id:
+            return {"status": "ERROR", "message": f"Row {row_id} does not belong to dataset {dataset_id}"}
+
+        # Create updated row by merging existing data with updates
+        updated_row = {**row, **data}
+
+        # Update lastModifiedDate
+        updated_row["lastModifiedDate"] = datetime.now().isoformat()
+
+        # Validate if validation is enabled
+        if self.validation_mode:
+            is_valid, validated_data, error = self._validate_model(updated_row, QTestDatasetRow)
+            if not is_valid:
+                return {"status": "ERROR", "message": f"Invalid dataset row data: {error}"}
+            updated_row = validated_data.model_dump()
+
+        # Update row in data store
+        self.data["parameters"]["dataset_rows"][row_id] = updated_row
+
+        # Log update
+        logger.info(f"Updated dataset row: {row_id} for dataset: {dataset_id}")
+
+        return {
+            "status": "SUCCESS",
+            "data": updated_row
+        }
+
+    def _handle_delete_dataset_row(self, dataset_id: int, row_id: int) -> Dict[str, Any]:
+        """
+        Handle DELETE /data-sets/{datasetId}/rows/{rowId} endpoint.
+
+        Args:
+            dataset_id: The ID of the dataset
+            row_id: The ID of the row to delete
+
+        Returns:
+            Success message or an error message
+        """
+        if dataset_id not in self.data["parameters"]["datasets"]:
+            return {"status": "ERROR", "message": f"Dataset not found: {dataset_id}"}
+
+        if row_id not in self.data["parameters"]["dataset_rows"]:
+            return {"status": "ERROR", "message": f"Dataset row not found: {row_id}"}
+
+        # Check if row belongs to dataset
+        row = self.data["parameters"]["dataset_rows"][row_id]
+        if row.get("datasetId") != dataset_id:
+            return {"status": "ERROR", "message": f"Row {row_id} does not belong to dataset {dataset_id}"}
+
+        # Delete row from data store
+        self.data["parameters"]["dataset_rows"].pop(row_id)
+
+        # Log deletion
+        logger.info(f"Deleted dataset row: {row_id} from dataset: {dataset_id}")
+
+        return {
+            "status": "SUCCESS",
+            "message": f"Dataset row {row_id} deleted successfully"
+        }
+
     # API route handlers
     def handle_request(
         self,
@@ -832,8 +1331,20 @@ class QTestMockServer:
         logger.debug(f"Handling Manager API request: {method} {endpoint}")
 
         # Projects endpoints
-        if endpoint.endswith("/projects") and method == "GET":
-            return self._handle_get_projects(params)
+        if endpoint == "/projects":
+            if method == "GET":
+                return self._handle_get_projects(params)
+            elif method == "POST":
+                return self._handle_create_project(data)
+        elif endpoint.startswith("/projects/") and endpoint.count("/") == 2:
+            # Specific project endpoint like /projects/123
+            project_id = int(endpoint.split("/projects/")[1])
+            if method == "GET":
+                return self._handle_get_project(project_id)
+            elif method == "PUT":
+                return self._handle_update_project(project_id, data)
+            elif method == "DELETE":
+                return self._handle_delete_project(project_id)
 
         # Test cases endpoints
         elif "/test-cases" in endpoint:
@@ -901,6 +1412,53 @@ class QTestMockServer:
             elif method == "POST" and endpoint.endswith("/modules"):
                 # Create module
                 return self._handle_create_module(project_id, data)
+
+        # Custom fields endpoints
+        elif "/custom-fields" in endpoint:
+            if method == "GET":
+                if "/custom-fields/" in endpoint and not endpoint.endswith("/custom-fields"):
+                    # Get single custom field
+                    custom_field_id = int(endpoint.split("/custom-fields/")[1].split("/")[0])
+                    return self._handle_get_custom_field(custom_field_id)
+                else:
+                    # Get custom fields by entity type
+                    entity_type = endpoint.split("/")[-1]  # Extract the last segment like "test-cases"
+                    if entity_type == "custom-fields":
+                        entity_type = params.get("entity_type", "test-cases")
+                    return self._handle_get_custom_fields(project_id, entity_type)
+            elif method == "POST" and endpoint.endswith("/custom-fields"):
+                # Create custom field
+                return self._handle_create_custom_field(project_id, data)
+            elif method == "PUT" and "/custom-fields/" in endpoint:
+                # Update custom field
+                custom_field_id = int(endpoint.split("/custom-fields/")[1].split("/")[0])
+                return self._handle_update_custom_field(custom_field_id, data)
+            elif method == "DELETE" and "/custom-fields/" in endpoint:
+                # Delete custom field
+                custom_field_id = int(endpoint.split("/custom-fields/")[1].split("/")[0])
+                return self._handle_delete_custom_field(custom_field_id)
+
+        # Release endpoints
+        elif "/releases" in endpoint:
+            if method == "GET":
+                if "/releases/" in endpoint and not endpoint.endswith("/releases"):
+                    # Get single release
+                    release_id = int(endpoint.split("/releases/")[1].split("/")[0])
+                    return self._handle_get_release(release_id)
+                else:
+                    # Get multiple releases
+                    return self._handle_get_releases(project_id)
+            elif method == "POST" and endpoint.endswith("/releases"):
+                # Create release
+                return self._handle_create_release(project_id, data)
+            elif method == "PUT" and "/releases/" in endpoint:
+                # Update release
+                release_id = int(endpoint.split("/releases/")[1].split("/")[0])
+                return self._handle_update_release(release_id, data)
+            elif method == "DELETE" and "/releases/" in endpoint:
+                # Delete release
+                release_id = int(endpoint.split("/releases/")[1].split("/")[0])
+                return self._handle_delete_release(release_id)
 
         # Attachment endpoints
         elif "/blob-handles" in endpoint and method == "POST":
@@ -1098,6 +1656,213 @@ class QTestMockServer:
                 "total": len(projects),
                 "items": paginated_projects,
             }
+
+    def _handle_get_project(self, project_id: int) -> dict[str, Any]:
+        """
+        Handle GET /projects/{projectId} request.
+
+        Args:
+            project_id: The ID of the project to retrieve
+
+        Returns:
+            The project data or an error message if not found
+        """
+        for project in self.data["manager"]["projects"]:
+            if project["id"] == project_id:
+                return project
+
+        return self._format_error_response(f"Project not found: {project_id}", 404)
+
+    def _handle_create_project(self, data: dict[str, Any]) -> dict[str, Any]:
+        """
+        Handle POST /projects request.
+
+        Args:
+            data: The project data to create
+
+        Returns:
+            The created project data
+        """
+        # Validate project data if validation is enabled
+        if self.validation_mode:
+            is_valid, validated_data, error = self._validate_model(data, QTestProject)
+            if not is_valid:
+                return self._format_error_response(f"Invalid project data: {error}", 400)
+            data = validated_data.model_dump()
+
+        # Generate project ID if not provided
+        if "id" not in data:
+            data["id"] = max([p["id"] for p in self.data["manager"]["projects"]], default=0) + 1
+
+        # Add created/updated timestamps if not provided
+        now = datetime.now().isoformat()
+        if "createdDate" not in data:
+            data["createdDate"] = now
+        if "lastModifiedDate" not in data:
+            data["lastModifiedDate"] = now
+
+        # Add project to data store
+        self.data["manager"]["projects"].append(data)
+
+        # Log creation
+        logger.info(f"Created project: {data['id']} - {data.get('name', 'Unnamed')}")
+
+        return data
+
+    def _handle_update_project(self, project_id: int, data: dict[str, Any]) -> dict[str, Any]:
+        """
+        Handle PUT /projects/{projectId} request.
+
+        Args:
+            project_id: The ID of the project to update
+            data: The updated project data
+
+        Returns:
+            The updated project data or an error message if not found
+        """
+        # Find project to update
+        project_index = None
+        for i, project in enumerate(self.data["manager"]["projects"]):
+            if project["id"] == project_id:
+                project_index = i
+                break
+
+        if project_index is None:
+            return self._format_error_response(f"Project not found: {project_id}", 404)
+
+        # Get existing project
+        existing_project = self.data["manager"]["projects"][project_index]
+
+        # Create updated project by merging existing data with updates
+        updated_project = {**existing_project, **data}
+
+        # Update lastModifiedDate
+        updated_project["lastModifiedDate"] = datetime.now().isoformat()
+
+        # Validate if validation is enabled
+        if self.validation_mode:
+            is_valid, validated_data, error = self._validate_model(updated_project, QTestProject)
+            if not is_valid:
+                return self._format_error_response(f"Invalid project data: {error}", 400)
+            updated_project = validated_data.model_dump()
+
+        # Update project in data store
+        self.data["manager"]["projects"][project_index] = updated_project
+
+        # Log update
+        logger.info(f"Updated project: {project_id} - {updated_project.get('name', 'Unnamed')}")
+
+        return updated_project
+
+    def _handle_delete_project(self, project_id: int) -> dict[str, Any]:
+        """
+        Handle DELETE /projects/{projectId} request.
+
+        Args:
+            project_id: The ID of the project to delete
+
+        Returns:
+            Success message or an error message if not found
+        """
+        # Find project to delete
+        project_index = None
+        for i, project in enumerate(self.data["manager"]["projects"]):
+            if project["id"] == project_id:
+                project_index = i
+                break
+
+        if project_index is None:
+            return self._format_error_response(f"Project not found: {project_id}", 404)
+
+        # Delete project from data store
+        deleted_project = self.data["manager"]["projects"].pop(project_index)
+
+        # Log deletion
+        logger.info(f"Deleted project: {project_id} - {deleted_project.get('name', 'Unnamed')}")
+
+        # Delete associated data
+        self._delete_project_data(project_id)
+
+        return {"success": True, "message": f"Project {project_id} deleted successfully"}
+
+    def _delete_project_data(self, project_id: int) -> None:
+        """
+        Delete all data associated with a project.
+
+        Args:
+            project_id: The ID of the project to delete data for
+        """
+        # Delete modules for project
+        self.data["manager"]["modules"] = {
+            k: v for k, v in self.data["manager"]["modules"].items()
+            if v.get("projectId") != project_id
+        }
+
+        # Delete test cases for project
+        self.data["manager"]["test_cases"] = {
+            k: v for k, v in self.data["manager"]["test_cases"].items()
+            if v.get("projectId") != project_id
+        }
+
+        # Delete test cycles for project
+        self.data["manager"]["test_cycles"] = {
+            k: v for k, v in self.data["manager"]["test_cycles"].items()
+            if v.get("projectId") != project_id
+        }
+
+        # Delete test runs for project
+        self.data["manager"]["test_runs"] = {
+            k: v for k, v in self.data["manager"]["test_runs"].items()
+            if v.get("projectId") != project_id
+        }
+
+        # Delete releases for project
+        self.data["manager"]["releases"] = {
+            k: v for k, v in self.data["manager"]["releases"].items()
+            if v.get("projectId") != project_id
+        }
+
+        # Delete parameters for project
+        self.data["parameters"]["parameters"] = {
+            k: v for k, v in self.data["parameters"]["parameters"].items()
+            if v.get("projectId") != project_id
+        }
+
+        # Delete datasets for project
+        self.data["parameters"]["datasets"] = {
+            k: v for k, v in self.data["parameters"]["datasets"].items()
+            if v.get("projectId") != project_id
+        }
+
+        # Delete pulse rules for project
+        self.data["pulse"]["rules"] = {
+            k: v for k, v in self.data["pulse"]["rules"].items()
+            if v.get("projectId") != project_id
+        }
+
+        # Delete pulse triggers for project
+        self.data["pulse"]["triggers"] = {
+            k: v for k, v in self.data["pulse"]["triggers"].items()
+            if v.get("projectId") != project_id
+        }
+
+        # Delete pulse actions for project
+        self.data["pulse"]["actions"] = {
+            k: v for k, v in self.data["pulse"]["actions"].items()
+            if v.get("projectId") != project_id
+        }
+
+        # Delete pulse constants for project
+        self.data["pulse"]["constants"] = {
+            k: v for k, v in self.data["pulse"]["constants"].items()
+            if v.get("projectId") != project_id
+        }
+
+        # Delete scenario features for project
+        self.data["scenario"]["features"] = {
+            k: v for k, v in self.data["scenario"]["features"].items()
+            if v.get("projectId") != project_id
+        }
 
     def _handle_get_test_cases(self, project_id: int, params: dict[str, Any]) -> dict[str, Any]:
         """Handle GET /projects/{projectId}/test-cases request."""
