@@ -102,8 +102,8 @@
 - [x] **[TRANSFORM-1]** Create entity mapping definitions with validation rules
 - [x] **[TEST-UNIT-17]** Write unit tests for test case transformer
 - [x] **[TRANSFORM-2]** Implement test case transformer with error boundaries
-- [ ] **[TEST-UNIT-18]** Write unit tests for test cycle transformer
-- [ ] **[TRANSFORM-3]** Implement test cycle transformer with validation
+- [x] **[TEST-UNIT-18]** Write unit tests for test cycle transformer
+- [x] **[TRANSFORM-3]** Implement test cycle transformer with validation
 - [ ] **[TEST-UNIT-19]** Write unit tests for test execution transformer
 - [ ] **[TRANSFORM-4]** Implement test execution transformer with data normalization
 - [ ] **[TEST-UNIT-20]** Write unit tests for custom field mapper
@@ -274,6 +274,8 @@
 - [x] **[TEST-INFRA-3]** Implement test harness for API mocking
 - [x] **[TEST-UNIT-17]** Write unit tests for test case transformer
 - [x] **[TRANSFORM-2]** Implement test case transformer with error boundaries
+- [x] **[TEST-UNIT-18]** Write unit tests for test cycle transformer
+- [x] **[TRANSFORM-3]** Implement test cycle transformer with validation
 - [x] **[TEST-UNIT-22]** Write unit tests for qTest authentication
 - [x] **[QTEST-2]** Implement qTest authentication and token management *(Added comprehensive token management with bearer token and username/password authentication, automatic token refresh, rate limit handling, and debugging tools)*
 - [x] **[TEST-UNIT-3]** Write unit tests for Zephyr API client *(Added comprehensive tests for retry logic, circuit breaker, and error handling)*
