@@ -251,11 +251,11 @@ class QTestClient:
             if token.lower().startswith("bearer "):
                 # Extract just the token part, removing "bearer "
                 self.auth_token = token[7:].strip()
-                self.headers["Authorization"] = f"bearer {self.auth_token}"
+                self.headers["Authorization"] = f"Bearer {self.auth_token}"
             else:
-                # Use token as-is
+                # Use token as-is but add Bearer prefix
                 self.auth_token = token
-                self.headers["Authorization"] = f"bearer {self.auth_token}"
+                self.headers["Authorization"] = f"Bearer {self.auth_token}"
 
             logger.info(f"Using provided bearer token for {self.api_type} API")
             logger.debug(f"Authorization header: {self.headers['Authorization']}")
@@ -317,8 +317,8 @@ class QTestClient:
             if not self.auth_token:
                 raise ValueError("No access token returned from authentication endpoint")
 
-            # Set authorization header with proper token format
-            self.headers["Authorization"] = f"{token_type} {self.auth_token}"
+            # Set authorization header with proper token format, always using "Bearer" with proper capitalization
+            self.headers["Authorization"] = f"Bearer {self.auth_token}"
 
             logger.info(f"Successfully authenticated with {self.api_type} API")
             logger.debug(f"Token type: {token_type}, expires in: {data.get('expires_in', 'unknown')} seconds")
