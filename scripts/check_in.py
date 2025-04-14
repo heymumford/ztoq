@@ -18,6 +18,7 @@ ROOT_DIR = Path(__file__).parent.parent.absolute()
 VERSION_PATH = ROOT_DIR / "ztoq" / "__init__.py"
 BUILD_INFO_PATH = ROOT_DIR / ".build_info.json"
 PYPROJECT_PATH = ROOT_DIR / "pyproject.toml"
+SPHINX_CONF_PATH = ROOT_DIR / "docs" / "sphinx" / "source" / "conf.py"
 
 
 def run_command(cmd: List[str], cwd: Optional[Path] = None) -> Tuple[int, str, str]:
@@ -57,7 +58,9 @@ def get_next_build_number() -> int:
 
 
 def update_version(new_version: str) -> bool:
-    """Update the version in the __init__.py file and pyproject.toml."""
+    """Update the version in the __init__.py file, pyproject.toml, and Sphinx conf.py."""
+    success = True
+    
     # Update __init__.py
     if VERSION_PATH.exists():
         with open(VERSION_PATH, "r") as f:
@@ -78,6 +81,7 @@ def update_version(new_version: str) -> bool:
             print(f"Version in {VERSION_PATH} already set to {new_version}")
     else:
         print(f"Warning: {VERSION_PATH} not found, cannot update version")
+        success = False
     
     # Update pyproject.toml
     if PYPROJECT_PATH.exists():
@@ -95,13 +99,35 @@ def update_version(new_version: str) -> bool:
             with open(PYPROJECT_PATH, "w") as f:
                 f.write(new_content)
             print(f"Updated version in {PYPROJECT_PATH} to {new_version}")
-            return True
         else:
             print(f"Version in {PYPROJECT_PATH} already set to {new_version}")
-            return True
     else:
         print(f"Warning: {PYPROJECT_PATH} not found, cannot update version")
-        return False
+        success = False
+    
+    # Update Sphinx conf.py
+    if SPHINX_CONF_PATH.exists():
+        with open(SPHINX_CONF_PATH, "r") as f:
+            content = f.read()
+        
+        # Replace version in Sphinx conf.py
+        new_content = re.sub(
+            r'release\s*=\s*["\']([^"\']+)["\']',
+            f'release = "{new_version}"',
+            content
+        )
+        
+        if new_content != content:
+            with open(SPHINX_CONF_PATH, "w") as f:
+                f.write(new_content)
+            print(f"Updated version in {SPHINX_CONF_PATH} to {new_version}")
+        else:
+            print(f"Version in {SPHINX_CONF_PATH} already set to {new_version}")
+    else:
+        print(f"Warning: {SPHINX_CONF_PATH} not found, cannot update version")
+        # Don't fail the process just because Sphinx conf is missing
+    
+    return success
 
 
 def clean_commit_message(message: str) -> str:

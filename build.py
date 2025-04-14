@@ -31,6 +31,7 @@ class BuildCommand(Enum):
     DOCS = "docs"
     DOCS_CHECK = "docs-check"
     BUILD = "build"
+    SYNC_VERSIONS = "sync-versions"
     ALL = "all"
 
 
@@ -116,12 +117,21 @@ def check_docs_naming_convention() -> bool:
     return True
 
 
+def sync_versions() -> bool:
+    """Synchronize version numbers across different files."""
+    return run_command(["python", "scripts/sync_versions.py"])
+
+
 def generate_docs() -> bool:
     """Generate documentation."""
     # First, check the documentation naming convention
     if not check_docs_naming_convention():
         print("Warning: Some documentation files don't follow the naming convention.")
         # Continue anyway, but print a warning
+    
+    # Synchronize versions before generating documentation
+    if not sync_versions():
+        print("Warning: Failed to synchronize versions, continuing anyway.")
     
     # Generate API documentation
     if not run_command(["sphinx-apidoc", "-o", "docs/sphinx/source/api", "ztoq", "--force"]):
@@ -140,6 +150,7 @@ def run_all() -> bool:
     """Run all build steps."""
     steps = [
         ("Cleaning", clean),
+        ("Synchronizing versions", sync_versions),
         ("Linting", lint),
         ("Type checking", type_check),
         ("Running unit tests", lambda: test(TestLevel.UNIT)),
@@ -200,6 +211,8 @@ def main() -> int:
         success = check_docs_naming_convention()
     elif command == BuildCommand.BUILD:
         success = build()
+    elif command == BuildCommand.SYNC_VERSIONS:
+        success = sync_versions()
     elif command == BuildCommand.ALL:
         success = run_all()
     return 0 if success else 1
