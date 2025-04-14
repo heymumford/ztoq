@@ -196,7 +196,13 @@ def verify_qtest_token(timeout_seconds=15, no_verify_ssl=False):
                     logger.info("✅ qTest API token is valid and working correctly.")
                     return True
                 else:
+                    # Check the error in the logs to provide more specific messages
                     logger.error("❌ qTest API token verification failed.")
+                    logger.info("Try checking:")
+                    logger.info("1. Network connectivity to the qTest server")
+                    logger.info("2. Correct URL (format: https://instance.qtestnet.com or https://qtest.yourdomain.com)")
+                    logger.info("3. Token validity and permissions")
+                    logger.info("4. If SSL errors occur, try the --no-verify-ssl option (use with caution)")
                     return False
             finally:
                 # Restore original request function
