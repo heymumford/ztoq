@@ -113,17 +113,59 @@ This document details the mapping of entities between Zephyr Scale and qTest, in
 | `MULTISELECT` | `STRING` | Join values with delimiter |
 | `NUMBER` | `NUMBER` | Direct mapping |
 | `DATE` | `DATE` | Format conversion if needed |
-| `USER` | `STRING` | Map to username or ID |
+| `USER` | `STRING` | Extract username or display name |
+| `TABLE` | `STRING` | Format as tabular text with headers and rows |
+| `HIERARCHICAL_SELECT` | `STRING` | Extract hierarchy path as delimited text |
+| `COMPONENT` | `STRING` | Extract component names |
+| `VERSION` | `STRING` | Extract version string |
+| `LABEL` | `STRING` | Join multiple labels with delimiter |
+| `SPRINT` | `STRING` | Extract sprint name |
 
 ### Special Custom Fields
 
 | Zephyr Field | qTest Field | Conversion Logic |
 |--------------|-------------|------------------|
-| `Epic Link` | `Epic Link` | Map to corresponding qTest field |
+| `Epic Link` | `Epic_Link` | Map to corresponding qTest field |
 | `Components` | `Components` | Split/join as needed |
 | `Labels` | `Tags` | Split/join as needed |
-| `Sprint` | `Sprint/Release` | Map to appropriate qTest structure |
+| `Sprint` | `Sprint_Release` | Map to appropriate qTest structure |
 | `Automated` | `Automation` | Map boolean to qTest automation status |
+| `Test Type` | `Test_Type` | Direct mapping |
+| `Severity` | `Severity` | Direct mapping |
+| `Risk Level` | `Risk_Level` | Direct mapping |
+
+### Status Mapping
+
+| Zephyr Status | qTest Status | Notes |
+|--------------|-------------|-------|
+| `PASS` | `PASSED` | |
+| `FAIL` | `FAILED` | |
+| `WIP` | `IN_PROGRESS` | |
+| `BLOCKED` | `BLOCKED` | |
+| `NOT EXECUTED` | `NOT_RUN` | |
+| `UNEXECUTED` | `NOT_RUN` | |
+| `PASS WITH WARNINGS` | `PASSED` | Mapped to same target status |
+| `CONDITIONAL PASS` | `PASSED` | Mapped to same target status |
+| `IN PROGRESS` | `IN_PROGRESS` | |
+| `EXECUTING` | `IN_PROGRESS` | |
+| `ABORTED` | `BLOCKED` | |
+| `CANCELED` | `NOT_RUN` | |
+| `PENDING` | `NOT_RUN` | |
+
+### Priority Mapping
+
+| Zephyr Priority | qTest Priority | Notes |
+|--------------|-------------|-------|
+| `HIGHEST` | `CRITICAL` | |
+| `HIGH` | `HIGH` | |
+| `MEDIUM` | `MEDIUM` | |
+| `LOW` | `LOW` | |
+| `LOWEST` | `TRIVIAL` | |
+| `BLOCKER` | `CRITICAL` | Mapped to same target priority |
+| `CRITICAL` | `CRITICAL` | |
+| `MAJOR` | `HIGH` | Mapped to same target priority |
+| `MINOR` | `LOW` | Mapped to same target priority |
+| `TRIVIAL` | `TRIVIAL` | |
 
 ## Entity Relationships
 

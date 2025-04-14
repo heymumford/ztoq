@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "ztoq"
-version = "0.3.2"
+version = "0.3.3"
 description = "A Python tool that extracts test data from Zephyr Scale and migrates it to qTest"
 authors = ["Eric C. Mumford (@heymumford)"]
 readme = "README.md"
@@ -32,6 +32,18 @@ httpx = "^0.28.1"
 types-pyyaml = "^6.0.12.20250402"
 types-requests = "^2.32.0.20250328"
 uvicorn = "^0.34.1"
+ruff = "^0.0.292"
+isort = "^5.12.0"
+pre-commit = "^3.3.3"
+bandit = "^1.7.5"
+safety = "^2.3.5"
+pydocstyle = "^6.3.0"
+interrogate = "^1.5.0"
+radon = "^6.0.1"
+xenon = "^0.9.0"
+docformatter = "^1.7.5"
+pylint = "^3.0.1"
+pytest-benchmark = "^4.0.0"
 
 [tool.poetry.group.docs.dependencies]
 sphinx = "^8.2"
@@ -49,6 +61,7 @@ markers = [
     "unit: marks tests as unit tests",
     "integration: marks tests as integration tests",
     "system: marks tests as system tests",
+    "docker: marks tests related to Docker functionality",
 ]
 
 [tool.poetry.scripts]
@@ -60,6 +73,139 @@ target-version = ["py311"]
 include = '\.pyi?$'
 
 # flake8 configuration moved to setup.cfg
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+select = [
+    "E",   # pycodestyle errors
+    "F",   # pyflakes
+    "W",   # pycodestyle warnings
+    "C",   # flake8-comprehensions
+    "B",   # flake8-bugbear
+    "I",   # isort
+    "N",   # pep8-naming
+    "UP",  # pyupgrade
+    "S",   # flake8-bandit
+    "A",   # flake8-builtins
+    "T",   # flake8-print
+    "PT",  # flake8-pytest-style
+    "RET", # flake8-return
+    "SIM", # flake8-simplify
+]
+ignore = [
+    "E501",  # line too long (handled by black)
+    "S101",  # use of assert (acceptable in test files)
+    "B008",  # function call in argument defaults (common pattern in FastAPI)
+    "N815",  # mixed-case variable in class scope (common in SQLAlchemy models)
+    "T201",  # print statements (acceptable in CLI tools)
+    "S104",  # possible binding to all interfaces (acceptable in dev context)
+]
+# Allow autofix for all enabled rules (when `--fix`) is provided
+fixable = ["ALL"]
+unfixable = []
+
+[tool.ruff.per-file-ignores]
+"tests/**/*.py" = [
+    "S101",  # Allow assert in tests
+    "T201",  # Allow print in tests
+    "B011",  # Allow assert False in tests
+    "PT012", # Allow pytest.raises() without match
+]
+"ztoq/cli.py" = ["T201"] # Allow print statements in CLI
+"ztoq/main.py" = ["T201"] # Allow print statements in main
+
+[tool.ruff.isort]
+known-first-party = ["ztoq"]
+known-third-party = ["pydantic", "fastapi", "sqlalchemy", "pytest", "typer", "requests"]
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+disallow_untyped_decorators = true
+check_untyped_defs = true
+disallow_any_generics = false
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+exclude = [
+    '^tests/.*$',
+    '^scripts/.*$',
+]
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+
+[tool.bandit]
+exclude_dirs = ["tests", "venv", "scripts"]
+skips = ["B101"]  # Skip assert detection
+
+[tool.interrogate]
+ignore-init-method = true
+ignore-init-module = true
+ignore-magic = true
+ignore-semiprivate = true
+ignore-private = true
+ignore-property-decorators = true
+ignore-module = true
+ignore-nested-functions = true
+ignore-nested-classes = true
+ignore-setters = true
+fail-under = 80  # Minimum percentage of docstring coverage
+exclude = ["tests", "venv", "scripts", "examples"]
+verbose = 0
+omit-covered-files = false
+
+[tool.docformatter]
+recursive = true
+make-summary-multi-line = true
+pre-summary-newline = true
+wrap-descriptions = 80
+
+[tool.pylint.master]
+ignore = ["tests", "venv", "scripts"]
+ignore-patterns = ["^\\.#"]
+extension-pkg-whitelist = ["pydantic"]
+
+[tool.pylint.messages_control]
+disable = [
+    "missing-module-docstring",
+    "too-few-public-methods",
+    "too-many-arguments",
+    "too-many-instance-attributes",
+    "too-many-locals",
+    "invalid-name",
+]
+
+[tool.pytest.benchmarks]
+min-time = 0.1
+min-rounds = 5
+max-time = 1.0
+timer = "time.perf_counter"
+warmup = true
+
+[tool.coverage.run]
+source = ["ztoq"]
+omit = ["tests/*", "venv/*", "scripts/*", "examples/*"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "pass",
+    "raise ImportError",
+]
+show_missing = true
+fail_under = 80
 
 [build-system]
 requires = ["poetry-core"]

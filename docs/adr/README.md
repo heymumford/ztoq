@@ -26,6 +26,7 @@ ADRs are documents that capture an important architectural decision made along w
 | [ADR-014](014-database-platform-strategy.md) | Database Platform Strategy | Accepted | 2025-04-13 |
 | [ADR-015](015-strategic-design-preferences.md) | Strategic Design Preferences | Accepted | 2025-04-13 |
 | [ADR-016](016-anti-fragile-and-black-swan-concepts.md) | Antifragile and Black Swan Design Principles | Accepted | 2025-04-13 |
+| [ADR-017](017-enhanced-custom-field-mapping.md) | Enhanced Custom Field Mapping for Migration | Accepted | 2025-04-14 |
 
 ---
 *Copyright (c) 2025 Eric C. Mumford (@heymumford) - Licensed under [MIT License](../../LICENSE)*
