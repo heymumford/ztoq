@@ -53,7 +53,7 @@ We'll use a pyproject.toml file at the root of the project with this structure:
 name = "ztoq"
 version = "0.1.0"
 description = "Zephyr to qTest migration tool"
-authors = ["Your Name <your.email@example.com>"]
+authors = ["Eric C. Mumford (@heymumford)"]
 readme = "README.md"
 packages = [{include = "ztoq"}]
 

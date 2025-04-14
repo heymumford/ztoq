@@ -14,9 +14,9 @@ sys.path.insert(0, os.path.abspath("../../../"))
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 project = "ztoq"
-copyright = "2025, ztoq Team"
-author = "ztoq Team"
-release = "0.1.0"
+copyright = "2025, Eric C. Mumford (@heymumford)"
+author = "Eric C. Mumford (@heymumford)"
+release = "0.3.1"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration

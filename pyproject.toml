@@ -2,7 +2,7 @@
 name = "ztoq"
 version = "0.3.1"
 description = "A Python tool that extracts test data from Zephyr Scale and migrates it to qTest"
-authors = ["Your Name <your.email@example.com>"]
+authors = ["Eric C. Mumford (@heymumford)"]
 readme = "README.md"
 packages = [{include = "ztoq"}]
 
