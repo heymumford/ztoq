@@ -12,22 +12,9 @@ import mimetypes
 import logging
 import json
 import os
-
-from ztoq.models import (
-    ZephyrConfig,
-    Project,
-    Case,
-    CycleInfo,
-    Plan,
-    Execution,
-    Folder,
-    Status,
-    Priority,
-    Environment,
-    Attachment,
-    PaginatedResponse,
-)
+from ztoq.models import ZephyrConfig, Project, Case, CycleInfo, Plan, Execution, Folder, Status, Priority, Environment, Attachment, PaginatedResponse
 from ztoq.openapi_parser import load_openapi_spec
+
 
 T = TypeVar("T")
 

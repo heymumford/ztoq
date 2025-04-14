@@ -11,11 +11,9 @@ Unit tests for the data_fetcher module.
 import pytest
 from unittest.mock import MagicMock, patch
 from typing import Dict, List
-
-from ztoq.models import (
-    ZephyrConfig,
-    Project,
-    Case,
+from ztoq.models import ZephyrConfig, Project, Case
+from ztoq.zephyr_client import ZephyrClient
+from ztoq.data_fetcher import (
     CycleInfo,
     Execution,
     Folder,
@@ -23,8 +21,8 @@ from ztoq.models import (
     Priority,
     Environment,
 )
-from ztoq.zephyr_client import ZephyrClient
-from ztoq.data_fetcher import (
+
+
     create_authenticated_client,
     fetch_projects,
     fetch_all_test_cases,

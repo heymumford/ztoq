@@ -10,22 +10,11 @@ import sqlite3
 from datetime import datetime
 from pathlib import Path
 from unittest.mock import MagicMock, patch
-
-from ztoq.models import (
-    Project,
-    Case,
-    CycleInfo,
-    Execution,
-    Folder,
-    Status,
-    Priority,
-    Environment,
-    CustomField,
-    Link,
-    CaseStep,
-)
+from ztoq.models import Project, Case, CycleInfo, Execution, Folder, Status, Priority, Environment, CustomField, Link, CaseStep
 from ztoq.data_fetcher import FetchResult
 from ztoq.database_manager import DatabaseManager
+
+
 
 
 @pytest.mark.unit

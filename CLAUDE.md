@@ -18,13 +18,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Format**: Use black with default settings
 - **Typing**: Use static typing with mypy; all public functions should have type annotations
 - **Exception Handling**: Use domain-specific exception hierarchy; handle and log appropriately
-- **Imports**: Group standard library, third-party, and local imports (sorted alphabetically)
+- **Imports**: 
+  - Keep imports after license header but before any other code
+  - Group standard library, third-party, and local imports (sorted alphabetically)
+  - Fix imports with the scripts/fix_imports.py tool when adding license headers
 - **Naming**:
   - Classes: PascalCase
   - Functions/Variables: snake_case
   - Constants: UPPER_SNAKE_CASE
 - **Documentation**: Docstrings for all public classes and methods
 - **Testing**: Follow TDD approach (test-driven development) with pytest
+- **License Headers**: Make sure to use scripts/add_license_headers.py to add license information to new files
 
 ---
 *Copyright (c) 2025 Eric C. Mumford (@heymumford) - Licensed under [MIT License](LICENSE)*

@@ -5,11 +5,9 @@ See LICENSE file for details.
 """
 
 import yaml
-import json
-import jsonschema
 import re
 from pathlib import Path
-from typing import Dict, Any, List, Optional, Union, Tuple, Set, Callable, Type, get_type_hints
+from typing import Dict, Any, List, Optional, Tuple
 import logging
 import random
 import string
@@ -18,7 +16,6 @@ from datetime import datetime, date
 
 # Set up module logger
 logger = logging.getLogger("ztoq.openapi_parser")
-
 
 def load_openapi_spec(spec_path: Path) -> Dict[str, Any]:
     """Load and parse an OpenAPI specification file.
@@ -65,7 +62,6 @@ def load_openapi_spec(spec_path: Path) -> Dict[str, Any]:
         logger.error(f"Error loading OpenAPI spec: {e}")
         raise
 
-
 def validate_zephyr_spec(spec: Dict[str, Any]) -> bool:
     """Validate that the OpenAPI spec is for Zephyr Scale API.
 
@@ -91,7 +87,6 @@ def validate_zephyr_spec(spec: Dict[str, Any]) -> bool:
         logger.warning(f"Spec may not be for Zephyr Scale API. Title: '{info.get('title', '')}'")
 
     return is_zephyr
-
 
 def extract_api_endpoints(spec: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
     """Extract API endpoints from the OpenAPI spec.
@@ -123,7 +118,6 @@ def extract_api_endpoints(spec: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
 
     logger.info(f"Extracted {len(endpoints)} endpoints from OpenAPI spec")
     return endpoints
-
 
 class ZephyrApiSpecWrapper:
     """A wrapper class for the Zephyr Scale OpenAPI specification.

@@ -12,29 +12,16 @@ a single responsibility. Functions are designed to be composable and to have no 
 apart from API interactions.
 """
 
-from typing import Dict, List, Any, Optional, Callable, TypeVar, Iterator, Tuple
-from pathlib import Path
+from typing import Dict, List, Any, Optional, Callable, TypeVar
+
 import logging
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
-
-from ztoq.models import (
-    ZephyrConfig,
-    Project,
-    Case,
-    CycleInfo,
-    Plan,
-    Execution,
-    Folder,
-    Status,
-    Priority,
-    Environment,
-)
+from ztoq.models import ZephyrConfig, Project, Case, CycleInfo, Plan, Execution, Folder, Status, Priority, Environment
 from ztoq.zephyr_client import ZephyrClient
 
 T = TypeVar("T")
 logger = logging.getLogger(__name__)
-
 
 @dataclass(frozen=True)
 class FetchResult:
@@ -47,7 +34,6 @@ class FetchResult:
     success: bool
     error: Optional[str] = None
 
-
 def create_authenticated_client(config: ZephyrConfig) -> ZephyrClient:
     """
     Creates an authenticated Zephyr client using the provided configuration.
@@ -56,7 +42,6 @@ def create_authenticated_client(config: ZephyrConfig) -> ZephyrClient:
     with the Zephyr Scale API.
     """
     return ZephyrClient(config)
-
 
 def fetch_projects(client: ZephyrClient) -> List[Project]:
     """
@@ -70,7 +55,6 @@ def fetch_projects(client: ZephyrClient) -> List[Project]:
     except Exception as e:
         logger.error(f"Failed to fetch projects: {str(e)}")
         return []
-
 
 def fetch_all_test_cases(client: ZephyrClient, project_key: str) -> FetchResult:
     """
@@ -101,7 +85,6 @@ def fetch_all_test_cases(client: ZephyrClient, project_key: str) -> FetchResult:
             error=error_message,
         )
 
-
 def fetch_all_test_cycles(client: ZephyrClient, project_key: str) -> FetchResult:
     """
     Retrieves all test cycles for a specific project.
@@ -130,7 +113,6 @@ def fetch_all_test_cycles(client: ZephyrClient, project_key: str) -> FetchResult
             success=False,
             error=error_message,
         )
-
 
 def fetch_all_test_executions(client: ZephyrClient, project_key: str) -> FetchResult:
     """
@@ -161,7 +143,6 @@ def fetch_all_test_executions(client: ZephyrClient, project_key: str) -> FetchRe
             error=error_message,
         )
 
-
 def fetch_folders(client: ZephyrClient, project_key: str) -> FetchResult:
     """
     Retrieves all folders for a specific project.
@@ -189,7 +170,6 @@ def fetch_folders(client: ZephyrClient, project_key: str) -> FetchResult:
             success=False,
             error=error_message,
         )
-
 
 def fetch_statuses(client: ZephyrClient, project_key: str) -> FetchResult:
     """
@@ -220,7 +200,6 @@ def fetch_statuses(client: ZephyrClient, project_key: str) -> FetchResult:
             error=error_message,
         )
 
-
 def fetch_priorities(client: ZephyrClient, project_key: str) -> FetchResult:
     """
     Retrieves all priorities for a specific project.
@@ -248,7 +227,6 @@ def fetch_priorities(client: ZephyrClient, project_key: str) -> FetchResult:
             success=False,
             error=error_message,
         )
-
 
 def fetch_environments(client: ZephyrClient, project_key: str) -> FetchResult:
     """
@@ -278,7 +256,6 @@ def fetch_environments(client: ZephyrClient, project_key: str) -> FetchResult:
             success=False,
             error=error_message,
         )
-
 
 def fetch_all_project_data(
     client: ZephyrClient,
@@ -334,7 +311,6 @@ def fetch_all_project_data(
                     progress_callback(entity_type, project_key, False)
 
     return results
-
 
 def fetch_all_projects_data(
     client: ZephyrClient,
