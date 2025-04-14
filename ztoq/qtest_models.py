@@ -30,23 +30,29 @@ class QTestConfig(BaseModel):
 
     The bearer token can be loaded from the environment variable 'qtest_bearer_token'.
     If not provided explicitly, the token will be fetched from this environment variable.
+    The base URL can be loaded from the environment variable 'qtest_base_url'.
     """
 
-    base_url: str = Field(..., description="Base URL for qTest API (e.g., https://example.qtest.com)")
+    base_url: str = Field(default_factory=lambda: os.environ.get("qtest_base_url", ""),
+                         description="Base URL for qTest API (e.g., https://example.qtest.com)")
     username: str = Field(default="", description="Username for qTest authentication (not needed with bearer token)")
     password: str = Field(default="", description="Password for qTest authentication (not needed with bearer token)")
     project_id: int = Field(..., description="Project ID to work with", gt=0)
     bearer_token: str = Field(default_factory=lambda: os.environ.get("qtest_bearer_token", ""),
                               description="Bearer token for qTest authentication")
 
-    # Environment variable name for token
+    # Environment variable names
     ENV_TOKEN_NAME: ClassVar[str] = "qtest_bearer_token"
+    ENV_BASE_URL_NAME: ClassVar[str] = "qtest_base_url"
 
     @field_validator('base_url')
     def validate_base_url(cls, value):
         """Validate base URL format."""
+        if not value:
+            raise ValueError(f'base_url must be provided or set in {cls.ENV_BASE_URL_NAME} environment variable')
+        # Ensure base URL has proper prefix, adding https:// if missing
         if not value.startswith(('http://', 'https://')):
-            raise ValueError('base_url must start with http:// or https://')
+            value = f"https://{value}"
         return value
 
     @model_validator(mode='after')
@@ -65,10 +71,18 @@ class QTestConfig(BaseModel):
         return values
 
     @classmethod
-    def from_env(cls, base_url: str, project_id: int) -> "QTestConfig":
-        """Create a config using the bearer token from environment variables."""
+    def from_env(cls, project_id: int, base_url: str = None) -> "QTestConfig":
+        """Create a config using environment variables.
+
+        Args:
+            project_id: The project ID to work with
+            base_url: Optional base URL override (otherwise uses qtest_base_url env var)
+
+        Returns:
+            QTestConfig instance
+        """
         return cls(
-            base_url=base_url,
+            base_url=base_url or os.environ.get(cls.ENV_BASE_URL_NAME, ""),
             bearer_token=os.environ.get(cls.ENV_TOKEN_NAME, ""),
             project_id=project_id
         )
