@@ -174,8 +174,18 @@ class QTestPaginatedIterator(Generic[T]):
 
         response = self.client._make_request("GET", self.endpoint, params=self.params)
 
+        # Handle different response formats - either a dict with pagination or a direct list
+        if isinstance(response, list):
+            # Direct list of items
+            self.current_page = QTestPaginatedResponse(
+                items=response,
+                page=0,
+                page_size=len(response),
+                total=len(response),
+                is_last=True  # Assume this is the only page when the response is a list
+            )
         # Handle different pagination formats depending on API type
-        if self.client.api_type == "manager":
+        elif self.client.api_type == "manager" and isinstance(response, dict):
             self.current_page = QTestPaginatedResponse(
                 items=response.get("items", []),
                     page=response.get("page", 0),
@@ -550,7 +560,12 @@ class QTestClient:
         endpoint = "/projects"
         response = self._make_request("GET", endpoint)
 
-        projects_data = response.get("items", [])
+        # Handle both response formats - either a list of projects directly or an object with "items" property
+        if isinstance(response, list):
+            projects_data = response
+        else:
+            projects_data = response.get("items", [])
+
         return [QTestProject(**project) for project in projects_data]
 
     def get_current_user_permission(self, project_id: int = None) -> dict[str, Any]:

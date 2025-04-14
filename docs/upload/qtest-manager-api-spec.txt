@@ -1,14 +1,14 @@
 qTest Manager API Version 2025.1
- 2025.1 
+ 2025.1
 Introduction to qTest API Specification
 How to use interactive API Doc
 The bearer token can be found at [qtestUrl/p/{projectId}/portal/project#tab=resource] under the API & SDK tab.
 
 Introduction to qTest API Specification
 How to use interactive API Doc
-Username/Password: api-test@qasymphony.com/admin123
-Access Token: bearer 9bbf04fd-aed2-4e05-8428-7fc5ecff7bb8
-Sample Project ID: 108781
+Username/Password: [username]/[password]
+Access Token: bearer [token]
+Sample Project ID: [project-id]
 Schemes
 
 https

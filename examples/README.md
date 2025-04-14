@@ -46,6 +46,47 @@ export qtest_bearer_token=YOUR_TOKEN
 python qtest_auth_test.py --project-id 12345
 ```
 
+### qtest_verify_token.py
+
+Verify that a qTest API token works with proper OAuth 2.0 Bearer format.
+
+```bash
+# Using environment variables
+python qtest_verify_token.py
+
+# Using command-line arguments
+python qtest_verify_token.py --url company.qtestnet.com --token YOUR_TOKEN
+
+# Disable SSL verification for testing
+python qtest_verify_token.py --no-verify-ssl
+```
+
+### qtest_check_connection.py
+
+Check multiple domain formats to find working qTest endpoints.
+
+```bash
+# Try different domain formats
+python qtest_check_connection.py --url company --token YOUR_TOKEN --no-verify-ssl
+
+# Using environment variables
+export qtest_base_url=company.qtestnet.com
+export qtest_bearer_token=YOUR_TOKEN
+python qtest_check_connection.py
+```
+
+### qtest_direct_api_check.py
+
+Direct HTTP check of qTest API connectivity, bypassing the ZTOQ library.
+
+```bash
+# Check connection with token
+python qtest_direct_api_check.py --url company.qtestnet.com --token YOUR_TOKEN
+
+# Try alternative domain formats
+python qtest_direct_api_check.py --url company --token YOUR_TOKEN --try-alternatives --no-verify-ssl
+```
+
 ### qtest_auth_debug.py
 
 Debug script for troubleshooting qTest authentication issues with detailed logging.
