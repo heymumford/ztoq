@@ -4,6 +4,7 @@
 [![Unit Tests](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/yourusername/ztoq/main/docs/badges/unit_tests.json)](https://github.com/yourusername/ztoq/actions)
 [![Integration Tests](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/yourusername/ztoq/main/docs/badges/integration_tests.json)](https://github.com/yourusername/ztoq/actions)
 [![E2E Tests](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/yourusername/ztoq/main/docs/badges/e2e_tests.json)](https://github.com/yourusername/ztoq/actions)
+[![ETL Tests](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/yourusername/ztoq/main/docs/badges/etl_integration_tests.json)](https://github.com/yourusername/ztoq/actions/workflows/etl-integration.yml)
 
 A Python CLI tool that extracts test data from Zephyr Scale and migrates it to qTest. This tool reads the Zephyr Scale OpenAPI specification and provides a complete migration pathway between these two test management systems.
 
@@ -23,7 +24,7 @@ A Python CLI tool that extracts test data from Zephyr Scale and migrates it to q
 Total: 0/18 tests passed (18 failed, 0 skipped)
 ```
 
-*Updated: 2025-04-13 21:30*
+*Updated: 2025-04-14 21:45*
 
 ## Features
 
@@ -39,16 +40,23 @@ Total: 0/18 tests passed (18 failed, 0 skipped)
 - Comprehensive request/response validation against OpenAPI schema
 - Automatic test generation from OpenAPI specification
 - Mock data generation for testing
+- Complete ETL migration pipeline from Zephyr Scale to qTest
+- Batch processing and parallel operations for large migrations
+- Resumable migration with state tracking
+- Attachment handling for complete data migration
 
 ## Project Structure
 
 ```
 ztoq/
 ├── models.py         # Pydantic models for Zephyr data
+├── qtest_models.py   # Pydantic models for qTest data
 ├── openapi_parser.py # Parser for OpenAPI spec and API spec wrapper
 ├── zephyr_client.py  # Client for Zephyr Scale API
+├── qtest_client.py   # Client for qTest API
 ├── storage.py        # Storage adapters (JSON/SQLite/Canonical SQL)
 ├── exporter.py       # Data export orchestration
+├── migration.py      # ETL migration from Zephyr to qTest
 ├── test_generator.py # Test case generator from OpenAPI spec
 └── cli.py            # Typer CLI commands
 
@@ -148,6 +156,30 @@ poetry run ztoq export-all z-openapi.yml \
   --projects PROJECT1,PROJECT2
 ```
 
+### Migrate from Zephyr Scale to qTest
+
+```bash
+# Run a complete migration from Zephyr Scale to qTest
+poetry run ztoq migrate run \
+  --zephyr-base-url https://api.atlassian.com/ex/jira/your-instance/rest/zephyr/1.0 \
+  --zephyr-api-token YOUR_ZEPHYR_TOKEN \
+  --zephyr-project-key PROJECT \
+  --qtest-base-url https://yourcompany.qtestnet.com \
+  --qtest-username YOUR_USERNAME \
+  --qtest-password YOUR_PASSWORD \
+  --qtest-project-id 12345 \
+  --db-type sqlite \
+  --db-path ./migration.db
+
+# Check migration status
+poetry run ztoq migrate status \
+  --db-type sqlite \
+  --db-path ./migration.db \
+  --project-key PROJECT
+```
+
+For detailed migration instructions, see the [Migration Guide](docs/migration-guide.md).
+
 ## Development
 
 ```bash
@@ -228,12 +260,98 @@ make docs-serve         # Generate and serve documentation
 make test-with-docs     # Run tests and generate documentation
 
 # Code quality
-make format             # Format code with black
-make lint               # Lint code with flake8
+make format             # Format code with ruff and isort
+make lint               # Run linters (ruff, mypy, pylint)
+make security           # Run security checks (bandit, safety)
+make pre-commit         # Run pre-commit hooks on all files
+make validate-all       # Run format, lint, test, and security checks
+
+# Docker
+make docker-build       # Build Docker container
+make docker-run         # Run application in Docker
 
 # Quick validation
 make validate           # Validate OpenAPI spec
 make list-endpoints     # List API endpoints in spec
+```
+
+## Quality Gates
+
+ZTOQ implements comprehensive quality checks to ensure code quality, security, and reliability:
+
+### Linters and Formatters
+
+- **Ruff**: Fast Python linter combining multiple tools
+- **Black**: Code formatter for consistent style
+- **isort**: Import sorter to organize imports
+- **mypy**: Static type checker for Python
+- **pylint**: Python code analysis tool
+
+### Security
+
+- **Bandit**: Security linter for Python code
+- **Safety**: Dependency vulnerability scanner
+- **Trivy**: Container vulnerability scanner
+- **SonarCloud**: Continuous code quality scanner
+
+### Documentation
+
+- **docformatter**: Formats Python docstrings
+- **interrogate**: Measures docstring coverage
+- **Sphinx**: Documentation generator
+
+### Testing
+
+- **pytest**: Testing framework
+- **pytest-cov**: Test coverage measurement
+- **pytest-benchmark**: Performance testing
+
+### CI/CD Integration
+
+- **GitHub Actions**: Automated quality gates and security scanning
+  - Quality Gates workflow (linting, testing, security checks, SonarCloud analysis)
+  - Container Security Scan workflow (Trivy vulnerability scanning)
+  - Scheduled weekly security scans with automatic issue creation
+- **pre-commit**: Git hooks for code quality
+- **Dependabot**: Automated dependency updates for Python, GitHub Actions, and Docker
+
+### Running Quality Checks
+
+Run a comprehensive quality check with:
+
+```bash
+make validate-all
+```
+
+Or run individual checks:
+
+```bash
+# Code formatting
+make format
+
+# Static analysis
+make lint
+
+# Security checks
+make security
+
+# Run all pre-commit hooks
+make pre-commit
+```
+
+### Docker Support
+
+ZTOQ includes Docker support for containerized deployment:
+
+```bash
+# Build the Docker image
+make docker-build
+
+# Run the application in Docker
+make docker-run
+
+# Run with Docker Compose (includes PostgreSQL)
+docker-compose up
 ```
 
 ### Using Build Scripts
@@ -321,11 +439,13 @@ poetry run ztoq db init --db-type postgresql \
 
 For more detailed information, see these documents in the `docs/` directory:
 
+- [Migration Guide](docs/migration-guide.md)
 - [OpenAPI Integration](docs/openapi-integration.md)
 - [Custom Fields and Attachments](docs/custom-fields-attachments.md)
 - [qTest Migration Architecture](docs/qtest-migration-architecture.md)
 - [Conversion Process](docs/conversion-process.md)
 - [Entity Mapping](docs/entity-mapping.md)
+- [GitHub Actions Configuration](docs/github-actions.md)
 - [Kanban Board](docs/kanban.md)
 - [Maintenance Guide](docs/maintenance.md)
 - [Documentation Contribution Guide](docs/docs-contribution-guide.md)
