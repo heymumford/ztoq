@@ -9,6 +9,7 @@ import sys
 import logging
 import time
 import signal
+import requests
 from pathlib import Path
 from requests.exceptions import Timeout, ConnectionError, RequestException
 
@@ -203,6 +204,15 @@ def verify_qtest_token(timeout_seconds=15):
                 headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
 
                 logger.debug(f"Verifying qTest token with direct request to: {url}")
+                # Mask the token for logging but show authorization type
+                safe_headers = headers.copy()
+                if 'Authorization' in safe_headers:
+                    auth_parts = safe_headers['Authorization'].split()
+                    if len(auth_parts) > 1:
+                        safe_headers['Authorization'] = f"{auth_parts[0]} {'*' * 8}"
+                    else:
+                        safe_headers['Authorization'] = "****"
+                logger.debug(f"Headers: {safe_headers}")
 
                 response = requests.get(url=url, headers=headers, timeout=(5.0, 10.0))
 
