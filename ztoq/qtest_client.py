@@ -338,6 +338,8 @@ class QTestClient:
             json_data: dict[str, Any] | None = None,
             files: dict[str, Any] | None = None,
             headers: dict[str, str] | None = None,
+            verify: bool = True,
+            timeout: tuple | None = None,
             _retry_count: int = 0,
             _max_retries: int = 3,
         ) -> dict[str, Any]:
@@ -350,6 +352,8 @@ class QTestClient:
             json_data: JSON request body
             files: Files to upload (for multipart/form-data requests)
             headers: Optional headers to override default headers
+            verify: Whether to verify SSL certificates (default True)
+            timeout: Request timeout as (connect_timeout, read_timeout) tuple
             _retry_count: Internal retry counter to prevent infinite loops
             _max_retries: Maximum number of retries for authentication
 
@@ -411,6 +415,8 @@ class QTestClient:
                     params=params,
                     json=json_data,
                     files=files,
+                    verify=verify,
+                    timeout=timeout,
                 )
 
             # Calculate request duration
@@ -764,12 +770,15 @@ class QTestClient:
             logger.error(f"Failed to revoke token: {str(e)}")
             return False
 
-    def verify_api_token(self) -> bool:
+    def verify_api_token(self, verify_ssl: bool = True) -> bool:
         """
         Verify that the API token is valid by making a simple API call.
 
         This is useful to check if the token retrieved from environment variables
         is valid and has the necessary permissions.
+
+        Args:
+            verify_ssl: Whether to verify SSL certificates (default True)
 
         Returns:
             bool: True if the token is valid, False otherwise
@@ -778,8 +787,9 @@ class QTestClient:
 
         try:
             # Make a lightweight request to verify the token
-            # Get projects is a good lightweight endpoint available in all qTest APIs
-            self.get_projects()
+            # Use projects endpoint with explicit verify parameter
+            endpoint = "/projects"
+            self._make_request("GET", endpoint, verify=verify_ssl, timeout=(5.0, 10.0))
             logger.info("qTest API token verification successful")
             return True
         except Exception as e:

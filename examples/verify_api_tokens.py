@@ -190,8 +190,8 @@ def verify_qtest_token(timeout_seconds=15, no_verify_ssl=False):
             requests.request = request_with_timeout
 
             try:
-                # Use the client's built-in verification
-                valid = client.verify_api_token()
+                # Use the client's built-in verification with SSL option
+                valid = client.verify_api_token(verify_ssl=not no_verify_ssl)
                 if valid:
                     logger.info("✅ qTest API token is valid and working correctly.")
                     return True
