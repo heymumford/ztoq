@@ -15,28 +15,17 @@ a relational database that properly represents the Zephyr Scale data model.
 import sqlite3
 import json
 import logging
-from typing import Dict, List, Any, Optional, Tuple, Union
+from typing import Dict, Any, Union
 from pathlib import Path
 from datetime import datetime
 from contextlib import contextmanager
-
 from ztoq.models import (
-    Project,
-    Case,
-    CycleInfo,
-    Execution,
-    Folder,
-    Status,
-    Priority,
-    Environment,
-    Attachment,
-    CaseStep,
-    CustomField,
+    Project, Case, CycleInfo, Execution, Folder, Status, 
+    Priority, Environment, CustomField, CaseStep, Attachment
 )
 from ztoq.data_fetcher import FetchResult
 
 logger = logging.getLogger(__name__)
-
 
 class DatabaseManager:
     """

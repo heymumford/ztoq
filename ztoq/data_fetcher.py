@@ -12,12 +12,12 @@ a single responsibility. Functions are designed to be composable and to have no 
 apart from API interactions.
 """
 
-from typing import Dict, List, Any, Optional, Callable, TypeVar
-
 import logging
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
-from ztoq.models import ZephyrConfig, Project, Case, CycleInfo, Plan, Execution, Folder, Status, Priority, Environment
+from typing import Dict, List, Any, Optional, Callable, TypeVar
+
+from ztoq.models import ZephyrConfig, Project
 from ztoq.zephyr_client import ZephyrClient
 
 T = TypeVar("T")

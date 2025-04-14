@@ -8,13 +8,13 @@ import pytest
 import json
 import sqlite3
 from datetime import datetime
-from pathlib import Path
 from unittest.mock import MagicMock, patch
-from ztoq.models import Project, Case, CycleInfo, Execution, Folder, Status, Priority, Environment, CustomField, Link, CaseStep
+from ztoq.models import (
+    Project, Case, CycleInfo, Execution, Folder, Status,
+    Priority, Environment, CustomField, Link, CaseStep
+)
 from ztoq.data_fetcher import FetchResult
 from ztoq.database_manager import DatabaseManager
-
-
 
 
 @pytest.mark.unit
@@ -41,7 +41,7 @@ class TestDatabaseManager:
 
         # Test parent directory creation
         nested_path = db_path.parent / "nested" / "test.db"
-        manager3 = DatabaseManager(nested_path)
+        DatabaseManager(nested_path)  # Creates the directory
         assert nested_path.parent.exists()
 
     def test_context_manager(self, db_manager):

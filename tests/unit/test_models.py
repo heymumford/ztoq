@@ -8,12 +8,10 @@ import pytest
 from datetime import datetime
 import base64
 from pydantic import ValidationError
-
 from ztoq.models import (
     ZephyrConfig,
     Link,
     CustomField,
-    CustomFieldType,
     CaseStep,
     Case,
     Priority,

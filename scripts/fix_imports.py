@@ -44,16 +44,40 @@ def fix_imports(file_path):
             module_docstring = after_license[:docstring_end]
             code_remainder = after_license[docstring_end:].lstrip()
     
-    # Find all import statements
-    import_pattern = re.compile(r'^(?:from\s+[\w.]+\s+import\s+.*|import\s+.*)$', re.MULTILINE)
-    imports = import_pattern.findall(code_remainder)
+    # Find all import statements - both single line and multi-line imports
+    import_lines = []
+    lines = code_remainder.split('\n')
+    i = 0
+    while i < len(lines):
+        line = lines[i].strip()
+        if line.startswith('import ') or line.startswith('from '):
+            # Check if it's a multi-line import with parentheses
+            if '(' in line and ')' not in line:
+                # Collect all lines until the closing parenthesis
+                import_group = [lines[i]]
+                j = i + 1
+                while j < len(lines) and ')' not in lines[j]:
+                    import_group.append(lines[j])
+                    j += 1
+                if j < len(lines):  # Add the line with closing parenthesis
+                    import_group.append(lines[j])
+                import_lines.append('\n'.join(import_group))
+                i = j + 1
+            else:
+                import_lines.append(lines[i])
+                i += 1
+        else:
+            i += 1
     
     # Remove the imports from the remainder
-    for imp in imports:
-        code_remainder = code_remainder.replace(imp, '', 1)
+    for imp in import_lines:
+        lines_to_remove = imp.split('\n')
+        for line in lines_to_remove:
+            if line in code_remainder:
+                code_remainder = code_remainder.replace(line, '', 1)
     
     # Clean up any empty lines at the beginning of remainder
-    code_remainder = code_remainder.lstrip()
+    code_remainder = re.sub(r'^\s*\n+', '', code_remainder)
     
     # Build the new content
     new_content = LICENSE_HEADER + "\n\n"
@@ -63,7 +87,7 @@ def fix_imports(file_path):
         new_content += module_docstring + "\n\n"
     
     # Add imports
-    new_content += "\n".join(imports) + "\n\n"
+    new_content += "\n".join(import_lines) + "\n\n"
     
     # Add the rest of the code
     new_content += code_remainder

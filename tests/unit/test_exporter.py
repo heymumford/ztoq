@@ -7,8 +7,7 @@ See LICENSE file for details.
 import pytest
 from pathlib import Path
 from unittest.mock import patch, MagicMock
-
-from ztoq.models import ZephyrConfig, Execution, Case, CycleInfo, Attachment, CustomField
+from ztoq.models import ZephyrConfig, Execution, Attachment, CustomField
 from ztoq.zephyr_client import ZephyrClient
 from ztoq.storage import SQLiteStorage, JSONStorage
 from ztoq.exporter import ZephyrExporter, ZephyrExportManager
