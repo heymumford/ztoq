@@ -10,12 +10,42 @@ from enum import Enum
 from typing import Any
 from pydantic import BaseModel, Field, field_validator
 
+import os
+from typing import ClassVar
+
 class ZephyrConfig(BaseModel):
-    """Configuration for Zephyr Scale API."""
+    """
+    Configuration for Zephyr Scale API.
+
+    The API token can be loaded from the environment variable 'zephyr_access_token'.
+    If not provided explicitly, the token will be fetched from this environment variable.
+    """
 
     base_url: str
-    api_token: str
+    api_token: str = Field(default_factory=lambda: os.environ.get("zephyr_access_token", ""))
     project_key: str
+
+    # Environment variable name for token
+    ENV_TOKEN_NAME: ClassVar[str] = "zephyr_access_token"
+
+    @field_validator("api_token")
+    def validate_api_token(cls, v: str) -> str:
+        """Validate that the API token is not empty."""
+        if not v:
+            raise ValueError(
+                f"API token cannot be empty. Please provide it directly or "
+                f"set the {cls.ENV_TOKEN_NAME} environment variable."
+            )
+        return v
+
+    @classmethod
+    def from_env(cls, base_url: str, project_key: str) -> "ZephyrConfig":
+        """Create a config using the API token from environment variables."""
+        return cls(
+            base_url=base_url,
+            api_token=os.environ.get(cls.ENV_TOKEN_NAME, ""),
+            project_key=project_key
+        )
 
 
 class Link(BaseModel):

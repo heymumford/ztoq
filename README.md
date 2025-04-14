@@ -14,6 +14,26 @@
 
 A Python CLI tool that extracts test data from Zephyr Scale and migrates it to qTest. This tool reads the Zephyr Scale OpenAPI specification and provides a complete migration pathway between these two test management systems.
 
+## API Access Configuration
+
+This tool requires authentication with both Zephyr Scale and qTest APIs. API tokens are securely managed through environment variables:
+
+- **Zephyr Scale**: Set the `zephyr_access_token` environment variable with your Zephyr API token.
+- **qTest**: Set the `qtest_bearer_token` environment variable with your qTest bearer token.
+
+You can verify your API tokens using the provided example script:
+
+```bash
+# First, set your API tokens in your environment
+export zephyr_access_token="your_zephyr_token"
+export qtest_bearer_token="your_qtest_token"
+
+# Then run the verification script
+python examples/verify_api_tokens.py
+```
+
+For detailed instructions on obtaining and configuring API tokens, see the [API Tokens Configuration Guide](docs/api-tokens.md).
+
 ## Test Coverage
 
 ```

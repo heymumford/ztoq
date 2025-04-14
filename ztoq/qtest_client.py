@@ -242,21 +242,29 @@ class QTestClient:
 
     def _authenticate(self):
         """Authenticate with qTest API and obtain an access token."""
+        # If bearer token is already provided in config, use it directly
+        if hasattr(self.config, 'bearer_token') and self.config.bearer_token:
+            self.auth_token = self.config.bearer_token
+            self.headers["Authorization"] = f"Bearer {self.auth_token}"
+            logger.info(f"Using provided bearer token for {self.api_type} API")
+            return
+
+        # Otherwise, use username/password to obtain a token
         auth_endpoints = {
             "manager": "/oauth/token",
-                "parameters": "/oauth/v1/token-login",
-                "pulse": "/oauth/token",
-                "scenario": "/oauth/token",
-            }
+            "parameters": "/oauth/v1/token-login",
+            "pulse": "/oauth/token",
+            "scenario": "/oauth/token",
+        }
 
         endpoint = auth_endpoints.get(self.api_type, "/oauth/token")
         url = f"{self.config.base_url}{endpoint}"
 
         auth_data = {
             "grant_type": "password",
-                "username": self.config.username,
-                "password": self.config.password,
-            }
+            "username": self.config.username,
+            "password": self.config.password,
+        }
 
         # For Parameters API which uses a different format
         if self.api_type == "parameters":
@@ -648,6 +656,71 @@ class QTestClient:
         return QTestPaginatedIterator[QTestParameter](
             client=self, endpoint=endpoint, model_class=QTestParameter, params=query_data
         )
+
+    def verify_api_token(self) -> bool:
+        """
+        Verify that the API token is valid by making a simple API call.
+
+        This is useful to check if the token retrieved from environment variables
+        is valid and has the necessary permissions.
+
+        Returns:
+            bool: True if the token is valid, False otherwise
+        """
+        logger.info("Verifying qTest API token validity")
+
+        try:
+            # Make a lightweight request to verify the token
+            # Get projects is a good lightweight endpoint available in all qTest APIs
+            self.get_projects()
+            logger.info("qTest API token verification successful")
+            return True
+        except Exception as e:
+            logger.error(f"qTest API token verification failed: {str(e)}")
+            return False
+
+    def check_api_health(self) -> dict[str, Any]:
+        """
+        Check the API health and connectivity.
+
+        This method makes a lightweight request to the API to verify connectivity
+        and measure latency.
+
+        Returns:
+            Dict containing health check results:
+            - healthy: True if API is responding
+            - latency_ms: Response time in milliseconds
+            - error: Error message if health check failed
+        """
+        logger.debug("Performing API health check")
+
+        # Initialize health info object
+        health_info = {
+            "healthy": False,
+            "latency_ms": 0,
+            "rate_limit_remaining": self.rate_limit_remaining,
+            "rate_limit_reset": self.rate_limit_reset,
+            "error": None
+        }
+
+        try:
+            # Use a simple endpoint that should always work and is lightweight
+            start_time = time.time()
+            self.get_projects()
+
+            # Calculate latency
+            latency_ms = int((time.time() - start_time) * 1000)
+
+            # Update health info
+            health_info["healthy"] = True
+            health_info["latency_ms"] = latency_ms
+
+        except Exception as e:
+            health_info["healthy"] = False
+            health_info["error"] = f"{e.__class__.__name__}: {str(e)}"
+            logger.warning(f"API health check failed: {health_info['error']}")
+
+        return health_info
 
     def create_parameter(self, parameter: QTestParameter) -> QTestParameter:
         """Create a parameter.

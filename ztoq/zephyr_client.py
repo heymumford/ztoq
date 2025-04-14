@@ -4,27 +4,30 @@ This file is part of ZTOQ, licensed under the MIT License.
 See LICENSE file for details.
 """
 
+import functools
 import json
 import logging
 import mimetypes
 import os
+import random
 import time
 from pathlib import Path
-from typing import Any, Generic, TypeVar, cast
+from typing import Any, Callable, Dict, Generic, Optional, TypeVar, cast, Union
 import requests
+from requests.exceptions import ConnectionError, HTTPError, RequestException, Timeout
 from ztoq.models import (
     Attachment,
-        Case,
-        CycleInfo,
-        Environment,
-        Execution,
-        Folder,
-        PaginatedResponse,
-        Plan,
-        Priority,
-        Project,
-        Status,
-        ZephyrConfig,
+    Case,
+    CycleInfo,
+    Environment,
+    Execution,
+    Folder,
+    PaginatedResponse,
+    Plan,
+    Priority,
+    Project,
+    Status,
+    ZephyrConfig,
 )
 from ztoq.openapi_parser import ZephyrApiSpecWrapper, load_openapi_spec
 
@@ -65,6 +68,215 @@ def configure_logging(level=None):
 
 # Initialize logging with default settings
 configure_logging()
+
+
+class CircuitBreaker:
+    """Circuit breaker pattern implementation for API calls.
+
+    Implements a simple circuit breaker that tracks failures and prevents
+    calls to failing endpoints for a cooling-off period.
+
+    Attributes:
+        failure_threshold: Number of failures before opening circuit
+        reset_timeout: Seconds before attempting to close circuit again
+        state: Current circuit state (CLOSED, OPEN, HALF_OPEN)
+        failure_count: Current count of consecutive failures
+        last_failure_time: Timestamp of last failure
+        endpoint_circuits: Dictionary tracking circuits for different endpoints
+    """
+
+    # Circuit states
+    CLOSED = "closed"  # Normal operation - requests pass through
+    OPEN = "open"      # Circuit breaker tripped - requests fail fast
+    HALF_OPEN = "half_open"  # Testing if service recovered
+
+    # Class level circuit tracking for different endpoints
+    _endpoint_circuits = {}
+
+    def __init__(self, failure_threshold=5, reset_timeout=60):
+        """Initialize circuit breaker.
+
+        Args:
+            failure_threshold: Number of failures before opening circuit
+            reset_timeout: Seconds before attempting to close circuit again
+        """
+        self.failure_threshold = failure_threshold
+        self.reset_timeout = reset_timeout
+        self.state = self.CLOSED
+        self.failure_count = 0
+        self.last_failure_time = 0
+
+    def __call__(self, func):
+        """Make the class callable as a decorator."""
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            # Extract endpoint from args if present (used for tracking different endpoints)
+            endpoint = None
+            if len(args) > 2 and isinstance(args[0], ZephyrClient) and isinstance(args[2], str):
+                # Extract endpoint from _make_request call: (self, method, endpoint, ...)
+                endpoint = args[2]
+
+            # Get or create circuit for this endpoint
+            circuit = self._get_circuit(endpoint)
+
+            # Check circuit state
+            if circuit.state == self.OPEN:
+                # Check if enough time has passed to try again
+                if time.time() - circuit.last_failure_time >= circuit.reset_timeout:
+                    logger.info(f"Circuit for endpoint {endpoint} switching to HALF_OPEN")
+                    circuit.state = self.HALF_OPEN
+                else:
+                    # Circuit is still open, fail fast
+                    error_msg = f"Circuit for endpoint {endpoint} is OPEN - failing fast"
+                    logger.error(error_msg)
+                    raise RequestException(error_msg)
+
+            try:
+                # Call the wrapped function
+                result = func(*args, **kwargs)
+
+                # Success - reset circuit if it was half-open
+                if circuit.state == self.HALF_OPEN:
+                    logger.info(f"Circuit for endpoint {endpoint} reset to CLOSED - service recovered")
+                    circuit.state = self.CLOSED
+                    circuit.failure_count = 0
+
+                return result
+
+            except (ConnectionError, Timeout, HTTPError) as e:
+                # Network or HTTP error - increment failure counter
+                circuit.failure_count += 1
+                circuit.last_failure_time = time.time()
+
+                # Log the failure
+                logger.warning(
+                    f"Circuit failure for endpoint {endpoint}: {e} "
+                    f"(count: {circuit.failure_count}/{circuit.failure_threshold})"
+                )
+
+                # Check if we need to open the circuit
+                if circuit.state == self.CLOSED and circuit.failure_count >= circuit.failure_threshold:
+                    logger.error(f"Circuit for endpoint {endpoint} OPEN - too many failures")
+                    circuit.state = self.OPEN
+
+                # Re-raise the exception
+                raise
+
+        return wrapper
+
+    @classmethod
+    def _get_circuit(cls, endpoint):
+        """Get or create a circuit for an endpoint."""
+        if endpoint not in cls._endpoint_circuits:
+            cls._endpoint_circuits[endpoint] = CircuitBreaker()
+        return cls._endpoint_circuits[endpoint]
+
+    @classmethod
+    def reset_all_circuits(cls):
+        """Reset all circuits - useful for testing."""
+        cls._endpoint_circuits = {}
+
+    @classmethod
+    def get_circuit_status(cls):
+        """Get status of all tracked circuits."""
+        return {
+            endpoint: {
+                "state": circuit.state,
+                "failures": circuit.failure_count,
+                "last_failure": circuit.last_failure_time
+            }
+            for endpoint, circuit in cls._endpoint_circuits.items()
+        }
+
+
+def retry(
+    max_retries: int = 3,
+    retry_codes: tuple = (429, 500, 502, 503, 504),
+    initial_delay: float = 0.1,
+    max_delay: float = 60.0,
+    backoff_factor: float = 2.0,
+    jitter: bool = True,
+):
+    """Retry decorator with exponential backoff for API calls.
+
+    Args:
+        max_retries: Maximum number of retry attempts
+        retry_codes: HTTP status codes to retry on
+        initial_delay: Initial delay in seconds
+        max_delay: Maximum delay in seconds
+        backoff_factor: Factor to multiply delay by on each retry
+        jitter: Whether to add random jitter to delay
+
+    Returns:
+        Decorated function
+    """
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            retries = 0
+            delay = initial_delay
+
+            while True:
+                try:
+                    return func(*args, **kwargs)
+                except (ConnectionError, Timeout) as e:
+                    # Always retry network errors
+                    retries += 1
+                    if retries > max_retries:
+                        logger.error(f"Max retries ({max_retries}) exceeded: {e}")
+                        raise
+
+                    # Calculate backoff with optional jitter
+                    current_delay = min(delay, max_delay)
+                    if jitter:
+                        # Add 0-25% random jitter
+                        current_delay = current_delay * (1 + random.random() * 0.25)
+
+                    logger.warning(
+                        f"Network error: {e}. Retrying in {current_delay:.2f}s "
+                        f"(attempt {retries}/{max_retries})"
+                    )
+                    time.sleep(current_delay)
+                    delay *= backoff_factor
+
+                except HTTPError as e:
+                    # Only retry on specific HTTP error codes
+                    if hasattr(e, "response") and e.response is not None:
+                        status_code = e.response.status_code
+
+                        if status_code in retry_codes:
+                            retries += 1
+                            if retries > max_retries:
+                                logger.error(f"Max retries ({max_retries}) exceeded: {e}")
+                                raise
+
+                            # Calculate backoff with optional jitter
+                            current_delay = min(delay, max_delay)
+                            if jitter:
+                                current_delay = current_delay * (1 + random.random() * 0.25)
+
+                            logger.warning(
+                                f"HTTP error {status_code}: Retrying in {current_delay:.2f}s "
+                                f"(attempt {retries}/{max_retries})"
+                            )
+                            time.sleep(current_delay)
+                            delay *= backoff_factor
+                        else:
+                            # Don't retry on other HTTP errors
+                            logger.error(f"HTTP error {status_code} not eligible for retry: {e}")
+                            raise
+                    else:
+                        # If response is not available, don't retry
+                        logger.error(f"HTTP error without response, not retrying: {e}")
+                        raise
+
+                except Exception as e:
+                    # Don't retry other exceptions
+                    logger.error(f"Unexpected error, not retrying: {e}")
+                    raise
+
+        return wrapper
+    return decorator
 
 
 class PaginatedIterator(Generic[T]):
@@ -189,6 +401,8 @@ class ZephyrClient:
             f"ZephyrClient initialized for project {config.project_key} with base URL {config.base_url}"
         )
 
+    @CircuitBreaker(failure_threshold=5, reset_timeout=60)
+    @retry(max_retries=3, initial_delay=0.5, backoff_factor=2.0, jitter=True)
     def _make_request(
         self,
             method: str,
@@ -199,6 +413,7 @@ class ZephyrClient:
             files: dict[str, Any] | None = None,
             headers: dict[str, str] | None = None,
             validate: bool = True,
+            timeout: tuple[float, float] = (10.0, 30.0),  # Connect timeout, read timeout
         ) -> dict[str, Any]:
         """Make a request to the Zephyr API.
 
@@ -211,6 +426,7 @@ class ZephyrClient:
             files: Files to upload (for multipart/form-data requests)
             headers: Optional headers to override default headers
             validate: Whether to validate request/response against OpenAPI spec
+            timeout: Connection and read timeout in seconds (tuple of connect_timeout, read_timeout)
 
         Returns:
             API response as dictionary
@@ -268,30 +484,34 @@ class ZephyrClient:
                         safe_json = self._mask_sensitive_data(json_data)
                         logger.debug(f"Invalid request body: {json.dumps(safe_json)}")
 
+        # Generate a unique request ID for correlation
+        request_id = f"{method}_{endpoint.replace('/', '_')}_{int(time.time()*1000)}"
+
         # Log request details (careful not to log sensitive data)
         safe_headers = {k: v for k, v in request_headers.items() if k.lower() != "authorization"}
-        logger.debug(f"API Request: {method} {url}")
-        logger.debug(f"Parameters: {params}")
-        logger.debug(f"Headers: {safe_headers}")
+        logger.debug(f"API Request [{request_id}]: {method} {url}")
+        logger.debug(f"Parameters [{request_id}]: {params}")
+        logger.debug(f"Headers [{request_id}]: {safe_headers}")
 
         if logger.isEnabledFor(logging.DEBUG) and json_data:
             # Mask any sensitive fields in the debug output
             safe_json = self._mask_sensitive_data(json_data)
-            logger.debug(f"Request Body: {json.dumps(safe_json)}")
+            logger.debug(f"Request Body [{request_id}]: {json.dumps(safe_json)}")
 
         # Measure request time for performance monitoring
         start_time = time.time()
 
         try:
-            # Make the request
+            # Make the request with timeout
             response = requests.request(
                 method=method,
-                    url=url,
-                    headers=request_headers,
-                    params=params,
-                    json=json_data,
-                    files=files,
-                )
+                url=url,
+                headers=request_headers,
+                params=params,
+                json=json_data,
+                files=files,
+                timeout=timeout,
+            )
 
             # Calculate request duration
             duration = time.time() - start_time
@@ -299,22 +519,31 @@ class ZephyrClient:
             # Update rate limits
             if "X-Rate-Limit-Remaining" in response.headers:
                 self.rate_limit_remaining = int(response.headers["X-Rate-Limit-Remaining"])
-                logger.debug(f"Rate limit remaining: {self.rate_limit_remaining}")
+                logger.debug(f"Rate limit remaining [{request_id}]: {self.rate_limit_remaining}")
             if "X-Rate-Limit-Reset" in response.headers:
                 self.rate_limit_reset = int(response.headers["X-Rate-Limit-Reset"])
 
             # Log response metadata
-            logger.debug(f"Response received in {duration:.2f}s - Status: {response.status_code}")
+            logger.debug(
+                f"Response [{request_id}] received in {duration:.2f}s - "
+                f"Status: {response.status_code}"
+            )
 
             # Log headers at trace level (requires DEBUG or lower)
             if logger.isEnabledFor(logging.DEBUG):
-                logger.debug(f"Response Headers: {dict(response.headers)}")
+                logger.debug(f"Response Headers [{request_id}]: {dict(response.headers)}")
 
-            # Handle errors with detailed logging
+            # Check response status - will raise HTTPError for 4xx/5xx responses
             response.raise_for_status()
 
-            # Parse JSON response
-            response_json = response.json()
+            try:
+                # Parse JSON response
+                response_json = response.json()
+            except ValueError as e:
+                logger.error(f"JSON Parsing Error [{request_id}]: {e}")
+                logger.error(f"Response Text [{request_id}]: {response.text[:500]}")
+                raise ValueError(f"Could not parse JSON response: {e}. "
+                                 f"Response text: {response.text[:100]}...")
 
             # Validate response against OpenAPI spec if available and validation is enabled
             if validate and hasattr(self, "spec_wrapper"):
@@ -323,7 +552,7 @@ class ZephyrClient:
                     endpoint, method.lower(), status_code, response_json
                 )
                 if not valid_response:
-                    logger.warning(f"Response validation failed: {response_error}")
+                    logger.warning(f"Response validation failed [{request_id}]: {response_error}")
                     if logger.isEnabledFor(logging.DEBUG):
                         # Truncate very large responses for logging
                         if isinstance(response_json, dict) and "values" in response_json:
@@ -333,12 +562,19 @@ class ZephyrClient:
                                 log_response["values"] = log_response["values"][:3]
                                 log_response["values"].append("... truncated for logging")
                                 logger.debug(
-                                    f"Invalid response body (truncated): {json.dumps(log_response)}"
+                                    f"Invalid response body [{request_id}] (truncated): "
+                                    f"{json.dumps(log_response)}"
                                 )
                             else:
-                                logger.debug(f"Invalid response body: {json.dumps(response_json)}")
+                                logger.debug(
+                                    f"Invalid response body [{request_id}]: "
+                                    f"{json.dumps(response_json)}"
+                                )
                         else:
-                            logger.debug(f"Invalid response body: {json.dumps(response_json)}")
+                            logger.debug(
+                                f"Invalid response body [{request_id}]: "
+                                f"{json.dumps(response_json)}"
+                            )
 
             # Log response data at trace level
             if logger.isEnabledFor(logging.DEBUG):
@@ -350,39 +586,44 @@ class ZephyrClient:
                         log_response = response_json.copy()
                         log_response["values"] = log_response["values"][:3]
                         log_response["values"].append("... truncated for logging")
-                        logger.debug(f"Response Body (truncated): {json.dumps(log_response)}")
+                        logger.debug(
+                            f"Response Body [{request_id}] (truncated): "
+                            f"{json.dumps(log_response)}"
+                        )
                     else:
-                        logger.debug(f"Response Body: {json.dumps(response_json)}")
+                        logger.debug(
+                            f"Response Body [{request_id}]: {json.dumps(response_json)}"
+                        )
                 else:
-                    logger.debug(f"Response Body: {json.dumps(response_json)}")
+                    logger.debug(f"Response Body [{request_id}]: {json.dumps(response_json)}")
 
             return response_json
 
         except requests.exceptions.HTTPError as e:
             # Enhanced HTTP error logging
-            logger.error(f"HTTP Error: {e}")
+            logger.error(f"HTTP Error [{request_id}]: {e}")
             if hasattr(e, "response") and e.response is not None:
                 try:
                     error_json = e.response.json()
-                    logger.error(f"API Error Details: {error_json}")
+                    logger.error(f"API Error Details [{request_id}]: {error_json}")
                 except ValueError:
-                    logger.error(f"Response text: {e.response.text}")
+                    logger.error(f"Response text [{request_id}]: {e.response.text[:500]}")
             raise
 
-        except requests.exceptions.ConnectionError:
-            logger.error(f"Connection Error: Could not connect to {url}")
+        except requests.exceptions.ConnectionError as e:
+            logger.error(f"Connection Error [{request_id}]: Could not connect to {url}: {e}")
             raise
 
-        except requests.exceptions.Timeout:
-            logger.error(f"Timeout Error: Request to {url} timed out")
+        except requests.exceptions.Timeout as e:
+            logger.error(f"Timeout Error [{request_id}]: Request to {url} timed out after {timeout}s: {e}")
             raise
 
         except requests.exceptions.RequestException as e:
-            logger.error(f"Request Error: {e}")
+            logger.error(f"Request Error [{request_id}]: {e}")
             raise
 
-        except ValueError as e:
-            logger.error(f"JSON Parsing Error: {e}")
+        except Exception as e:
+            logger.error(f"Unexpected Error [{request_id}]: {e.__class__.__name__}: {e}")
             raise
 
     def _mask_sensitive_data(self, data: dict[str, Any]) -> dict[str, Any]:
@@ -647,25 +888,173 @@ class ZephyrClient:
 
         return [Attachment(**attachment) for attachment in response.get("values", [])]
 
-    def download_attachment(self, attachment_id: str) -> bytes:
+    @CircuitBreaker(failure_threshold=3, reset_timeout=60)
+    @retry(max_retries=5, initial_delay=1.0, backoff_factor=2.0, jitter=True)
+    def download_attachment(
+        self,
+        attachment_id: str,
+        timeout: tuple[float, float] = (10.0, 120.0)
+    ) -> bytes:
         """Download an attachment by ID.
 
         Args:
             attachment_id: ID of the attachment
+            timeout: Connection and read timeout in seconds (tuple of connect_timeout, read_timeout)
+                     Longer read timeout for large files
 
         Returns:
             Binary content of the attachment
-        """
-        endpoint = f"/attachments/{attachment_id}/content"
 
-        # Make request with different content type
+        Raises:
+            HTTPError: If the attachment can't be downloaded
+            ConnectionError: If connection to the server fails
+            Timeout: If the download times out
+            ValueError: If the attachment ID is invalid
+        """
+        if not attachment_id:
+            raise ValueError("Invalid attachment ID: must not be empty")
+
+        endpoint = f"/attachments/{attachment_id}/content"
         url = f"{self.config.base_url}{endpoint}"
         headers = {"Authorization": self.headers["Authorization"]}
 
-        response = requests.get(url, headers=headers)
-        response.raise_for_status()
+        # Generate unique request ID
+        request_id = f"download_{attachment_id}_{int(time.time()*1000)}"
 
-        return response.content
+        logger.debug(f"Downloading attachment [{request_id}]: {attachment_id} from {url}")
+        start_time = time.time()
+
+        try:
+            # Use a streaming response for potentially large files
+            response = requests.get(url, headers=headers, timeout=timeout, stream=True)
+            response.raise_for_status()
+
+            # Get content length if available
+            content_length = int(response.headers.get('Content-Length', '0')) or None
+            if content_length:
+                logger.debug(f"Attachment size [{request_id}]: {content_length/1024:.1f} KB")
+
+            # Read the content
+            content = response.content
+
+            # Calculate download speed
+            duration = time.time() - start_time
+            size_kb = len(content) / 1024
+
+            # Avoid division by zero for extremely fast downloads or time precision issues
+            if duration > 0:
+                download_speed = size_kb / duration
+            else:
+                download_speed = size_kb  # Assume 1 second if duration is 0
+
+            logger.debug(
+                f"Attachment downloaded [{request_id}] in {duration:.2f}s "
+                f"({size_kb:.1f} KB, {download_speed:.1f} KB/s)"
+            )
+
+            return content
+
+        except requests.exceptions.HTTPError as e:
+            logger.error(f"HTTP Error downloading attachment [{request_id}]: {e}")
+            if hasattr(e, "response") and e.response is not None:
+                logger.error(f"Status code: {e.response.status_code}")
+            raise
+
+        except requests.exceptions.ConnectionError as e:
+            logger.error(f"Connection Error downloading attachment [{request_id}]: {e}")
+            raise
+
+        except requests.exceptions.Timeout as e:
+            logger.error(
+                f"Timeout Error downloading attachment [{request_id}]: "
+                f"Download timed out after {timeout[1]}s"
+            )
+            raise
+
+        except Exception as e:
+            logger.error(f"Error downloading attachment [{request_id}]: {e.__class__.__name__}: {e}")
+            raise
+
+    def check_api_health(self) -> dict[str, Any]:
+        """Check the health of the Zephyr API.
+
+        Performs a simple API call to check if the API is reachable and properly responding.
+        Also returns information about current circuit breaker status.
+
+        Returns:
+            Dictionary with health check information
+
+        Example:
+            {
+                "healthy": True,
+                "latency_ms": 152,
+                "rate_limit_remaining": 950,
+                "rate_limit_reset": 1633046400,
+                "circuits": {
+                    "/projects": {"state": "closed", "failures": 0},
+                    "/testcases": {"state": "open", "failures": 5}
+                }
+            }
+        """
+        health_info = {
+            "healthy": False,
+            "latency_ms": 0,
+            "rate_limit_remaining": self.rate_limit_remaining,
+            "rate_limit_reset": self.rate_limit_reset,
+            "circuits": CircuitBreaker.get_circuit_status(),
+            "error": None
+        }
+
+        try:
+            # Use a simple endpoint that should always work and is lightweight
+            start_time = time.time()
+            self._make_request("GET", "/projects", timeout=(5.0, 10.0))
+
+            # Calculate latency
+            latency_ms = int((time.time() - start_time) * 1000)
+
+            # Update health info
+            health_info["healthy"] = True
+            health_info["latency_ms"] = latency_ms
+            health_info["rate_limit_remaining"] = self.rate_limit_remaining
+            health_info["rate_limit_reset"] = self.rate_limit_reset
+
+        except Exception as e:
+            health_info["healthy"] = False
+            health_info["error"] = f"{e.__class__.__name__}: {str(e)}"
+            logger.warning(f"API health check failed: {health_info['error']}")
+
+        return health_info
+
+    def verify_api_token(self) -> bool:
+        """
+        Verify that the API token is valid by making a simple API call.
+
+        This is useful to check if the token retrieved from environment variables
+        is valid and has the necessary permissions.
+
+        Returns:
+            bool: True if the token is valid, False otherwise
+        """
+        logger.info("Verifying Zephyr API token validity")
+
+        try:
+            # Make a lightweight request to verify the token
+            self._make_request("GET", "/projects", timeout=(5.0, 10.0))
+            logger.info("Zephyr API token verification successful")
+            return True
+        except Exception as e:
+            logger.error(f"Zephyr API token verification failed: {str(e)}")
+            return False
+
+    def reset_circuit_breakers(self) -> None:
+        """Reset all circuit breakers to their closed state.
+
+        This is useful when you want to force retry of previously failing endpoints,
+        for example after fixing connectivity issues.
+        """
+        CircuitBreaker.reset_all_circuits()
+        logger.info("All circuit breakers have been reset")
 
     @classmethod
     def from_openapi_spec(
@@ -703,7 +1092,6 @@ class ZephyrClient:
         client = cls(config=config, log_level=log_level)
 
         # Create a spec wrapper that provides validation and utilities
-
         client.spec_wrapper = ZephyrApiSpecWrapper(spec)
 
         logger.info("Created ZephyrClient with OpenAPI spec wrapper")

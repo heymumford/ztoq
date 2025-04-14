@@ -19,22 +19,59 @@ import uuid
 from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional, Union, ClassVar
-from pydantic import BaseModel, Field, root_validator, validator
+from pydantic import BaseModel, Field, model_validator, field_validator
+
+import os
+from typing import ClassVar
 
 class QTestConfig(BaseModel):
-    """Configuration for qTest API."""
+    """
+    Configuration for qTest API.
+
+    The bearer token can be loaded from the environment variable 'qtest_bearer_token'.
+    If not provided explicitly, the token will be fetched from this environment variable.
+    """
 
     base_url: str = Field(..., description="Base URL for qTest API (e.g., https://example.qtest.com)")
-    username: str = Field(..., description="Username for qTest authentication")
-    password: str = Field(..., description="Password for qTest authentication")
+    username: str = Field(default="", description="Username for qTest authentication (not needed with bearer token)")
+    password: str = Field(default="", description="Password for qTest authentication (not needed with bearer token)")
     project_id: int = Field(..., description="Project ID to work with", gt=0)
+    bearer_token: str = Field(default_factory=lambda: os.environ.get("qtest_bearer_token", ""),
+                              description="Bearer token for qTest authentication")
 
-    @validator('base_url')
+    # Environment variable name for token
+    ENV_TOKEN_NAME: ClassVar[str] = "qtest_bearer_token"
+
+    @field_validator('base_url')
     def validate_base_url(cls, value):
         """Validate base URL format."""
         if not value.startswith(('http://', 'https://')):
             raise ValueError('base_url must start with http:// or https://')
         return value
+
+    @model_validator(mode='after')
+    def validate_auth_method(cls, values):
+        """Validate that either username/password or bearer token is provided."""
+        username = values.username
+        password = values.password
+        bearer_token = values.bearer_token
+
+        if not bearer_token and not (username and password):
+            raise ValueError(
+                "Either bearer_token or username/password combination must be provided. "
+                f"Bearer token can be set via {cls.ENV_TOKEN_NAME} environment variable."
+            )
+
+        return values
+
+    @classmethod
+    def from_env(cls, base_url: str, project_id: int) -> "QTestConfig":
+        """Create a config using the bearer token from environment variables."""
+        return cls(
+            base_url=base_url,
+            bearer_token=os.environ.get(cls.ENV_TOKEN_NAME, ""),
+            project_id=project_id
+        )
 
 
 class QTestPaginatedResponse(BaseModel):
@@ -63,7 +100,7 @@ class QTestLink(BaseModel):
     icon_url: str | None = Field(None, description="URL for the link icon", alias="iconUrl")
     target: str | None = Field(None, description="Target for the link (e.g., '_blank')")
 
-    @validator('url')
+    @field_validator('url')
     def validate_url(cls, value):
         """Validate URL format."""
         if not value.startswith(('http://', 'https://')):
@@ -78,7 +115,7 @@ class QTestCustomField(BaseModel):
     Represents a custom field in qTest.
 
     qTest supports various field types including STRING, NUMBER, CHECKBOX, DATE, DATETIME,
-    USER, MULTI_VALUE, and more. The field_value type depends on the field_type.
+    USER, MULTI_USER, MULTI_VALUE, RICH_TEXT, TREE, and TABLE. The field_value type depends on the field_type.
     """
 
     field_id: int = Field(..., alias="id", description="Unique identifier for the custom field")
@@ -86,6 +123,7 @@ class QTestCustomField(BaseModel):
     field_type: str = Field(..., alias="type", description="Data type of the custom field")
     field_value: Any | None = Field(None, alias="value", description="Value of the custom field")
     is_required: bool | None = Field(None, alias="required", description="Whether the field is required")
+    entity_type: str | None = Field(None, alias="entityType", description="Type of entity this field is associated with")
 
     # List of supported custom field types in qTest
     SUPPORTED_TYPES: ClassVar[list[str]] = [
@@ -93,7 +131,16 @@ class QTestCustomField(BaseModel):
         "MULTI_VALUE", "RICH_TEXT", "TREE", "TABLE"
     ]
 
-    @validator('field_type')
+    # Entity types that can have custom fields
+    VALID_ENTITY_TYPES: ClassVar[list[str]] = [
+        "TEST_CASE", "TEST_CYCLE", "TEST_RUN", "TEST_LOG", "REQUIREMENT", "DEFECT", "RELEASE"
+    ]
+
+    # Format patterns for validation
+    DATE_PATTERN: ClassVar[str] = r'^\d{4}-\d{2}-\d{2}$'  # YYYY-MM-DD
+    DATETIME_PATTERN: ClassVar[str] = r'^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})?$'  # ISO format
+
+    @field_validator('field_type')
     def validate_field_type(cls, v):
         """Validate that the field type is supported."""
         v_upper = v.upper()
@@ -101,19 +148,113 @@ class QTestCustomField(BaseModel):
             raise ValueError(f"Field type '{v}' is not supported. Must be one of: {', '.join(cls.SUPPORTED_TYPES)}")
         return v_upper
 
-    @root_validator(skip_on_failure=True)
+    @field_validator('entity_type')
+    def validate_entity_type(cls, v):
+        """Validate that the entity type is supported if provided."""
+        if v is not None:
+            v_upper = v.upper()
+            if v_upper not in cls.VALID_ENTITY_TYPES:
+                raise ValueError(f"Entity type '{v}' is not valid. Must be one of: {', '.join(cls.VALID_ENTITY_TYPES)}")
+            return v_upper
+        return v
+
+    @model_validator(mode='after')
     def validate_field_value(cls, values):
         """Validate that the field value matches the field type."""
         field_type = values.get('field_type')
         field_value = values.get('field_value')
 
         if field_value is not None and field_type:
-            if field_type == "NUMBER" and not isinstance(field_value, (int, float)):
-                raise ValueError(f"Field value for NUMBER type must be numeric, got {type(field_value).__name__}")
-            elif field_type == "CHECKBOX" and not isinstance(field_value, bool):
-                raise ValueError(f"Field value for CHECKBOX type must be boolean, got {type(field_value).__name__}")
-            elif field_type in ["DATE", "DATETIME"] and not isinstance(field_value, (str, datetime)):
-                raise ValueError(f"Field value for {field_type} type must be datetime or string, got {type(field_value).__name__}")
+            # NUMBER type validation
+            if field_type == "NUMBER":
+                if not isinstance(field_value, (int, float)):
+                    raise ValueError(f"Field value for NUMBER type must be numeric, got {type(field_value).__name__}")
+
+            # CHECKBOX type validation
+            elif field_type == "CHECKBOX":
+                if not isinstance(field_value, bool):
+                    raise ValueError(f"Field value for CHECKBOX type must be boolean, got {type(field_value).__name__}")
+
+            # DATE and DATETIME validation
+            elif field_type in ["DATE", "DATETIME"]:
+                import re
+                if isinstance(field_value, str):
+                    # Validate string format
+                    if field_type == "DATE":
+                        if not re.match(cls.DATE_PATTERN, field_value):
+                            raise ValueError(f"Field value for DATE type must be in YYYY-MM-DD format, got '{field_value}'")
+                    else:  # DATETIME
+                        if not re.match(cls.DATETIME_PATTERN, field_value):
+                            raise ValueError(f"Field value for DATETIME type must be in ISO format, got '{field_value}'")
+                elif not isinstance(field_value, datetime):
+                    raise ValueError(f"Field value for {field_type} type must be datetime or string, got {type(field_value).__name__}")
+
+            # USER type validation
+            elif field_type == "USER":
+                # User can be an ID or an object with at least an ID field
+                if isinstance(field_value, dict):
+                    if "id" not in field_value:
+                        raise ValueError("Field value for USER type must contain an 'id' field")
+                elif not isinstance(field_value, (int, str)):
+                    raise ValueError(f"Field value for USER type must be an ID or user object, got {type(field_value).__name__}")
+
+            # MULTI_USER type validation
+            elif field_type == "MULTI_USER":
+                if not isinstance(field_value, list):
+                    raise ValueError(f"Field value for MULTI_USER type must be a list, got {type(field_value).__name__}")
+
+                for i, user in enumerate(field_value):
+                    if isinstance(user, dict):
+                        if "id" not in user:
+                            raise ValueError(f"User at index {i} in MULTI_USER field must contain an 'id' field")
+                    elif not isinstance(user, (int, str)):
+                        raise ValueError(f"User at index {i} in MULTI_USER field must be an ID or user object, got {type(user).__name__}")
+
+            # MULTI_VALUE type validation
+            elif field_type == "MULTI_VALUE":
+                if not isinstance(field_value, list):
+                    raise ValueError(f"Field value for MULTI_VALUE type must be a list, got {type(field_value).__name__}")
+
+            # RICH_TEXT validation (minimal)
+            elif field_type == "RICH_TEXT":
+                if not isinstance(field_value, str):
+                    raise ValueError(f"Field value for RICH_TEXT type must be a string, got {type(field_value).__name__}")
+
+            # TREE validation
+            elif field_type == "TREE":
+                if not isinstance(field_value, (list, dict)):
+                    raise ValueError(f"Field value for TREE type must be a dictionary or list, got {type(field_value).__name__}")
+
+                # If it's a single node as dict
+                if isinstance(field_value, dict):
+                    if "id" not in field_value and "name" not in field_value:
+                        raise ValueError("Tree node in TREE field must contain at least 'id' or 'name' field")
+
+                # If it's a list of nodes
+                elif isinstance(field_value, list):
+                    for i, node in enumerate(field_value):
+                        if not isinstance(node, dict):
+                            raise ValueError(f"Node at index {i} in TREE field must be a dictionary, got {type(node).__name__}")
+                        if "id" not in node and "name" not in node:
+                            raise ValueError(f"Node at index {i} in TREE field must contain at least 'id' or 'name' field")
+
+            # TABLE validation
+            elif field_type == "TABLE":
+                if not isinstance(field_value, (list, dict)):
+                    raise ValueError(f"Field value for TABLE type must be a dictionary or list, got {type(field_value).__name__}")
+
+                # If it's a table configuration object
+                if isinstance(field_value, dict):
+                    if "columns" not in field_value:
+                        raise ValueError("TABLE field must contain a 'columns' field defining the table structure")
+
+                    if "rows" in field_value and not isinstance(field_value["rows"], list):
+                        raise ValueError("'rows' in TABLE field must be a list")
+
+                # If it's just a list of rows
+                elif isinstance(field_value, list):
+                    if field_value and not isinstance(field_value[0], (list, dict)):
+                        raise ValueError("Rows in TABLE field must be lists or dictionaries")
 
         return values
 
@@ -132,26 +273,125 @@ class QTestAttachment(BaseModel):
     id: int | None = Field(None, description="Attachment ID in qTest")
     name: str = Field(..., description="Filename of the attachment", min_length=1, max_length=255)
     content_type: str = Field(..., alias="contentType", description="MIME type of the attachment")
-    size: int | None = Field(None, description="Size of the attachment in bytes")
+    size: int | None = Field(None, description="Size of the attachment in bytes", gt=0)
+    data: str | None = Field(None, description="Base64 encoded attachment data (for upload/download)")
     created_date: datetime | None = Field(None, alias="createdDate", description="Date when the attachment was created")
     created_by: dict | None = Field(None, alias="createdBy", description="User who created the attachment")
     web_url: str | None = Field(None, alias="webUrl", description="URL to access the attachment in qTest web UI")
+    checksum: str | None = Field(None, description="MD5 checksum for attachment integrity verification")
+    related_entity_type: str | None = Field(None, alias="relatedEntityType", description="Type of entity this attachment is associated with")
+    related_entity_id: int | None = Field(None, alias="relatedEntityId", description="ID of the entity this attachment is associated with")
 
     model_config = {"populate_by_name": True}
 
-    @validator('name')
+    # Common MIME types for validation
+    COMMON_MIME_TYPES: ClassVar[dict[str, list[str]]] = {
+        "image": ["image/png", "image/jpeg", "image/gif", "image/bmp", "image/svg+xml"],
+        "document": ["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"],
+        "spreadsheet": ["application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"],
+        "text": ["text/plain", "text/csv", "text/html", "text/markdown"],
+        "archive": ["application/zip", "application/x-rar-compressed", "application/x-7z-compressed"],
+        "video": ["video/mp4", "video/webm", "video/quicktime"],
+        "audio": ["audio/mpeg", "audio/wav", "audio/ogg"]
+    }
+
+    # Valid related entity types
+    VALID_ENTITY_TYPES: ClassVar[list[str]] = [
+        "TEST_CASE", "TEST_CYCLE", "TEST_RUN", "TEST_LOG", "REQUIREMENT", "DEFECT", "TEST_STEP"
+    ]
+
+    @field_validator('name')
     def validate_name(cls, value):
-        """Validate that attachment name has a valid extension."""
+        """Validate that attachment name has a valid extension and is safe."""
         if not '.' in value:
             raise ValueError("Attachment name must include a file extension")
+
+        # Check for potential unsafe characters in filename
+        import re
+        if re.search(r'[<>:"/\\|?*]', value):
+            raise ValueError("Attachment name contains invalid characters. Avoid: < > : \" / \\ | ? *")
+
+        # Check for valid file extension
+        extension = value.split('.')[-1].lower()
+        common_extensions = ["pdf", "doc", "docx", "xls", "xlsx", "txt", "csv", "jpg", "jpeg",
+                           "png", "gif", "bmp", "svg", "mp4", "mp3", "zip", "html", "xml", "json"]
+
+        if len(extension) > 10:  # Extremely long extensions are suspicious
+            raise ValueError(f"File extension '{extension}' is unusually long")
+
         return value
 
-    @validator('content_type')
+    @field_validator('content_type')
     def validate_content_type(cls, value):
-        """Validate content type format."""
+        """Validate content type format and against known MIME types."""
         if not '/' in value:
             raise ValueError("Content type must be in format 'type/subtype', e.g. 'image/png'")
+
+        # Check if it's a known MIME type
+        mime_category = value.split('/')[0]
+        known_types = []
+        for category, types in cls.COMMON_MIME_TYPES.items():
+            known_types.extend(types)
+
+        if value not in known_types and mime_category not in ["application", "text", "image", "audio", "video", "font"]:
+            # Not raising an error here, just a warning in the message
+            return f"{value} (Warning: uncommon MIME type)"
+
         return value
+
+    @field_validator('related_entity_type')
+    def validate_related_entity_type(cls, value):
+        """Validate related entity type if provided."""
+        if value is not None:
+            v_upper = value.upper()
+            if v_upper not in cls.VALID_ENTITY_TYPES:
+                raise ValueError(f"Entity type '{value}' is not valid. Must be one of: {', '.join(cls.VALID_ENTITY_TYPES)}")
+            return v_upper
+        return value
+
+    @field_validator('data')
+    def validate_data(cls, value):
+        """Validate that data is properly base64 encoded if provided."""
+        if value is not None:
+            # Basic validation that it looks like base64
+            import re
+            if not re.match(r'^[A-Za-z0-9+/]+={0,2}$', value):
+                raise ValueError("Data must be base64 encoded")
+
+            # Check if the length is consistent with base64 encoding
+            if len(value) % 4 != 0:
+                raise ValueError("Data length is not valid for base64 encoding")
+
+        return value
+
+    @field_validator('checksum')
+    def validate_checksum(cls, value):
+        """Validate MD5 checksum format if provided."""
+        if value is not None:
+            import re
+            if not re.match(r'^[a-fA-F0-9]{32}$', value):
+                raise ValueError("Checksum must be a 32-character MD5 hexadecimal hash")
+
+        return value
+
+    @model_validator(mode='after')
+    def validate_size_and_data(cls, values):
+        """Validate that size is consistent with data if both are provided."""
+        size = values.get('size')
+        data = values.get('data')
+
+        if size is not None and data is not None:
+            # Calculate approximate size from base64 data
+            # Base64 encoding increases size by ~33% (4/3), so we decode to get original size
+            import base64
+            try:
+                decoded_size = len(base64.b64decode(data))
+                if abs(decoded_size - size) > 100:  # Allow small differences due to padding
+                    raise ValueError(f"Size {size} does not match the size of provided data {decoded_size}")
+            except Exception:
+                raise ValueError("Could not decode base64 data to verify size")
+
+        return values
 
     @classmethod
     def from_binary(cls, name: str, content_type: str, binary_data: bytes):
@@ -166,13 +406,49 @@ class QTestAttachment(BaseModel):
         Returns:
             Dictionary representation of the attachment suitable for API upload
         """
+        import base64
+        import hashlib
+
         encoded = base64.b64encode(binary_data).decode("utf-8")
+        md5_hash = hashlib.md5(binary_data).hexdigest()
+
         return {
             "name": name,
             "contentType": content_type,
             "size": len(binary_data),
-            "data": encoded
+            "data": encoded,
+            "checksum": md5_hash
         }
+
+    @classmethod
+    def calculate_checksum(cls, binary_data: bytes) -> str:
+        """
+        Calculate MD5 checksum for binary data.
+
+        Args:
+            binary_data: Binary content to calculate checksum for
+
+        Returns:
+            MD5 checksum hexadecimal string
+        """
+        import hashlib
+        return hashlib.md5(binary_data).hexdigest()
+
+    def verify_checksum(self, binary_data: bytes) -> bool:
+        """
+        Verify that binary data matches this attachment's checksum.
+
+        Args:
+            binary_data: Binary content to verify
+
+        Returns:
+            True if checksum matches, False otherwise
+        """
+        if not self.checksum:
+            return False
+
+        calculated = self.calculate_checksum(binary_data)
+        return calculated == self.checksum
 
 
 class QTestProject(BaseModel):
@@ -198,14 +474,14 @@ class QTestProject(BaseModel):
     # Project statuses supported by qTest
     VALID_STATUSES: ClassVar[list[str]] = ["Active", "Inactive", "Completed", "Archived"]
 
-    @validator('status_name')
+    @field_validator('status_name')
     def validate_status_name(cls, v):
         """Validate project status."""
         if v is not None and v not in cls.VALID_STATUSES:
             raise ValueError(f"Status '{v}' is not valid. Must be one of: {', '.join(cls.VALID_STATUSES)}")
         return v
 
-    @root_validator(skip_on_failure=True)
+    @model_validator(mode='after')
     def validate_dates(cls, values):
         """Validate that start_date is before end_date."""
         start_date = values.get('start_date')
@@ -235,7 +511,7 @@ class QTestModule(BaseModel):
     project_id: int | None = Field(None, alias="projectId", description="ID of the project containing this module")
     path: str | None = Field(None, description="Full path to the module in the hierarchy")
 
-    @validator('name')
+    @field_validator('name')
     def validate_name(cls, value):
         """Validate module name isn't empty or just whitespace."""
         if value.strip() == "":
@@ -273,7 +549,7 @@ class QTestField(BaseModel):
         "TEST_CASE", "TEST_CYCLE", "TEST_RUN", "TEST_LOG", "REQUIREMENT", "DEFECT", "RELEASE"
     ]
 
-    @validator('field_type')
+    @field_validator('field_type')
     def validate_field_type(cls, v):
         """Validate that field type is supported."""
         v_upper = v.upper()
@@ -281,7 +557,7 @@ class QTestField(BaseModel):
             raise ValueError(f"Field type '{v}' is not valid. Must be one of: {', '.join(cls.VALID_FIELD_TYPES)}")
         return v_upper
 
-    @validator('entity_type')
+    @field_validator('entity_type')
     def validate_entity_type(cls, v):
         """Validate that entity type is supported."""
         v_upper = v.upper()
@@ -307,14 +583,14 @@ class QTestStep(BaseModel):
     order: int = Field(..., description="Sequential order of this step in the test case", ge=1)
     attachments: list[QTestAttachment] = Field(default_factory=list, description="Attachments related to this step")
 
-    @validator('description')
+    @field_validator('description')
     def validate_description(cls, value):
         """Validate step description isn't empty or just whitespace."""
         if value.strip() == "":
             raise ValueError("Step description cannot be empty or only whitespace")
         return value
 
-    @validator('expected_result')
+    @field_validator('expected_result')
     def validate_expected_result(cls, value):
         """Validate expected result if provided."""
         if value is not None and value.strip() == "":
@@ -340,7 +616,7 @@ class QTestAutomationSettings(BaseModel):
     is_parameterized: bool | None = Field(None, alias="isParameterized", description="Whether the automated test accepts parameters")
     external_id: str | None = Field(None, alias="externalId", description="External system ID for this test")
 
-    @validator('automation_id')
+    @field_validator('automation_id')
     def validate_automation_id(cls, value):
         """Validate automation ID format if provided."""
         if value is not None and value.strip() == "":
@@ -382,7 +658,7 @@ class QTestTestCase(BaseModel):
     project_id: int | None = Field(None, alias="projectId", description="ID of the project containing the test case")
     origin: str | None = Field(None, description="Origin of the test case")
 
-    @root_validator(skip_on_failure=True)
+    @model_validator(mode='after')
     def validate_test_steps(cls, values):
         """Validate that test steps have sequential order."""
         test_steps = values.get('test_steps')
@@ -422,21 +698,21 @@ class QTestRelease(BaseModel):
     # Common release statuses in qTest
     VALID_STATUSES: ClassVar[list[str]] = ["Planning", "In Progress", "Completed", "Cancelled", "Delayed"]
 
-    @validator('name')
+    @field_validator('name')
     def validate_name(cls, value):
         """Validate release name isn't empty or just whitespace."""
         if value.strip() == "":
             raise ValueError("Release name cannot be empty or only whitespace")
         return value
 
-    @validator('status')
+    @field_validator('status')
     def validate_status(cls, value):
         """Validate release status if provided."""
         if value is not None and value not in cls.VALID_STATUSES:
             raise ValueError(f"Status '{value}' is not valid. Common statuses are: {', '.join(cls.VALID_STATUSES)}")
         return value
 
-    @root_validator(skip_on_failure=True)
+    @model_validator(mode='after')
     def validate_dates(cls, values):
         """Validate that start_date is before end_date."""
         start_date = values.get('start_date')
@@ -477,21 +753,21 @@ class QTestTestCycle(BaseModel):
     # Common test cycle statuses in qTest
     VALID_STATUSES: ClassVar[list[str]] = ["Not Started", "In Progress", "Completed", "Blocked", "Deferred"]
 
-    @validator('name')
+    @field_validator('name')
     def validate_name(cls, value):
         """Validate test cycle name isn't empty or just whitespace."""
         if value.strip() == "":
             raise ValueError("Test cycle name cannot be empty or only whitespace")
         return value
 
-    @validator('status')
+    @field_validator('status')
     def validate_status(cls, value):
         """Validate test cycle status if provided."""
         if value is not None and value not in cls.VALID_STATUSES:
             raise ValueError(f"Status '{value}' is not valid. Common statuses are: {', '.join(cls.VALID_STATUSES)}")
         return value
 
-    @root_validator(skip_on_failure=True)
+    @model_validator(mode='after')
     def validate_dates(cls, values):
         """Validate that start_date is before end_date."""
         start_date = values.get('start_date')
@@ -534,14 +810,14 @@ class QTestTestRun(BaseModel):
     # Common test run statuses in qTest
     VALID_STATUSES: ClassVar[list[str]] = ["Not Run", "Passed", "Failed", "Blocked", "Incomplete", "Skipped"]
 
-    @validator('status')
+    @field_validator('status')
     def validate_status(cls, value):
         """Validate test run status if provided."""
         if value is not None and value not in cls.VALID_STATUSES:
             raise ValueError(f"Status '{value}' is not valid. Common statuses are: {', '.join(cls.VALID_STATUSES)}")
         return value
 
-    @root_validator(skip_on_failure=True)
+    @model_validator(mode='after')
     def validate_required_fields_for_creation(cls, values):
         """Validate that either test_case_id or test_case_version_id is provided for new test runs."""
         if values.get('id') is None:  # Only validate for new test runs (no ID yet)
@@ -584,21 +860,21 @@ class QTestTestLog(BaseModel):
     # Valid test execution statuses in qTest
     VALID_STATUSES: ClassVar[list[str]] = ["Passed", "Failed", "Blocked", "Incomplete", "Skipped", "Unexecuted"]
 
-    @validator('status')
+    @field_validator('status')
     def validate_status(cls, value):
         """Validate test execution status."""
         if value not in cls.VALID_STATUSES:
             raise ValueError(f"Status '{value}' is not valid. Must be one of: {', '.join(cls.VALID_STATUSES)}")
         return value
 
-    @validator('note')
+    @field_validator('note')
     def validate_note(cls, value):
         """Validate note field if provided."""
         if value is not None and value.strip() == "":
             raise ValueError("Note cannot be empty or only whitespace if provided")
         return value
 
-    @root_validator(skip_on_failure=True)
+    @model_validator(mode='after')
     def validate_required_fields_for_creation(cls, values):
         """Validate that test_run_id is provided for new test logs."""
         if values.get('id') is None:  # Only validate for new test logs (no ID yet)
@@ -639,14 +915,14 @@ class QTestTestExecution(BaseModel):
     # Valid test execution statuses in qTest
     VALID_STATUSES: ClassVar[list[str]] = ["Passed", "Failed", "Blocked", "Incomplete", "Skipped", "Unexecuted"]
 
-    @validator('status')
+    @field_validator('status')
     def validate_status(cls, value):
         """Validate test execution status."""
         if value not in cls.VALID_STATUSES:
             raise ValueError(f"Status '{value}' is not valid. Must be one of: {', '.join(cls.VALID_STATUSES)}")
         return value
 
-    @validator('test_step_logs')
+    @field_validator('test_step_logs')
     def validate_test_step_logs(cls, value):
         """Validate test step logs format if provided."""
         if value is not None:
@@ -666,7 +942,7 @@ class QTestTestExecution(BaseModel):
 
         return value
 
-    @validator('build_url')
+    @field_validator('build_url')
     def validate_build_url(cls, value):
         """Validate build URL format if provided."""
         if value is not None and not value.startswith(('http://', 'https://')):
@@ -688,7 +964,7 @@ class QTestParameterValue(BaseModel):
     value: str = Field(..., description="The actual value", min_length=1)
     parameter_id: int | None = Field(None, alias="parameterId", description="ID of the parameter this value belongs to")
 
-    @validator('value')
+    @field_validator('value')
     def validate_value(cls, value):
         """Validate parameter value isn't empty or just whitespace."""
         if value.strip() == "":
@@ -719,14 +995,14 @@ class QTestParameter(BaseModel):
     # Valid parameter statuses in qTest
     VALID_STATUSES: ClassVar[list[str]] = ["Active", "Inactive", "Archived"]
 
-    @validator('name')
+    @field_validator('name')
     def validate_name(cls, value):
         """Validate parameter name isn't empty or just whitespace."""
         if value.strip() == "":
             raise ValueError("Parameter name cannot be empty or only whitespace")
         return value
 
-    @validator('status')
+    @field_validator('status')
     def validate_status(cls, value):
         """Validate parameter status if provided."""
         if value is not None and value not in cls.VALID_STATUSES:
@@ -750,7 +1026,7 @@ class QTestDatasetRow(BaseModel):
     name: str | None = Field(None, description="Optional name for this dataset row")
     description: str | None = Field(None, description="Optional description of this dataset row")
 
-    @validator('values')
+    @field_validator('values')
     def validate_values(cls, value):
         """Validate that values dictionary is not empty."""
         if not value:
@@ -782,21 +1058,21 @@ class QTestDataset(BaseModel):
     # Valid dataset statuses in qTest
     VALID_STATUSES: ClassVar[list[str]] = ["Active", "Inactive", "Archived"]
 
-    @validator('name')
+    @field_validator('name')
     def validate_name(cls, value):
         """Validate dataset name isn't empty or just whitespace."""
         if value.strip() == "":
             raise ValueError("Dataset name cannot be empty or only whitespace")
         return value
 
-    @validator('status')
+    @field_validator('status')
     def validate_status(cls, value):
         """Validate dataset status if provided."""
         if value is not None and value not in cls.VALID_STATUSES:
             raise ValueError(f"Status '{value}' is not valid. Must be one of: {', '.join(cls.VALID_STATUSES)}")
         return value
 
-    @root_validator(skip_on_failure=True)
+    @model_validator(mode='after')
     def validate_parameter_consistency(cls, values):
         """Validate that all rows use the same parameter names if parameter_names is provided."""
         rows = values.get('rows', [])
@@ -874,21 +1150,21 @@ class QTestPulseCondition(BaseModel):
     # Valid value types in qTest Pulse
     VALID_VALUE_TYPES: ClassVar[list[str]] = ["string", "number", "boolean", "array", "object", "null"]
 
-    @validator('operator')
+    @field_validator('operator')
     def validate_operator(cls, value):
         """Validate that the operator is supported."""
         if value not in cls.VALID_OPERATORS:
             raise ValueError(f"Operator '{value}' is not valid. Must be one of: {', '.join(cls.VALID_OPERATORS)}")
         return value
 
-    @validator('value_type')
+    @field_validator('value_type')
     def validate_value_type(cls, value):
         """Validate that the value type is supported if provided."""
         if value is not None and value.lower() not in cls.VALID_VALUE_TYPES:
             raise ValueError(f"Value type '{value}' is not valid. Must be one of: {', '.join(cls.VALID_VALUE_TYPES)}")
         return value.lower() if value is not None else value
 
-    @root_validator(skip_on_failure=True)
+    @model_validator(mode='after')
     def validate_value_consistency(cls, values):
         """Validate that value is consistent with value_type if provided."""
         value = values.get('value')
@@ -924,21 +1200,21 @@ class QTestPulseActionParameter(BaseModel):
     # Valid value types in qTest Pulse
     VALID_VALUE_TYPES: ClassVar[list[str]] = ["string", "number", "boolean", "array", "object", "null"]
 
-    @validator('name')
+    @field_validator('name')
     def validate_name(cls, value):
         """Validate parameter name isn't empty or just whitespace."""
         if value.strip() == "":
             raise ValueError("Parameter name cannot be empty or only whitespace")
         return value
 
-    @validator('value_type')
+    @field_validator('value_type')
     def validate_value_type(cls, value):
         """Validate that the value type is supported if provided."""
         if value is not None and value.lower() not in cls.VALID_VALUE_TYPES:
             raise ValueError(f"Value type '{value}' is not valid. Must be one of: {', '.join(cls.VALID_VALUE_TYPES)}")
         return value.lower() if value is not None else value
 
-    @root_validator(skip_on_failure=True)
+    @model_validator(mode='after')
     def validate_value_consistency(cls, values):
         """Validate that value is consistent with value_type if provided."""
         value = values.get('value')
@@ -978,14 +1254,14 @@ class QTestPulseAction(BaseModel):
     updated_by: dict[str, Any] | None = Field(None, alias="updatedBy", description="User who last updated the action")
     updated_date: datetime | None = Field(None, alias="updatedDate", description="Date when the action was last updated")
 
-    @validator('name')
+    @field_validator('name')
     def validate_name(cls, value):
         """Validate action name isn't empty or just whitespace."""
         if value.strip() == "":
             raise ValueError("Action name cannot be empty or only whitespace")
         return value
 
-    @validator('action_type')
+    @field_validator('action_type')
     def validate_action_type(cls, value):
         """Validate that action type is valid."""
         try:
@@ -996,7 +1272,7 @@ class QTestPulseAction(BaseModel):
             valid_types = [e.value for e in QTestPulseActionType]
             raise ValueError(f"Action type '{value}' is not valid. Must be one of: {', '.join(valid_types)}")
 
-    @root_validator(skip_on_failure=True)
+    @model_validator(mode='after')
     def validate_required_parameters(cls, values):
         """Validate that required parameters are provided based on action type."""
         action_type = values.get('action_type')
@@ -1044,14 +1320,14 @@ class QTestPulseTrigger(BaseModel):
     updated_by: dict[str, Any] | None = Field(None, alias="updatedBy", description="User who last updated the trigger")
     updated_date: datetime | None = Field(None, alias="updatedDate", description="Date when the trigger was last updated")
 
-    @validator('name')
+    @field_validator('name')
     def validate_name(cls, value):
         """Validate trigger name isn't empty or just whitespace."""
         if value.strip() == "":
             raise ValueError("Trigger name cannot be empty or only whitespace")
         return value
 
-    @validator('event_type')
+    @field_validator('event_type')
     def validate_event_type(cls, value):
         """Validate that event type is valid."""
         try:
@@ -1062,7 +1338,7 @@ class QTestPulseTrigger(BaseModel):
             valid_types = [e.value for e in QTestPulseEventType]
             raise ValueError(f"Event type '{value}' is not valid. Must be one of: {', '.join(valid_types)}")
 
-    @root_validator(skip_on_failure=True)
+    @model_validator(mode='after')
     def validate_scheduled_trigger(cls, values):
         """Validate that scheduled triggers have appropriate conditions."""
         event_type = values.get('event_type')
@@ -1100,14 +1376,14 @@ class QTestPulseRule(BaseModel):
     updated_date: datetime | None = Field(None, alias="updatedDate", description="Date when the rule was last updated")
     priority: int | None = Field(None, description="Priority order for rule execution (lower runs first)", ge=1)
 
-    @validator('name')
+    @field_validator('name')
     def validate_name(cls, value):
         """Validate rule name isn't empty or just whitespace."""
         if value.strip() == "":
             raise ValueError("Rule name cannot be empty or only whitespace")
         return value
 
-    @validator('description')
+    @field_validator('description')
     def validate_description(cls, value):
         """Validate rule description if provided."""
         if value is not None and value.strip() == "":
@@ -1138,7 +1414,7 @@ class QTestPulseConstant(BaseModel):
     updated_by: dict[str, Any] | None = Field(None, alias="updatedBy", description="User who last updated the constant")
     updated_date: datetime | None = Field(None, alias="updatedDate", description="Date when the constant was last updated")
 
-    @validator('name')
+    @field_validator('name')
     def validate_name(cls, value):
         """Validate constant name format."""
         if value.strip() == "":
@@ -1155,14 +1431,14 @@ class QTestPulseConstant(BaseModel):
 
         return value
 
-    @validator('value')
+    @field_validator('value')
     def validate_value(cls, value):
         """Validate constant value isn't empty."""
         if value.strip() == "":
             raise ValueError("Constant value cannot be empty or only whitespace")
         return value
 
-    @validator('description')
+    @field_validator('description')
     def validate_description(cls, value):
         """Validate constant description if provided."""
         if value is not None and value.strip() == "":
@@ -1172,6 +1448,235 @@ class QTestPulseConstant(BaseModel):
     model_config = {"populate_by_name": True}
 
 
+
+
+class QTestScenarioStep(BaseModel):
+    """
+    Represents a step in a BDD scenario.
+
+    Steps define the actions and assertions in a BDD scenario. They use keywords
+    like Given, When, Then, And, and But followed by step text. They can also
+    have data tables or doc strings as arguments.
+    """
+
+    id: str | None = Field(None, description="Unique identifier for the step (UUID format)")
+    keyword: str = Field(..., description="Step keyword (Given, When, Then, And, But)")
+    text: str = Field(..., description="Step text content", min_length=1)
+    argument: dict | None = Field(None, description="Optional arguments like data tables or doc strings")
+    line: int | None = Field(None, description="Line number in the feature file")
+
+    # Valid step keywords in Gherkin
+    VALID_KEYWORDS: ClassVar[list[str]] = ["Given", "When", "Then", "And", "But", "*"]
+
+    @field_validator("id", mode="before")
+    def set_id_if_none(cls, v):
+        """Set UUID if id is None."""
+        return v or str(uuid.uuid4())
+
+    @field_validator('keyword')
+    def validate_keyword(cls, value):
+        """Validate that step keyword is valid."""
+        if value not in cls.VALID_KEYWORDS:
+            raise ValueError(f"Step keyword '{value}' is not valid. Must be one of: {', '.join(cls.VALID_KEYWORDS)}")
+        return value
+
+    @field_validator('text')
+    def validate_text(cls, value):
+        """Validate step text isn't empty or just whitespace."""
+        if value.strip() == "":
+            raise ValueError("Step text cannot be empty or only whitespace")
+        return value
+
+    model_config = {"populate_by_name": True}
+
+
+class QTestScenarioBackground(BaseModel):
+    """
+    Represents a background in a BDD feature.
+
+    Backgrounds define steps that are run before each scenario in a feature.
+    They provide a way to set up common preconditions for all scenarios.
+    """
+
+    id: str | None = Field(None, description="Unique identifier for the background (UUID format)")
+    name: str | None = Field(None, description="Optional name or title for the background")
+    description: str | None = Field(None, description="Optional description of the background")
+    steps: list[QTestScenarioStep] = Field(default_factory=list, description="Steps in the background")
+    line: int | None = Field(None, description="Line number in the feature file")
+
+    @field_validator("id", mode="before")
+    def set_id_if_none(cls, v):
+        """Set UUID if id is None."""
+        return v or str(uuid.uuid4())
+
+    @field_validator('steps')
+    def validate_steps(cls, value):
+        """Validate that background has at least one step."""
+        if not value:
+            raise ValueError("Background must have at least one step")
+        return value
+
+    model_config = {"populate_by_name": True}
+
+
+class QTestScenarioExample(BaseModel):
+    """
+    Represents an example table in a BDD scenario outline.
+
+    Examples provide data sets that are used to run a scenario outline multiple times
+    with different values. Each row in the example table represents one execution.
+    """
+
+    id: str | None = Field(None, description="Unique identifier for the example (UUID format)")
+    header: list[str] = Field(..., description="Table header row with parameter names")
+    rows: list[list[str]] = Field(..., description="Table data rows with parameter values")
+    tags: list[str] = Field(default_factory=list, description="Tags associated with this example")
+    line: int | None = Field(None, description="Line number in the feature file")
+
+    @field_validator("id", mode="before")
+    def set_id_if_none(cls, v):
+        """Set UUID if id is None."""
+        return v or str(uuid.uuid4())
+
+    @field_validator('header')
+    def validate_header(cls, value):
+        """Validate that header has at least one column."""
+        if not value:
+            raise ValueError("Example table header cannot be empty")
+
+        if any(not h.strip() for h in value):
+            raise ValueError("Example table header columns cannot be empty or only whitespace")
+
+        return value
+
+    @field_validator('rows')
+    def validate_rows(cls, values, info):
+        """Validate example table rows match header length."""
+        # In Pydantic v2, we need to use the info parameter
+        # to access other field values
+        model_data = info.data
+        header = model_data.get('header', [])
+
+        if not values:
+            raise ValueError("Example table must have at least one data row")
+
+        for i, row in enumerate(values):
+            if len(row) != len(header):
+                raise ValueError(f"Example row {i+1} has {len(row)} values but header has {len(header)} columns")
+
+        return values
+
+    model_config = {"populate_by_name": True}
+
+
+class QTestScenarioOutline(BaseModel):
+    """
+    Represents a scenario outline in a BDD feature.
+
+    Scenario outlines are templates for scenarios that can be executed multiple
+    times with different data sets defined in the examples table. They use
+    placeholders (parameters) that are replaced with values from the examples.
+    """
+
+    id: str | None = Field(None, description="Unique identifier for the scenario outline (UUID format)")
+    name: str = Field(..., description="Name of the scenario outline", min_length=1)
+    description: str | None = Field(None, description="Detailed description of the scenario outline")
+    steps: list[QTestScenarioStep] = Field(..., description="Steps in the scenario outline")
+    examples: list[QTestScenarioExample] = Field(..., description="Example tables for the scenario outline")
+    tags: list[str] = Field(default_factory=list, description="Tags associated with this scenario outline")
+    line: int | None = Field(None, description="Line number in the feature file")
+
+    @field_validator("id", mode="before")
+    def set_id_if_none(cls, v):
+        """Set UUID if id is None."""
+        return v or str(uuid.uuid4())
+
+    @field_validator('name')
+    def validate_name(cls, value):
+        """Validate scenario outline name isn't empty or just whitespace."""
+        if value.strip() == "":
+            raise ValueError("Scenario outline name cannot be empty or only whitespace")
+        return value
+
+    @field_validator('steps')
+    def validate_steps(cls, value):
+        """Validate that scenario outline has at least one step."""
+        if not value:
+            raise ValueError("Scenario outline must have at least one step")
+        return value
+
+    @field_validator('examples')
+    def validate_examples(cls, value):
+        """Validate that scenario outline has at least one example."""
+        if not value:
+            raise ValueError("Scenario outline must have at least one example table")
+        return value
+
+    @model_validator(mode='after')
+    def validate_parameter_usage(self):
+        """Validate that all parameters in steps are defined in examples."""
+        steps = self.steps
+        examples = self.examples
+
+        if not steps or not examples:
+            return self
+
+        # Extract parameters from steps (format <parameter>)
+        import re
+        parameters = set()
+        for step in steps:
+            params = re.findall(r'<([^>]+)>', step.text)
+            parameters.update(params)
+
+        # Check if all parameters are defined in at least one example table
+        defined_params = set()
+        for example in examples:
+            defined_params.update(example.header)
+
+        missing = parameters - defined_params
+        if missing:
+            raise ValueError(f"Parameters not defined in any example table: {', '.join(missing)}")
+
+        return self
+
+    model_config = {"populate_by_name": True}
+
+
+class QTestScenario(BaseModel):
+    """
+    Represents a BDD scenario in qTest Scenario.
+
+    Scenarios in qTest Scenario define specific test cases using Gherkin syntax.
+    Each scenario consists of a series of steps that describe the behavior being tested.
+    """
+
+    id: str | None = Field(None, description="Unique identifier for the scenario (UUID format)")
+    name: str = Field(..., description="Name of the scenario", min_length=1)
+    description: str | None = Field(None, description="Detailed description of the scenario")
+    steps: list[QTestScenarioStep] = Field(..., description="Steps in the scenario")
+    tags: list[str] = Field(default_factory=list, description="Tags associated with this scenario")
+    line: int | None = Field(None, description="Line number in the feature file")
+
+    @field_validator("id", mode="before")
+    def set_id_if_none(cls, v):
+        """Set UUID if id is None."""
+        return v or str(uuid.uuid4())
+
+    @field_validator('name')
+    def validate_name(cls, value):
+        """Validate scenario name isn't empty or just whitespace."""
+        if value.strip() == "":
+            raise ValueError("Scenario name cannot be empty or only whitespace")
+        return value
+
+    @field_validator('steps')
+    def validate_steps(cls, value):
+        """Validate that scenario has at least one step."""
+        if not value:
+            raise ValueError("Scenario must have at least one step")
+        return value
+
+    model_config = {"populate_by_name": True}
 
 
 class QTestScenarioFeature(BaseModel):
@@ -1190,23 +1695,26 @@ class QTestScenarioFeature(BaseModel):
     content: str = Field(..., description="Full Gherkin content of the feature", min_length=1)
     path: str | None = Field(None, description="File path where this feature is stored")
     tags: list[str] | None = Field(default_factory=list, description="Tags associated with this feature")
+    background: QTestScenarioBackground | None = Field(None, description="Background steps for all scenarios")
+    scenarios: list[QTestScenario] = Field(default_factory=list, description="Scenarios in this feature")
+    scenario_outlines: list[QTestScenarioOutline] = Field(default_factory=list, alias="scenarioOutlines", description="Scenario outlines in this feature")
     created_date: datetime | None = Field(None, alias="createdDate", description="Date when the feature was created")
     created_by: dict | None = Field(None, alias="createdBy", description="User who created the feature")
     updated_date: datetime | None = Field(None, alias="updatedDate", description="Date when the feature was last updated")
 
-    @validator("id", pre=True, always=True)
+    @field_validator("id", mode="before")
     def set_id_if_none(cls, v):
         """Set UUID if id is None."""
         return v or str(uuid.uuid4())
 
-    @validator('name')
+    @field_validator('name')
     def validate_name(cls, value):
         """Validate feature name isn't empty or just whitespace."""
         if value.strip() == "":
             raise ValueError("Feature name cannot be empty or only whitespace")
         return value
 
-    @validator('content')
+    @field_validator('content')
     def validate_content(cls, value):
         """Validate feature content has proper Gherkin format."""
         if not value.strip():
@@ -1222,5 +1730,18 @@ class QTestScenarioFeature(BaseModel):
             raise ValueError("Feature must contain at least one Scenario or Scenario Outline")
 
         return value
+
+    @model_validator(mode='after')
+    def validate_scenarios_or_outlines(self):
+        """Validate that feature has at least one scenario or scenario outline."""
+        scenarios = self.scenarios
+        scenario_outlines = self.scenario_outlines
+
+        if not scenarios and not scenario_outlines:
+            # This might be parsed from content, so don't fail if content is present
+            if not self.content:
+                raise ValueError("Feature must have at least one scenario or scenario outline")
+
+        return self
 
     model_config = {"populate_by_name": True}
