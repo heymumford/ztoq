@@ -904,4 +904,3 @@ class ZephyrApiSpecWrapper:
 
         # Build the full signature
         return f"def {operation_id}({', '.join(params)}) -> Dict[str, Any]:"
-

@@ -17,14 +17,21 @@ from datetime import datetime, timedelta
 from typing import Any, Dict, List
 from pydantic import BaseModel
 from ztoq.qtest_models import (
+    QTestAutomationSettings,
+    QTestConfig,
     QTestCustomField,
     QTestDataset,
     QTestDatasetRow,
+    QTestField,
+    QTestLink,
     QTestModule,
+    QTestPaginatedResponse,
     QTestParameter,
     QTestParameterValue,
     QTestProject,
     QTestPulseAction,
+    QTestPulseActionParameter,
+    QTestPulseCondition,
     QTestPulseConstant,
     QTestPulseRule,
     QTestPulseTrigger,
@@ -33,6 +40,7 @@ from ztoq.qtest_models import (
     QTestStep,
     QTestTestCase,
     QTestTestCycle,
+    QTestTestExecution,
     QTestTestLog,
     QTestTestRun,
 )
@@ -159,17 +167,15 @@ class QTestModuleFactory(MockFactory):
 class QTestCustomFieldFactory(MockFactory):
     """Factory for qTest CustomField entities."""
 
-    FIELD_TYPES = ["STRING", "NUMBER", "DATE", "CHECKBOX", "USER", "RELEASE", "MULTI_SELECT"]
-
     @classmethod
     def create(cls, **kwargs) -> QTestCustomField:
         """Create a single qTest Custom Field."""
-        field_type = kwargs.get("type", cls.random_list_item(cls.FIELD_TYPES))
-        field_id = kwargs.get("id", cls.random_id())
+        field_type = kwargs.get("field_type", cls.random_list_item(QTestCustomField.SUPPORTED_TYPES))
+        field_id = kwargs.get("field_id", cls.random_id())
 
         # Generate appropriate value based on type
-        if "value" in kwargs:
-            field_value = kwargs["value"]
+        if "field_value" in kwargs:
+            field_value = kwargs["field_value"]
         else:
             if field_type == "STRING":
                 field_value = cls.random_string("Value-")
@@ -181,21 +187,21 @@ class QTestCustomFieldFactory(MockFactory):
                 field_value = cls.random_bool()
             elif field_type == "USER":
                 field_value = {"id": cls.random_id(), "name": cls.random_string("User-")}
-            elif field_type == "RELEASE":
-                field_value = cls.random_id()
-            elif field_type == "MULTI_SELECT":
-                field_value = ",".join(
-                    [cls.random_string("Option-") for _ in range(random.randint(1, 3))]
-                )
+            elif field_type == "MULTI_USER":
+                field_value = [{"id": cls.random_id(), "name": cls.random_string("User-")} for _ in range(2)]
+            elif field_type == "MULTI_VALUE":
+                field_value = [cls.random_string("Option-") for _ in range(2)]
+            elif field_type == "RICH_TEXT":
+                field_value = f"<p>{cls.random_string('Rich text value-')}</p>"
             else:
                 field_value = cls.random_string("Value-")
 
         field_data = {
-            "id": field_id,
-            "name": kwargs.get("name", cls.random_string("Field-")),
-            "type": field_type,
-            "value": field_value,
-            "required": kwargs.get("required", False),
+            "field_id": field_id,
+            "field_name": kwargs.get("field_name", cls.random_string("Field-")),
+            "field_type": field_type,
+            "field_value": field_value,
+            "is_required": kwargs.get("is_required", False),
         }
 
         return QTestCustomField(**field_data)
@@ -240,6 +246,22 @@ class QTestTestCaseFactory(MockFactory):
         """Create a single qTest Test Case."""
         test_case_id = kwargs.get("id", cls.random_id())
         create_date = kwargs.get("create_date", cls.random_date(90))
+        module_id = kwargs.get("module_id", cls.random_id())
+
+        # Create test steps with sequential order
+        if "test_steps" not in kwargs:
+            step_count = kwargs.get("step_count", 3)
+            test_steps = []
+            for i in range(step_count):
+                test_steps.append(QTestStepFactory.create(order=i+1))
+        else:
+            test_steps = kwargs["test_steps"]
+
+        # Create automation settings if not provided
+        if "automation" not in kwargs and cls.random_bool():
+            automation = QTestAutomationSettingsFactory.create()
+        else:
+            automation = kwargs.get("automation")
 
         test_case_data = {
             "id": test_case_id,
@@ -249,15 +271,20 @@ class QTestTestCaseFactory(MockFactory):
                 "description", f"Description for test case {kwargs.get('name', 'Test Case')}"
             ),
             "precondition": kwargs.get("precondition", "Test case precondition"),
-            "test_steps": kwargs.get("test_steps", QTestStepFactory.create_batch(3)),
-            "properties": kwargs.get("properties", QTestCustomFieldFactory.create_batch(2)),
+            "test_steps": test_steps,
+            "properties": kwargs.get("properties", []),
             "parent_id": kwargs.get("parent_id"),
-            "module_id": kwargs.get("module_id", cls.random_id()),
+            "module_id": module_id,
             "priority_id": kwargs.get("priority_id", random.randint(1, 5)),
             "creator_id": kwargs.get("creator_id", cls.random_id()),
             "attachments": kwargs.get("attachments", []),
             "create_date": create_date,
             "last_modified_date": kwargs.get("last_modified_date", create_date),
+            "automation": automation,
+            "shared": kwargs.get("shared", False),
+            "test_case_version_id": kwargs.get("test_case_version_id", 1),
+            "version": kwargs.get("version", 1),
+            "project_id": kwargs.get("project_id", cls.random_id())
         }
 
         return QTestTestCase(**test_case_data)
@@ -344,6 +371,9 @@ class QTestTestRunFactory(MockFactory):
             test_case_id = kwargs.get("test_case_id", cls.random_id())
             run_name = cls.random_string("Test Run-")
 
+        test_cycle_id = kwargs.get("test_cycle_id", cls.random_id())
+        created_date = kwargs.get("created_date", cls.random_date())
+
         run_data = {
             "id": run_id,
             "name": kwargs.get("name", run_name),
@@ -353,10 +383,22 @@ class QTestTestRunFactory(MockFactory):
             "pid": kwargs.get("pid", f"TR-{run_id}"),
             "test_case_version_id": kwargs.get("test_case_version_id", 1),
             "test_case_id": test_case_id,
-            "test_cycle_id": kwargs.get("test_cycle_id", cls.random_id()),
+            "test_cycle_id": test_cycle_id,
             "project_id": kwargs.get("project_id", cls.random_id()),
-            "properties": kwargs.get("properties", QTestCustomFieldFactory.create_batch(2)),
-            "status": kwargs.get("status", "NOT_EXECUTED"),
+            "properties": kwargs.get("properties", []),
+            "status": kwargs.get("status", "Not Run"),
+            "assigned_to": kwargs.get("assigned_to", {
+                "id": cls.random_id(),
+                "name": cls.random_string("User-")
+            }),
+            "created_date": created_date,
+            "created_by": kwargs.get("created_by", {
+                "id": cls.random_id(),
+                "name": cls.random_string("User-")
+            }),
+            "planned_execution_date": kwargs.get("planned_execution_date", created_date + timedelta(days=1)),
+            "actual_execution_date": kwargs.get("actual_execution_date"),
+            "latest_test_log_id": kwargs.get("latest_test_log_id")
         }
 
         return QTestTestRun(**run_data)
@@ -370,20 +412,30 @@ class QTestTestRunFactory(MockFactory):
 class QTestTestLogFactory(MockFactory):
     """Factory for qTest Test Log entities."""
 
-    TEST_STATUSES = ["PASS", "FAIL", "BLOCKED", "INCOMPLETE", "NOT_EXECUTED"]
-
     @classmethod
     def create(cls, **kwargs) -> QTestTestLog:
         """Create a single qTest Test Log."""
-        status = kwargs.get("status", cls.random_list_item(cls.TEST_STATUSES))
+        status = kwargs.get("status", cls.random_list_item(QTestTestLog.VALID_STATUSES))
+        execution_date = kwargs.get("execution_date", cls.random_date(10))
+
+        # Test run ID is required for new test logs
+        test_run_id = kwargs.get("test_run_id", cls.random_id())
 
         log_data = {
             "id": kwargs.get("id", cls.random_id()),
             "status": status,
-            "execution_date": kwargs.get("execution_date", cls.random_date(10)),
+            "execution_date": execution_date,
             "note": kwargs.get("note", f"Test executed with result: {status}"),
             "attachments": kwargs.get("attachments", []),
-            "properties": kwargs.get("properties", QTestCustomFieldFactory.create_batch(1)),
+            "properties": kwargs.get("properties", []),
+            "test_run_id": test_run_id,
+            "executed_by": kwargs.get("executed_by", {
+                "id": cls.random_id(),
+                "name": cls.random_string("User-")
+            }),
+            "defects": kwargs.get("defects", []),
+            "test_step_logs": kwargs.get("test_step_logs"),
+            "actual_results": kwargs.get("actual_results", f"Actual results for test with status: {status}")
         }
 
         return QTestTestLog(**log_data)
@@ -434,6 +486,29 @@ class QTestAttachmentFactory(MockFactory):
         return [cls.create(**kwargs) for _ in range(count)]
 
 
+class QTestParameterValueFactory(MockFactory):
+    """Factory for qTest Parameter Value entities."""
+
+    @classmethod
+    def create(cls, **kwargs) -> QTestParameterValue:
+        """Create a single qTest Parameter Value."""
+        value_id = kwargs.get("id", cls.random_id())
+        parameter_id = kwargs.get("parameter_id", cls.random_id())
+
+        value_data = {
+            "id": value_id,
+            "value": kwargs.get("value", f"Value-{cls.random_string()}"),
+            "parameter_id": parameter_id
+        }
+
+        return QTestParameterValue(**value_data)
+
+    @classmethod
+    def create_batch(cls, count: int = 3, **kwargs) -> List[QTestParameterValue]:
+        """Create multiple qTest Parameter Values."""
+        return [cls.create(**kwargs) for _ in range(count)]
+
+
 class QTestParameterFactory(MockFactory):
     """Factory for qTest Parameter entities."""
 
@@ -441,13 +516,18 @@ class QTestParameterFactory(MockFactory):
     def create(cls, **kwargs) -> QTestParameter:
         """Create a single qTest Parameter."""
         param_id = kwargs.get("id", cls.random_id())
+        project_id = kwargs.get("project_id", cls.random_id())
 
-        # Create parameter values if not provided
+        # Create parameter values separately if not provided
         if "values" not in kwargs:
-            values = [
-                QTestParameterValue(id=cls.random_id(), value=f"Value-{i+1}", parameter_id=param_id)
-                for i in range(random.randint(2, 5))
-            ]
+            # Create values using QTestParameterValueFactory
+            values = []
+            for i in range(random.randint(2, 5)):
+                value = QTestParameterValueFactory.create(
+                    parameter_id=param_id,
+                    value=f"Value-{i+1}"
+                )
+                values.append(value)
         else:
             values = kwargs["values"]
 
@@ -457,8 +537,8 @@ class QTestParameterFactory(MockFactory):
             "description": kwargs.get(
                 "description", f"Description for {kwargs.get('name', 'Parameter')}"
             ),
-            "project_id": kwargs.get("project_id", cls.random_id()),
-            "status": kwargs.get("status", "ACTIVE"),
+            "project_id": project_id,
+            "status": kwargs.get("status", "Active"),
             "values": values,
         }
 
@@ -478,17 +558,23 @@ class QTestDatasetFactory(MockFactory):
         """Create a single qTest Dataset."""
         dataset_id = kwargs.get("id", cls.random_id())
 
+        # Default parameter names
+        parameter_names = kwargs.get("parameter_names", ["param1", "param2", "param3"])
+
         # Create rows if not provided
         if "rows" not in kwargs:
-            # Generate column names
-            columns = kwargs.get("columns", ["column1", "column2", "column3"])
-
             # Generate 2-5 rows of data
             rows = []
             for i in range(random.randint(2, 5)):
-                row_values = {col: f"Value-{i+1}-{col}" for col in columns}
+                row_values = {param: f"Value-{i+1}-{param}" for param in parameter_names}
                 rows.append(
-                    QTestDatasetRow(id=cls.random_id(), dataset_id=dataset_id, values=row_values)
+                    QTestDatasetRow(
+                        id=cls.random_id(),
+                        dataset_id=dataset_id,
+                        values=row_values,
+                        name=f"Row {i+1}",
+                        description=f"Description for row {i+1}"
+                    )
                 )
         else:
             rows = kwargs["rows"]
@@ -500,8 +586,14 @@ class QTestDatasetFactory(MockFactory):
                 "description", f"Description for {kwargs.get('name', 'Dataset')}"
             ),
             "project_id": kwargs.get("project_id", cls.random_id()),
-            "status": kwargs.get("status", "ACTIVE"),
+            "status": kwargs.get("status", "Active"),
             "rows": rows,
+            "parameter_names": parameter_names,
+            "created_date": kwargs.get("created_date", cls.random_date()),
+            "created_by": kwargs.get("created_by", {
+                "id": cls.random_id(),
+                "name": cls.random_string("User-")
+            })
         }
 
         return QTestDataset(**dataset_data)
@@ -515,34 +607,19 @@ class QTestDatasetFactory(MockFactory):
 class QTestPulseTriggerFactory(MockFactory):
     """Factory for qTest Pulse Trigger entities."""
 
-    EVENT_TYPES = [
-        "TEST_CASE_CREATED",
-        "TEST_CASE_UPDATED",
-        "TEST_CYCLE_CREATED",
-        "TEST_LOG_CREATED",
-        "DEFECT_CREATED",
-        "REQUIREMENT_CREATED",
-    ]
-
     @classmethod
     def create(cls, **kwargs) -> QTestPulseTrigger:
         """Create a single qTest Pulse Trigger."""
-        event_type = kwargs.get("event_type", cls.random_list_item(cls.EVENT_TYPES))
+        from ztoq.qtest_models import QTestPulseEventType
+        event_type = kwargs.get("event_type", cls.random_list_item(list(QTestPulseEventType)))
 
         # Create conditions if not provided
         if "conditions" not in kwargs:
-            # Generate 0-3 conditions
+            # Generate 0-3 conditions using the condition factory
             conditions = []
-            for _ in range(random.randint(0, 3)):
-                conditions.append(
-                    {
-                        "field": cls.random_string("field_"),
-                        "operator": cls.random_list_item(
-                            ["equals", "contains", "startsWith", "endsWith"]
-                        ),
-                        "value": cls.random_string("value_"),
-                    }
-                )
+            for _ in range(random.randint(1, 3)):
+                condition = QTestPulseConditionFactory.create()
+                conditions.append(condition)
         else:
             conditions = kwargs["conditions"]
 
@@ -569,45 +646,58 @@ class QTestPulseTriggerFactory(MockFactory):
 class QTestPulseActionFactory(MockFactory):
     """Factory for qTest Pulse Action entities."""
 
-    ACTION_TYPES = [
-        "CREATE_DEFECT",
-        "SEND_MAIL",
-        "UPDATE_FIELD_VALUE",
-        "WEBHOOK",
-        "UPDATE_TEST_RUN_STATUS",
-    ]
-
     @classmethod
     def create(cls, **kwargs) -> QTestPulseAction:
         """Create a single qTest Pulse Action."""
-        action_type = kwargs.get("action_type", cls.random_list_item(cls.ACTION_TYPES))
+        from ztoq.qtest_models import QTestPulseActionType
+
+        # If action_type is provided as string, convert to enum
+        if "action_type" in kwargs and isinstance(kwargs["action_type"], str):
+            kwargs["action_type"] = QTestPulseActionType(kwargs["action_type"])
+
+        # Use SEND_MAIL as default action type for reliable parameter structure
+        action_type = kwargs.get("action_type", QTestPulseActionType.SEND_MAIL)
 
         # Create parameters if not provided
         if "parameters" not in kwargs:
             # Generate parameters based on action type
             parameters = []
-            if action_type == "CREATE_DEFECT":
+            if action_type == QTestPulseActionType.CREATE_DEFECT:
                 parameters = [
-                    {"name": "issueType", "value": "Bug"},
-                    {"name": "summary", "value": "{{testCase.name}} failed"},
-                    {"name": "description", "value": "Failure in {{testCase.name}}"},
+                    QTestPulseActionParameterFactory.create(name="issueType", value="Bug"),
+                    QTestPulseActionParameterFactory.create(name="summary", value="{{testCase.name}} failed"),
+                    QTestPulseActionParameterFactory.create(name="description", value="Failure in {{testCase.name}}")
                 ]
-            elif action_type == "SEND_MAIL":
+            elif action_type == QTestPulseActionType.SEND_MAIL:
                 parameters = [
-                    {"name": "recipients", "value": "test@example.com"},
-                    {"name": "subject", "value": "Test Notification: {{testCase.name}}"},
-                    {"name": "body", "value": "Test case {{testCase.name}} has been updated."},
+                    QTestPulseActionParameterFactory.create(name="recipients", value="test@example.com"),
+                    QTestPulseActionParameterFactory.create(name="subject", value="Test Notification: {{testCase.name}}"),
+                    QTestPulseActionParameterFactory.create(name="body", value="Test case {{testCase.name}} has been updated.")
                 ]
-            elif action_type == "UPDATE_FIELD":
+            elif action_type == QTestPulseActionType.UPDATE_FIELD_VALUE:
                 parameters = [
-                    {"name": "fieldId", "value": cls.random_id()},
-                    {"name": "value", "value": "New Value"},
+                    QTestPulseActionParameterFactory.create(name="field_id", value=cls.random_id()),
+                    QTestPulseActionParameterFactory.create(name="field_value", value="New Value")
+                ]
+            elif action_type == QTestPulseActionType.WEBHOOK:
+                parameters = [
+                    QTestPulseActionParameterFactory.create(name="url", value="https://example.com/webhook"),
+                    QTestPulseActionParameterFactory.create(name="method", value="POST")
+                ]
+            elif action_type == QTestPulseActionType.SLACK:
+                parameters = [
+                    QTestPulseActionParameterFactory.create(name="webhook_url", value="https://slack.com/api/webhook"),
+                    QTestPulseActionParameterFactory.create(name="message", value="Test notification from qTest")
+                ]
+            elif action_type == QTestPulseActionType.UPDATE_TEST_RUN_STATUS:
+                parameters = [
+                    QTestPulseActionParameterFactory.create(name="status", value="Passed")
                 ]
             else:
-                # Generic parameters
+                # Generate generic parameters with at least required fields
                 parameters = [
-                    {"name": "param1", "value": "value1"},
-                    {"name": "param2", "value": "value2"},
+                    QTestPulseActionParameterFactory.create(name="param1", value="value1"),
+                    QTestPulseActionParameterFactory.create(name="param2", value="value2")
                 ]
         else:
             parameters = kwargs["parameters"]
@@ -628,7 +718,10 @@ class QTestPulseActionFactory(MockFactory):
 
     @classmethod
     def create_batch(cls, count: int = 3, **kwargs) -> List[QTestPulseAction]:
-        """Create multiple qTest Pulse Actions."""
+        """Create multiple qTest Pulse Actions with same configuration."""
+        # Create a test object first to ensure validation passes
+        action = cls.create(**kwargs)
+        # Then create batch with the same configuration
         return [cls.create(**kwargs) for _ in range(count)]
 
 
@@ -669,14 +762,20 @@ class QTestPulseRuleFactory(MockFactory):
         # Create trigger and action if not provided
         project_id = kwargs.get("project_id", cls.random_id())
 
-        if "trigger_id" not in kwargs:
+        if "trigger" not in kwargs and "trigger_id" not in kwargs:
             trigger = QTestPulseTriggerFactory.create(project_id=project_id)
+            trigger_id = trigger.id
+        elif "trigger" in kwargs:
+            trigger = kwargs["trigger"]
             trigger_id = trigger.id
         else:
             trigger_id = kwargs["trigger_id"]
 
-        if "action_id" not in kwargs:
+        if "action" not in kwargs and "action_id" not in kwargs:
             action = QTestPulseActionFactory.create(project_id=project_id)
+            action_id = action.id
+        elif "action" in kwargs:
+            action = kwargs["action"]
             action_id = action.id
         else:
             action_id = kwargs["action_id"]
@@ -761,4 +860,237 @@ Feature: {feature_name}
     @classmethod
     def create_batch(cls, count: int = 3, **kwargs) -> List[QTestScenarioFeature]:
         """Create multiple qTest Scenario Features."""
+        return [cls.create(**kwargs) for _ in range(count)]
+
+
+class QTestConfigFactory(MockFactory):
+    """Factory for qTest API configuration."""
+
+    @classmethod
+    def create(cls, **kwargs) -> QTestConfig:
+        """Create a single qTest API configuration."""
+        config_data = {
+            "base_url": kwargs.get("base_url", "https://example.qtest.com"),
+            "username": kwargs.get("username", f"user_{cls.random_string()}"),
+            "password": kwargs.get("password", cls.random_string("pass_")),
+            "project_id": kwargs.get("project_id", cls.random_id())
+        }
+        return QTestConfig(**config_data)
+
+
+class QTestPaginatedResponseFactory(MockFactory):
+    """Factory for qTest paginated API responses."""
+
+    @classmethod
+    def create(cls, **kwargs) -> QTestPaginatedResponse:
+        """Create a single qTest paginated response."""
+        # Create item dictionaries if not provided
+        if "items" not in kwargs:
+            item_count = kwargs.get("item_count", random.randint(1, 10))
+            items = [{"id": cls.random_id(), "name": cls.random_string()} for _ in range(item_count)]
+        else:
+            items = kwargs["items"]
+            item_count = len(items)
+
+        page = kwargs.get("page", 1)
+        page_size = kwargs.get("page_size", 20)
+        total = kwargs.get("total", item_count + random.randint(0, 20))
+
+        response_data = {
+            "items": items,
+            "page": page,
+            "page_size": page_size,
+            "offset": kwargs.get("offset", (page - 1) * page_size),
+            "limit": kwargs.get("limit", page_size),
+            "total": total,
+            "is_last": kwargs.get("is_last", page * page_size >= total)
+        }
+        return QTestPaginatedResponse(**response_data)
+
+
+class QTestLinkFactory(MockFactory):
+    """Factory for qTest link entities."""
+
+    @classmethod
+    def create(cls, **kwargs) -> QTestLink:
+        """Create a single qTest link."""
+        link_data = {
+            "id": kwargs.get("id", cls.random_id()),
+            "name": kwargs.get("name", cls.random_string("Link-")),
+            "url": kwargs.get("url", f"https://example.com/{cls.random_string()}"),
+            "icon_url": kwargs.get("icon_url", f"https://example.com/icons/{cls.random_string()}.png"),
+            "target": kwargs.get("target", "_blank")
+        }
+        return QTestLink(**link_data)
+
+    @classmethod
+    def create_batch(cls, count: int = 3, **kwargs) -> List[QTestLink]:
+        """Create multiple qTest links."""
+        return [cls.create(**kwargs) for _ in range(count)]
+
+
+class QTestFieldFactory(MockFactory):
+    """Factory for qTest field entities."""
+
+    @classmethod
+    def create(cls, **kwargs) -> QTestField:
+        """Create a single qTest field."""
+        field_type = kwargs.get("field_type", cls.random_list_item(QTestField.VALID_FIELD_TYPES))
+        entity_type = kwargs.get("entity_type", cls.random_list_item(QTestField.VALID_ENTITY_TYPES))
+
+        field_data = {
+            "id": kwargs.get("id", cls.random_id()),
+            "name": kwargs.get("name", cls.random_string("field_")),
+            "label": kwargs.get("label", cls.random_string("Field ")),
+            "field_type": field_type,
+            "entity_type": entity_type,
+            "allowed_values": kwargs.get("allowed_values"),
+            "required": kwargs.get("required", random.choice([True, False]))
+        }
+        return QTestField(**field_data)
+
+    @classmethod
+    def create_batch(cls, count: int = 3, **kwargs) -> List[QTestField]:
+        """Create multiple qTest fields."""
+        return [cls.create(**kwargs) for _ in range(count)]
+
+
+class QTestAutomationSettingsFactory(MockFactory):
+    """Factory for qTest automation settings."""
+
+    @classmethod
+    def create(cls, **kwargs) -> QTestAutomationSettings:
+        """Create a single qTest automation settings object."""
+        framework_id = kwargs.get("framework_id", cls.random_id())
+
+        settings_data = {
+            "automation_id": kwargs.get("automation_id", f"auto_{cls.random_string()}"),
+            "framework_id": framework_id,
+            "framework_name": kwargs.get("framework_name", cls.random_string("Framework-")),
+            "parameters": kwargs.get("parameters", {
+                "param1": cls.random_string(),
+                "param2": cls.random_string()
+            }),
+            "is_parameterized": kwargs.get("is_parameterized", random.choice([True, False])),
+            "external_id": kwargs.get("external_id", cls.random_string("ext_"))
+        }
+        return QTestAutomationSettings(**settings_data)
+
+
+class QTestTestExecutionFactory(MockFactory):
+    """Factory for qTest test execution entities."""
+
+    @classmethod
+    def create(cls, **kwargs) -> QTestTestExecution:
+        """Create a single qTest test execution."""
+        execution_date = kwargs.get("execution_date", cls.random_date())
+        status = kwargs.get("status", cls.random_list_item(QTestTestExecution.VALID_STATUSES))
+        test_run_id = kwargs.get("test_run_id", cls.random_id())
+
+        # Create test step logs if not provided
+        if "test_step_logs" not in kwargs:
+            step_count = random.randint(1, 5)
+            step_logs = []
+            for i in range(step_count):
+                step_logs.append({
+                    "stepId": i + 1,
+                    "status": cls.random_list_item(QTestTestExecution.VALID_STATUSES),
+                    "actualResult": f"Actual result for step {i+1}",
+                    "executionNotes": f"Notes for step {i+1}"
+                })
+        else:
+            step_logs = kwargs["test_step_logs"]
+
+        execution_data = {
+            "id": kwargs.get("id", cls.random_id()),
+            "test_run_id": test_run_id,
+            "status": status,
+            "execution_date": execution_date,
+            "executed_by": kwargs.get("executed_by", cls.random_id()),
+            "note": kwargs.get("note", f"Execution completed with status: {status}"),
+            "attachments": kwargs.get("attachments", QTestAttachmentFactory.create_batch(random.randint(0, 2))),
+            "test_step_logs": step_logs,
+            "build": kwargs.get("build", f"1.{random.randint(0, 10)}.{random.randint(0, 100)}"),
+            "build_url": kwargs.get("build_url", f"https://ci.example.com/build/{cls.random_id()}"),
+            "duration": kwargs.get("duration", random.randint(100, 10000))
+        }
+        return QTestTestExecution(**execution_data)
+
+    @classmethod
+    def create_batch(cls, count: int = 3, **kwargs) -> List[QTestTestExecution]:
+        """Create multiple qTest test executions."""
+        return [cls.create(**kwargs) for _ in range(count)]
+
+
+class QTestPulseConditionFactory(MockFactory):
+    """Factory for qTest Pulse condition entities."""
+
+    @classmethod
+    def create(cls, **kwargs) -> QTestPulseCondition:
+        """Create a single qTest Pulse condition."""
+        operator = kwargs.get("operator", cls.random_list_item(QTestPulseCondition.VALID_OPERATORS))
+
+        # Select appropriate value based on operator
+        if "value" not in kwargs:
+            if operator in ["equals", "not_equals"]:
+                value = cls.random_string()
+            elif operator in ["contains", "not_contains", "starts_with", "ends_with"]:
+                value = cls.random_string()
+            elif operator in ["greater_than", "less_than"]:
+                value = random.randint(1, 100)
+            else:  # is_empty, is_not_empty
+                value = None
+        else:
+            value = kwargs["value"]
+
+        condition_data = {
+            "field": kwargs.get("field", cls.random_string("field_")),
+            "operator": operator,
+            "value": value,
+            "value_type": kwargs.get("value_type")
+        }
+        return QTestPulseCondition(**condition_data)
+
+    @classmethod
+    def create_batch(cls, count: int = 3, **kwargs) -> List[QTestPulseCondition]:
+        """Create multiple qTest Pulse conditions."""
+        return [cls.create(**kwargs) for _ in range(count)]
+
+
+class QTestPulseActionParameterFactory(MockFactory):
+    """Factory for qTest Pulse action parameter entities."""
+
+    @classmethod
+    def create(cls, **kwargs) -> QTestPulseActionParameter:
+        """Create a single qTest Pulse action parameter."""
+        # Default to string type for simplicity
+        value_type = kwargs.get("value_type", "string")
+
+        # Generate appropriate value based on type
+        if "value" not in kwargs:
+            if value_type == "string":
+                value = cls.random_string("value_")
+            elif value_type == "number":
+                value = random.randint(1, 100)
+            elif value_type == "boolean":
+                value = random.choice([True, False])
+            elif value_type == "array":
+                value = [cls.random_string() for _ in range(random.randint(1, 3))]
+            elif value_type == "object":
+                value = {"key1": cls.random_string(), "key2": cls.random_string()}
+            else:
+                value = cls.random_string()
+        else:
+            value = kwargs["value"]
+
+        parameter_data = {
+            "name": kwargs.get("name", cls.random_string("param_")),
+            "value": value,
+            "value_type": value_type
+        }
+        return QTestPulseActionParameter(**parameter_data)
+
+    @classmethod
+    def create_batch(cls, count: int = 3, **kwargs) -> List[QTestPulseActionParameter]:
+        """Create multiple qTest Pulse action parameters."""
         return [cls.create(**kwargs) for _ in range(count)]

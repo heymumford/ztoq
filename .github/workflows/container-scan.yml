@@ -4,16 +4,16 @@ on:
   push:
     branches: [ main ]
     paths:
-      - 'Dockerfile'
-      - 'docker-compose.yml'
+      - 'config/Dockerfile'
+      - 'config/docker-compose.yml'
       - 'requirements*.txt'
       - 'poetry.lock'
       - 'pyproject.toml'
   pull_request:
     branches: [ main ]
     paths:
-      - 'Dockerfile'
-      - 'docker-compose.yml'
+      - 'config/Dockerfile'
+      - 'config/docker-compose.yml'
       - 'requirements*.txt'
       - 'poetry.lock'
       - 'pyproject.toml'
@@ -36,6 +36,7 @@ jobs:
         uses: docker/build-push-action@v4
         with:
           context: .
+          file: ./config/Dockerfile
           push: false
           load: true
           tags: ztoq:latest
@@ -49,7 +50,7 @@ jobs:
           format: 'json'
           output: 'trivy-results.json'
           severity: 'CRITICAL,HIGH,MEDIUM'
-        
+
       - name: Run Trivy vulnerability scanner (Table)
         uses: aquasecurity/trivy-action@master
         with:
@@ -95,12 +96,12 @@ jobs:
       - name: Create issue for critical vulnerabilities
         if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
         run: |
-          if jq '.Results[] | select(.Vulnerabilities != null) | .Vulnerabilities[] | select(.Severity=="CRITICAL")' trivy-results.json | grep -q .; then
+          if jq '.Results[] | select(.Vulnerabilities \!= null) | .Vulnerabilities[] | select(.Severity=="CRITICAL")' trivy-results.json | grep -q .; then
             echo "Critical vulnerabilities found in container image"
-            
+
             # Create summary of critical vulnerabilities
-            VULN_SUMMARY=$(jq -r '.Results[] | select(.Vulnerabilities != null) | .Vulnerabilities[] | select(.Severity=="CRITICAL") | "- \(.VulnerabilityID): \(.Title) in \(.PkgName) \(.InstalledVersion)"' trivy-results.json | sort | uniq)
-            
+            VULN_SUMMARY=$(jq -r '.Results[] | select(.Vulnerabilities \!= null) | .Vulnerabilities[] | select(.Severity=="CRITICAL") | "- \(.VulnerabilityID): \(.Title) in \(.PkgName) \(.InstalledVersion)"' trivy-results.json | sort | uniq)
+
             # Create GitHub issue with the summary
             gh issue create \
               --title "Critical container vulnerabilities detected" \
@@ -113,3 +114,4 @@ See the attached workflow run for full details." \
           fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+EOF < /dev/null

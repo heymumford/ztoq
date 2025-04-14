@@ -67,7 +67,7 @@ class TestDockerMigration:
         # Test the setup command
         with patch('os.chdir'):
             result = subprocess.run(
-                [str(docker_env["original_dir"] / "run-migration.sh"), "setup",
+                [str(docker_env["original_dir"] / "utils" / "run-migration.sh"), "setup",
                      "--env-file", str(docker_env["env_file"])],
                     env=env,
                     capture_output=True,
@@ -98,7 +98,7 @@ class TestDockerMigration:
         # Test the run command with custom parameters
         with patch('os.chdir'):
             result = subprocess.run(
-                [str(docker_env["original_dir"] / "run-migration.sh"), "run",
+                [str(docker_env["original_dir"] / "utils" / "run-migration.sh"), "run",
                      "--env-file", str(docker_env["env_file"]),
                      "--batch-size", "100",
                      "--workers", "10",
@@ -126,7 +126,7 @@ class TestDockerMigration:
         # Test the status command
         with patch('os.chdir'):
             result = subprocess.run(
-                [str(docker_env["original_dir"] / "run-migration.sh"), "status",
+                [str(docker_env["original_dir"] / "utils" / "run-migration.sh"), "status",
                      "--env-file", str(docker_env["env_file"])],
                     env=env,
                     capture_output=True,
@@ -150,7 +150,7 @@ class TestDockerMigration:
         # Test the report command
         with patch('os.chdir'):
             result = subprocess.run(
-                [str(docker_env["original_dir"] / "run-migration.sh"), "report",
+                [str(docker_env["original_dir"] / "utils" / "run-migration.sh"), "report",
                      "--env-file", str(docker_env["env_file"])],
                     env=env,
                     capture_output=True,

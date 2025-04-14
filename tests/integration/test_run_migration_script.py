@@ -16,7 +16,7 @@ class TestRunMigrationScript:
     @pytest.fixture
     def script_path(self):
         """Get the path to the run-migration.sh script."""
-        script_path = Path(__file__).parent.parent.parent / "run-migration.sh"
+        script_path = Path(__file__).parent.parent.parent / "utils" / "run-migration.sh"
         assert script_path.exists(), f"Script not found at {script_path}"
         return script_path
 

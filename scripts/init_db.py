@@ -30,7 +30,7 @@ def get_alembic_config(db_config: DatabaseConfig) -> Config:
     """Get Alembic configuration with the correct connection string."""
     # Create Alembic config pointing to our project's alembic.ini
     project_root = Path(__file__).parent.parent
-    alembic_cfg = Config(project_root / "alembic.ini")
+    alembic_cfg = Config(project_root / "config" / "alembic.ini")
 
     # Set the connection string based on database configuration
     alembic_cfg.set_main_option("sqlalchemy.url", db_config.get_connection_string())

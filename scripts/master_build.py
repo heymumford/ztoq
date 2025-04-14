@@ -342,7 +342,7 @@ def build_project() -> int:
 
     # Build documentation
     returncode, stdout, stderr = run_command(
-        ["poetry", "run", "python", "build.py", "docs"], ROOT_DIR
+        ["poetry", "run", "python", "utils/build.py", "docs"], ROOT_DIR
     )
     if returncode != 0:
         print(f"Documentation build failed:\n{stderr}")

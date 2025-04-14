@@ -148,7 +148,7 @@ You can integrate the migration workflow with other CI/CD processes:
 ```yaml
 jobs:
   # Other jobs...
-  
+
   trigger-migration:
     name: Trigger Migration
     runs-on: ubuntu-latest
@@ -309,15 +309,15 @@ For better Slack notifications, customize the message format:
     fields: repo,message,workflow,job,commit,eventName
     text: |
       *Migration Report - ${{ needs.prepare.outputs.project_key }}*
-      
+
       *Status:* ${{ needs.run-migration.outputs.status }}
       *Migration ID:* `${{ needs.prepare.outputs.migration_id }}`
       *Completed:* ${{ steps.set-timestamp.outputs.timestamp }}
-      
+
       *Project Stats:*
       - Test Cases: 250 migrated
       - Test Cycles: 15 migrated
       - Executions: 120 migrated
-      
+
       [View Full Report](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
 ```

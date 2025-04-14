@@ -16,7 +16,7 @@ class TestDockerComposeConfiguration:
     @pytest.fixture
     def docker_compose_file(self):
         """Load the Docker Compose file for testing."""
-        compose_path = Path(__file__).parent.parent.parent / "docker-compose.migration.yml"
+        compose_path = Path(__file__).parent.parent.parent / "config" / "docker-compose.migration.yml"
         assert compose_path.exists(), f"Docker Compose file not found at {compose_path}"
 
         with open(compose_path, 'r') as f:
@@ -126,7 +126,7 @@ class TestDockerComposeConfiguration:
         # Check build configuration
         assert 'build' in report_service, "migration-report service should have build configuration"
         assert 'dockerfile' in report_service['build'], "build should specify dockerfile"
-        assert report_service['build']['dockerfile'] == 'Dockerfile.migration-report', "Should use specialized Dockerfile"
+        assert report_service['build']['dockerfile'] == 'config/Dockerfile.migration-report', "Should use specialized Dockerfile"
 
         # Check volumes
         assert 'volumes' in report_service, "migration-report service should have volumes"

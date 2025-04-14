@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   app:
-    build: 
+    build:
       context: .
       dockerfile: Dockerfile
     volumes:
@@ -10,7 +10,7 @@ services:
     environment:
       - ZTOQ_LOG_LEVEL=DEBUG
     command: ["--help"]
-  
+
   postgres:
     image: postgres:16-alpine
     volumes:
@@ -21,7 +21,7 @@ services:
       - POSTGRES_DB=ztoq
     ports:
       - "5432:5432"
-  
+
   pgadmin:
     image: dpage/pgadmin4:latest
     environment:

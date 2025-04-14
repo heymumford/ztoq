@@ -55,3 +55,4 @@ migration-config/*
 
 # Documentation build
 docs/sphinx/build/
+CLAUDE.md

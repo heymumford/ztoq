@@ -31,7 +31,7 @@ updates:
     commit-message:
       prefix: "ci"
       include: "scope"
-    
+
   # Maintain dependencies for Docker
   - package-ecosystem: "docker"
     directory: "/"

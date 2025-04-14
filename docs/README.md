@@ -5,13 +5,6 @@
 ![Integration Tests](https://img.shields.io/badge/integration%20tests-passing-brightgreen)
 ![Coverage](https://img.shields.io/badge/coverage-88%25-green)
 
-> [!NOTE]
-> This project follows a standard organization structure with:
-> - `config/` - Configuration files (Dockerfiles, docker-compose, ini, config)
-> - `docs/` - Documentation files
-> - `utils/` - Utility scripts and tools
-> - See [Project Structure](docs/project-structure.md) for details.
-
 A Python CLI tool that extracts test data from Zephyr Scale and migrates it to qTest. This tool reads the Zephyr Scale OpenAPI specification and provides a complete migration pathway between these two test management systems.
 
 ## Test Coverage

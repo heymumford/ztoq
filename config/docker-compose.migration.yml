@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   migration:
-    build: 
+    build:
       context: .
       dockerfile: Dockerfile
     volumes:
@@ -25,15 +25,15 @@ services:
       - QTEST_USERNAME=${QTEST_USERNAME}
       - QTEST_PASSWORD=${QTEST_PASSWORD}
       - QTEST_PROJECT_ID=${QTEST_PROJECT_ID}
-    command: ["migrate", "run", 
-      "--batch-size", "50", 
-      "--max-workers", "5", 
+    command: ["migrate", "run",
+      "--batch-size", "50",
+      "--max-workers", "5",
       "--attachments-dir", "/app/attachments"]
     depends_on:
       - postgres
-  
+
   migration-status:
-    build: 
+    build:
       context: .
       dockerfile: Dockerfile
     environment:
@@ -48,9 +48,9 @@ services:
     command: ["migrate", "status", "--project-key", "${ZEPHYR_PROJECT_KEY}"]
     depends_on:
       - postgres
-  
+
   migration-report:
-    build: 
+    build:
       context: .
       dockerfile: Dockerfile.migration-report
     volumes:
@@ -66,7 +66,7 @@ services:
     command: ["python", "-m", "ztoq.migration_report", "--db-type", "postgresql", "--project-key", "${ZEPHYR_PROJECT_KEY}", "--output-format", "html", "--output-file", "/app/reports/migration-report.html"]
     depends_on:
       - postgres
-  
+
   postgres:
     image: postgres:16-alpine
     volumes:
@@ -77,7 +77,7 @@ services:
       - POSTGRES_DB=ztoq
     ports:
       - "5432:5432"
-  
+
   pgadmin:
     image: dpage/pgadmin4:latest
     environment:

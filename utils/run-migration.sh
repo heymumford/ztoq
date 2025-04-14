@@ -112,43 +112,43 @@ case "$COMMAND" in
     else
       PHASE_ARG=""
     fi
-    
+
     echo "Running migration with batch size $BATCH_SIZE and $MAX_WORKERS workers"
-    
+
     docker-compose -f docker-compose.migration.yml --env-file "$ENV_FILE" run \
       migration migrate run \
       --batch-size "$BATCH_SIZE" \
       --max-workers "$MAX_WORKERS" \
       --attachments-dir /app/attachments $PHASE_ARG
     ;;
-    
+
   status)
     echo "Checking migration status"
     docker-compose -f docker-compose.migration.yml --env-file "$ENV_FILE" run \
       migration-status
     ;;
-    
+
   report)
     echo "Generating migration report"
     docker-compose -f docker-compose.migration.yml --env-file "$ENV_FILE" run \
       migration-report
     echo "Report saved to ./reports/migration-report.html"
     ;;
-    
+
   dashboard)
     echo "Starting migration monitoring dashboard on port $PORT (refresh: $REFRESH seconds)"
     create_directories
-    
+
     # Check if postgres is running
     if ! docker ps | grep -q postgres; then
       echo "Starting PostgreSQL database"
       docker-compose -f docker-compose.dashboard.yml --env-file "$ENV_FILE" up -d postgres
-      
+
       # Wait for PostgreSQL to start
       echo "Waiting for PostgreSQL to start..."
       sleep 5
     fi
-    
+
     # Start the dashboard
     docker-compose -f docker-compose.dashboard.yml --env-file "$ENV_FILE" run -p $PORT:$PORT \
       dashboard python -m ztoq.migration_dashboard \
@@ -157,36 +157,36 @@ case "$COMMAND" in
       --refresh "$REFRESH" \
       --db-type postgresql
     ;;
-    
+
   setup)
     create_directories
     echo "Starting PostgreSQL database"
     docker-compose -f docker-compose.migration.yml --env-file "$ENV_FILE" up -d postgres
-    
+
     # Wait for PostgreSQL to start
     echo "Waiting for PostgreSQL to start..."
     sleep 5
-    
+
     echo "Initializing database schema"
     docker-compose -f docker-compose.migration.yml --env-file "$ENV_FILE" run \
       migration db init --db-type postgresql
-    
+
     echo "Setup complete. You can now run the migration with:"
     echo "./run-migration.sh run"
     ;;
-    
+
   stop)
     echo "Stopping all containers"
     docker-compose -f docker-compose.migration.yml --env-file "$ENV_FILE" stop
     docker-compose -f docker-compose.dashboard.yml --env-file "$ENV_FILE" stop 2>/dev/null || true
     ;;
-    
+
   clean)
     echo "Removing containers and networks (keeping volumes and data)"
     docker-compose -f docker-compose.migration.yml --env-file "$ENV_FILE" down
     docker-compose -f docker-compose.dashboard.yml --env-file "$ENV_FILE" down 2>/dev/null || true
     ;;
-    
+
   purge)
     echo "WARNING: This will remove all containers, networks, volumes, and data."
     read -p "Are you sure you want to continue? (y/N) " confirm
@@ -200,7 +200,7 @@ case "$COMMAND" in
       echo "Purge cancelled."
     fi
     ;;
-    
+
   *)
     echo "Unknown command: $COMMAND"
     echo "Run './run-migration.sh --help' for usage information."

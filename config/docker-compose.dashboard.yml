@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   dashboard:
-    build: 
+    build:
       context: .
       dockerfile: Dockerfile.migration-report
     ports:
@@ -21,9 +21,9 @@ services:
     command: ["python", "-m", "ztoq.migration_dashboard", "--project-key", "${ZEPHYR_PROJECT_KEY}", "--port", "5000", "--refresh", "30"]
     depends_on:
       - postgres
-  
+
   migration-report:
-    build: 
+    build:
       context: .
       dockerfile: Dockerfile.migration-report
     volumes:
@@ -39,7 +39,7 @@ services:
     command: ["python", "-m", "ztoq.migration_report", "--db-type", "postgresql", "--project-key", "${ZEPHYR_PROJECT_KEY}", "--output-format", "all", "--output-file", "/app/reports/migration-report.html"]
     depends_on:
       - postgres
-  
+
   postgres:
     image: postgres:16-alpine
     volumes:
@@ -50,7 +50,7 @@ services:
       - POSTGRES_DB=ztoq
     ports:
       - "5432:5432"
-  
+
   pgadmin:
     image: dpage/pgadmin4:latest
     environment:

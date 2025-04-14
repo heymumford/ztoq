@@ -16,14 +16,14 @@ class TestDockerImages:
     @pytest.fixture
     def dockerfile_path(self):
         """Get the path to the Dockerfile."""
-        dockerfile_path = Path(__file__).parent.parent.parent / "Dockerfile"
+        dockerfile_path = Path(__file__).parent.parent.parent / "config" / "Dockerfile"
         assert dockerfile_path.exists(), f"Dockerfile not found at {dockerfile_path}"
         return dockerfile_path
 
     @pytest.fixture
     def report_dockerfile_path(self):
         """Get the path to the Dockerfile.migration-report."""
-        dockerfile_path = Path(__file__).parent.parent.parent / "Dockerfile.migration-report"
+        dockerfile_path = Path(__file__).parent.parent.parent / "config" / "Dockerfile.migration-report"
         assert dockerfile_path.exists(), f"Dockerfile.migration-report not found at {dockerfile_path}"
         return dockerfile_path
 
@@ -139,7 +139,7 @@ class TestDockerImages:
 
         # Test docker-compose up
         subprocess.run(
-            ["docker-compose", "-f", "docker-compose.migration.yml", "up", "-d"],
+            ["docker-compose", "-f", "config/docker-compose.migration.yml", "up", "-d"],
                 capture_output=True,
                 text=True,
                 check=False
@@ -153,7 +153,7 @@ class TestDockerImages:
 
         # Test docker-compose down
         subprocess.run(
-            ["docker-compose", "-f", "docker-compose.migration.yml", "down"],
+            ["docker-compose", "-f", "config/docker-compose.migration.yml", "down"],
                 capture_output=True,
                 text=True,
                 check=False

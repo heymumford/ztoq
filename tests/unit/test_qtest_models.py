@@ -367,6 +367,7 @@ class TestQTestModels:
                 test_case_version_id=1,
                 test_case_id=101,
                 test_cycle_id=201,
+                status="Not Run",
                 properties=[
                 QTestCustomField(id=1, name="Environment", type="STRING", value="Production")
             ],
@@ -381,12 +382,15 @@ class TestQTestModels:
         assert len(test_run.properties) == 1
         assert test_run.properties[0].field_name == "Environment"
 
-        # Create with minimum fields
-        min_test_run = QTestTestRun()
-        assert min_test_run.id is None
+        # Create with minimum fields - note we need to provide required fields
+        min_test_run = QTestTestRun(
+            id=2,  # With ID to bypass creation validation
+            test_case_id=102
+        )
+        assert min_test_run.id == 2
         assert min_test_run.name is None
         assert min_test_run.description is None
-        assert min_test_run.test_case_id is None
+        assert min_test_run.test_case_id == 102
         assert min_test_run.test_cycle_id is None
         assert len(min_test_run.properties) == 0
 
@@ -396,25 +400,30 @@ class TestQTestModels:
         execution_date = datetime.now()
         test_log = QTestTestLog(
             id=1,
-                status="PASS",
+                status="Passed",  # Updated to use valid status
                 execution_date=execution_date,
                 note="Test passed successfully",
+                test_run_id=123,  # Added required field
                 attachments=[QTestAttachment(id=1, name="result.log", content_type="text/plain")],
                 properties=[QTestCustomField(id=1, name="Execution Time", type="NUMBER", value=5.2)],
             )
         assert test_log.id == 1
-        assert test_log.status == "PASS"
+        assert test_log.status == "Passed"
         assert test_log.execution_date == execution_date
         assert test_log.note == "Test passed successfully"
+        assert test_log.test_run_id == 123
         assert len(test_log.attachments) == 1
         assert test_log.attachments[0].name == "result.log"
         assert len(test_log.properties) == 1
         assert test_log.properties[0].field_name == "Execution Time"
 
         # Create with minimum fields
-        min_test_log = QTestTestLog(status="FAIL")
-        assert min_test_log.id is None
-        assert min_test_log.status == "FAIL"
+        min_test_log = QTestTestLog(
+            id=2,  # With ID to bypass creation validation
+            status="Failed"  # Updated to use valid status
+        )
+        assert min_test_log.id == 2
+        assert min_test_log.status == "Failed"
         assert min_test_log.execution_date is None
         assert min_test_log.note is None
         assert len(min_test_log.attachments) == 0
@@ -427,19 +436,19 @@ class TestQTestModels:
         test_execution = QTestTestExecution(
             id=1,
                 test_run_id=101,
-                status="PASS",
+                status="Passed",  # Updated to match valid status
                 execution_date=execution_date,
                 executed_by=1001,
                 note="Test passed successfully",
                 attachments=[QTestAttachment(id=1, name="result.log", content_type="text/plain")],
                 test_step_logs=[
-                {"stepId": 201, "status": "PASS", "actualResult": "Login page displayed correctly"},
-                    {"stepId": 202, "status": "PASS", "actualResult": "Logged in successfully"},
+                {"stepId": 201, "status": "Passed", "actualResult": "Login page displayed correctly"},
+                    {"stepId": 202, "status": "Passed", "actualResult": "Logged in successfully"},
                 ],
             )
         assert test_execution.id == 1
         assert test_execution.test_run_id == 101
-        assert test_execution.status == "PASS"
+        assert test_execution.status == "Passed"
         assert test_execution.execution_date == execution_date
         assert test_execution.executed_by == 1001
         assert test_execution.note == "Test passed successfully"
@@ -447,11 +456,11 @@ class TestQTestModels:
         assert test_execution.attachments[0].name == "result.log"
         assert len(test_execution.test_step_logs) == 2
         assert test_execution.test_step_logs[0]["stepId"] == 201
-        assert test_execution.test_step_logs[1]["status"] == "PASS"
+        assert test_execution.test_step_logs[1]["status"] == "Passed"
 
         # Validation should fail if required fields are missing
         with pytest.raises(ValidationError):
-            QTestTestExecution(id=1, status="PASS")  # Missing test_run_id and execution_date
+            QTestTestExecution(id=1, status="Passed")  # Missing test_run_id and execution_date
 
     def test_qtest_parameter(self):
         """Test QTestParameter model."""
@@ -462,7 +471,7 @@ class TestQTestModels:
                 name="Browser",
                 description="Browser type",
                 project_id=12345,
-                status="ACTIVE",
+                status="Active",  # Updated to match valid status
                 values=[
                 QTestParameterValue(id=101, value="Chrome", parameter_id=1),
                     QTestParameterValue(id=102, value="Firefox", parameter_id=1),
@@ -472,7 +481,7 @@ class TestQTestModels:
         assert parameter.name == "Browser"
         assert parameter.description == "Browser type"
         assert parameter.project_id == 12345
-        assert parameter.status == "ACTIVE"
+        assert parameter.status == "Active"
         assert len(parameter.values) == 2
         assert parameter.values[0].value == "Chrome"
         assert parameter.values[1].value == "Firefox"
@@ -678,7 +687,8 @@ class TestQTestModels:
                 name="Login Test Data",
                 description="Test data for login scenarios",
                 project_id=12345,
-                status="ACTIVE",
+                status="Active",  # Updated to match valid status
+                parameter_names=["username", "password", "expected"],  # Added parameter names
                 rows=[
                 QTestDatasetRow(
                     id=201,
@@ -696,7 +706,7 @@ class TestQTestModels:
         assert dataset.name == "Login Test Data"
         assert dataset.description == "Test data for login scenarios"
         assert dataset.project_id == 12345
-        assert dataset.status == "ACTIVE"
+        assert dataset.status == "Active"
         assert len(dataset.rows) == 2
         assert dataset.rows[0].values["username"] == "user1"
         assert dataset.rows[1].values["expected"] == "failure"

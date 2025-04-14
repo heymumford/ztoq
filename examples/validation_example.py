@@ -34,16 +34,16 @@ def run_migration_with_validation(
     zephyr_config = ZephyrConfig(
         api_url=zephyr_url, api_key=zephyr_api_key, project_key=zephyr_project_key
     )
-    
+
     qtest_config = QTestConfig(
         api_url=qtest_url, api_key=qtest_api_key, project_id=qtest_project_id
     )
-    
+
     # Initialize database
     db_path = Path(f"./migration_{zephyr_project_key}_validated.db")
     db_manager = DatabaseManager(db_path)
     db_manager.initialize_database()
-    
+
     # Create migration instance with validation enabled
     migration = create_migration(
         zephyr_config=zephyr_config,
@@ -54,14 +54,14 @@ def run_migration_with_validation(
         attachments_dir=Path(f"./attachments_{zephyr_project_key}"),
         enable_validation=True,  # Enable validation
     )
-    
+
     # Run migration
     try:
         migration.run_migration()
         logger.info(f"Migration for project {zephyr_project_key} completed successfully")
     except Exception as e:
         logger.error(f"Migration failed: {str(e)}")
-        
+
     # Display validation results
     display_validation_results(db_manager, zephyr_project_key)
 
@@ -73,13 +73,13 @@ def display_validation_results(db_manager, project_key):
     if reports:
         report = reports[0]
         logger.info(f"Validation Report Summary: {report['summary']}")
-        
+
         # Display issue counts by level
         issue_counts = report.get("issue_counts", {})
         logger.info("Issue counts by level:")
         for level, count in issue_counts.items():
             logger.info(f"  {level}: {count}")
-        
+
         # Get critical issues
         critical_issues = db_manager.get_validation_issues(
             project_key, resolved=False, level=ValidationLevel.CRITICAL.value
@@ -88,7 +88,7 @@ def display_validation_results(db_manager, project_key):
             logger.warning(f"Found {len(critical_issues)} CRITICAL issues:")
             for issue in critical_issues:
                 logger.warning(f"  - {issue['message']} ({issue['entity_id']})")
-        
+
         # Get error issues
         error_issues = db_manager.get_validation_issues(
             project_key, resolved=False, level=ValidationLevel.ERROR.value
@@ -110,9 +110,9 @@ def main():
     parser.add_argument("--qtest-url", required=True, help="qTest API URL")
     parser.add_argument("--qtest-api-key", required=True, help="qTest API key")
     parser.add_argument("--qtest-project-id", required=True, help="qTest project ID")
-    
+
     args = parser.parse_args()
-    
+
     run_migration_with_validation(
         args.zephyr_url,
         args.zephyr_api_key,
