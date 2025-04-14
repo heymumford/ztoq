@@ -487,7 +487,7 @@ class CustomFieldMapper:
 
     def map_custom_fields(
         self, zephyr_fields: List[Union[CustomField, Dict[str, Any]]]
-    ) -> List[QTestCustomField]:
+    ) -> List[Dict[str, Any]]:
         """
         Map Zephyr custom fields to qTest custom fields.
 
@@ -495,7 +495,7 @@ class CustomFieldMapper:
             zephyr_fields: List of Zephyr custom fields
 
         Returns:
-            List of qTest custom fields
+            List of qTest custom fields as dictionaries
         """
         qtest_fields = []
 
@@ -524,19 +524,19 @@ class CustomFieldMapper:
             # Transform the value
             qtest_field_value = self.transform_field_value(field_name, field_type, field_value)
 
-            # Create qTest custom field
-            qtest_field = QTestCustomField(
-                field_id=0,  # This will be set during creation in qTest
-                field_name=qtest_field_name,
-                    field_type=qtest_field_type,
-                    field_value=qtest_field_value
-            )
+            # Create qTest custom field as a dictionary
+            qtest_field = {
+                "field_id": 0,  # This will be set during creation in qTest
+                "field_name": qtest_field_name,
+                "field_type": qtest_field_type,
+                "field_value": qtest_field_value
+            }
 
             qtest_fields.append(qtest_field)
 
         return qtest_fields
 
-    def map_zephyr_key_to_custom_field(self, zephyr_key: str) -> QTestCustomField:
+    def map_zephyr_key_to_custom_field(self, zephyr_key: str) -> Dict[str, Any]:
         """
         Create a qTest custom field to store the Zephyr key for reference.
 
@@ -544,16 +544,16 @@ class CustomFieldMapper:
             zephyr_key: The Zephyr entity key
 
         Returns:
-            A qTest custom field containing the Zephyr key
+            A qTest custom field dictionary containing the Zephyr key
         """
-        return QTestCustomField(
-            field_id=0,
-                field_name="zephyr_key",
-                field_type="STRING",
-                field_value=zephyr_key
-        )
+        return {
+            "field_id": 0,
+            "field_name": "zephyr_key",
+            "field_type": "STRING",
+            "field_value": zephyr_key
+        }
 
-    def map_testcase_fields(self, zephyr_testcase: Dict[str, Any]) -> List[QTestCustomField]:
+    def map_testcase_fields(self, zephyr_testcase: Dict[str, Any]) -> List[Dict[str, Any]]:
         """
         Map Zephyr test case fields to qTest custom fields.
 
@@ -561,7 +561,7 @@ class CustomFieldMapper:
             zephyr_testcase: Zephyr test case data
 
         Returns:
-            List of qTest custom fields
+            List of qTest custom fields as dictionaries
         """
         qtest_fields = []
 
@@ -572,39 +572,39 @@ class CustomFieldMapper:
         # Map labels if present
         if "labels" in zephyr_testcase and zephyr_testcase["labels"]:
             labels_str = ", ".join(zephyr_testcase["labels"])
-            qtest_fields.append(QTestCustomField(
-                field_id=0,
-                    field_name="Tags",
-                    field_type="STRING",
-                    field_value=labels_str
-            ))
+            qtest_fields.append({
+                "field_id": 0,
+                "field_name": "Tags",
+                "field_type": "STRING",
+                "field_value": labels_str
+            })
 
         # Map status if present
         if "status" in zephyr_testcase and zephyr_testcase["status"]:
-            qtest_fields.append(QTestCustomField(
-                field_id=0,
-                    field_name="status",
-                    field_type="STRING",
-                    field_value=zephyr_testcase["status"]
-            ))
+            qtest_fields.append({
+                "field_id": 0,
+                "field_name": "status",
+                "field_type": "STRING",
+                "field_value": zephyr_testcase["status"]
+            })
 
         # Map estimated time if present
         if "estimatedTime" in zephyr_testcase and zephyr_testcase["estimatedTime"]:
-            qtest_fields.append(QTestCustomField(
-                field_id=0,
-                    field_name="estimated_time",
-                    field_type="NUMBER",
-                    field_value=zephyr_testcase["estimatedTime"]
-            ))
+            qtest_fields.append({
+                "field_id": 0,
+                "field_name": "estimated_time",
+                "field_type": "NUMBER",
+                "field_value": zephyr_testcase["estimatedTime"]
+            })
 
         # Map component if present
         if "component" in zephyr_testcase and zephyr_testcase["component"]:
-            qtest_fields.append(QTestCustomField(
-                field_id=0,
-                    field_name="Components",
-                    field_type="STRING",
-                    field_value=zephyr_testcase["component"]
-            ))
+            qtest_fields.append({
+                "field_id": 0,
+                "field_name": "Components",
+                "field_type": "STRING",
+                "field_value": zephyr_testcase["component"]
+            })
 
         # Map custom fields
         if "customFields" in zephyr_testcase and zephyr_testcase["customFields"]:
@@ -613,7 +613,7 @@ class CustomFieldMapper:
 
         return qtest_fields
 
-    def map_testcycle_fields(self, zephyr_cycle: Dict[str, Any]) -> List[QTestCustomField]:
+    def map_testcycle_fields(self, zephyr_cycle: Dict[str, Any]) -> List[Dict[str, Any]]:
         """
         Map Zephyr test cycle fields to qTest custom fields.
 
@@ -621,7 +621,7 @@ class CustomFieldMapper:
             zephyr_cycle: Zephyr test cycle data
 
         Returns:
-            List of qTest custom fields
+            List of qTest custom fields as dictionaries
         """
         qtest_fields = []
 
@@ -631,30 +631,30 @@ class CustomFieldMapper:
 
         # Map environment if present
         if "environment" in zephyr_cycle and zephyr_cycle["environment"]:
-            qtest_fields.append(QTestCustomField(
-                field_id=0,
-                    field_name="environment",
-                    field_type="STRING",
-                    field_value=zephyr_cycle["environment"]
-            ))
+            qtest_fields.append({
+                "field_id": 0,
+                "field_name": "environment",
+                "field_type": "STRING",
+                "field_value": zephyr_cycle["environment"]
+            })
 
         # Map status if present
         if "status" in zephyr_cycle and zephyr_cycle["status"]:
-            qtest_fields.append(QTestCustomField(
-                field_id=0,
-                    field_name="status",
-                    field_type="STRING",
-                    field_value=zephyr_cycle["status"]
-            ))
+            qtest_fields.append({
+                "field_id": 0,
+                "field_name": "status",
+                "field_type": "STRING",
+                "field_value": zephyr_cycle["status"]
+            })
 
         # Map owner if present
         if "owner" in zephyr_cycle and zephyr_cycle["owner"]:
-            qtest_fields.append(QTestCustomField(
-                field_id=0,
-                    field_name="owner",
-                    field_type="STRING",
-                    field_value=zephyr_cycle["owner"]
-            ))
+            qtest_fields.append({
+                "field_id": 0,
+                "field_name": "owner",
+                "field_type": "STRING",
+                "field_value": zephyr_cycle["owner"]
+            })
 
         # Map custom fields
         if "customFields" in zephyr_cycle and zephyr_cycle["customFields"]:
@@ -663,7 +663,7 @@ class CustomFieldMapper:
 
         return qtest_fields
 
-    def map_testrun_fields(self, zephyr_execution: Dict[str, Any]) -> List[QTestCustomField]:
+    def map_testrun_fields(self, zephyr_execution: Dict[str, Any]) -> List[Dict[str, Any]]:
         """
         Map Zephyr test execution fields to qTest test run custom fields.
 
@@ -671,56 +671,56 @@ class CustomFieldMapper:
             zephyr_execution: Zephyr test execution data
 
         Returns:
-            List of qTest custom fields
+            List of qTest custom fields as dictionaries
         """
         qtest_fields = []
 
         # Map environment if present
         if "environment" in zephyr_execution and zephyr_execution["environment"]:
-            qtest_fields.append(QTestCustomField(
-                field_id=0,
-                    field_name="environment",
-                    field_type="STRING",
-                    field_value=zephyr_execution["environment"]
-            ))
+            qtest_fields.append({
+                "field_id": 0,
+                "field_name": "environment",
+                "field_type": "STRING",
+                "field_value": zephyr_execution["environment"]
+            })
 
         # Map actual time if present
         if "actualTime" in zephyr_execution and zephyr_execution["actualTime"]:
-            qtest_fields.append(QTestCustomField(
-                field_id=0,
-                    field_name="actual_time",
-                    field_type="NUMBER",
-                    field_value=zephyr_execution["actualTime"]
-            ))
+            qtest_fields.append({
+                "field_id": 0,
+                "field_name": "actual_time",
+                "field_type": "NUMBER",
+                "field_value": zephyr_execution["actualTime"]
+            })
 
         # Map executed by if present
         if "executedBy" in zephyr_execution and zephyr_execution["executedBy"]:
-            qtest_fields.append(QTestCustomField(
-                field_id=0,
-                    field_name="executed_by",
-                    field_type="STRING",
-                    field_value=zephyr_execution["executedBy"]
-            ))
+            qtest_fields.append({
+                "field_id": 0,
+                "field_name": "executed_by",
+                "field_type": "STRING",
+                "field_value": zephyr_execution["executedBy"]
+            })
 
         # Map execution date if present
         if "executedOn" in zephyr_execution and zephyr_execution["executedOn"]:
-            qtest_fields.append(QTestCustomField(
-                field_id=0,
-                    field_name="execution_date",
-                    field_type="DATE",
-                    field_value=str(zephyr_execution["executedOn"])
-            ))
+            qtest_fields.append({
+                "field_id": 0,
+                "field_name": "execution_date",
+                "field_type": "DATE",
+                "field_value": str(zephyr_execution["executedOn"])
+            })
 
         # Map defects if present
         if "defects" in zephyr_execution and zephyr_execution["defects"]:
             defects_str = ", ".join([defect.get("key", "") for defect in zephyr_execution["defects"]])
             if defects_str:
-                qtest_fields.append(QTestCustomField(
-                    field_id=0,
-                        field_name="defects",
-                        field_type="STRING",
-                        field_value=defects_str
-                ))
+                qtest_fields.append({
+                    "field_id": 0,
+                    "field_name": "defects",
+                    "field_type": "STRING",
+                    "field_value": defects_str
+                })
 
         # Map custom fields
         if "customFields" in zephyr_execution and zephyr_execution["customFields"]:

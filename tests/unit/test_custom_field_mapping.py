@@ -13,8 +13,9 @@ from datetime import datetime
 from unittest.mock import MagicMock, patch
 from ztoq.custom_field_mapping import CustomFieldMapper, get_default_field_mapper
 from ztoq.models import CustomField, CustomFieldType
-from ztoq.qtest_models import QTestCustomField
 
+import pytest
+@pytest.mark.unit
 class TestCustomFieldMapper(unittest.TestCase):
     """Test the CustomFieldMapper class."""
 
@@ -108,20 +109,20 @@ class TestCustomFieldMapper(unittest.TestCase):
         self.assertEqual(len(qtest_fields), 3)
 
         # Check field mappings
-        priority_field = next((f for f in qtest_fields if f.field_name == "priority"), None)
+        priority_field = next((f for f in qtest_fields if f["field_name"] == "priority"), None)
         self.assertIsNotNone(priority_field)
-        self.assertEqual(priority_field.field_type, "STRING")
-        self.assertEqual(priority_field.field_value, "High")
+        self.assertEqual(priority_field["field_type"], "STRING")
+        self.assertEqual(priority_field["field_value"], "High")
 
-        labels_field = next((f for f in qtest_fields if f.field_name == "Tags"), None)
+        labels_field = next((f for f in qtest_fields if f["field_name"] == "Tags"), None)
         self.assertIsNotNone(labels_field)
-        self.assertEqual(labels_field.field_type, "STRING")
-        self.assertEqual(labels_field.field_value, "tag1, tag2")
+        self.assertEqual(labels_field["field_type"], "STRING")
+        self.assertEqual(labels_field["field_value"], "tag1, tag2")
 
-        automated_field = next((f for f in qtest_fields if f.field_name == "Automation"), None)
+        automated_field = next((f for f in qtest_fields if f["field_name"] == "Automation"), None)
         self.assertIsNotNone(automated_field)
-        self.assertEqual(automated_field.field_type, "CHECKBOX")
-        self.assertEqual(automated_field.field_value, True)
+        self.assertEqual(automated_field["field_type"], "CHECKBOX")
+        self.assertEqual(automated_field["field_value"], True)
 
     def test_map_testcase_fields(self):
         """Test mapping Zephyr test case fields to qTest custom fields."""
@@ -146,26 +147,26 @@ class TestCustomFieldMapper(unittest.TestCase):
         self.assertGreaterEqual(len(qtest_fields), 5)  # Key, status, estimated time, labels, and 2 custom fields
 
         # Check field mappings
-        key_field = next((f for f in qtest_fields if f.field_name == "zephyr_key"), None)
+        key_field = next((f for f in qtest_fields if f["field_name"] == "zephyr_key"), None)
         self.assertIsNotNone(key_field)
-        self.assertEqual(key_field.field_value, "TEST-123")
+        self.assertEqual(key_field["field_value"], "TEST-123")
 
-        status_field = next((f for f in qtest_fields if f.field_name == "status"), None)
+        status_field = next((f for f in qtest_fields if f["field_name"] == "status"), None)
         self.assertIsNotNone(status_field)
-        self.assertEqual(status_field.field_value, "Active")
+        self.assertEqual(status_field["field_value"], "Active")
 
-        time_field = next((f for f in qtest_fields if f.field_name == "estimated_time"), None)
+        time_field = next((f for f in qtest_fields if f["field_name"] == "estimated_time"), None)
         self.assertIsNotNone(time_field)
-        self.assertEqual(time_field.field_value, 60)
+        self.assertEqual(time_field["field_value"], 60)
 
-        labels_field = next((f for f in qtest_fields if f.field_name == "Tags"), None)
+        labels_field = next((f for f in qtest_fields if f["field_name"] == "Tags"), None)
         self.assertIsNotNone(labels_field)
-        self.assertEqual(labels_field.field_value, "regression, smoke")
+        self.assertEqual(labels_field["field_value"], "regression, smoke")
 
         # The Component custom field would now map to components (lowercase)
-        component_field = next((f for f in qtest_fields if f.field_name == "component"), None)
+        component_field = next((f for f in qtest_fields if f["field_name"] == "component"), None)
         self.assertIsNotNone(component_field)
-        self.assertEqual(component_field.field_value, "UI")
+        self.assertEqual(component_field["field_value"], "UI")
 
     def test_map_testcycle_fields(self):
         """Test mapping Zephyr test cycle fields to qTest custom fields."""
@@ -189,21 +190,21 @@ class TestCustomFieldMapper(unittest.TestCase):
         self.assertGreaterEqual(len(qtest_fields), 4)  # Key, status, environment, owner, and 1 custom field
 
         # Check field mappings
-        key_field = next((f for f in qtest_fields if f.field_name == "zephyr_key"), None)
+        key_field = next((f for f in qtest_fields if f["field_name"] == "zephyr_key"), None)
         self.assertIsNotNone(key_field)
-        self.assertEqual(key_field.field_value, "CYCLE-456")
+        self.assertEqual(key_field["field_value"], "CYCLE-456")
 
-        status_field = next((f for f in qtest_fields if f.field_name == "status"), None)
+        status_field = next((f for f in qtest_fields if f["field_name"] == "status"), None)
         self.assertIsNotNone(status_field)
-        self.assertEqual(status_field.field_value, "Active")
+        self.assertEqual(status_field["field_value"], "Active")
 
-        env_field = next((f for f in qtest_fields if f.field_name == "environment"), None)
+        env_field = next((f for f in qtest_fields if f["field_name"] == "environment"), None)
         self.assertIsNotNone(env_field)
-        self.assertEqual(env_field.field_value, "Production")
+        self.assertEqual(env_field["field_value"], "Production")
 
-        sprint_field = next((f for f in qtest_fields if f.field_name == "Sprint_Release"), None)
+        sprint_field = next((f for f in qtest_fields if f["field_name"] == "Sprint_Release"), None)
         self.assertIsNotNone(sprint_field)
-        self.assertEqual(sprint_field.field_value, "Sprint 1")
+        self.assertEqual(sprint_field["field_value"], "Sprint 1")
 
     def test_map_testrun_fields(self):
         """Test mapping Zephyr execution fields to qTest test run custom fields."""
@@ -229,25 +230,25 @@ class TestCustomFieldMapper(unittest.TestCase):
         self.assertGreaterEqual(len(qtest_fields), 5)  # Environment, executed by, execution date, actual time, defects, and 1 custom field
 
         # Check field mappings
-        env_field = next((f for f in qtest_fields if f.field_name == "environment"), None)
+        env_field = next((f for f in qtest_fields if f["field_name"] == "environment"), None)
         self.assertIsNotNone(env_field)
-        self.assertEqual(env_field.field_value, "Staging")
+        self.assertEqual(env_field["field_value"], "Staging")
 
-        executed_by_field = next((f for f in qtest_fields if f.field_name == "executed_by"), None)
+        executed_by_field = next((f for f in qtest_fields if f["field_name"] == "executed_by"), None)
         self.assertIsNotNone(executed_by_field)
-        self.assertEqual(executed_by_field.field_value, "jdoe")
+        self.assertEqual(executed_by_field["field_value"], "jdoe")
 
-        time_field = next((f for f in qtest_fields if f.field_name == "actual_time"), None)
+        time_field = next((f for f in qtest_fields if f["field_name"] == "actual_time"), None)
         self.assertIsNotNone(time_field)
-        self.assertEqual(time_field.field_value, 45)
+        self.assertEqual(time_field["field_value"], 45)
 
-        defects_field = next((f for f in qtest_fields if f.field_name == "defects"), None)
+        defects_field = next((f for f in qtest_fields if f["field_name"] == "defects"), None)
         self.assertIsNotNone(defects_field)
-        self.assertEqual(defects_field.field_value, "BUG-001, BUG-002")
+        self.assertEqual(defects_field["field_value"], "BUG-001, BUG-002")
 
-        release_field = next((f for f in qtest_fields if f.field_name == "release"), None)
+        release_field = next((f for f in qtest_fields if f["field_name"] == "release"), None)
         self.assertIsNotNone(release_field)
-        self.assertEqual(release_field.field_value, "1.0")
+        self.assertEqual(release_field["field_value"], "1.0")
 
 
     def test_transform_table_field(self):
@@ -395,6 +396,7 @@ class TestCustomFieldMapper(unittest.TestCase):
         self.assertEqual(self.mapper.extract_and_map_field(entity, "null_field", "default"), "default")
 
 
+@pytest.mark.unit
 class TestDefaultFieldMapper(unittest.TestCase):
     """Test the default field mapper factory function."""
 
