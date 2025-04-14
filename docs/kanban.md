@@ -265,10 +265,8 @@
 - [ ] **[ANTIFRAGILE-13]** Document barbell strategy for feature development
 
 ## In Progress
-- [ ] **[TEST-UNIT-15]** Write unit tests for qTest mock server endpoints *(Implementing test cases for mock services)*
-- [ ] **[MOCK-4]** Build mock server for qTest API endpoints *(Implementation complete, needs testing)*
-- [ ] **[TEST-UNIT-21]** Write unit tests for qTest entity models *(Creating comprehensive test suite)*
-- [ ] **[QTEST-1]** Finalize Pydantic models for qTest entities *(Models implemented, adding validation)*
+- [ ] **[MOCK-4]** Build mock server for qTest API endpoints *(Implementation complete, testing in progress)*
+- [ ] **[QTEST-1]** Finalize Pydantic models for qTest entities *(Models implemented, additional validation needed)*
 - [ ] **[TEST-UNIT-27]** Write unit tests for qTest API client *(Creating test scenarios)*
 - [ ] **[LOAD-1]** Create qTest API client with comprehensive error handling *(Core functionality implemented, refining error handling)*
 
@@ -280,6 +278,8 @@
 - [x] **[TEST-INFRA-1]** Setup test pyramid structure (unit, integration, acceptance)
 - [x] **[TEST-INFRA-2]** Create base test fixtures and factories
 - [x] **[TEST-INFRA-3]** Implement test harness for API mocking
+- [x] **[TEST-UNIT-15]** Write unit tests for qTest mock server endpoints
+- [x] **[TEST-UNIT-21]** Write unit tests for qTest entity models
 - [x] **[TEST-UNIT-14]** Define unit tests for qTest mock factories
 - [x] **[MOCK-3]** Create mock factory for qTest API responses
 - [x] **[TEST-UNIT-4]** Write unit tests for test case extraction
