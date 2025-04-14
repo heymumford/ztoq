@@ -20,6 +20,12 @@ ADRs are documents that capture an important architectural decision made along w
 | [ADR-008](008-test-driven-development.md) | Test-Driven Development Approach | Accepted | 2025-04-13 |
 | [ADR-009](009-error-handling-strategy.md) | Error Handling Strategy | Accepted | 2025-04-13 |
 | [ADR-010](010-logging-strategy.md) | Logging Strategy | Accepted | 2025-04-13 |
+| [ADR-011](011-qtest-integration-architecture.md) | qTest Integration Architecture | Accepted | 2025-04-13 |
+| [ADR-012](012-test-driven-development-approach.md) | Test-Driven Development Approach | Accepted | 2025-04-13 |
+| [ADR-013](013-etl-migration-workflow.md) | ETL Migration Workflow | Accepted | 2025-04-13 |
+| [ADR-014](014-database-platform-strategy.md) | Database Platform Strategy | Accepted | 2025-04-13 |
+| [ADR-015](015-strategic-design-preferences.md) | Strategic Design Preferences | Accepted | 2025-04-13 |
+| [ADR-016](016-anti-fragile-and-black-swan-concepts.md) | Antifragile and Black Swan Design Principles | Accepted | 2025-04-13 |
 
 ---
 *Copyright (c) 2025 Eric C. Mumford (@heymumford) - Licensed under [MIT License](../../LICENSE)*

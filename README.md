@@ -281,6 +281,23 @@ section in the documentation for instructions on creating and embedding C4 model
 
 ## Additional Documentation
 
+### Design Philosophy
+
+ZTOQ follows a set of strategic design preferences that guide our implementation decisions. Rather than viewing technical choices as strictly right or wrong, we acknowledge that software design often involves trade-offs and context-specific decisions.
+
+Our key design preferences include:
+
+- **Type Safety**: Prefer strong typing and validation over dynamic types
+- **Explicitness**: Prefer explicit configuration over implicit defaults
+- **Composition**: Prefer composition over inheritance
+- **Test-Driven**: Prefer writing tests before or alongside implementation
+- **Immutability**: Prefer immutable data structures where possible
+- **Scalability**: Prefer batch processing over individual record handling
+- **Reliability**: Prefer fine-grained error handling over generic exceptions
+- **Antifragility**: Design systems that gain from disorder and uncertainty
+
+For the complete list of strategic preferences, see [ADR-015: Strategic Design Preferences](docs/adr/015-strategic-design-preferences.md) and [ADR-016: Antifragile and Black Swan Design Principles](docs/adr/016-anti-fragile-and-black-swan-concepts.md).
+
 ### CLI Database Commands
 
 The tool provides dedicated database commands for working with the canonical SQL schema:
@@ -295,7 +312,7 @@ poetry run ztoq db stats --project-key PROJECT
 # Run pending database migrations
 poetry run ztoq db migrate
 
-# Use PostgreSQL database
+# Use PostgreSQL database (recommended for production)
 poetry run ztoq db init --db-type postgresql \
   --host localhost --port 5432 \
   --username ztoq_user --password password \

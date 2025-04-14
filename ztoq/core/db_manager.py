@@ -298,11 +298,17 @@ class SQLDatabaseManager:
             project_key: Project key the folder belongs to
         """
         with self.get_session() as session:
+            # Map folderType to folder_type (convert camelCase to snake_case)
+            folder_type = folder_model.folderType if hasattr(folder_model, 'folderType') else folder_model.folder_type
+            
+            # Map parentId to parent_id (convert camelCase to snake_case)
+            parent_id = folder_model.parentId if hasattr(folder_model, 'parentId') else folder_model.parent_id
+            
             folder = Folder(
                 id=folder_model.id,
                 name=folder_model.name,
-                folder_type=folder_model.folder_type,
-                parent_id=folder_model.parent_id,
+                folder_type=folder_type,
+                parent_id=parent_id,
                 project_key=project_key,
             )
             
@@ -843,15 +849,20 @@ class SQLDatabaseManager:
             project_key: Project key the test execution belongs to
         """
         with self.get_session() as session:
+            # Handle camelCase to snake_case mapping for Pydantic model attributes
+            test_case_key = getattr(test_execution_model, 'testCaseKey', None) or getattr(test_execution_model, 'test_case_key', None)
+            cycle_id = getattr(test_execution_model, 'cycleId', None) or getattr(test_execution_model, 'cycle_id', None)
+            environment_id = getattr(test_execution_model, 'environment', None) or getattr(test_execution_model, 'environment_id', None)
+            
             # Create or update the test execution
             test_execution = TestExecution(
                 id=test_execution_model.id,
-                test_case_key=test_execution_model.test_case_key,
-                cycle_id=test_execution_model.cycle_id,
+                test_case_key=test_case_key,
+                cycle_id=cycle_id,
                 cycle_name=test_execution_model.cycle_name,
                 status=test_execution_model.status,
                 status_name=test_execution_model.status_name,
-                environment_id=test_execution_model.environment,
+                environment_id=environment_id,
                 environment_name=test_execution_model.environment_name,
                 executed_by=test_execution_model.executed_by,
                 executed_by_name=test_execution_model.executed_by_name,
