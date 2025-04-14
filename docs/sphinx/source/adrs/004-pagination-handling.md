@@ -1,2 +1,2 @@
-```{include} ../../../../docs/adr/004-pagination-handling.md
+```{include} ../../../adr/004-pagination-handling.md
 ```

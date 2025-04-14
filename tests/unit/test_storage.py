@@ -2,10 +2,7 @@ import pytest
 import json
 from datetime import datetime
 
-from ztoq.models import (
-    Case,
-    TestCase  # Using compatibility alias
-)
+from ztoq.models import Case, TestCase  # Using compatibility alias
 from ztoq.storage import SQLiteStorage, JSONStorage
 
 

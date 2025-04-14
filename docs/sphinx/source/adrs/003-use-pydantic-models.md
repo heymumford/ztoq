@@ -1,2 +1,2 @@
-```{include} ../../../../docs/adr/003-use-pydantic-models.md
+```{include} ../../../adr/003-use-pydantic-models.md
 ```

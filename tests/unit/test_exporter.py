@@ -89,9 +89,19 @@ class TestZephyrExporter:
     @patch("ztoq.storage.JSONStorage.save_test_cases")
     @patch("ztoq.storage.JSONStorage.save_test_cycles")
     @patch("ztoq.storage.JSONStorage.save_test_executions")
-    def test_export_all(self, mock_save_execs, mock_save_cycles, mock_save_cases,
-                     mock_save_envs, mock_save_priorities, mock_save_statuses,
-                     mock_save_folders, mock_save_project, json_exporter, client):
+    def test_export_all(
+        self,
+        mock_save_execs,
+        mock_save_cycles,
+        mock_save_cases,
+        mock_save_envs,
+        mock_save_priorities,
+        mock_save_statuses,
+        mock_save_folders,
+        mock_save_project,
+        json_exporter,
+        client,
+    ):
         """Test exporting all data."""
         # Mock client methods with proper serializable objects
         project = MagicMock()
@@ -152,7 +162,7 @@ class TestZephyrExporter:
         execution1.custom_fields = [
             CustomField(id="cf1", name="Test Environment", type="text", value="Staging")
         ]
-        
+
         execution2 = MagicMock(spec=Execution)
         execution2.id = "exec2"
         execution2.test_case_key = "TEST-TC-2"
@@ -163,9 +173,9 @@ class TestZephyrExporter:
         ]
         execution2.custom_fields = [
             CustomField(id="cf1", name="Test Environment", type="text", value="Production"),
-            CustomField(id="cf2", name="Priority Fix", type="checkbox", value=True)
+            CustomField(id="cf2", name="Priority Fix", type="checkbox", value=True),
         ]
-        
+
         test_executions = [execution1, execution2]
         client.get_test_executions.return_value = test_executions
 
@@ -205,8 +215,9 @@ class TestZephyrExportManager:
     def test_export_project(self, export_manager):
         """Test exporting a project."""
         # Patch the export_all method of ZephyrExporter
-        with patch.object(ZephyrExporter, 'export_all',
-                       return_value={"test_cases": 10, "test_cycles": 5}):
+        with patch.object(
+            ZephyrExporter, "export_all", return_value={"test_cases": 10, "test_cycles": 5}
+        ):
             # Patch the ZephyrClient so we don't make real API calls
             with patch("ztoq.exporter.ZephyrClient") as mock_client_class:
                 # Setup client mock
@@ -232,7 +243,7 @@ class TestZephyrExportManager:
             project2.key = "PROJ2"
             mock_client.get_projects.return_value = [project1, project2]
             # Mock export_project method
-            with patch.object(export_manager, 'export_project') as mock_export_project:
+            with patch.object(export_manager, "export_project") as mock_export_project:
                 mock_export_project.side_effect = [
                     {"test_cases": 10},
                     {"test_cases": 20},
@@ -265,7 +276,7 @@ class TestZephyrExportManager:
             project2.key = "PROJ2"
             mock_client.get_projects.return_value = [project1, project2]
             # Mock export_project method - first succeeds, second fails
-            with patch.object(export_manager, 'export_project') as mock_export_project:
+            with patch.object(export_manager, "export_project") as mock_export_project:
                 mock_export_project.side_effect = [
                     {"test_cases": 10},
                     Exception("Export failed"),

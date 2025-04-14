@@ -28,7 +28,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger("ztoq")
 
-app = typer.Typer(help="ZTOQ - Zephyr Test Object Query")
+app = typer.Typer(help="ZTOQ - Zephyr to qTest")
 console = Console()
 
 

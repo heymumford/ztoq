@@ -69,7 +69,7 @@ class TestModels:
             createdOn="2023-01-01T12:00:00",
             createdBy="user123",
         )
-        
+
         # With all fields including attachments
         step = CaseStep(
             id="123",
@@ -102,33 +102,35 @@ class TestModels:
         """Test Case model with nested objects including attachments and custom fields."""
         # Create priority
         priority = Priority(id="p1", name="High", rank=1, color="#ff0000")
-        
+
         # Create steps with attachments
         step_attachment = Attachment(
-            id="att1", 
-            filename="screenshot.png", 
-            contentType="image/png",
-            size=1024
+            id="att1", filename="screenshot.png", contentType="image/png", size=1024
         )
-        
+
         steps = [
             CaseStep(
-                index=1, 
-                description="Step 1", 
+                index=1,
+                description="Step 1",
                 expectedResult="Result 1",
-                attachments=[step_attachment]
+                attachments=[step_attachment],
             )
         ]
-        
+
         # Create different types of custom fields
         custom_fields = [
             CustomField(id="cf1", name="Text Field", type="text", value="Text value"),
             CustomField(id="cf2", name="Checkbox", type="checkbox", value=True),
             CustomField(id="cf3", name="Dropdown", type="dropdown", value="Option 1"),
-            CustomField(id="cf4", name="Multiple Select", type="multipleSelect", value=["Option 1", "Option 2"]),
+            CustomField(
+                id="cf4",
+                name="Multiple Select",
+                type="multipleSelect",
+                value=["Option 1", "Option 2"],
+            ),
             CustomField(id="cf5", name="Numeric", type="numeric", value=123),
         ]
-        
+
         # Create case attachment
         case_attachment = Attachment(
             id="att2",
@@ -170,17 +172,19 @@ class TestModels:
     def test_custom_field_validation(self):
         """Test CustomField validation based on field type."""
         # Valid fields
-        assert CustomField(id="cf1", name="Text", type="text", value="Some text").value == "Some text"
+        assert (
+            CustomField(id="cf1", name="Text", type="text", value="Some text").value == "Some text"
+        )
         assert CustomField(id="cf2", name="Checkbox", type="checkbox", value=True).value is True
         assert CustomField(id="cf3", name="Number", type="numeric", value=123).value == 123
-        
+
         # Invalid field values should raise validation errors
         with pytest.raises(ValueError):
             CustomField(id="cf4", name="Checkbox", type="checkbox", value="not a boolean")
-            
+
         with pytest.raises(ValueError):
             CustomField(id="cf5", name="Number", type="numeric", value="not a number")
-            
+
         with pytest.raises(ValueError):
             CustomField(id="cf6", name="MultiSelect", type="multipleSelect", value="not a list")
 
@@ -196,19 +200,17 @@ class TestModels:
         assert attachment.id == "att1"
         assert attachment.filename == "document.pdf"
         assert attachment.content_type == "application/pdf"
-        
+
         # Test binary data handling
         test_data = b"This is test binary data"
         binary_attachment = Attachment.from_binary(
-            filename="test.bin",
-            content_type="application/octet-stream",
-            binary_data=test_data
+            filename="test.bin", content_type="application/octet-stream", binary_data=test_data
         )
-        
+
         assert binary_attachment.filename == "test.bin"
         assert binary_attachment.content_type == "application/octet-stream"
         assert binary_attachment.size == len(test_data)
-        
+
         # Verify content is base64 encoded
         decoded = base64.b64decode(binary_attachment.content)
         assert decoded == test_data

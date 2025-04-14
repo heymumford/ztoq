@@ -1,13 +1,13 @@
 [tool.poetry]
 name = "ztoq"
 version = "0.1.0"
-description = "A Python tool that extracts test data from Zephyr Scale via its API"
+description = "A Python tool that extracts test data from Zephyr Scale and migrates it to qTest"
 authors = ["Your Name <your.email@example.com>"]
 readme = "README.md"
 packages = [{include = "ztoq"}]
 
 [tool.poetry.dependencies]
-python = "^3.9"
+python = "^3.11"
 pyyaml = "^6.0"
 pydantic = "^2.0"
 requests = "^2.30.0"
@@ -50,7 +50,7 @@ ztoq = "ztoq.cli:app"
 
 [tool.black]
 line-length = 100
-target-version = ["py39"]
+target-version = ["py311"]
 include = '\.pyi?$'
 
 [tool.flake8]

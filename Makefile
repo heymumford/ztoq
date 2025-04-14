@@ -1,6 +1,6 @@
 # Makefile for ZTOQ project
 
-.PHONY: setup install test lint format clean docs docs-clean
+.PHONY: setup install test lint format clean docs docs-clean build checkin
 
 setup:
 	pip install poetry
@@ -48,6 +48,16 @@ apidoc:
 
 # Build documentation after running tests with coverage
 test-with-docs: test-cov docs
+
+build:
+	python scripts/master_build.py
+
+checkin:
+	@if [ -z "$(message)" ]; then \
+		echo "Error: Commit message required. Usage: make checkin message=\"Your commit message\""; \
+		exit 1; \
+	fi
+	python scripts/check_in.py "$(message)"
 
 clean:
 	rm -rf .pytest_cache

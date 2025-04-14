@@ -1,0 +1,852 @@
+qTest Manager API Version 2025.1
+ 2025.1 
+Introduction to qTest API Specification
+How to use interactive API Doc
+The bearer token can be found at [qtestUrl/p/{projectId}/portal/project#tab=resource] under the API & SDK tab.
+
+Introduction to qTest API Specification
+How to use interactive API Doc
+Username/Password: api-test@qasymphony.com/admin123
+Access Token: bearer 9bbf04fd-aed2-4e05-8428-7fc5ecff7bb8
+Sample Project ID: 108781
+Schemes
+
+https
+Authorize
+Filter by tag
+attachment
+Attachment API
+
+GET
+/api/v3/projects/{projectId}/attachments
+Searches for Attachments
+
+GET
+/api/v3/projects/{projectId}/{objectType}/{objectId}/attachments
+Gets all Attachments of an Object
+
+GET
+/api/v3/projects/{projectId}/{objectType}/{objectId}/attachments/{attachmentId}
+Gets an Attachment of an Object
+
+POST
+/api/v3/projects/{projectId}/{objectType}/{objectId}/blob-handles
+Uploads an Attachment to an Object
+
+DELETE
+/api/v3/projects/{projectId}/{objectType}/{objectId}/blob-handles/{blobHandleId}
+Deletes an Attachment from an Object
+
+auth-systems
+Authentication Systems API
+
+GET
+/api/v3/auth-systems
+Get multiple Authentication Systems
+
+POST
+/api/v3/auth-systems/ldap/{ldapAuthConfigId}/import
+Associate Manager users with LDAP users
+
+GET
+/api/v3/auth-systems/ldap/{ldapAuthConfigId}/users
+Get all LDAP users of an authentication LDAP config
+
+automation-job
+Automation Job API
+
+POST
+/api/v3/automation/automation-agents
+Search automation agents
+
+POST
+/api/v3/automation/jobs/schedule/create
+Create a Schedule
+
+build
+Build API
+
+GET
+/api/v3/projects/{projectId}/builds
+Gets multiple Builds
+
+POST
+/api/v3/projects/{projectId}/builds
+Creates a Build
+
+GET
+/api/v3/projects/{projectId}/builds/{buildId}
+Gets a Build
+
+PUT
+/api/v3/projects/{projectId}/builds/{buildId}
+Updates a Build
+
+DELETE
+/api/v3/projects/{projectId}/builds/{buildId}
+Deletes a Build
+
+common
+Common API
+
+POST
+/api/v3/projects/{projectId}/settings/{objectType}/custom-fields/active
+Update active or inactive custom fields of an Object Type
+
+POST
+/api/v3/projects/{projectId}/settings/{objectType}/system-fields/{fieldId}
+Edit System Field of an Object Type by the field
+
+defect
+Defect API
+
+POST
+/api/v3/projects/{projectId}/defects
+Submit a Defect
+
+GET
+/api/v3/projects/{projectId}/defects/last-change
+Gets recently updated Defects
+
+GET
+/api/v3/projects/{projectId}/defects/{defectId}
+Gets a Defect
+
+PUT
+/api/v3/projects/{projectId}/defects/{defectId}
+Updates a Defect
+
+GET
+/api/v3/projects/{projectId}/defects/{idOrKey}/comments
+Gets all Comments of a Defect
+
+POST
+/api/v3/projects/{projectId}/defects/{idOrKey}/comments
+Adds a Comment to a Defect
+
+GET
+/api/v3/projects/{projectId}/defects/{idOrKey}/comments/{commentId}
+Gets a Comment of a Defect
+
+PUT
+/api/v3/projects/{projectId}/defects/{idOrKey}/comments/{commentId}
+Updates a Comment of a Defect
+
+DELETE
+/api/v3/projects/{projectId}/defects/{idOrKey}/comments/{commentId}
+Deletes a Comment of a Defect
+
+field
+Field API
+
+GET
+/api/v3/fields/{objectType}
+Gets all site field of an object type
+
+POST
+/api/v3/fields/{objectType}
+Creates a Custom Site Field of an Object Type
+
+GET
+/api/v3/fields/{objectType}/{fieldId}
+Gets a Custom Site Field of an Object Type
+
+PUT
+/api/v3/fields/{objectType}/{fieldId}
+Updates a Custom Site Field of an Object Type
+
+DELETE
+/api/v3/fields/{objectType}/{fieldId}
+Deletes a Custom Site Field of an Object Type
+
+GET
+/api/v3/fields/{objectType}/{fieldId}/allowed-values
+Gets all allowed values of a Site Field
+
+POST
+/api/v3/fields/{objectType}/{fieldId}/allowed-values
+Creates allowed values of a Site Field
+
+PUT
+/api/v3/fields/{objectType}/{fieldId}/allowed-values/{value}
+Updates an allowed value of a Site Field
+
+DELETE
+/api/v3/fields/{objectType}/{fieldId}/allowed-values/{value}
+Deletes an allowed value of a Site Field
+
+GET
+/api/v3/projects/{projectId}/settings/{objectType}/fields
+Gets all Fields of an Object Type
+
+POST
+/api/v3/projects/{projectId}/settings/{objectType}/fields
+Creates a Custom Field of an Object Type
+
+GET
+/api/v3/projects/{projectId}/settings/{objectType}/fields/{fieldId}
+Gets a Custom Field of an Object Type
+
+PUT
+/api/v3/projects/{projectId}/settings/{objectType}/fields/{fieldId}
+Updates a Custom Field of an Object Type
+
+DELETE
+/api/v3/projects/{projectId}/settings/{objectType}/fields/{fieldId}
+Deletes a Custom Field of an Object Type
+
+GET
+/api/v3/projects/{projectId}/settings/{objectType}/fields/{fieldId}/allowed-values
+Gets all allowed values of a Project Field
+
+POST
+/api/v3/projects/{projectId}/settings/{objectType}/fields/{fieldId}/allowed-values
+Creates allowed values of a Project Field
+
+PUT
+/api/v3/projects/{projectId}/settings/{objectType}/fields/{fieldId}/allowed-values/{value}
+Updates an allowed value of a Project Field
+
+DELETE
+/api/v3/projects/{projectId}/settings/{objectType}/fields/{fieldId}/allowed-values/{value}
+Deletes an allowed value of a Project Field
+
+groups
+User Group API
+
+GET
+/api/v3/groups
+Get multiple UserGroups
+
+POST
+/api/v3/groups
+Create custom UserGroup
+
+integration-settings
+Integration Settings
+
+GET
+/api/v3/projects/{projectId}/settings/integration/connections
+Get all Jira connections of a project
+
+POST
+/api/v3/projects/{projectId}/settings/integration/connections
+Add a new Jira connection
+
+GET
+/api/v3/projects/{projectId}/settings/integration/connections/oauthAuthorizeURL
+OAuth Authorize URL
+
+PUT
+/api/v3/projects/{projectId}/settings/integration/connections/{connectionId}
+Activate or deactivate a Jira connection
+
+DELETE
+/api/v3/projects/{projectId}/settings/integration/connections/{connectionId}
+Delete a Jira connection
+
+PUT
+/api/v3/projects/{projectId}/settings/integration/connections/{connectionId}/defect
+Enable or disable populating Jira Unlinked Defects of a Jira connection
+
+GET
+/api/v3/projects/{projectId}/settings/integration/connections/{connectionId}/defect/mappings
+Get Jira defect mappings of a Jira connection
+
+POST
+/api/v3/projects/{projectId}/settings/integration/connections/{connectionId}/defect/mappings
+Add a defect mapping to a Jira connection
+
+PUT
+/api/v3/projects/{projectId}/settings/integration/connections/{connectionId}/defect/mappings
+Update a defect mapping of Jira connection
+
+POST
+/api/v3/projects/{projectId}/settings/integration/connections/{connectionId}/refreshFieldSettings
+Trigger retrieving latest field settings from a JIRA connection
+
+PUT
+/api/v3/projects/{projectId}/settings/integration/connections/{connectionId}/release
+Enable or disable Release Integration feature of a Jira connection
+
+GET
+/api/v3/projects/{projectId}/settings/integration/connections/{connectionId}/release/mappings
+Get Jira release mappings of a Jira connection
+
+POST
+/api/v3/projects/{projectId}/settings/integration/connections/{connectionId}/release/mappings
+Add a new Jira release mapping to a Jira connection
+
+PUT
+/api/v3/projects/{projectId}/settings/integration/connections/{connectionId}/release/mappings
+Update a Release Mapping of a Jira connection
+
+PUT
+/api/v3/projects/{projectId}/settings/integration/connections/{connectionId}/requirement
+Enable or disable a Requirement Integration feature of a Jira connection
+
+GET
+/api/v3/projects/{projectId}/settings/integration/connections/{connectionId}/requirement/mappings
+Get requirement mappings of a Jira connection
+
+POST
+/api/v3/projects/{projectId}/settings/integration/connections/{connectionId}/requirement/mappings
+Add a requirement mapping to a Jira connection
+
+PUT
+/api/v3/projects/{projectId}/settings/integration/connections/{connectionId}/requirement/mappings
+Update a requirement mapping of a Jira connection
+
+GET
+/api/v3/projects/{projectId}/settings/integration/connections/{connectionId}/retrieve
+Trigger data retrieval from an integrated Jira system
+
+DELETE
+/api/v3/projects/{projectId}/settings/integration/connections/{connectionId}/{artifact}/mappings
+Remove a Mapping of a Jira connection
+
+POST
+/api/v3/projects/{projectId}/settings/jira-integration/defect/retrieve
+Trigger defect retrieval from an integrated Jira system
+
+login
+Login API
+
+GET
+/oauth/status
+Gets status of access token
+
+POST
+/oauth/token
+Log in
+module
+Module API
+
+GET
+/api/v3/projects/{projectId}/modules
+Gets multiple Modules
+
+POST
+/api/v3/projects/{projectId}/modules
+Creates a Module
+
+GET
+/api/v3/projects/{projectId}/modules/{moduleId}
+Gets a Module
+
+PUT
+/api/v3/projects/{projectId}/modules/{moduleId}
+Updates a Module
+
+DELETE
+/api/v3/projects/{projectId}/modules/{moduleId}
+Deletes a Module
+
+object-link
+Object Link API
+
+GET
+/api/v3/projects/{projectId}/linked-artifacts
+Gets associated objects of given objects
+
+POST
+/api/v3/projects/{projectId}/{objectType}/{objectId}/link
+Creates links between objects
+
+DELETE
+/api/v3/projects/{projectId}/{objectType}/{objectId}/link
+Removes links between objects
+
+POST
+/api/v3/projects/{projectId}/{objectType}/{objectId}/{linkType}
+Creates links between objects by pids
+
+DELETE
+/api/v3/projects/{projectId}/{objectType}/{objectId}/{linkType}
+Removes links between objects by pids
+
+project
+Project API
+
+GET
+/api/v3/projects
+Gets multiple Projects
+
+POST
+/api/v3/projects
+Creates a Project
+
+POST
+/api/v3/projects/search
+Search for projects
+
+GET
+/api/v3/projects/{projectId}
+Gets a Project
+
+PUT
+/api/v3/projects/{projectId}
+Updates a Project
+
+GET
+/api/v3/projects/{projectId}/user-profiles/current
+Gets current user Permissions in a Project
+
+GET
+/api/v3/projects/{projectId}/users
+Gets all Users in a Project
+
+release
+Release API
+
+GET
+/api/v3/projects/{projectId}/releases
+Gets multiple Releases
+
+POST
+/api/v3/projects/{projectId}/releases
+Creates a Release
+
+GET
+/api/v3/projects/{projectId}/releases/{releaseId}
+Gets a Release
+
+PUT
+/api/v3/projects/{projectId}/releases/{releaseId}
+Updates a Release
+
+DELETE
+/api/v3/projects/{projectId}/releases/{releaseId}
+Delete a release
+
+requirement
+Requirement API
+
+GET
+/api/v3/projects/{projectId}/requirements
+Gets multiple Requirements
+
+POST
+/api/v3/projects/{projectId}/requirements
+Creates a Requirement
+
+GET
+/api/v3/projects/{projectId}/requirements/trace-matrix-report
+Gets Requirement Traceability Matrix Report
+
+GET
+/api/v3/projects/{projectId}/requirements/{idOrKey}/comments
+Gets all Comments of a Requirement
+
+POST
+/api/v3/projects/{projectId}/requirements/{idOrKey}/comments
+Adds a Comment to a Requirement
+
+GET
+/api/v3/projects/{projectId}/requirements/{idOrKey}/comments/{commentId}
+Gets a Comment of a Requirement
+
+PUT
+/api/v3/projects/{projectId}/requirements/{idOrKey}/comments/{commentId}
+Updates a Comment of a Requirement
+
+DELETE
+/api/v3/projects/{projectId}/requirements/{idOrKey}/comments/{commentId}
+Deletes a Comment of a Requirement
+
+GET
+/api/v3/projects/{projectId}/requirements/{requirementId}
+Gets a Requirement
+
+PUT
+/api/v3/projects/{projectId}/requirements/{requirementId}
+Updates a Requirement
+
+DELETE
+/api/v3/projects/{projectId}/requirements/{requirementId}
+Deletes a Requirement
+
+GET
+/api/v3/projects/{projectId}/requirements/{requirementId}/defects
+To get defects by requirementId
+
+GET
+/api/v3/projects/{projectId}/requirements/{requirementId}/test-runs
+To get all test runs associated to requirement
+
+search
+Search API
+
+POST
+/api/v3/projects/{projectId}/comments
+Queries Comments
+
+POST
+/api/v3/projects/{projectId}/histories
+Queries objects' histories
+
+POST
+/api/v3/projects/{projectId}/search
+Queries objects
+
+site-templates
+Site Templates API
+
+GET
+/api/v3/site-templates
+Get all site-templates
+
+POST
+/api/v3/site-templates/{templateId}/projects
+Apply template to existing projects.
+
+DELETE
+/api/v3/site-templates/{templateId}/projects
+Remove projects from a site template.
+
+test-case
+Test Case API
+
+GET
+/api/v3/projects/{projectId}/test-cases
+Gets multiple Test Cases
+
+POST
+/api/v3/projects/{projectId}/test-cases
+Creates a Test Case
+
+PUT
+/api/v3/projects/{projectId}/test-cases/update/testcases
+Updates multiple test cases
+
+GET
+/api/v3/projects/{projectId}/test-cases/{idOrKey}/comments
+Gets all Comments of a Test Case
+
+POST
+/api/v3/projects/{projectId}/test-cases/{idOrKey}/comments
+Adds a Comment to a Test Case
+
+GET
+/api/v3/projects/{projectId}/test-cases/{idOrKey}/comments/{commentId}
+Gets a Comment of a Test Case
+
+PUT
+/api/v3/projects/{projectId}/test-cases/{idOrKey}/comments/{commentId}
+Updates a Comment of a Test Case
+
+DELETE
+/api/v3/projects/{projectId}/test-cases/{idOrKey}/comments/{commentId}
+Deletes a Comment of a Test Case
+
+GET
+/api/v3/projects/{projectId}/test-cases/{testCaseId}
+Gets a Test Case
+
+PUT
+/api/v3/projects/{projectId}/test-cases/{testCaseId}
+Updates a Test Case
+
+DELETE
+/api/v3/projects/{projectId}/test-cases/{testCaseId}
+Deletes a Test Case
+
+PUT
+/api/v3/projects/{projectId}/test-cases/{testCaseId}/approve
+Approves a Test Case
+
+GET
+/api/v3/projects/{projectId}/test-cases/{testCaseId}/test-steps
+Gets Test Steps of a Test Case
+
+POST
+/api/v3/projects/{projectId}/test-cases/{testCaseId}/test-steps
+Creates a Test Step
+
+GET
+/api/v3/projects/{projectId}/test-cases/{testCaseId}/test-steps/{stepId}
+Gets a Test Step
+
+PUT
+/api/v3/projects/{projectId}/test-cases/{testCaseId}/test-steps/{stepId}
+Update a Test Step
+
+DELETE
+/api/v3/projects/{projectId}/test-cases/{testCaseId}/test-steps/{stepId}
+Deletes a Test Step
+
+PUT
+/api/v3/projects/{projectId}/test-cases/{testCaseId}/vera/approve
+test-case.vera.approve
+
+GET
+/api/v3/projects/{projectId}/test-cases/{testCaseId}/versions
+Gets all versions of a Test Case
+
+GET
+/api/v3/projects/{projectId}/test-cases/{testCaseId}/versions/{versionId}
+Gets a version of a Test Case
+
+GET
+/api/v3/projects/{projectId}/test-cases/{testCaseId}/versions/{versionId}/test-steps
+Gets Test Steps of a Test Case version
+
+GET
+/api/v4/projects/{projectId}/test-cases/{testCaseId}/test-steps
+Gets Test Steps of a Test Case
+
+GET
+/api/v4/projects/{projectId}/test-cases/{testCaseId}/versions/{versionId}/test-steps
+Gets Test Steps of a Test Case version
+
+test-cycle
+Test Cycle API
+
+GET
+/api/v3/projects/{projectId}/test-cycles
+Gets multiple Test Cycles
+
+POST
+/api/v3/projects/{projectId}/test-cycles
+Create a Test Cycle
+
+GET
+/api/v3/projects/{projectId}/test-cycles/{testCycleId}
+Gets a Test Cycle
+
+PUT
+/api/v3/projects/{projectId}/test-cycles/{testCycleId}
+Updates a Test Cycle
+
+DELETE
+/api/v3/projects/{projectId}/test-cycles/{testCycleId}
+Deletes a Test Cycle
+
+test-log
+Test Log API
+
+POST
+/api/v3.1/projects/{projectId}/test-runs/{testRunId}/auto-test-logs
+Submits multiple test results
+
+GET
+/api/v3/projects/queue-processing/{id}
+Gets a Batch Test Log Submission job's state
+
+POST
+/api/v3/projects/{projectId}/auto-test-logs
+Submits multiple test results and specifies Test Design and Test Execution tree structures
+
+POST
+/api/v3/projects/{projectId}/test-runs/{testRunId}/auto-test-logs
+Submits an Automation Test Log
+
+PUT
+/api/v3/projects/{projectId}/test-runs/{testRunId}/auto-test-logs/{id}
+Modify an Automation Test Log
+
+GET
+/api/v3/projects/{projectId}/test-runs/{testRunId}/test-logs
+Gets all Test Logs of a Test Run
+
+POST
+/api/v3/projects/{projectId}/test-runs/{testRunId}/test-logs
+Submits a Manual Test Log
+
+GET
+/api/v3/projects/{projectId}/test-runs/{testRunId}/test-logs/last-run
+Gets the latest Test Log of a Test Run
+
+GET
+/api/v3/projects/{projectId}/test-runs/{testRunId}/test-logs/{id}
+Gets a Test Log of a Test Run
+
+PUT
+/api/v3/projects/{projectId}/test-runs/{testRunId}/test-logs/{id}
+Modify a Manual Test Log
+
+test-run
+Test Run API
+
+GET
+/api/v3/projects/{projectId}/test-runs
+Gets multiple Test Runs
+
+POST
+/api/v3/projects/{projectId}/test-runs
+Creates a Test Run
+
+POST
+/api/v3/projects/{projectId}/test-runs/assign-parameter-values/dataset
+Create multiple Test Runs with Parameter values from dataset.
+
+POST
+/api/v3/projects/{projectId}/test-runs/assign-parameter-values/manually
+Create multiple Test Runs with Parameter values manual
+
+POST
+/api/v3/projects/{projectId}/test-runs/assign-parameter-values/randomize
+Create multiple Test Runs with Parameter values random from selection combine type.
+
+GET
+/api/v3/projects/{projectId}/test-runs/execution-statuses
+Gets Test Run statuses
+
+GET
+/api/v3/projects/{projectId}/test-runs/subhierarchy
+Gets a Sub Hierarchy
+
+GET
+/api/v3/projects/{projectId}/test-runs/{idOrKey}/comments
+Gets all Comments of a Test Run
+
+POST
+/api/v3/projects/{projectId}/test-runs/{idOrKey}/comments
+Adds a Comment to a Test Run
+
+GET
+/api/v3/projects/{projectId}/test-runs/{idOrKey}/comments/{commentId}
+Gets a Comment from a Test Run
+
+PUT
+/api/v3/projects/{projectId}/test-runs/{idOrKey}/comments/{commentId}
+Updates a Comment of a Test Run
+
+DELETE
+/api/v3/projects/{projectId}/test-runs/{idOrKey}/comments/{commentId}
+Deletes a Comment of a Test Run
+
+GET
+/api/v3/projects/{projectId}/test-runs/{testRunId}
+Gets a Test Run
+
+PUT
+/api/v3/projects/{projectId}/test-runs/{testRunId}
+Updates a Test Run
+
+DELETE
+/api/v3/projects/{projectId}/test-runs/{testRunId}
+Deletes a Test Run
+
+test-suite
+Test Suite API
+
+GET
+/api/v3/projects/{projectId}/test-suites
+Gets multiple Test Suite
+
+POST
+/api/v3/projects/{projectId}/test-suites
+Creates a Test Suite
+
+GET
+/api/v3/projects/{projectId}/test-suites/{testSuiteId}
+Gets a Test Suite
+
+PUT
+/api/v3/projects/{projectId}/test-suites/{testSuiteId}
+Updates a Test Suite
+
+DELETE
+/api/v3/projects/{projectId}/test-suites/{testSuiteId}
+Deletes a Test Suite
+
+tosca
+Tosca Integration API
+
+POST
+/api/v3/projects/{projectId}/tosca/import/test-event
+Import Tosca TestEvent objects
+
+user
+User API
+
+GET
+/api/v3/re-evaluation
+Gets current user's information
+
+GET
+/api/v3/search/user
+Queries Users by Project Name
+
+POST
+/api/v3/users
+Invites a User
+
+POST
+/api/v3/users/projects
+Assigns multiple Users to a Project
+
+PUT
+/api/v3/users/projects
+Remove association between users and projects
+
+GET
+/api/v3/users/search
+Queries Users by Username
+
+GET
+/api/v3/users/{userId}
+Gets a User
+
+PUT
+/api/v3/users/{userId}
+Update user's information
+
+GET
+/api/v3/users/{userId}/avatar
+Gets a User's Avatar
+
+POST
+/api/v3/users/{userId}/projects
+Assigns a User to a Project
+
+user-profile
+User Profile API
+
+GET
+/api/v3/admin-profiles/current
+Gets current User's Admin Profile
+
+GET
+/api/v3/user-profiles
+Gets available Profiles
+
+POST
+/api/v3/user-profiles/batch-assign-users
+Assigns multiple Users to a Profile
+
+GET
+/api/v3/user-profiles/current
+Gets current User's Profiles in different Projects
+
+POST
+/api/v3/user-profiles/{projectId}/batch-assign-users
+Assigns multiple Users to a Profile in a Project
+
+webhook
+Webhook
+
+GET
+/api/v3/webhooks
+Gets list of all registered webhooks
+
+POST
+/api/v3/webhooks
+Registers a webhook
+
+GET
+/api/v3/webhooks/events
+Get list of webhook event names
+
+GET
+/api/v3/webhooks/{webhookId}
+Gets a webhook
+
+PUT
+/api/v3/webhooks/{webhookId}
+Updates a webhook
+
+DELETE
+/api/v3/webhooks/{webhookId}
+Deletes a webhook

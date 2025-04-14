@@ -25,7 +25,7 @@ class Link(BaseModel):
 
 class CustomFieldType(str, Enum):
     """Types of custom fields supported by Zephyr Scale."""
-    
+
     TEXT = "text"
     PARAGRAPH = "paragraph"
     CHECKBOX = "checkbox"
@@ -55,31 +55,33 @@ class CustomField(BaseModel):
     name: str
     type: str
     value: Any
-    
-    @validator('value')
+
+    @validator("value")
     def validate_value_by_type(cls, v, values):
         """Validate that the value is appropriate for the field type."""
-        if 'type' not in values:
+        if "type" not in values:
             return v
-            
-        field_type = values['type']
-        
+
+        field_type = values["type"]
+
         # Validate based on field type
         if field_type == CustomFieldType.CHECKBOX and not isinstance(v, bool):
             raise ValueError(f"Field type {field_type} requires a boolean value")
-        elif field_type == CustomFieldType.NUMERIC and not (isinstance(v, int) or isinstance(v, float)):
+        elif field_type == CustomFieldType.NUMERIC and not (
+            isinstance(v, int) or isinstance(v, float)
+        ):
             raise ValueError(f"Field type {field_type} requires a numeric value")
         elif field_type == CustomFieldType.TABLE and not isinstance(v, list):
             raise ValueError(f"Field type {field_type} requires a list of table rows")
         elif field_type == CustomFieldType.MULTIPLE_SELECT and not isinstance(v, list):
             raise ValueError(f"Field type {field_type} requires a list of selected values")
-            
+
         return v
 
 
 class Attachment(BaseModel):
     """Represents a file attachment in Zephyr Scale."""
-    
+
     id: Optional[str] = None
     filename: str
     content_type: str = Field(..., alias="contentType")
@@ -87,20 +89,20 @@ class Attachment(BaseModel):
     created_on: Optional[datetime] = Field(None, alias="createdOn")
     created_by: Optional[str] = Field(None, alias="createdBy")
     content: Optional[str] = None  # Base64 encoded content when applicable
-    
+
     model_config = {"populate_by_name": True}
-    
+
     @classmethod
     def from_binary(cls, filename: str, content_type: str, binary_data: bytes):
         """Create an attachment from binary data by encoding it as base64."""
-        encoded = base64.b64encode(binary_data).decode('utf-8')
+        encoded = base64.b64encode(binary_data).decode("utf-8")
         return cls(
             filename=filename,
             contentType=content_type,
             size=len(binary_data),
             content=encoded,
             createdOn=datetime.now(),
-            createdBy="system"
+            createdBy="system",
         )
 
 
@@ -312,6 +314,7 @@ class Project(BaseModel):
     key: str
     name: str
     description: Optional[str] = None
+
 
 # Compatibility aliases for backward compatibility
 TestStep = CaseStep

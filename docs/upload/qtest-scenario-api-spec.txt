@@ -1,0 +1,43 @@
+qTest Scenario
+ 2025.2.0 
+Introduction to qTest Scenario API
+Username/Password: api-test@qasymphony.com/admin123
+Sample Project ID: 108781
+Schemes
+
+https
+Authorize
+Filter by tag
+feature
+Feature API
+
+GET
+/features
+get list of features
+
+POST
+/features
+
+PUT
+/features/{id}
+
+PATCH
+/features/{id}
+
+step
+Step API
+
+GET
+/steps
+get list of steps
+
+POST
+/steps
+
+PUT
+/steps/{id}
+update step
+
+PATCH
+/steps/{id}
+update step

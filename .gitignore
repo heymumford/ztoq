@@ -33,3 +33,6 @@ env/
 
 # Logs
 *.log
+
+# Build info
+.build_info.json

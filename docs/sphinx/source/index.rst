@@ -1,17 +1,19 @@
 Welcome to ZTOQ Documentation
 ===========================
 
-ZTOQ is a tool for downloading a complete set of test data from Zephyr Scale into a SQL database.
+ZTOQ is a tool for extracting test data from Zephyr Scale and migrating it to qTest or other storage formats.
 
 Features
 --------
 
-* Authentication with access tokens
-* Project data retrieval
-* Test case download with pagination support
-* Test cycle and execution download
-* Downloads folders, statuses, priorities, and environments
-* Data processing and SQL database population
+* Authentication with access tokens for Zephyr Scale and qTest
+* Project data retrieval and migration
+* Test case, cycle, and execution handling
+* Custom field mapping and transformation
+* Attachment processing and binary content transfer
+* ETL pipeline for data migration
+* Robust error handling and resumability
+* Test-driven development approach
 
 .. toctree::
    :maxdepth: 2
@@ -21,9 +23,18 @@ Features
    usage
    api/modules
    architecture
+   openapi-integration
+   qtest-integration
+   custom-fields
+   conversion-process
+   entity-mapping
+   development
+   docs-contribution
+   test-strategy
+   kanban
+   maintenance
    adrs/index
    c4_lucidchart
-   development
    
 Indices and tables
 ==================

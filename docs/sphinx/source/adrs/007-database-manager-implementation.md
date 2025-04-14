@@ -1,0 +1,1 @@
+../../../../docs/adr/007-database-manager-implementation.md

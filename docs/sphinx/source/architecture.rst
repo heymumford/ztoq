@@ -4,7 +4,7 @@ Architecture
 C4 Diagram
 ----------
 
-.. include:: ../../../docs/c4_diagram.md
+.. include:: ../../../docs/c4-diagram.md
    :parser: myst_parser.sphinx_
 
 Components
@@ -17,6 +17,9 @@ ZTOQ is organized into several main components:
 3. **Storage Layer**: Manages data storage in SQLite or JSON formats.
 4. **Database Manager**: Handles database operations for storing fetched data.
 5. **CLI**: Provides command-line interface for user interaction.
+6. **Error Handling**: Provides domain-specific exceptions and Result objects for operations.
+7. **Logging System**: Implements structured logging with context and redaction capabilities.
+8. **Documentation**: Comprehensive documentation with Sphinx, ADRs, and C4 diagrams.
 
 Sequence Flow
 ------------
@@ -68,3 +71,14 @@ For detailed information about design decisions, please refer to the Architectur
    :maxdepth: 1
    
    adrs/index
+
+Additional Architecture Documents
+--------------------------------
+
+.. toctree::
+   :maxdepth: 1
+   
+   openapi-integration
+   qtest-integration
+   conversion-process
+   entity-mapping

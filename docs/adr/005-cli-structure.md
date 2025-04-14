@@ -55,7 +55,7 @@ from pathlib import Path
 from typing import Optional, List
 import rich
 
-app = typer.Typer(help="ZTOQ - Zephyr Test Object Query")
+app = typer.Typer(help="ZTOQ - Zephyr to qTest")
 
 @app.command("validate")
 def validate_spec(spec_path: Path = typer.Argument(..., help="Path to the OpenAPI spec file")):

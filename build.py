@@ -10,7 +10,9 @@ The test pyramid consists of:
 import argparse
 import subprocess
 import sys
-from typing import List, Dict, Any, Optional
+import os
+import re
+from typing import List, Dict, Any, Optional, Tuple
 from enum import Enum
 
 
@@ -27,6 +29,7 @@ class BuildCommand(Enum):
     TYPE_CHECK = "type-check"
     TEST = "test"
     DOCS = "docs"
+    DOCS_CHECK = "docs-check"
     BUILD = "build"
     ALL = "all"
 
@@ -70,24 +73,63 @@ def test(level: TestLevel = TestLevel.ALL, with_docs: bool = False) -> bool:
     # Add coverage for all tests
     if level == TestLevel.ALL:
         cmd.extend(["--cov=ztoq", "--cov-report=term", "--cov-report=html"])
-    
+
     success = run_poetry_command(cmd)
-    
+
     # Generate documentation after successful tests if requested
     if success and with_docs and level == TestLevel.ALL:
         success = generate_docs()
-        
+
     return success
+
+
+def check_docs_naming_convention() -> bool:
+    """Check that documentation files follow the kebab-case naming convention."""
+    docs_dir = "docs"
+    root_dir = os.path.abspath(os.path.dirname(__file__))
+    docs_path = os.path.join(root_dir, docs_dir)
+    
+    # Define pattern for kebab-case (lowercase with hyphens)
+    kebab_case_pattern = re.compile(r'^[a-z0-9]+(-[a-z0-9]+)*\.md$')
+    
+    # Exceptions that don't need to follow kebab-case
+    exceptions = ["README.md"]
+    
+    violations = []
+    
+    # Check all markdown files in the docs directory and subdirectories
+    for root, _, files in os.walk(docs_path):
+        for file in files:
+            if file.endswith('.md') and file not in exceptions:
+                if not kebab_case_pattern.match(file):
+                    rel_path = os.path.relpath(os.path.join(root, file), root_dir)
+                    violations.append(rel_path)
+    
+    if violations:
+        print("Documentation naming convention violations found:")
+        for violation in violations:
+            print(f"  - {violation} (should use kebab-case)")
+        print("All documentation files should use kebab-case (lowercase with hyphens).")
+        return False
+    
+    print("All documentation files follow the kebab-case naming convention.")
+    return True
 
 
 def generate_docs() -> bool:
     """Generate documentation."""
-    # First, generate API documentation
+    # First, check the documentation naming convention
+    if not check_docs_naming_convention():
+        print("Warning: Some documentation files don't follow the naming convention.")
+        # Continue anyway, but print a warning
+    
+    # Generate API documentation
     if not run_command(["sphinx-apidoc", "-o", "docs/sphinx/source/api", "ztoq", "--force"]):
         return False
-    
+
     # Then build the documentation
     return run_command(["make", "-C", "docs/sphinx", "html"])
+
 
 def build() -> bool:
     """Build the project."""
@@ -103,6 +145,7 @@ def run_all() -> bool:
         ("Running unit tests", lambda: test(TestLevel.UNIT)),
         ("Running integration tests", lambda: test(TestLevel.INTEGRATION)),
         ("Running system tests", lambda: test(TestLevel.SYSTEM)),
+        ("Checking documentation conventions", check_docs_naming_convention),
         ("Generating documentation", generate_docs),
         ("Building", build),
     ]
@@ -153,6 +196,8 @@ def main() -> int:
         success = test(test_level, args.with_docs)
     elif command == BuildCommand.DOCS:
         success = generate_docs()
+    elif command == BuildCommand.DOCS_CHECK:
+        success = check_docs_naming_convention()
     elif command == BuildCommand.BUILD:
         success = build()
     elif command == BuildCommand.ALL:

@@ -1,0 +1,1 @@
+../../../../docs/adr/010-logging-strategy.md

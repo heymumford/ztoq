@@ -299,7 +299,9 @@ class SQLiteStorage:
             description: Project description
         """
         if self.cursor is None:
-            raise ValueError("Database connection not established. Use context manager or connect().")
+            raise ValueError(
+                "Database connection not established. Use context manager or connect()."
+            )
         self.cursor.execute(
             "INSERT OR REPLACE INTO projects (id, key, name, description) VALUES (?, ?, ?, ?)",
             (project_id, project_key, project_name, description),
@@ -313,7 +315,9 @@ class SQLiteStorage:
             project_key: Project key
         """
         if self.cursor is None:
-            raise ValueError("Database connection not established. Use context manager or connect().")
+            raise ValueError(
+                "Database connection not established. Use context manager or connect()."
+            )
         for folder in folders:
             self.cursor.execute(
                 """
@@ -332,7 +336,9 @@ class SQLiteStorage:
             project_key: Project key
         """
         if self.cursor is None:
-            raise ValueError("Database connection not established. Use context manager or connect().")
+            raise ValueError(
+                "Database connection not established. Use context manager or connect()."
+            )
         for status in statuses:
             self.cursor.execute(
                 """
@@ -358,7 +364,9 @@ class SQLiteStorage:
             project_key: Project key
         """
         if self.cursor is None:
-            raise ValueError("Database connection not established. Use context manager or connect().")
+            raise ValueError(
+                "Database connection not established. Use context manager or connect()."
+            )
         for priority in priorities:
             self.cursor.execute(
                 """
@@ -384,7 +392,9 @@ class SQLiteStorage:
             project_key: Project key
         """
         if self.cursor is None:
-            raise ValueError("Database connection not established. Use context manager or connect().")
+            raise ValueError(
+                "Database connection not established. Use context manager or connect()."
+            )
         for env in environments:
             self.cursor.execute(
                 """
@@ -403,31 +413,44 @@ class SQLiteStorage:
             project_key: Project key
         """
         if self.cursor is None:
-            raise ValueError("Database connection not established. Use context manager or connect().")
+            raise ValueError(
+                "Database connection not established. Use context manager or connect()."
+            )
         # Convert lists to JSON, using appropriate serialization method
         # (supporting both Pydantic v1's .dict() and v2's .model_dump())
         labels_json = self._serialize_value(test_case.labels)
-        steps_json = self._serialize_value([
-            step.dict() if hasattr(step, 'dict') else step.model_dump() 
-            for step in test_case.steps
-        ])
-        custom_fields_json = self._serialize_value([
-            cf.dict() if hasattr(cf, 'dict') else cf.model_dump() 
-            for cf in test_case.custom_fields
-        ])
-        links_json = self._serialize_value([
-            link.dict() if hasattr(link, 'dict') else link.model_dump() 
-            for link in test_case.links
-        ])
-        scripts_json = self._serialize_value([
-            script.dict() if hasattr(script, 'dict') else script.model_dump() 
-            for script in test_case.scripts
-        ])
+        steps_json = self._serialize_value(
+            [
+                step.dict() if hasattr(step, "dict") else step.model_dump()
+                for step in test_case.steps
+            ]
+        )
+        custom_fields_json = self._serialize_value(
+            [
+                cf.dict() if hasattr(cf, "dict") else cf.model_dump()
+                for cf in test_case.custom_fields
+            ]
+        )
+        links_json = self._serialize_value(
+            [
+                link.dict() if hasattr(link, "dict") else link.model_dump()
+                for link in test_case.links
+            ]
+        )
+        scripts_json = self._serialize_value(
+            [
+                script.dict() if hasattr(script, "dict") else script.model_dump()
+                for script in test_case.scripts
+            ]
+        )
         # Handle both new 'versions' field and legacy 'test_versions' field
-        versions_attr = 'versions' if hasattr(test_case, 'versions') else 'test_versions'
+        versions_attr = "versions" if hasattr(test_case, "versions") else "test_versions"
         versions = getattr(test_case, versions_attr, [])
         versions_json = self._serialize_value(
-            [version.dict() if hasattr(version, 'dict') else version.model_dump() for version in versions]
+            [
+                version.dict() if hasattr(version, "dict") else version.model_dump()
+                for version in versions
+            ]
         )
 
         # Handle the priority if it's an object
@@ -490,7 +513,9 @@ class SQLiteStorage:
             test_cycle: Test cycle to save
         """
         if self.cursor is None:
-            raise ValueError("Database connection not established. Use context manager or connect().")
+            raise ValueError(
+                "Database connection not established. Use context manager or connect()."
+            )
         # Convert lists to JSON
         custom_fields_json = self._serialize_value([cf.dict() for cf in test_cycle.custom_fields])
         links_json = self._serialize_value([link.dict() for link in test_cycle.links])
@@ -533,7 +558,9 @@ class SQLiteStorage:
             test_plan: Test plan to save
         """
         if self.cursor is None:
-            raise ValueError("Database connection not established. Use context manager or connect().")
+            raise ValueError(
+                "Database connection not established. Use context manager or connect()."
+            )
         # Convert lists to JSON
         custom_fields_json = self._serialize_value([cf.dict() for cf in test_plan.custom_fields])
         links_json = self._serialize_value([link.dict() for link in test_plan.links])
@@ -577,7 +604,9 @@ class SQLiteStorage:
             project_key: Project key
         """
         if self.cursor is None:
-            raise ValueError("Database connection not established. Use context manager or connect().")
+            raise ValueError(
+                "Database connection not established. Use context manager or connect()."
+            )
         # Convert lists to JSON
         steps_json = self._serialize_value([step.dict() for step in test_execution.steps])
         custom_fields_json = self._serialize_value(

@@ -111,8 +111,7 @@ class TestZephyrClient:
         # Setup mock to return paginated data
         client._make_request = MagicMock()
         client._make_request.side_effect = lambda method, endpoint, params=None, **kwargs: (
-            mock_data[0] if params.get('startAt') == 0 else
-            mock_data[1]
+            mock_data[0] if params.get("startAt") == 0 else mock_data[1]
         )
 
         # Get test cases iterator
@@ -133,7 +132,7 @@ class TestZephyrClient:
         assert test_cases[0].key == "TEST-TC-1"
         assert test_cases[1].key == "TEST-TC-2"
         assert test_cases[2].key == "TEST-TC-3"
-        
+
     def test_get_custom_fields(self, client):
         """Test retrieving custom fields."""
         # Mock response
@@ -143,30 +142,30 @@ class TestZephyrClient:
                 "name": "Requirements",
                 "type": "text",
                 "options": None,
-                "entityTypes": ["testCase"]
+                "entityTypes": ["testCase"],
             },
             {
                 "id": "cf2",
                 "name": "Automated",
                 "type": "checkbox",
                 "options": None,
-                "entityTypes": ["testCase"]
+                "entityTypes": ["testCase"],
             },
             {
                 "id": "cf3",
                 "name": "Test Type",
                 "type": "dropdown",
                 "options": ["Unit", "Integration", "E2E"],
-                "entityTypes": ["testCase"]
-            }
+                "entityTypes": ["testCase"],
+            },
         ]
-        
+
         # Setup mock
         client._make_request = MagicMock(return_value={"values": mock_custom_fields})
-        
+
         # Call the method
         result = client.get_custom_fields(entity_type="testCase")
-        
+
         # Verify
         assert result == mock_custom_fields
         # Test the call with proper params match
@@ -176,13 +175,13 @@ class TestZephyrClient:
         assert call_args[0][1] == "/customfields"
         assert "entityType" in call_args[1]["params"]
         assert call_args[1]["params"]["entityType"] == "testCase"
-        
+
     def test_upload_attachment(self, client, tmp_path):
         """Test uploading an attachment."""
         # Create a temporary file
         test_file = tmp_path / "test_attachment.txt"
         test_file.write_text("Test content")
-        
+
         # Mock response
         mock_response = {
             "id": "att123",
@@ -190,25 +189,23 @@ class TestZephyrClient:
             "contentType": "text/plain",
             "size": 12,
             "createdBy": "user123",
-            "createdOn": "2023-01-01T12:00:00Z"
+            "createdOn": "2023-01-01T12:00:00Z",
         }
-        
+
         # Setup mock
         client._make_request = MagicMock(return_value=mock_response)
-        
+
         # Upload attachment
         result = client.upload_attachment(
-            entity_type="testCase",
-            entity_id="tc123",
-            file_path=test_file
+            entity_type="testCase", entity_id="tc123", file_path=test_file
         )
-        
+
         # Verify result
         assert result.id == "att123"
         assert result.filename == "test_attachment.txt"
         assert result.content_type == "text/plain"
         assert result.size == 12
-        
+
         # Verify correct request params
         client._make_request.assert_called_once()
         call_args = client._make_request.call_args
@@ -216,7 +213,7 @@ class TestZephyrClient:
         assert call_args[1]["endpoint"] == "/testCases/tc123/attachments"
         assert "files" in call_args[1]
         assert "file" in call_args[1]["files"]
-        
+
     def test_get_attachments(self, client):
         """Test getting attachments."""
         # Mock response
@@ -227,7 +224,7 @@ class TestZephyrClient:
                 "contentType": "application/pdf",
                 "size": 1024,
                 "createdBy": "user123",
-                "createdOn": "2023-01-01T12:00:00Z"
+                "createdOn": "2023-01-01T12:00:00Z",
             },
             {
                 "id": "att2",
@@ -235,46 +232,43 @@ class TestZephyrClient:
                 "contentType": "image/png",
                 "size": 2048,
                 "createdBy": "user123",
-                "createdOn": "2023-01-01T12:30:00Z"
-            }
+                "createdOn": "2023-01-01T12:30:00Z",
+            },
         ]
-        
+
         # Setup mock
         client._make_request = MagicMock(return_value={"values": mock_attachments})
-        
+
         # Get attachments
-        result = client.get_attachments(
-            entity_type="testCase",
-            entity_id="tc123"
-        )
-        
+        result = client.get_attachments(entity_type="testCase", entity_id="tc123")
+
         # Verify result
         assert len(result) == 2
         assert result[0].id == "att1"
         assert result[0].filename == "document.pdf"
         assert result[1].id == "att2"
         assert result[1].filename == "screenshot.png"
-        
+
         # Verify request with less strict assertion
         assert client._make_request.call_count == 1
         call_args = client._make_request.call_args
         assert call_args[0][0] == "GET"
         assert call_args[0][1] == "/testCases/tc123/attachments"
-        
+
     def test_download_attachment(self, client):
         """Test downloading attachment content."""
         # Mock response for the direct HTTP request to bypass _make_request
         mock_content = b"Test binary content"
-        
+
         # Mock requests.get directly
         with patch("requests.get") as mock_get:
             mock_response = MagicMock()
             mock_response.content = mock_content
             mock_get.return_value = mock_response
-            
+
             # Download attachment
             result = client.download_attachment("att123")
-            
+
             # Verify
             assert result == mock_content
             mock_get.assert_called_once()
@@ -349,9 +343,9 @@ class TestPaginatedIterator:
         client._make_request = MagicMock()
         # Setup return values differently
         client._make_request.side_effect = lambda method, endpoint, params=None, **kwargs: (
-            mock_data[0] if params.get('startAt') == 0 else
-            mock_data[1] if params.get('startAt') == 2 else
-            mock_data[2]
+            mock_data[0]
+            if params.get("startAt") == 0
+            else mock_data[1] if params.get("startAt") == 2 else mock_data[2]
         )
 
         # Create and use the iterator

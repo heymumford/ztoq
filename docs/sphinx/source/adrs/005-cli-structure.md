@@ -1,2 +1,2 @@
-```{include} ../../../../docs/adr/005-cli-structure.md
+```{include} ../../../adr/005-cli-structure.md
 ```

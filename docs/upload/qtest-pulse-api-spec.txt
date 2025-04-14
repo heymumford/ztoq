@@ -1,0 +1,154 @@
+qTest Pulse
+ 2025.1.0 
+Introduction to qTest Pulse API
+Username/Password: api-test@qasymphony.com/admin123
+Sample Project ID: 108781
+Schemes
+
+https
+Authorize
+Filter by tag
+user
+User API
+
+GET
+/me
+Get current logged-in user
+
+PUT
+/me
+Update current user
+
+PATCH
+/me
+Update current user
+
+project
+Project API
+
+GET
+/projects
+Get all projects
+
+GET
+/projects/{id}
+Get a project
+
+constant
+Constant API
+
+GET
+/constants
+Get all constants of a project
+
+POST
+/constants
+Create a constant
+
+GET
+/constants/{id}
+Get a constant
+
+PUT
+/constants/{id}
+Update a constant
+
+PATCH
+/constants/{id}
+Update a constant
+
+DELETE
+/constants/{id}
+Delete a constant
+
+trigger
+Trigger API
+
+GET
+/triggers
+Get all triggers of a project
+
+POST
+/triggers
+Create a trigger
+
+GET
+/triggers/{id}
+Get a trigger
+
+PUT
+/triggers/{id}
+Update a trigger
+
+PATCH
+/triggers/{id}
+Update a trigger
+
+DELETE
+/triggers/{id}
+Delete a trigger
+
+action
+Action API
+
+GET
+/actions
+Get all actions of a project
+
+POST
+/actions
+Create an action
+
+GET
+/actions/{id}
+Get an action
+
+PUT
+/actions/{id}
+Update an action
+
+PATCH
+/actions/{id}
+Update an action
+
+DELETE
+/actions/{id}
+Delete an action
+
+rule
+Rule API
+
+GET
+/rules
+Get all rules of a project
+
+POST
+/rules
+Create a rule
+
+GET
+/rules/{id}
+Get a rule
+
+PUT
+/rules/{id}
+Update a rule
+
+PATCH
+/rules/{id}
+Update a rule
+
+DELETE
+/rules/{id}
+Delete a rule
+
+execution
+Execution API
+
+GET
+/executions
+Get all executions of an action
+
+GET
+/executions/{id}
+Get an execution
