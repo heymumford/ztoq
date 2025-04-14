@@ -17,27 +17,29 @@ import sys
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import List, Optional, Dict, Any
-from ztoq.models import ZephyrConfig
-from ztoq.data_fetcher import create_authenticated_client, fetch_projects, fetch_all_projects_data
+from typing import Any
+from ztoq.data_fetcher import create_authenticated_client, fetch_all_projects_data, fetch_projects
 from ztoq.database_manager import DatabaseManager
+from ztoq.models import ZephyrConfig
 
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    handlers=[logging.StreamHandler(sys.stdout), logging.FileHandler("zephyr_import.log")],
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        handlers=[logging.StreamHandler(sys.stdout), logging.FileHandler("zephyr_import.log")],
 )
 logger = logging.getLogger(__name__)
 
 
 @dataclass
+
+
 class ImportConfig:
     """Configuration for the import process."""
 
     base_url: str
     api_token: str
-    project_keys: Optional[List[str]] = None
+    project_keys: list[str] | None = None
     db_path: str = "zephyr_data.db"
     concurrency: int = 5
     verbose: bool = False
@@ -65,7 +67,7 @@ class ImportProgress:
         self.entities_total = 0
         self.entities_completed = 0
         self.entities_failed = 0
-        self.current_project: Optional[str] = None
+        self.current_project: str | None = None
 
     def set_projects_total(self, count: int) -> None:
         """Set the total number of projects to import."""
@@ -129,7 +131,7 @@ class ImportProgress:
         else:
             self.entity_callback(entity_type, project_key, success)
 
-    def print_summary(self) -> Dict[str, Any]:
+    def print_summary(self) -> dict[str, Any]:
         """
         Print a summary of the import operation.
 
@@ -149,14 +151,14 @@ class ImportProgress:
 
         return {
             "duration": duration,
-            "projects_total": self.projects_total,
-            "projects_completed": self.projects_completed,
-            "entities_completed": self.entities_completed,
-            "entities_failed": self.entities_failed,
-        }
+                "projects_total": self.projects_total,
+                "projects_completed": self.projects_completed,
+                "entities_completed": self.entities_completed,
+                "entities_failed": self.entities_failed,
+            }
 
 
-def import_zephyr_data(config: ImportConfig) -> Dict[str, Any]:
+def import_zephyr_data(config: ImportConfig) -> dict[str, Any]:
     """
     Import all Zephyr Scale test data into a SQL database.
 
@@ -179,9 +181,9 @@ def import_zephyr_data(config: ImportConfig) -> Dict[str, Any]:
     # Create Zephyr configuration
     zephyr_config = ZephyrConfig(
         base_url=config.base_url,
-        api_token=config.api_token,
-        project_key="" if config.project_keys else "placeholder",
-    )
+            api_token=config.api_token,
+            project_key="" if config.project_keys else "placeholder",
+        )
 
     # Create authenticated client
     client = create_authenticated_client(zephyr_config)
@@ -234,19 +236,19 @@ def parse_args() -> ImportConfig:
 
     parser.add_argument(
         "--base-url",
-        type=str,
-        default="https://api.zephyrscale.smartbear.com/v2",
-        help="Zephyr Scale API base URL",
-    )
+            type=str,
+            default="https://api.zephyrscale.smartbear.com/v2",
+            help="Zephyr Scale API base URL",
+        )
 
     parser.add_argument("--api-token", type=str, required=True, help="Zephyr Scale API token")
 
     parser.add_argument(
         "--project-keys",
-        type=str,
-        nargs="*",
-        help="List of project keys to import (omit to import all projects)",
-    )
+            type=str,
+            nargs="*",
+            help="List of project keys to import (omit to import all projects)",
+        )
 
     parser.add_argument(
         "--db-path", type=str, default="zephyr_data.db", help="Path to SQLite database file"
@@ -262,12 +264,12 @@ def parse_args() -> ImportConfig:
 
     return ImportConfig(
         base_url=args.base_url,
-        api_token=args.api_token,
-        project_keys=args.project_keys,
-        db_path=args.db_path,
-        concurrency=args.concurrency,
-        verbose=args.verbose,
-    )
+            api_token=args.api_token,
+            project_keys=args.project_keys,
+            db_path=args.db_path,
+            concurrency=args.concurrency,
+            verbose=args.verbose,
+        )
 
 
 def main() -> int:

@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  app:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ./:/app
+    environment:
+      - ZTOQ_LOG_LEVEL=DEBUG
+    command: ["--help"]
+  
+  postgres:
+    image: postgres:16-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=ztoq
+      - POSTGRES_PASSWORD=ztoq_password
+      - POSTGRES_DB=ztoq
+    ports:
+      - "5432:5432"
+  
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=admin@ztoq.local
+      - PGADMIN_DEFAULT_PASSWORD=pgadmin_password
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
+
+volumes:
+  postgres_data:

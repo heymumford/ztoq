@@ -4,16 +4,29 @@ This file is part of ZTOQ, licensed under the MIT License.
 See LICENSE file for details.
 """
 
-import requests
-from typing import Dict, Any, List, Optional, TypeVar, Generic, Type, cast, Union
-from pathlib import Path
-import time
-import mimetypes
-import logging
 import json
+import logging
+import mimetypes
 import os
-from ztoq.models import ZephyrConfig, Project, Case, CycleInfo, Plan, Execution, Folder, Status, Priority, Environment, Attachment, PaginatedResponse
-from ztoq.openapi_parser import load_openapi_spec, ZephyrApiSpecWrapper
+import time
+from pathlib import Path
+from typing import Any, Generic, TypeVar, cast
+import requests
+from ztoq.models import (
+    Attachment,
+        Case,
+        CycleInfo,
+        Environment,
+        Execution,
+        Folder,
+        PaginatedResponse,
+        Plan,
+        Priority,
+        Project,
+        Status,
+        ZephyrConfig,
+)
+from ztoq.openapi_parser import ZephyrApiSpecWrapper, load_openapi_spec
 
 T = TypeVar("T")
 
@@ -61,8 +74,8 @@ class PaginatedIterator(Generic[T]):
         self,
             client: "ZephyrClient",
             endpoint: str,
-            model_class: Type[T],
-            params: Optional[Dict[str, Any]] = None,
+            model_class: type[T],
+            params: dict[str, Any] | None = None,
             page_size: int = 100,
         ):
         """Initialize the paginated iterator.
@@ -79,7 +92,7 @@ class PaginatedIterator(Generic[T]):
         self.model_class = model_class
         self.params = params or {}
         self.params["maxResults"] = page_size
-        self.current_page: Optional[PaginatedResponse] = None
+        self.current_page: PaginatedResponse | None = None
         self.item_index = 0
         self.total_fetched = 0
 
@@ -180,13 +193,13 @@ class ZephyrClient:
         self,
             method: str,
             endpoint: str,
-            params: Optional[Dict[str, Any]] = None,
-            json_data: Optional[Dict[str, Any]] = None,
+            params: dict[str, Any] | None = None,
+            json_data: dict[str, Any] | None = None,
             handle_pagination: bool = False,
-            files: Optional[Dict[str, Any]] = None,
-            headers: Optional[Dict[str, str]] = None,
+            files: dict[str, Any] | None = None,
+            headers: dict[str, str] | None = None,
             validate: bool = True,
-        ) -> Dict[str, Any]:
+        ) -> dict[str, Any]:
         """Make a request to the Zephyr API.
 
         Args:
@@ -372,7 +385,7 @@ class ZephyrClient:
             logger.error(f"JSON Parsing Error: {e}")
             raise
 
-    def _mask_sensitive_data(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    def _mask_sensitive_data(self, data: dict[str, Any]) -> dict[str, Any]:
         """Mask sensitive fields in data before logging."""
         if not isinstance(data, dict):
             return data
@@ -392,7 +405,7 @@ class ZephyrClient:
 
         return result
 
-    def get_projects(self) -> List[Project]:
+    def get_projects(self) -> list[Project]:
         """Get all projects.
 
         Returns:
@@ -403,7 +416,7 @@ class ZephyrClient:
         projects_data = response if isinstance(response, list) else response.get("values", [])
         return [Project(**project) for project in projects_data]
 
-    def get_test_cases(self, project_key: Optional[str] = None) -> PaginatedIterator[Case]:
+    def get_test_cases(self, project_key: str | None = None) -> PaginatedIterator[Case]:
         """Get all test cases for a project.
 
         Args:
@@ -420,7 +433,7 @@ class ZephyrClient:
             client=self, endpoint="/testcases", model_class=Case, params=params
         )
 
-    def get_test_cycles(self, project_key: Optional[str] = None) -> PaginatedIterator[CycleInfo]:
+    def get_test_cycles(self, project_key: str | None = None) -> PaginatedIterator[CycleInfo]:
         """Get all test cycles for a project.
 
         Args:
@@ -437,7 +450,7 @@ class ZephyrClient:
             client=self, endpoint="/testcycles", model_class=CycleInfo, params=params
         )
 
-    def get_test_plans(self, project_key: Optional[str] = None) -> PaginatedIterator[Plan]:
+    def get_test_plans(self, project_key: str | None = None) -> PaginatedIterator[Plan]:
         """Get all test plans for a project.
 
         Args:
@@ -455,7 +468,7 @@ class ZephyrClient:
         )
 
     def get_test_executions(
-        self, cycle_id: Optional[str] = None, project_key: Optional[str] = None
+        self, cycle_id: str | None = None, project_key: str | None = None
     ) -> PaginatedIterator[Execution]:
         """Get all test executions for a test cycle.
 
@@ -476,7 +489,7 @@ class ZephyrClient:
             client=self, endpoint="/testexecutions", model_class=Execution, params=params
         )
 
-    def get_folders(self, project_key: Optional[str] = None) -> List[Folder]:
+    def get_folders(self, project_key: str | None = None) -> list[Folder]:
         """Get all folders for a project.
 
         Args:
@@ -492,7 +505,7 @@ class ZephyrClient:
         response = self._make_request("GET", "/folders", params=params)
         return [Folder(**folder) for folder in response.get("values", [])]
 
-    def get_statuses(self, project_key: Optional[str] = None) -> List[Status]:
+    def get_statuses(self, project_key: str | None = None) -> list[Status]:
         """Get all statuses for a project.
 
         Args:
@@ -508,7 +521,7 @@ class ZephyrClient:
         response = self._make_request("GET", "/statuses", params=params)
         return [Status(**status) for status in response.get("values", [])]
 
-    def get_priorities(self, project_key: Optional[str] = None) -> List[Priority]:
+    def get_priorities(self, project_key: str | None = None) -> list[Priority]:
         """Get all priorities for a project.
 
         Args:
@@ -524,7 +537,7 @@ class ZephyrClient:
         response = self._make_request("GET", "/priorities", params=params)
         return [Priority(**priority) for priority in response.get("values", [])]
 
-    def get_environments(self, project_key: Optional[str] = None) -> List[Environment]:
+    def get_environments(self, project_key: str | None = None) -> list[Environment]:
         """Get all environments for a project.
 
         Args:
@@ -541,8 +554,8 @@ class ZephyrClient:
         return [Environment(**env) for env in response.get("values", [])]
 
     def get_custom_fields(
-        self, entity_type: str = "testCase", project_key: Optional[str] = None
-    ) -> List[Dict[str, Any]]:
+        self, entity_type: str = "testCase", project_key: str | None = None
+    ) -> list[dict[str, Any]]:
         """Get available custom fields for a specific entity type.
 
         Args:
@@ -563,8 +576,8 @@ class ZephyrClient:
         self,
             entity_type: str,
             entity_id: str,
-            file_path: Union[str, Path],
-            project_key: Optional[str] = None,
+            file_path: str | Path,
+            project_key: str | None = None,
         ) -> Attachment:
         """Upload a file attachment to a test case, step, or execution.
 
@@ -613,8 +626,8 @@ class ZephyrClient:
         return Attachment(**response)
 
     def get_attachments(
-        self, entity_type: str, entity_id: str, project_key: Optional[str] = None
-    ) -> List[Attachment]:
+        self, entity_type: str, entity_id: str, project_key: str | None = None
+    ) -> list[Attachment]:
         """Get attachments for a test case, test step, or test execution.
 
         Args:
@@ -691,8 +704,7 @@ class ZephyrClient:
 
         # Create a spec wrapper that provides validation and utilities
 
-
         client.spec_wrapper = ZephyrApiSpecWrapper(spec)
 
-        logger.info(f"Created ZephyrClient with OpenAPI spec wrapper")
+        logger.info("Created ZephyrClient with OpenAPI spec wrapper")
         return client

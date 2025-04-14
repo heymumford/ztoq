@@ -2,7 +2,7 @@
 """
 Initialize the database using SQLAlchemy models and Alembic migrations.
 
-This script creates a new SQLite or PostgreSQL database and applies 
+This script creates a new SQLite or PostgreSQL database and applies
 all migrations to set up the schema.
 
 Copyright (c) 2025 Eric C. Mumford (@heymumford)
@@ -11,15 +11,13 @@ See LICENSE file for details.
 """
 
 import argparse
-import os
 import logging
+import os
 from pathlib import Path
 
-from alembic.config import Config
 from alembic import command
-
+from alembic.config import Config
 from ztoq.core.db_manager import DatabaseConfig, SQLDatabaseManager
-
 
 logging.basicConfig(
     level=logging.INFO,
@@ -33,10 +31,10 @@ def get_alembic_config(db_config: DatabaseConfig) -> Config:
     # Create Alembic config pointing to our project's alembic.ini
     project_root = Path(__file__).parent.parent
     alembic_cfg = Config(project_root / "alembic.ini")
-    
+
     # Set the connection string based on database configuration
     alembic_cfg.set_main_option("sqlalchemy.url", db_config.get_connection_string())
-    
+
     return alembic_cfg
 
 
@@ -52,7 +50,7 @@ def init_db(
 ) -> None:
     """
     Initialize the database with the schema.
-    
+
     Args:
         db_type: Database type (sqlite, postgresql)
         db_path: Path to SQLite database file
@@ -73,18 +71,18 @@ def init_db(
         password=password,
         database=database,
     )
-    
+
     # Create the database manager
     db_manager = SQLDatabaseManager(config=db_config)
-    
+
     if drop_existing:
         logger.warning("Dropping existing database tables...")
         db_manager.drop_all_tables()
         logger.warning("Database tables dropped")
-    
+
     # Get Alembic config
     alembic_cfg = get_alembic_config(db_config)
-    
+
     # Initialize database schema through Alembic migrations
     logger.info("Applying database migrations...")
     command.upgrade(alembic_cfg, "head")
@@ -94,7 +92,7 @@ def init_db(
 def main():
     """Script entry point."""
     parser = argparse.ArgumentParser(description="Initialize the ZTOQ database")
-    
+
     # Database type
     parser.add_argument(
         "--db-type",
@@ -102,14 +100,14 @@ def main():
         default="sqlite",
         help="Database type (sqlite, postgresql)",
     )
-    
+
     # SQLite options
     parser.add_argument(
         "--db-path",
         default=None,
         help="Path to SQLite database file (for SQLite only)",
     )
-    
+
     # PostgreSQL options
     parser.add_argument(
         "--host",
@@ -137,16 +135,16 @@ def main():
         default=None,
         help="PostgreSQL database name (for PostgreSQL only)",
     )
-    
+
     # Other options
     parser.add_argument(
         "--drop-existing",
         action="store_true",
         help="Drop existing tables before initializing",
     )
-    
+
     args = parser.parse_args()
-    
+
     # If no arguments are provided, check for environment variables
     if args.db_type == "postgresql" and not all([args.host, args.username, args.database]):
         args.host = os.environ.get("ZTOQ_PG_HOST", args.host)
@@ -154,7 +152,7 @@ def main():
         args.username = os.environ.get("ZTOQ_PG_USER", args.username)
         args.password = os.environ.get("ZTOQ_PG_PASSWORD", args.password)
         args.database = os.environ.get("ZTOQ_PG_DATABASE", args.database)
-    
+
     # Initialize the database
     init_db(
         db_type=args.db_type,
@@ -166,7 +164,7 @@ def main():
         database=args.database,
         drop_existing=args.drop_existing,
     )
-    
+
     logger.info("Database initialization complete")
 
 

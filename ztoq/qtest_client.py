@@ -10,33 +10,34 @@ qTest API Client for interacting with qTest Manager, Parameters, Pulse and Scena
 This module provides a unified client for working with all qTest APIs.
 """
 
-import requests
-import logging
 import json
+import logging
 import os
 import time
-from typing import Dict, Any, List, Optional, Union, TypeVar, Generic, Type, cast
 from pathlib import Path
+from typing import Any, Generic, TypeVar, cast
+import requests
 from ztoq.qtest_models import (
-
-QTestConfig,
+    QTestAttachment,
+        QTestConfig,
+        QTestDataset,
+        QTestModule,
+        QTestPaginatedResponse,
+        QTestParameter,
         QTestProject,
+        QTestPulseAction,
+        QTestPulseConstant,
+        QTestPulseRule,
+        QTestPulseTrigger,
         QTestTestCase,
         QTestTestCycle,
-        QTestTestExecution,
-        QTestRelease,
-        QTestModule,
-        QTestAttachment,
-        QTestCustomField,
-        QTestParameter,
-        QTestDataset,
-        QTestPaginatedResponse,
 )
 
 T = TypeVar("T")
 
 # Configure module logger
 logger = logging.getLogger("ztoq.qtest_client")
+
 
 def configure_logging(level=None):
     """Configure logging for the qTest client.
@@ -66,8 +67,10 @@ def configure_logging(level=None):
     # Log the configuration
     logger.debug(f"Logging configured with level: {level}")
 
+
 # Initialize logging with default settings
 configure_logging()
+
 
 class QTestPaginatedIterator(Generic[T]):
     """Iterator for paginated API responses."""
@@ -76,8 +79,8 @@ class QTestPaginatedIterator(Generic[T]):
         self,
             client: "QTestClient",
             endpoint: str,
-            model_class: Type[T],
-            params: Optional[Dict[str, Any]] = None,
+            model_class: type[T],
+            params: dict[str, Any] | None = None,
             page_size: int = 50,
         ):
         """Initialize the paginated iterator.
@@ -102,7 +105,7 @@ class QTestPaginatedIterator(Generic[T]):
             self.params["limit"] = page_size
             self.page_param = "offset"
 
-        self.current_page: Optional[QTestPaginatedResponse] = None
+        self.current_page: QTestPaginatedResponse | None = None
         self.item_index = 0
         self.total_fetched = 0
 
@@ -198,6 +201,7 @@ class QTestPaginatedIterator(Generic[T]):
             f"total: {self.current_page.total}, isLast: {self.current_page.is_last}"
         )
 
+
 class QTestClient:
     """Client for interacting with the qTest APIs."""
 
@@ -285,11 +289,11 @@ class QTestClient:
         self,
             method: str,
             endpoint: str,
-            params: Optional[Dict[str, Any]] = None,
-            json_data: Optional[Dict[str, Any]] = None,
-            files: Optional[Dict[str, Any]] = None,
-            headers: Optional[Dict[str, str]] = None,
-        ) -> Dict[str, Any]:
+            params: dict[str, Any] | None = None,
+            json_data: dict[str, Any] | None = None,
+            files: dict[str, Any] | None = None,
+            headers: dict[str, str] | None = None,
+        ) -> dict[str, Any]:
         """Make a request to the qTest API.
 
         Args:
@@ -437,7 +441,7 @@ class QTestClient:
             logger.error(f"JSON Parsing Error: {e}")
             raise
 
-    def _mask_sensitive_data(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    def _mask_sensitive_data(self, data: dict[str, Any]) -> dict[str, Any]:
         """Mask sensitive fields in data before logging."""
         if not isinstance(data, dict):
             return data
@@ -458,7 +462,7 @@ class QTestClient:
         return result
 
     # QTest Manager API methods
-    def get_projects(self) -> List[QTestProject]:
+    def get_projects(self) -> list[QTestProject]:
         """Get all projects.
 
         Returns:
@@ -471,7 +475,7 @@ class QTestClient:
         return [QTestProject(**project) for project in projects_data]
 
     def get_test_cases(
-        self, module_id: Optional[int] = None
+        self, module_id: int | None = None
     ) -> QTestPaginatedIterator[QTestTestCase]:
         """Get all test cases for a project or module.
 
@@ -545,7 +549,7 @@ class QTestClient:
         )
         return QTestTestCycle(**response)
 
-    def submit_test_log(self, test_run_id: int, test_log: Dict[str, Any]) -> Dict[str, Any]:
+    def submit_test_log(self, test_run_id: int, test_log: dict[str, Any]) -> dict[str, Any]:
         """Submit a test log for a test run.
 
         Args:
@@ -556,8 +560,7 @@ class QTestClient:
             Created test log
         """
         endpoint = f"/projects/{self.config.project_id}/test-runs/{test_run_id}/test-logs"
-        response = self._make_request("POST", endpoint, json_data=test_log)
-        return response
+        return self._make_request("POST", endpoint, json_data=test_log)
 
     def get_modules(self) -> QTestPaginatedIterator[QTestModule]:
         """Get all modules for a project.
@@ -587,7 +590,7 @@ class QTestClient:
         return QTestModule(**response)
 
     def upload_attachment(
-        self, object_type: str, object_id: int, file_path: Union[str, Path]
+        self, object_type: str, object_id: int, file_path: str | Path
     ) -> QTestAttachment:
         """Upload a file attachment to an object in qTest.
 
@@ -639,7 +642,7 @@ class QTestClient:
         query_data = {"projectId": self.config.project_id, "offset": 0, "limit": 50}
 
         # Parameters API uses POST for queries
-        response = self._make_request("POST", endpoint, json_data=query_data)
+        self._make_request("POST", endpoint, json_data=query_data)
 
         # Parameters API uses a different response format
         return QTestPaginatedIterator[QTestParameter](
@@ -672,7 +675,7 @@ class QTestClient:
         query_data = {"projectId": self.config.project_id, "offset": 0, "limit": 50}
 
         # Parameters API uses POST for queries
-        response = self._make_request("POST", endpoint, json_data=query_data)
+        self._make_request("POST", endpoint, json_data=query_data)
 
         # Parameters API uses a different response format
         return QTestPaginatedIterator[QTestDataset](
@@ -696,7 +699,360 @@ class QTestClient:
         return QTestDataset(**response.get("data", {}))
 
     # QTest Pulse API methods
-    def get_rules(self) -> List[Dict[str, Any]]:
+    def get_pulse_rules(self) -> QTestPaginatedIterator[QTestPulseRule]:
+        """Get all Pulse rules for a project.
+
+        Returns:
+            Iterator of Pulse rules
+        """
+        endpoint = "/pulse/rules"
+        params = {"projectId": self.config.project_id, "offset": 0, "limit": 50}
+
+        # Pulse API uses a different pagination approach
+        return QTestPaginatedIterator[QTestPulseRule](
+            client=self, endpoint=endpoint, model_class=QTestPulseRule, params=params
+        )
+
+    def get_pulse_rule(self, rule_id: int) -> QTestPulseRule:
+        """Get a specific Pulse rule.
+
+        Args:
+            rule_id: Rule ID
+
+        Returns:
+            Pulse rule
+        """
+        endpoint = f"/pulse/rules/{rule_id}"
+        response = self._make_request("GET", endpoint)
+        # Handle the response structure where data is wrapped
+        data = response.get("data", response)
+        # Check if data is a list and take the first item if so
+        if isinstance(data, list) and data:
+            data = data[0]
+        return QTestPulseRule(**data)
+
+    def create_pulse_rule(self, rule: QTestPulseRule) -> QTestPulseRule:
+        """Create a Pulse rule.
+
+        Args:
+            rule: Pulse rule to create
+
+        Returns:
+            Created Pulse rule
+        """
+        endpoint = "/pulse/rules"
+        rule_data = rule.model_dump(exclude_unset=True)
+
+        # Ensure project ID is set
+        rule_data["projectId"] = self.config.project_id
+
+        response = self._make_request("POST", endpoint, json_data=rule_data)
+        # Handle the response structure where data is wrapped
+        data = response.get("data", response)
+        return QTestPulseRule(**data)
+
+    def update_pulse_rule(self, rule_id: int, rule: QTestPulseRule) -> QTestPulseRule:
+        """Update a Pulse rule.
+
+        Args:
+            rule_id: Rule ID to update
+            rule: Updated rule data
+
+        Returns:
+            Updated Pulse rule
+        """
+        endpoint = f"/pulse/rules/{rule_id}"
+        rule_data = rule.model_dump(exclude_unset=True)
+
+        # Ensure rule ID is not in the payload
+        rule_data.pop("id", None)
+
+        response = self._make_request("PUT", endpoint, json_data=rule_data)
+        # Handle the response structure where data is wrapped
+        data = response.get("data", response)
+        return QTestPulseRule(**data)
+
+    def delete_pulse_rule(self, rule_id: int) -> bool:
+        """Delete a Pulse rule.
+
+        Args:
+            rule_id: Rule ID to delete
+
+        Returns:
+            True if deletion was successful
+        """
+        endpoint = f"/pulse/rules/{rule_id}"
+        self._make_request("DELETE", endpoint)
+        return True
+
+    def get_pulse_triggers(self) -> QTestPaginatedIterator[QTestPulseTrigger]:
+        """Get all Pulse triggers for a project.
+
+        Returns:
+            Iterator of Pulse triggers
+        """
+        endpoint = "/pulse/triggers"
+        params = {"projectId": self.config.project_id, "offset": 0, "limit": 50}
+
+        return QTestPaginatedIterator[QTestPulseTrigger](
+            client=self, endpoint=endpoint, model_class=QTestPulseTrigger, params=params
+        )
+
+    def get_pulse_trigger(self, trigger_id: int) -> QTestPulseTrigger:
+        """Get a specific Pulse trigger.
+
+        Args:
+            trigger_id: Trigger ID
+
+        Returns:
+            Pulse trigger
+        """
+        endpoint = f"/pulse/triggers/{trigger_id}"
+        response = self._make_request("GET", endpoint)
+        # Handle the response structure where data is wrapped
+        data = response.get("data", response)
+        # Check if data is a list and take the first item if so
+        if isinstance(data, list) and data:
+            data = data[0]
+        return QTestPulseTrigger(**data)
+
+    def create_pulse_trigger(self, trigger: QTestPulseTrigger) -> QTestPulseTrigger:
+        """Create a Pulse trigger.
+
+        Args:
+            trigger: Pulse trigger to create
+
+        Returns:
+            Created Pulse trigger
+        """
+        endpoint = "/pulse/triggers"
+        trigger_data = trigger.model_dump(exclude_unset=True)
+
+        # Ensure project ID is set
+        trigger_data["projectId"] = self.config.project_id
+
+        response = self._make_request("POST", endpoint, json_data=trigger_data)
+        # Handle the response structure where data is wrapped
+        data = response.get("data", response)
+        return QTestPulseTrigger(**data)
+
+    def update_pulse_trigger(self, trigger_id: int, trigger: QTestPulseTrigger) -> QTestPulseTrigger:
+        """Update a Pulse trigger.
+
+        Args:
+            trigger_id: Trigger ID to update
+            trigger: Updated trigger data
+
+        Returns:
+            Updated Pulse trigger
+        """
+        endpoint = f"/pulse/triggers/{trigger_id}"
+        trigger_data = trigger.model_dump(exclude_unset=True)
+
+        # Ensure trigger ID is not in the payload
+        trigger_data.pop("id", None)
+
+        response = self._make_request("PUT", endpoint, json_data=trigger_data)
+        # Handle the response structure where data is wrapped
+        data = response.get("data", response)
+        return QTestPulseTrigger(**data)
+
+    def delete_pulse_trigger(self, trigger_id: int) -> bool:
+        """Delete a Pulse trigger.
+
+        Args:
+            trigger_id: Trigger ID to delete
+
+        Returns:
+            True if deletion was successful
+        """
+        endpoint = f"/pulse/triggers/{trigger_id}"
+        self._make_request("DELETE", endpoint)
+        return True
+
+    def get_pulse_actions(self) -> QTestPaginatedIterator[QTestPulseAction]:
+        """Get all Pulse actions for a project.
+
+        Returns:
+            Iterator of Pulse actions
+        """
+        endpoint = "/pulse/actions"
+        params = {"projectId": self.config.project_id, "offset": 0, "limit": 50}
+
+        return QTestPaginatedIterator[QTestPulseAction](
+            client=self, endpoint=endpoint, model_class=QTestPulseAction, params=params
+        )
+
+    def get_pulse_action(self, action_id: int) -> QTestPulseAction:
+        """Get a specific Pulse action.
+
+        Args:
+            action_id: Action ID
+
+        Returns:
+            Pulse action
+        """
+        endpoint = f"/pulse/actions/{action_id}"
+        response = self._make_request("GET", endpoint)
+        # Handle the response structure where data is wrapped
+        data = response.get("data", response)
+        # Check if data is a list and take the first item if so
+        if isinstance(data, list) and data:
+            data = data[0]
+        return QTestPulseAction(**data)
+
+    def create_pulse_action(self, action: QTestPulseAction) -> QTestPulseAction:
+        """Create a Pulse action.
+
+        Args:
+            action: Pulse action to create
+
+        Returns:
+            Created Pulse action
+        """
+        endpoint = "/pulse/actions"
+        action_data = action.model_dump(exclude_unset=True)
+
+        # Ensure project ID is set
+        action_data["projectId"] = self.config.project_id
+
+        response = self._make_request("POST", endpoint, json_data=action_data)
+        # Handle the response structure where data is wrapped
+        data = response.get("data", response)
+        return QTestPulseAction(**data)
+
+    def update_pulse_action(self, action_id: int, action: QTestPulseAction) -> QTestPulseAction:
+        """Update a Pulse action.
+
+        Args:
+            action_id: Action ID to update
+            action: Updated action data
+
+        Returns:
+            Updated Pulse action
+        """
+        endpoint = f"/pulse/actions/{action_id}"
+        action_data = action.model_dump(exclude_unset=True)
+
+        # Ensure action ID is not in the payload
+        action_data.pop("id", None)
+
+        response = self._make_request("PUT", endpoint, json_data=action_data)
+        # Handle the response structure where data is wrapped
+        data = response.get("data", response)
+        return QTestPulseAction(**data)
+
+    def delete_pulse_action(self, action_id: int) -> bool:
+        """Delete a Pulse action.
+
+        Args:
+            action_id: Action ID to delete
+
+        Returns:
+            True if deletion was successful
+        """
+        endpoint = f"/pulse/actions/{action_id}"
+        self._make_request("DELETE", endpoint)
+        return True
+
+    def get_pulse_constants(self) -> QTestPaginatedIterator[QTestPulseConstant]:
+        """Get all Pulse constants for a project.
+
+        Returns:
+            Iterator of Pulse constants
+        """
+        endpoint = "/pulse/constants"
+        params = {"projectId": self.config.project_id, "offset": 0, "limit": 50}
+
+        return QTestPaginatedIterator[QTestPulseConstant](
+            client=self, endpoint=endpoint, model_class=QTestPulseConstant, params=params
+        )
+
+    def get_pulse_constant(self, constant_id: int) -> QTestPulseConstant:
+        """Get a specific Pulse constant.
+
+        Args:
+            constant_id: Constant ID
+
+        Returns:
+            Pulse constant
+        """
+        endpoint = f"/pulse/constants/{constant_id}"
+        response = self._make_request("GET", endpoint)
+        # Handle the response structure where data is wrapped
+        data = response.get("data", response)
+        # Check if data is a list and take the first item if so
+        if isinstance(data, list) and data:
+            data = data[0]
+        return QTestPulseConstant(**data)
+
+    def create_pulse_constant(self, constant: QTestPulseConstant) -> QTestPulseConstant:
+        """Create a Pulse constant.
+
+        Args:
+            constant: Pulse constant to create
+
+        Returns:
+            Created Pulse constant
+        """
+        endpoint = "/pulse/constants"
+        constant_data = constant.model_dump(exclude_unset=True)
+
+        # Ensure project ID is set
+        constant_data["projectId"] = self.config.project_id
+
+        response = self._make_request("POST", endpoint, json_data=constant_data)
+        # Handle the response structure where data is wrapped
+        data = response.get("data", response)
+        return QTestPulseConstant(**data)
+
+    def update_pulse_constant(self, constant_id: int, constant: QTestPulseConstant) -> QTestPulseConstant:
+        """Update a Pulse constant.
+
+        Args:
+            constant_id: Constant ID to update
+            constant: Updated constant data
+
+        Returns:
+            Updated Pulse constant
+        """
+        endpoint = f"/pulse/constants/{constant_id}"
+        constant_data = constant.model_dump(exclude_unset=True)
+
+        # Ensure constant ID is not in the payload
+        constant_data.pop("id", None)
+
+        response = self._make_request("PUT", endpoint, json_data=constant_data)
+        # Handle the response structure where data is wrapped
+        data = response.get("data", response)
+        return QTestPulseConstant(**data)
+
+    def delete_pulse_constant(self, constant_id: int) -> bool:
+        """Delete a Pulse constant.
+
+        Args:
+            constant_id: Constant ID to delete
+
+        Returns:
+            True if deletion was successful
+        """
+        endpoint = f"/pulse/constants/{constant_id}"
+        self._make_request("DELETE", endpoint)
+        return True
+
+    def execute_pulse_rule_manually(self, rule_id: int) -> bool:
+        """Execute a Pulse rule manually.
+
+        Args:
+            rule_id: Rule ID to execute
+
+        Returns:
+            True if execution was successful
+        """
+        endpoint = f"/pulse/rules/{rule_id}/execute"
+        self._make_request("POST", endpoint)
+        return True
+    def get_rules(self) -> list[dict[str, Any]]:
         """Get all rules for a project.
 
         Returns:
@@ -708,7 +1064,7 @@ class QTestClient:
         response = self._make_request("GET", endpoint, params=params)
         return response.get("data", [])
 
-    def create_rule(self, rule_data: Dict[str, Any]) -> Dict[str, Any]:
+    def create_rule(self, rule_data: dict[str, Any]) -> dict[str, Any]:
         """Create a rule in Pulse.
 
         Args:
@@ -724,7 +1080,7 @@ class QTestClient:
         return response.get("data", {})
 
     # QTest Scenario API methods
-    def get_features(self) -> List[Dict[str, Any]]:
+    def get_features(self) -> list[dict[str, Any]]:
         """Get all features for a project.
 
         Returns:
@@ -736,7 +1092,7 @@ class QTestClient:
         response = self._make_request("GET", endpoint, params=params)
         return response.get("data", [])
 
-    def create_feature(self, feature_data: Dict[str, Any]) -> Dict[str, Any]:
+    def create_feature(self, feature_data: dict[str, Any]) -> dict[str, Any]:
         """Create a feature in Scenario.
 
         Args:

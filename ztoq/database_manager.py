@@ -12,31 +12,38 @@ using a functional approach where possible. It focuses on creating and maintaini
 a relational database that properly represents the Zephyr Scale data model.
 """
 
-import sqlite3
 import json
 import logging
-from typing import Dict, Any, Union
-from pathlib import Path
-from datetime import datetime
+import sqlite3
 from contextlib import contextmanager
-from ztoq.models import (
-    Project, Case, CycleInfo, Execution, Folder, Status,
-        Priority, Environment, CustomField, CaseStep, Attachment
-)
+from datetime import datetime
+from pathlib import Path
+from typing import Any
 from ztoq.data_fetcher import FetchResult
+from ztoq.models import (
+    Case,
+        CycleInfo,
+        Environment,
+        Execution,
+        Folder,
+        Priority,
+        Project,
+        Status,
+)
 
 logger = logging.getLogger(__name__)
+
 
 class DatabaseManager:
     """
     Manages SQL database operations for Zephyr test data.
 
     This class provides methods for creating database schema, inserting data,
-        and retrieving data from a SQL database. It uses SQLite by default but
+            and retrieving data from a SQL database. It uses SQLite by default but
     can be extended to support other SQL databases.
     """
 
-    def __init__(self, db_path: Union[str, Path]):
+    def __init__(self, db_path: str | Path):
         """
         Initialize the database manager.
 
@@ -57,7 +64,7 @@ class DatabaseManager:
         Context manager for database connections.
 
         This ensures that connections are properly closed after use,
-            even if an error occurs.
+                even if an error occurs.
 
         Yields:
             SQLite connection object
@@ -79,20 +86,73 @@ class DatabaseManager:
         Creates all necessary database tables if they don't exist.
 
         This method establishes the schema for storing all Zephyr test data,
-            including tables for projects, test cases, test cycles, test executions,
-            folders, statuses, priorities, environments, and their relationships.
+                including tables for projects, test cases, test cycles, test executions,
+                folders, statuses, priorities, environments, and their relationships.
+            Also creates validation tables for tracking validation issues.
         """
         with self.get_connection() as conn:
             cursor = conn.cursor()
+
+            # Validation tables
+            cursor.execute(
+                """
+                CREATE TABLE IF NOT EXISTS validation_rules (
+                    id TEXT PRIMARY KEY,
+                        name TEXT NOT NULL,
+                        description TEXT NOT NULL,
+                        scope TEXT NOT NULL,
+                        phase TEXT NOT NULL,
+                        level TEXT NOT NULL,
+                        enabled INTEGER DEFAULT 1,
+                        created_on TEXT NOT NULL
+                )
+                """
+            )
+
+            cursor.execute(
+                """
+                CREATE TABLE IF NOT EXISTS validation_issues (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        rule_id TEXT NOT NULL,
+                        level TEXT NOT NULL,
+                        message TEXT NOT NULL,
+                        entity_id TEXT,
+                        scope TEXT NOT NULL,
+                        phase TEXT NOT NULL,
+                        context TEXT,  -- JSON object with context data
+                    project_key TEXT NOT NULL,
+                        created_on TEXT NOT NULL,
+                        resolved INTEGER DEFAULT 0,
+                        resolved_on TEXT,
+                        resolution_note TEXT,
+                        FOREIGN KEY (rule_id) REFERENCES validation_rules(id) ON DELETE CASCADE,
+                        FOREIGN KEY (project_key) REFERENCES projects(key) ON DELETE CASCADE
+                )
+                """
+            )
+
+            cursor.execute(
+                """
+                CREATE TABLE IF NOT EXISTS validation_reports (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        project_key TEXT NOT NULL,
+                        report_date TEXT NOT NULL,
+                        issue_counts TEXT NOT NULL,  -- JSON object with counts by level
+                    summary TEXT NOT NULL,
+                        details TEXT,  -- Full report details as JSON
+                    FOREIGN KEY (project_key) REFERENCES projects(key) ON DELETE CASCADE
+                )
+                """
+            )
 
             # Projects table
             cursor.execute(
                 """
             CREATE TABLE IF NOT EXISTS projects (
                 id TEXT PRIMARY KEY,
-                    key TEXT UNIQUE NOT NULL,
-                    name TEXT NOT NULL,
-                    description TEXT
+                        key TEXT UNIQUE NOT NULL,
+                        name TEXT NOT NULL,
+                        description TEXT
             )
             """
             )
@@ -102,12 +162,12 @@ class DatabaseManager:
                 """
             CREATE TABLE IF NOT EXISTS folders (
                 id TEXT PRIMARY KEY,
-                    name TEXT NOT NULL,
-                    folder_type TEXT NOT NULL,
-                    parent_id TEXT,
-                    project_key TEXT NOT NULL,
-                    FOREIGN KEY (parent_id) REFERENCES folders(id) ON DELETE CASCADE,
-                    FOREIGN KEY (project_key) REFERENCES projects(key) ON DELETE CASCADE
+                        name TEXT NOT NULL,
+                        folder_type TEXT NOT NULL,
+                        parent_id TEXT,
+                        project_key TEXT NOT NULL,
+                        FOREIGN KEY (parent_id) REFERENCES folders(id) ON DELETE CASCADE,
+                        FOREIGN KEY (project_key) REFERENCES projects(key) ON DELETE CASCADE
             )
             """
             )
@@ -117,12 +177,12 @@ class DatabaseManager:
                 """
             CREATE TABLE IF NOT EXISTS statuses (
                 id TEXT PRIMARY KEY,
-                    name TEXT NOT NULL,
-                    description TEXT,
-                    color TEXT,
-                    type TEXT NOT NULL,
-                    project_key TEXT NOT NULL,
-                    FOREIGN KEY (project_key) REFERENCES projects(key) ON DELETE CASCADE
+                        name TEXT NOT NULL,
+                        description TEXT,
+                        color TEXT,
+                        type TEXT NOT NULL,
+                        project_key TEXT NOT NULL,
+                        FOREIGN KEY (project_key) REFERENCES projects(key) ON DELETE CASCADE
             )
             """
             )
@@ -132,12 +192,12 @@ class DatabaseManager:
                 """
             CREATE TABLE IF NOT EXISTS priorities (
                 id TEXT PRIMARY KEY,
-                    name TEXT NOT NULL,
-                    description TEXT,
-                    color TEXT,
-                    rank INTEGER NOT NULL,
-                    project_key TEXT NOT NULL,
-                    FOREIGN KEY (project_key) REFERENCES projects(key) ON DELETE CASCADE
+                        name TEXT NOT NULL,
+                        description TEXT,
+                        color TEXT,
+                        rank INTEGER NOT NULL,
+                        project_key TEXT NOT NULL,
+                        FOREIGN KEY (project_key) REFERENCES projects(key) ON DELETE CASCADE
             )
             """
             )
@@ -147,10 +207,10 @@ class DatabaseManager:
                 """
             CREATE TABLE IF NOT EXISTS environments (
                 id TEXT PRIMARY KEY,
-                    name TEXT NOT NULL,
-                    description TEXT,
-                    project_key TEXT NOT NULL,
-                    FOREIGN KEY (project_key) REFERENCES projects(key) ON DELETE CASCADE
+                        name TEXT NOT NULL,
+                        description TEXT,
+                        project_key TEXT NOT NULL,
+                        FOREIGN KEY (project_key) REFERENCES projects(key) ON DELETE CASCADE
             )
             """
             )
@@ -160,27 +220,27 @@ class DatabaseManager:
                 """
             CREATE TABLE IF NOT EXISTS test_cases (
                 id TEXT PRIMARY KEY,
-                    key TEXT UNIQUE NOT NULL,
-                    name TEXT NOT NULL,
-                    objective TEXT,
-                    precondition TEXT,
-                    description TEXT,
-                    status TEXT,
-                    priority_id TEXT,
-                    priority_name TEXT,
-                    folder_id TEXT,
-                    folder_name TEXT,
-                    owner TEXT,
-                    owner_name TEXT,
-                    component TEXT,
-                    component_name TEXT,
-                    created_on TEXT,
-                    created_by TEXT,
-                    updated_on TEXT,
-                    updated_by TEXT,
-                    version TEXT,
-                    estimated_time INTEGER,
-                    labels TEXT, -- JSON array
+                        key TEXT UNIQUE NOT NULL,
+                        name TEXT NOT NULL,
+                        objective TEXT,
+                        precondition TEXT,
+                        description TEXT,
+                        status TEXT,
+                        priority_id TEXT,
+                        priority_name TEXT,
+                        folder_id TEXT,
+                        folder_name TEXT,
+                        owner TEXT,
+                        owner_name TEXT,
+                        component TEXT,
+                        component_name TEXT,
+                        created_on TEXT,
+                        created_by TEXT,
+                        updated_on TEXT,
+                        updated_by TEXT,
+                        version TEXT,
+                        estimated_time INTEGER,
+                        labels TEXT, -- JSON array
                 steps TEXT, -- JSON array
                 custom_fields TEXT, -- JSON array
                 links TEXT, -- JSON array
@@ -188,9 +248,9 @@ class DatabaseManager:
                 versions TEXT, -- JSON array
                 attachments TEXT, -- JSON array
                 project_key TEXT NOT NULL,
-                    FOREIGN KEY (priority_id) REFERENCES priorities(id) ON DELETE SET NULL,
-                    FOREIGN KEY (folder_id) REFERENCES folders(id) ON DELETE SET NULL,
-                    FOREIGN KEY (project_key) REFERENCES projects(key) ON DELETE CASCADE
+                        FOREIGN KEY (priority_id) REFERENCES priorities(id) ON DELETE SET NULL,
+                        FOREIGN KEY (folder_id) REFERENCES folders(id) ON DELETE SET NULL,
+                        FOREIGN KEY (project_key) REFERENCES projects(key) ON DELETE CASCADE
             )
             """
             )
@@ -200,25 +260,25 @@ class DatabaseManager:
                 """
             CREATE TABLE IF NOT EXISTS test_cycles (
                 id TEXT PRIMARY KEY,
-                    key TEXT UNIQUE NOT NULL,
-                    name TEXT NOT NULL,
-                    description TEXT,
-                    status TEXT,
-                    status_name TEXT,
-                    folder_id TEXT,
-                    folder_name TEXT,
-                    owner TEXT,
-                    owner_name TEXT,
-                    created_on TEXT,
-                    created_by TEXT,
-                    updated_on TEXT,
-                    updated_by TEXT,
-                    custom_fields TEXT, -- JSON array
+                        key TEXT UNIQUE NOT NULL,
+                        name TEXT NOT NULL,
+                        description TEXT,
+                        status TEXT,
+                        status_name TEXT,
+                        folder_id TEXT,
+                        folder_name TEXT,
+                        owner TEXT,
+                        owner_name TEXT,
+                        created_on TEXT,
+                        created_by TEXT,
+                        updated_on TEXT,
+                        updated_by TEXT,
+                        custom_fields TEXT, -- JSON array
                 links TEXT, -- JSON array
                 attachments TEXT, -- JSON array
                 project_key TEXT NOT NULL,
-                    FOREIGN KEY (folder_id) REFERENCES folders(id) ON DELETE SET NULL,
-                    FOREIGN KEY (project_key) REFERENCES projects(key) ON DELETE CASCADE
+                        FOREIGN KEY (folder_id) REFERENCES folders(id) ON DELETE SET NULL,
+                        FOREIGN KEY (project_key) REFERENCES projects(key) ON DELETE CASCADE
             )
             """
             )
@@ -228,24 +288,24 @@ class DatabaseManager:
                 """
             CREATE TABLE IF NOT EXISTS test_plans (
                 id TEXT PRIMARY KEY,
-                    key TEXT UNIQUE NOT NULL,
-                    name TEXT NOT NULL,
-                    description TEXT,
-                    status TEXT,
-                    status_name TEXT,
-                    folder_id TEXT,
-                    folder_name TEXT,
-                    owner TEXT,
-                    owner_name TEXT,
-                    created_on TEXT,
-                    created_by TEXT,
-                    updated_on TEXT,
-                    updated_by TEXT,
-                    custom_fields TEXT, -- JSON array
+                        key TEXT UNIQUE NOT NULL,
+                        name TEXT NOT NULL,
+                        description TEXT,
+                        status TEXT,
+                        status_name TEXT,
+                        folder_id TEXT,
+                        folder_name TEXT,
+                        owner TEXT,
+                        owner_name TEXT,
+                        created_on TEXT,
+                        created_by TEXT,
+                        updated_on TEXT,
+                        updated_by TEXT,
+                        custom_fields TEXT, -- JSON array
                 links TEXT, -- JSON array
                 project_key TEXT NOT NULL,
-                    FOREIGN KEY (folder_id) REFERENCES folders(id) ON DELETE SET NULL,
-                    FOREIGN KEY (project_key) REFERENCES projects(key) ON DELETE CASCADE
+                        FOREIGN KEY (folder_id) REFERENCES folders(id) ON DELETE SET NULL,
+                        FOREIGN KEY (project_key) REFERENCES projects(key) ON DELETE CASCADE
             )
             """
             )
@@ -255,31 +315,31 @@ class DatabaseManager:
                 """
             CREATE TABLE IF NOT EXISTS test_executions (
                 id TEXT PRIMARY KEY,
-                    test_case_key TEXT NOT NULL,
-                    cycle_id TEXT NOT NULL,
-                    cycle_name TEXT,
-                    status TEXT NOT NULL,
-                    status_name TEXT,
-                    environment_id TEXT,
-                    environment_name TEXT,
-                    executed_by TEXT,
-                    executed_by_name TEXT,
-                    executed_on TEXT,
-                    created_on TEXT,
-                    created_by TEXT,
-                    updated_on TEXT,
-                    updated_by TEXT,
-                    actual_time INTEGER,
-                    comment TEXT,
-                    steps TEXT, -- JSON array
+                        test_case_key TEXT NOT NULL,
+                        cycle_id TEXT NOT NULL,
+                        cycle_name TEXT,
+                        status TEXT NOT NULL,
+                        status_name TEXT,
+                        environment_id TEXT,
+                        environment_name TEXT,
+                        executed_by TEXT,
+                        executed_by_name TEXT,
+                        executed_on TEXT,
+                        created_on TEXT,
+                        created_by TEXT,
+                        updated_on TEXT,
+                        updated_by TEXT,
+                        actual_time INTEGER,
+                        comment TEXT,
+                        steps TEXT, -- JSON array
                 custom_fields TEXT, -- JSON array
                 links TEXT, -- JSON array
                 attachments TEXT, -- JSON array
                 project_key TEXT NOT NULL,
-                    FOREIGN KEY (test_case_key) REFERENCES test_cases(key) ON DELETE CASCADE,
-                    FOREIGN KEY (cycle_id) REFERENCES test_cycles(id) ON DELETE CASCADE,
-                    FOREIGN KEY (environment_id) REFERENCES environments(id) ON DELETE SET NULL,
-                    FOREIGN KEY (project_key) REFERENCES projects(key) ON DELETE CASCADE
+                        FOREIGN KEY (test_case_key) REFERENCES test_cases(key) ON DELETE CASCADE,
+                        FOREIGN KEY (cycle_id) REFERENCES test_cycles(id) ON DELETE CASCADE,
+                        FOREIGN KEY (environment_id) REFERENCES environments(id) ON DELETE SET NULL,
+                        FOREIGN KEY (project_key) REFERENCES projects(key) ON DELETE CASCADE
             )
             """
             )
@@ -324,7 +384,7 @@ class DatabaseManager:
         Serialize an object for database storage.
 
         This function handles serialization of Pydantic models, datetime objects,
-            lists, and dictionaries to JSON-compatible formats.
+                lists, and dictionaries to JSON-compatible formats.
 
         Args:
             obj: The object to serialize
@@ -349,7 +409,7 @@ class DatabaseManager:
         Serialize a value for database storage.
 
         This function handles conversion of Python objects to database-friendly formats,
-            including JSON serialization for complex objects.
+                including JSON serialization for complex objects.
 
         Args:
             value: The value to serialize
@@ -359,7 +419,7 @@ class DatabaseManager:
         """
         if value is None:
             return None
-        elif isinstance(value, (dict, list)):
+        elif isinstance(value, dict | list):
             return json.dumps(self._serialize_object(value))
         elif isinstance(value, datetime):
             return value.isoformat()
@@ -551,10 +611,10 @@ class DatabaseManager:
                 """
                 INSERT OR REPLACE INTO test_cases (
                     id, key, name, objective, precondition, description, status,
-                        priority_id, priority_name, folder_id, folder_name, owner, owner_name,
-                        component, component_name, created_on, created_by, updated_on, updated_by,
-                        version, estimated_time, labels, steps, custom_fields, links, scripts,
-                        versions, attachments, project_key
+                            priority_id, priority_name, folder_id, folder_name, owner, owner_name,
+                            component, component_name, created_on, created_by, updated_on, updated_by,
+                            version, estimated_time, labels, steps, custom_fields, links, scripts,
+                            versions, attachments, project_key
                 ) VALUES (
                     ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
                 )
@@ -631,8 +691,8 @@ class DatabaseManager:
                 """
                 INSERT OR REPLACE INTO test_cycles (
                     id, key, name, description, status, status_name, folder_id, folder_name,
-                        owner, owner_name, created_on, created_by, updated_on, updated_by,
-                        custom_fields, links, attachments, project_key
+                            owner, owner_name, created_on, created_by, updated_on, updated_by,
+                            custom_fields, links, attachments, project_key
                 ) VALUES (
                     ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
                 )
@@ -706,10 +766,10 @@ class DatabaseManager:
                 """
                 INSERT OR REPLACE INTO test_executions (
                     id, test_case_key, cycle_id, cycle_name, status, status_name,
-                        environment_id, environment_name, executed_by, executed_by_name,
-                        executed_on, created_on, created_by, updated_on, updated_by,
-                        actual_time, comment, steps, custom_fields, links, attachments,
-                        project_key
+                            environment_id, environment_name, executed_by, executed_by_name,
+                            executed_on, created_on, created_by, updated_on, updated_by,
+                            actual_time, comment, steps, custom_fields, links, attachments,
+                            project_key
                 ) VALUES (
                     ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
                 )
@@ -742,8 +802,8 @@ class DatabaseManager:
             conn.commit()
 
     def save_project_data(
-        self, project_key: str, fetch_results: Dict[str, FetchResult]
-    ) -> Dict[str, int]:
+        self, project_key: str, fetch_results: dict[str, FetchResult]
+    ) -> dict[str, int]:
         """
         Save all fetched data for a project.
 
@@ -848,8 +908,8 @@ class DatabaseManager:
         return counts
 
     def save_all_projects_data(
-        self, all_projects_data: Dict[str, Dict[str, FetchResult]]
-    ) -> Dict[str, Dict[str, int]]:
+        self, all_projects_data: dict[str, dict[str, FetchResult]]
+    ) -> dict[str, dict[str, int]]:
         """
         Save all fetched data for multiple projects.
 
@@ -868,3 +928,237 @@ class DatabaseManager:
             results[project_key] = self.save_project_data(project_key, project_data)
 
         return results
+
+    # Validation-related methods
+
+    def save_validation_rule(self, rule):
+        """
+        Save a validation rule to the database.
+
+        Args:
+            rule: The ValidationRule object to save
+        """
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                INSERT OR REPLACE INTO validation_rules
+                (id, name, description, scope, phase, level, enabled, created_on)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                    (
+                    rule.id,
+                        rule.name,
+                        rule.description,
+                        rule.scope.value,
+                        rule.phase.value,
+                        rule.level.value,
+                        1,  # enabled by default
+                    datetime.now().isoformat(),
+                    ),
+                )
+            conn.commit()
+
+    def save_validation_issue(self, issue, project_key):
+        """
+        Save a validation issue to the database.
+
+        Args:
+            issue: The ValidationIssue object to save
+            project_key: The project key the issue belongs to
+        """
+        context_json = self._serialize_value(issue.context)
+
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                INSERT INTO validation_issues
+                (rule_id, level, message, entity_id, scope, phase, context,
+                    project_key, created_on, resolved)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                    (
+                    issue.rule_id,
+                        issue.level.value,
+                        issue.message,
+                        issue.entity_id,
+                        issue.scope.value,
+                        issue.phase.value,
+                        context_json,
+                        project_key,
+                        datetime.now().isoformat(),
+                        0,  # not resolved
+                ),
+                )
+            conn.commit()
+            return cursor.lastrowid
+
+    def resolve_validation_issue(self, issue_id, resolution_note):
+        """
+        Mark a validation issue as resolved.
+
+        Args:
+            issue_id: The ID of the issue to resolve
+            resolution_note: Note explaining how the issue was resolved
+        """
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                UPDATE validation_issues
+                SET resolved = 1, resolved_on = ?, resolution_note = ?
+                WHERE id = ?
+                """,
+                    (
+                    datetime.now().isoformat(),
+                        resolution_note,
+                        issue_id,
+                    ),
+                )
+            conn.commit()
+
+    def save_validation_report(self, project_key, report):
+        """
+        Save a validation report to the database.
+
+        Args:
+            project_key: The project key the report belongs to
+            report: The validation report object/dictionary
+        """
+        issue_counts = report.get("issue_counts", {})
+        issue_counts_json = self._serialize_value(issue_counts)
+        details_json = self._serialize_value(report)
+
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                INSERT INTO validation_reports
+                (project_key, report_date, issue_counts, summary, details)
+                VALUES (?, ?, ?, ?, ?)
+                """,
+                    (
+                    project_key,
+                        datetime.now().isoformat(),
+                        issue_counts_json,
+                        report.get("summary", "Validation report"),
+                        details_json,
+                    ),
+                )
+            conn.commit()
+            return cursor.lastrowid
+
+    def get_validation_issues(self, project_key, resolved=False, level=None):
+        """
+        Get validation issues for a project.
+
+        Args:
+            project_key: The project key
+            resolved: Whether to get resolved or unresolved issues
+            level: Optional filter by validation level
+
+        Returns:
+            List of validation issues
+        """
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+
+            sql = """
+                SELECT *
+                FROM validation_issues
+                WHERE project_key = ? AND resolved = ?
+            """
+            params = [project_key, 1 if resolved else 0]
+
+            if level is not None:
+                sql += " AND level = ?"
+                params.append(level)
+
+            cursor.execute(sql, params)
+            rows = cursor.fetchall()
+
+            # Convert rows to dictionaries and deserialize JSON fields
+            issues = []
+            for row in rows:
+                issue = dict(row)
+
+                # Deserialize context
+                if issue["context"]:
+                    try:
+                        issue["context"] = json.loads(issue["context"])
+                    except (TypeError, json.JSONDecodeError):
+                        pass
+
+                issues.append(issue)
+
+            return issues
+
+    def get_validation_reports(self, project_key, limit=10):
+        """
+        Get validation reports for a project.
+
+        Args:
+            project_key: The project key
+            limit: Maximum number of reports to return
+
+        Returns:
+            List of validation reports
+        """
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+
+            cursor.execute(
+                """
+                SELECT *
+                FROM validation_reports
+                WHERE project_key = ?
+                ORDER BY report_date DESC
+                LIMIT ?
+                """,
+                    (project_key, limit),
+                )
+
+            rows = cursor.fetchall()
+
+            # Convert rows to dictionaries and deserialize JSON fields
+            reports = []
+            for row in rows:
+                report = dict(row)
+
+                # Deserialize issue_counts and details
+                if report["issue_counts"]:
+                    try:
+                        report["issue_counts"] = json.loads(report["issue_counts"])
+                    except (TypeError, json.JSONDecodeError):
+                        pass
+
+                if report["details"]:
+                    try:
+                        report["details"] = json.loads(report["details"])
+                    except (TypeError, json.JSONDecodeError):
+                        pass
+
+                reports.append(report)
+
+            return reports
+
+    def get_active_validation_rules(self):
+        """
+        Get all active validation rules.
+
+        Returns:
+            List of active validation rules
+        """
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+
+            cursor.execute(
+                """
+                SELECT *
+                FROM validation_rules
+                WHERE enabled = 1
+                """
+            )
+
+            return [dict(row) for row in cursor.fetchall()]

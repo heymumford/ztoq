@@ -5,13 +5,13 @@ See LICENSE file for details.
 """
 
 import logging
-from pathlib import Path
-from typing import List, Dict, Optional, Union, Callable
-from rich.progress import Progress
+from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from ztoq.models import ZephyrConfig, TestExecution
+from pathlib import Path
+from rich.progress import Progress
+from ztoq.models import TestExecution, ZephyrConfig
+from ztoq.storage import JSONStorage, SQLiteStorage
 from ztoq.zephyr_client import ZephyrClient
-from ztoq.storage import SQLiteStorage, JSONStorage
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +23,7 @@ class ZephyrExporter:
         self,
             client: ZephyrClient,
             output_format: str = "json",
-            output_path: Optional[Path] = None,
+            output_path: Path | None = None,
             concurrency: int = 2,
         ):
         """Initialize the Zephyr exporter.
@@ -40,7 +40,7 @@ class ZephyrExporter:
         self.concurrency = concurrency
 
         if self.output_format == "json":
-            self.storage: Union[JSONStorage, SQLiteStorage] = JSONStorage(self.output_path)
+            self.storage: JSONStorage | SQLiteStorage = JSONStorage(self.output_path)
         elif self.output_format == "sqlite":
             self.storage = SQLiteStorage(self.output_path)
             # Initialize SQLite database
@@ -49,7 +49,7 @@ class ZephyrExporter:
         else:
             raise ValueError(f"Unsupported output format: {output_format}")
 
-    def export_all(self, progress: Optional[Progress] = None) -> Dict[str, int]:
+    def export_all(self, progress: Progress | None = None) -> dict[str, int]:
         """Export all test data for the configured project.
 
         Args:
@@ -194,7 +194,7 @@ class ZephyrExporter:
 
         return counts
 
-    def _fetch_executions_for_cycle(self, cycle_id: str) -> List[TestExecution]:
+    def _fetch_executions_for_cycle(self, cycle_id: str) -> list[TestExecution]:
         """Fetch all executions for a test cycle.
 
         Args:
@@ -213,8 +213,8 @@ class ZephyrExportManager:
         self,
             config: ZephyrConfig,
             output_format: str = "json",
-            output_dir: Optional[Path] = None,
-            spec_path: Optional[Path] = None,
+            output_dir: Path | None = None,
+            spec_path: Path | None = None,
             concurrency: int = 2,
         ):
         """Initialize the export manager.
@@ -233,8 +233,8 @@ class ZephyrExportManager:
         self.concurrency = concurrency
 
     def export_project(
-        self, project_key: Optional[str] = None, progress: Optional[Progress] = None
-    ) -> Dict[str, int]:
+        self, project_key: str | None = None, progress: Progress | None = None
+    ) -> dict[str, int]:
         """Export data for a specific project.
 
         Args:
@@ -275,9 +275,9 @@ class ZephyrExportManager:
 
     def export_all_projects(
         self,
-            projects_to_export: Optional[List[str]] = None,
-            progress_callback: Optional[Callable[[str, str, int, int], None]] = None,
-        ) -> Dict[str, Dict[str, int]]:
+            projects_to_export: list[str] | None = None,
+            progress_callback: Callable[[str, str, int, int], None] | None = None,
+        ) -> dict[str, dict[str, int]]:
         """Export data for multiple projects.
 
         Args:

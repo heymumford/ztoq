@@ -10,12 +10,10 @@ Mock server for qTest API testing.
 This module provides a mock server that simulates the qTest APIs for testing.
 """
 
-import json
-import uuid
-import random
-from datetime import datetime, timedelta
-from typing import Dict, Any, List, Optional
 import logging
+import uuid
+from datetime import datetime
+from typing import Any
 
 logger = logging.getLogger("ztoq.qtest_mock_server")
 
@@ -459,24 +457,114 @@ class QTestMockServer:
 
     def _add_sample_rules(self, project_id: int):
         """Add sample Pulse rules for a project."""
+        # Add sample triggers first
+        triggers = [
+            {
+                "id": 1001,
+                    "name": "Test Log Created",
+                    "eventType": "TEST_LOG_CREATED",
+                    "projectId": project_id,
+                    "conditions": [
+                    {"field": "status", "operator": "equals", "value": "FAIL"}
+                ],
+                    "createdBy": {"id": 1, "name": "Admin"},
+                    "createdDate": datetime.now().isoformat(),
+                },
+                {
+                "id": 1002,
+                    "name": "Test Case Created",
+                    "eventType": "TEST_CASE_CREATED",
+                    "projectId": project_id,
+                    "conditions": [],
+                    "createdBy": {"id": 1, "name": "Admin"},
+                    "createdDate": datetime.now().isoformat(),
+                }
+        ]
+
+        for trigger in triggers:
+            self.data["pulse"]["triggers"][trigger["id"]] = trigger
+
+        # Add sample actions
+        actions = [
+            {
+                "id": 2001,
+                    "name": "Create JIRA Issue",
+                    "actionType": "CREATE_DEFECT",
+                    "projectId": project_id,
+                    "parameters": [
+                    {"name": "issueType", "value": "Bug"},
+                        {"name": "summary", "value": "Test Failed: {{testCase.name}}"},
+                        {"name": "description", "value": "Test execution failed: {{testLog.note}}"}
+                ],
+                    "createdBy": {"id": 1, "name": "Admin"},
+                    "createdDate": datetime.now().isoformat(),
+                },
+                {
+                "id": 2002,
+                    "name": "Send Email Notification",
+                    "actionType": "SEND_MAIL",
+                    "projectId": project_id,
+                    "parameters": [
+                    {"name": "recipients", "value": "qa@example.com"},
+                        {"name": "subject", "value": "New Test Case Created: {{testCase.name}}"},
+                        {"name": "body", "value": "A new test case has been created: {{testCase.name}}\\n\\nDescription: {{testCase.description}}"}
+                ],
+                    "createdBy": {"id": 1, "name": "Admin"},
+                    "createdDate": datetime.now().isoformat(),
+                }
+        ]
+
+        for action in actions:
+            self.data["pulse"]["actions"][action["id"]] = action
+
+        # Add sample constants
+        constants = [
+            {
+                "id": 3001,
+                    "name": "QA_EMAIL",
+                    "value": "qa@example.com",
+                    "description": "Email address for QA team",
+                    "projectId": project_id,
+                    "createdBy": {"id": 1, "name": "Admin"},
+                    "createdDate": datetime.now().isoformat(),
+                },
+                {
+                "id": 3002,
+                    "name": "JIRA_PROJECT",
+                    "value": "QA",
+                    "description": "JIRA project key",
+                    "projectId": project_id,
+                    "createdBy": {"id": 1, "name": "Admin"},
+                    "createdDate": datetime.now().isoformat(),
+                }
+        ]
+
+        for constant in constants:
+            self.data["pulse"]["constants"][constant["id"]] = constant
+
+        # Add sample rules using the triggers and actions
         rules = [
             {
-                "id": str(uuid.uuid4()),
+                "id": 4001,
                     "name": "JIRA Integration Rule",
-                    "description": "Update JIRA when test fails",
+                    "description": "Create JIRA issue when test fails",
                     "projectId": project_id,
                     "enabled": True,
-                    "conditions": [{"field": "status", "operator": "equals", "value": "FAIL"}],
-                    "actions": [
-                    {
-                        "type": "jira",
-                            "configuration": {
-                            "issueType": "Bug",
-                                "summary": "Test Failed: {{testCase.name}}",
-                                "description": "Test execution failed: {{testLog.note}}",
-                            },
-                        }
-                ],
+                    "triggerId": 1001,
+                    "actionId": 2001,
+                    "createdBy": {"id": 1, "name": "Admin"},
+                    "createdDate": datetime.now().isoformat(),
+                },
+                {
+                "id": 4002,
+                    "name": "New Test Case Notification",
+                    "description": "Send email when new test case is created",
+                    "projectId": project_id,
+                    "enabled": True,
+                    "triggerId": 1002,
+                    "actionId": 2002,
+                    "createdBy": {"id": 1, "name": "Admin"},
+                    "createdDate": datetime.now().isoformat(),
                 }
         ]
 
@@ -521,11 +609,11 @@ class QTestMockServer:
             api_type: str,
             method: str,
             endpoint: str,
-            params: Optional[Dict[str, Any]] = None,
-            data: Optional[Dict[str, Any]] = None,
-            headers: Optional[Dict[str, Any]] = None,
-            files: Optional[Dict[str, Any]] = None,
-        ) -> Dict[str, Any]:
+            params: dict[str, Any] | None = None,
+            data: dict[str, Any] | None = None,
+            headers: dict[str, Any] | None = None,
+            files: dict[str, Any] | None = None,
+        ) -> dict[str, Any]:
         """Handle a request to the mock server."""
         logger.debug(f"Mock server handling {method} {endpoint} to {api_type} API")
         logger.debug(f"Params: {params}")
@@ -547,7 +635,7 @@ class QTestMockServer:
         else:
             return {"error": f"Unknown API type: {api_type}"}
 
-    def _handle_auth(self, api_type: str) -> Dict[str, Any]:
+    def _handle_auth(self, api_type: str) -> dict[str, Any]:
         """Handle authentication requests."""
         token_ttl = 3600  # 1 hour in seconds
         current_time = int(datetime.now().timestamp())
@@ -564,10 +652,10 @@ class QTestMockServer:
         self,
             method: str,
             endpoint: str,
-            params: Optional[Dict[str, Any]] = None,
-            data: Optional[Dict[str, Any]] = None,
-            files: Optional[Dict[str, Any]] = None,
-        ) -> Dict[str, Any]:
+            params: dict[str, Any] | None = None,
+            data: dict[str, Any] | None = None,
+            files: dict[str, Any] | None = None,
+        ) -> dict[str, Any]:
         """Handle qTest Manager API requests."""
         params = params or {}
         data = data or {}
@@ -633,12 +721,11 @@ class QTestMockServer:
                 return self._handle_create_module(project_id, data)
 
         # Attachment endpoints
-        elif "/blob-handles" in endpoint:
-            if method == "POST":
-                # Upload attachment
-                object_type = endpoint.split(f"/projects/{project_id}/")[1].split("/")[0]
-                object_id = int(endpoint.split(f"/{object_type}/")[1].split("/")[0])
-                return self._handle_upload_attachment(project_id, object_type, object_id, files)
+        elif "/blob-handles" in endpoint and method == "POST":
+            # Upload attachment
+            object_type = endpoint.split(f"/projects/{project_id}/")[1].split("/")[0]
+            object_id = int(endpoint.split(f"/{object_type}/")[1].split("/")[0])
+            return self._handle_upload_attachment(project_id, object_type, object_id, files)
 
         # Default response for unimplemented endpoints
         return {"error": f"Unimplemented endpoint: {method} {endpoint}"}
@@ -647,9 +734,9 @@ class QTestMockServer:
         self,
             method: str,
             endpoint: str,
-            params: Optional[Dict[str, Any]] = None,
-            data: Optional[Dict[str, Any]] = None,
-        ) -> Dict[str, Any]:
+            params: dict[str, Any] | None = None,
+            data: dict[str, Any] | None = None,
+        ) -> dict[str, Any]:
         """Handle qTest Parameters API requests."""
         params = params or {}
         data = data or {}
@@ -669,7 +756,7 @@ class QTestMockServer:
                 elif method == "POST" and endpoint.endswith("/values/query"):
                     # Query parameter values
                     return self._handle_query_parameter_values(parameter_id, data)
-            elif "/parameters/" in endpoint and not "/values" in endpoint:
+            elif "/parameters/" in endpoint and "/values" not in endpoint:
                 parameter_id = int(endpoint.split("/parameters/")[1])
                 if method == "GET":
                     # Get parameter
@@ -689,7 +776,7 @@ class QTestMockServer:
                 elif method == "GET" and endpoint.endswith("/rows"):
                     # Get dataset rows
                     return self._handle_get_dataset_rows(dataset_id)
-            elif "/data-sets/" in endpoint and not "/rows" in endpoint:
+            elif "/data-sets/" in endpoint and "/rows" not in endpoint:
                 dataset_id = int(endpoint.split("/data-sets/")[1])
                 if method == "GET":
                     # Get dataset
@@ -702,9 +789,9 @@ class QTestMockServer:
         self,
             method: str,
             endpoint: str,
-            params: Optional[Dict[str, Any]] = None,
-            data: Optional[Dict[str, Any]] = None,
-        ) -> Dict[str, Any]:
+            params: dict[str, Any] | None = None,
+            data: dict[str, Any] | None = None,
+        ) -> dict[str, Any]:
         """Handle qTest Pulse API requests."""
         params = params or {}
         data = data or {}
@@ -717,9 +804,63 @@ class QTestMockServer:
             elif method == "POST" and endpoint == "/rules":
                 return self._handle_create_rule(data)
             elif "/rules/" in endpoint:
-                rule_id = endpoint.split("/rules/")[1]
+                if endpoint.endswith("/execute"):
+                    rule_id = endpoint.split("/rules/")[1].split("/execute")[0]
+                    if method == "POST":
+                        return self._handle_execute_rule(rule_id)
+                else:
+                    rule_id = endpoint.split("/rules/")[1]
+                    if method == "GET":
+                        return self._handle_get_rule(rule_id)
+                    elif method == "PUT":
+                        return self._handle_update_rule(rule_id, data)
+                    elif method == "DELETE":
+                        return self._handle_delete_rule(rule_id)
+
+        # Triggers endpoints
+        elif endpoint.startswith("/triggers"):
+            if method == "GET" and endpoint == "/triggers":
+                return self._handle_get_triggers(project_id)
+            elif method == "POST" and endpoint == "/triggers":
+                return self._handle_create_trigger(data)
+            elif "/triggers/" in endpoint:
+                trigger_id = endpoint.split("/triggers/")[1]
                 if method == "GET":
-                    return self._handle_get_rule(rule_id)
+                    return self._handle_get_trigger(trigger_id)
+                elif method == "PUT":
+                    return self._handle_update_trigger(trigger_id, data)
+                elif method == "DELETE":
+                    return self._handle_delete_trigger(trigger_id)
+
+        # Actions endpoints
+        elif endpoint.startswith("/actions"):
+            if method == "GET" and endpoint == "/actions":
+                return self._handle_get_actions(project_id)
+            elif method == "POST" and endpoint == "/actions":
+                return self._handle_create_action(data)
+            elif "/actions/" in endpoint:
+                action_id = endpoint.split("/actions/")[1]
+                if method == "GET":
+                    return self._handle_get_action(action_id)
+                elif method == "PUT":
+                    return self._handle_update_action(action_id, data)
+                elif method == "DELETE":
+                    return self._handle_delete_action(action_id)
+
+        # Constants endpoints
+        elif endpoint.startswith("/constants"):
+            if method == "GET" and endpoint == "/constants":
+                return self._handle_get_constants(project_id)
+            elif method == "POST" and endpoint == "/constants":
+                return self._handle_create_constant(data)
+            elif "/constants/" in endpoint:
+                constant_id = endpoint.split("/constants/")[1]
+                if method == "GET":
+                    return self._handle_get_constant(constant_id)
+                elif method == "PUT":
+                    return self._handle_update_constant(constant_id, data)
+                elif method == "DELETE":
+                    return self._handle_delete_constant(constant_id)
 
         # Default response for unimplemented endpoints
         return {"error": f"Unimplemented endpoint: {method} {endpoint}"}
@@ -728,9 +869,9 @@ class QTestMockServer:
         self,
             method: str,
             endpoint: str,
-            params: Optional[Dict[str, Any]] = None,
-            data: Optional[Dict[str, Any]] = None,
-        ) -> Dict[str, Any]:
+            params: dict[str, Any] | None = None,
+            data: dict[str, Any] | None = None,
+        ) -> dict[str, Any]:
         """Handle qTest Scenario API requests."""
         params = params or {}
         data = data or {}
@@ -747,7 +888,7 @@ class QTestMockServer:
         return {"error": f"Unimplemented endpoint: {method} {endpoint}"}
 
     # Helper methods for extracting path components
-    def _extract_project_id(self, endpoint: str) -> Optional[int]:
+    def _extract_project_id(self, endpoint: str) -> int | None:
         """Extract project ID from endpoint path."""
         if "/projects/" in endpoint:
             parts = endpoint.split("/projects/")[1].split("/")
@@ -756,7 +897,7 @@ class QTestMockServer:
         return None
 
     # Handler methods for specific endpoints
-    def _handle_get_projects(self, params: Dict[str, Any]) -> Dict[str, Any]:
+    def _handle_get_projects(self, params: dict[str, Any]) -> dict[str, Any]:
         """Handle GET /projects request."""
         projects = self.data["manager"]["projects"]
 
@@ -776,7 +917,7 @@ class QTestMockServer:
                 "items": paginated_projects,
             }
 
-    def _handle_get_test_cases(self, project_id: int, params: Dict[str, Any]) -> Dict[str, Any]:
+    def _handle_get_test_cases(self, project_id: int, params: dict[str, Any]) -> dict[str, Any]:
         """Handle GET /projects/{projectId}/test-cases request."""
         # Filter by project ID
         test_cases = [
@@ -806,14 +947,14 @@ class QTestMockServer:
                 "items": paginated_test_cases,
             }
 
-    def _handle_get_test_case(self, test_case_id: int) -> Dict[str, Any]:
+    def _handle_get_test_case(self, test_case_id: int) -> dict[str, Any]:
         """Handle GET /projects/{projectId}/test-cases/{testCaseId} request."""
         if test_case_id in self.data["manager"]["test_cases"]:
             return self.data["manager"]["test_cases"][test_case_id]
         else:
             return {"error": f"Test case not found: {test_case_id}"}
 
-    def _handle_create_test_case(self, project_id: int, data: Dict[str, Any]) -> Dict[str, Any]:
+    def _handle_create_test_case(self, project_id: int, data: dict[str, Any]) -> dict[str, Any]:
         """Handle POST /projects/{projectId}/test-cases request."""
         # Generate new test case ID
         test_case_id = max(self.data["manager"]["test_cases"].keys(), default=0) + 1
@@ -855,7 +996,7 @@ class QTestMockServer:
 
         return test_case
 
-    def _handle_get_modules(self, project_id: int, params: Dict[str, Any]) -> Dict[str, Any]:
+    def _handle_get_modules(self, project_id: int, params: dict[str, Any]) -> dict[str, Any]:
         """Handle GET /projects/{projectId}/modules request."""
         # Filter by project ID
         modules = [
@@ -878,14 +1019,14 @@ class QTestMockServer:
                 "items": paginated_modules,
             }
 
-    def _handle_get_module(self, module_id: int) -> Dict[str, Any]:
+    def _handle_get_module(self, module_id: int) -> dict[str, Any]:
         """Handle GET /projects/{projectId}/modules/{moduleId} request."""
         if module_id in self.data["manager"]["modules"]:
             return self.data["manager"]["modules"][module_id]
         else:
             return {"error": f"Module not found: {module_id}"}
 
-    def _handle_create_module(self, project_id: int, data: Dict[str, Any]) -> Dict[str, Any]:
+    def _handle_create_module(self, project_id: int, data: dict[str, Any]) -> dict[str, Any]:
         """Handle POST /projects/{projectId}/modules request."""
         # Generate new module ID
         module_id = max(self.data["manager"]["modules"].keys(), default=0) + 1
@@ -912,7 +1053,7 @@ class QTestMockServer:
 
         return module
 
-    def _handle_get_test_cycles(self, project_id: int, params: Dict[str, Any]) -> Dict[str, Any]:
+    def _handle_get_test_cycles(self, project_id: int, params: dict[str, Any]) -> dict[str, Any]:
         """Handle GET /projects/{projectId}/test-cycles request."""
         # Filter by project ID
         test_cycles = [
@@ -937,14 +1078,14 @@ class QTestMockServer:
                 "items": paginated_test_cycles,
             }
 
-    def _handle_get_test_cycle(self, test_cycle_id: int) -> Dict[str, Any]:
+    def _handle_get_test_cycle(self, test_cycle_id: int) -> dict[str, Any]:
         """Handle GET /projects/{projectId}/test-cycles/{testCycleId} request."""
         if test_cycle_id in self.data["manager"]["test_cycles"]:
             return self.data["manager"]["test_cycles"][test_cycle_id]
         else:
             return {"error": f"Test cycle not found: {test_cycle_id}"}
 
-    def _handle_create_test_cycle(self, project_id: int, data: Dict[str, Any]) -> Dict[str, Any]:
+    def _handle_create_test_cycle(self, project_id: int, data: dict[str, Any]) -> dict[str, Any]:
         """Handle POST /projects/{projectId}/test-cycles request."""
         # Generate new test cycle ID
         test_cycle_id = max(self.data["manager"]["test_cycles"].keys(), default=0) + 1
@@ -968,7 +1109,7 @@ class QTestMockServer:
 
         return test_cycle
 
-    def _handle_submit_test_log(self, test_run_id: int, data: Dict[str, Any]) -> Dict[str, Any]:
+    def _handle_submit_test_log(self, test_run_id: int, data: dict[str, Any]) -> dict[str, Any]:
         """Handle POST /projects/{projectId}/test-runs/{testRunId}/test-logs request."""
         # Verify test run exists
         if test_run_id not in self.data["manager"]["test_runs"]:
@@ -1000,7 +1141,7 @@ class QTestMockServer:
 
         return test_log
 
-    def _handle_get_test_logs(self, test_run_id: int) -> Dict[str, Any]:
+    def _handle_get_test_logs(self, test_run_id: int) -> dict[str, Any]:
         """Handle GET /projects/{projectId}/test-runs/{testRunId}/test-logs request."""
         # Filter test logs by test run ID
         test_logs = [
@@ -1012,8 +1153,8 @@ class QTestMockServer:
         return {"items": test_logs, "total": len(test_logs)}
 
     def _handle_upload_attachment(
-        self, project_id: int, object_type: str, object_id: int, files: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, project_id: int, object_type: str, object_id: int, files: dict[str, Any]
+    ) -> dict[str, Any]:
         """Handle POST /projects/{projectId}/{objectType}/{objectId}/blob-handles request."""
         # Generate attachment ID
         attachment_id = (
@@ -1049,7 +1190,7 @@ class QTestMockServer:
 
         return attachment
 
-    def _handle_query_parameters(self, project_id: int, data: Dict[str, Any]) -> Dict[str, Any]:
+    def _handle_query_parameters(self, project_id: int, data: dict[str, Any]) -> dict[str, Any]:
         """Handle POST /parameters/query request."""
         # Filter by project ID
         parameters = [
@@ -1072,7 +1213,7 @@ class QTestMockServer:
                 "data": paginated_parameters,
             }
 
-    def _handle_create_parameter(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    def _handle_create_parameter(self, data: dict[str, Any]) -> dict[str, Any]:
         """Handle POST /parameters/create request."""
         # Generate new parameter ID
         parameter_id = (
@@ -1111,7 +1252,7 @@ class QTestMockServer:
         # Parameters API uses a different response format
         return {"status": "SUCCESS", "data": parameter}
 
-    def _handle_get_parameter(self, parameter_id: int) -> Dict[str, Any]:
+    def _handle_get_parameter(self, parameter_id: int) -> dict[str, Any]:
         """Handle GET /parameters/{id} request."""
         if parameter_id in self.data["parameters"]["parameters"]:
             parameter = self.data["parameters"]["parameters"][parameter_id]
@@ -1129,8 +1270,8 @@ class QTestMockServer:
             return {"status": "ERROR", "message": f"Parameter not found: {parameter_id}"}
 
     def _handle_create_parameter_value(
-        self, parameter_id: int, data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, parameter_id: int, data: dict[str, Any]
+    ) -> dict[str, Any]:
         """Handle POST /parameters/{pid}/values request."""
         # Verify parameter exists
         if parameter_id not in self.data["parameters"]["parameters"]:
@@ -1152,8 +1293,8 @@ class QTestMockServer:
         return {"status": "SUCCESS", "data": value}
 
     def _handle_query_parameter_values(
-        self, parameter_id: int, data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, parameter_id: int, data: dict[str, Any]
+    ) -> dict[str, Any]:
         """Handle POST /parameters/{pid}/values/query request."""
         # Filter values by parameter ID
         values = [
@@ -1170,7 +1311,7 @@ class QTestMockServer:
 
         return {"offset": offset, "limit": limit, "total": len(values), "data": paginated_values}
 
-    def _handle_query_datasets(self, project_id: int, data: Dict[str, Any]) -> Dict[str, Any]:
+    def _handle_query_datasets(self, project_id: int, data: dict[str, Any]) -> dict[str, Any]:
         """Handle POST /data-sets/query request."""
         # Filter by project ID
         datasets = [
@@ -1192,7 +1333,7 @@ class QTestMockServer:
                 "data": paginated_datasets,
             }
 
-    def _handle_create_dataset(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    def _handle_create_dataset(self, data: dict[str, Any]) -> dict[str, Any]:
         """Handle POST /data-sets/create request."""
         # Generate new dataset ID
         dataset_id = (
@@ -1226,7 +1367,7 @@ class QTestMockServer:
 
         return {"status": "SUCCESS", "data": dataset}
 
-    def _handle_get_dataset(self, dataset_id: int) -> Dict[str, Any]:
+    def _handle_get_dataset(self, dataset_id: int) -> dict[str, Any]:
         """Handle GET /data-sets/{id} request."""
         if dataset_id in self.data["parameters"]["datasets"]:
             dataset = self.data["parameters"]["datasets"][dataset_id]
@@ -1243,7 +1384,7 @@ class QTestMockServer:
         else:
             return {"status": "ERROR", "message": f"Dataset not found: {dataset_id}"}
 
-    def _handle_create_dataset_row(self, dataset_id: int, data: Dict[str, Any]) -> Dict[str, Any]:
+    def _handle_create_dataset_row(self, dataset_id: int, data: dict[str, Any]) -> dict[str, Any]:
         """Handle POST /data-sets/{dsId}/rows request."""
         # Verify dataset exists
         if dataset_id not in self.data["parameters"]["datasets"]:
@@ -1264,7 +1405,7 @@ class QTestMockServer:
 
         return {"status": "SUCCESS", "data": row}
 
-    def _handle_get_dataset_rows(self, dataset_id: int) -> Dict[str, Any]:
+    def _handle_get_dataset_rows(self, dataset_id: int) -> dict[str, Any]:
         """Handle GET /data-sets/{dsId}/rows request."""
         # Filter rows by dataset ID
         rows = [
@@ -1275,7 +1416,7 @@ class QTestMockServer:
 
         return {"status": "SUCCESS", "data": rows}
 
-    def _handle_get_rules(self, project_id: int) -> Dict[str, Any]:
+    def _handle_get_rules(self, project_id: int) -> dict[str, Any]:
         """Handle GET /rules request."""
         # Filter by project ID
         rules = [
@@ -1284,7 +1425,7 @@ class QTestMockServer:
 
         return {"data": rules}
 
-    def _handle_create_rule(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    def _handle_create_rule(self, data: dict[str, Any]) -> dict[str, Any]:
         """Handle POST /rules request."""
         # Generate rule ID
         rule_id = str(uuid.uuid4())
@@ -1305,14 +1446,260 @@ class QTestMockServer:
 
         return {"data": rule}
 
-    def _handle_get_rule(self, rule_id: str) -> Dict[str, Any]:
+    def _handle_get_rule(self, rule_id: str) -> dict[str, Any]:
         """Handle GET /rules/{id} request."""
         if rule_id in self.data["pulse"]["rules"]:
             return {"data": self.data["pulse"]["rules"][rule_id]}
         else:
             return {"error": f"Rule not found: {rule_id}"}
 
-    def _handle_get_features(self, project_id: int) -> Dict[str, Any]:
+    def _handle_update_rule(self, rule_id: str, data: dict[str, Any]) -> dict[str, Any]:
+        """Handle PUT /rules/{id} request."""
+        if rule_id in self.data["pulse"]["rules"]:
+            # Update the rule with new data
+            rule = self.data["pulse"]["rules"][rule_id]
+            for key, value in data.items():
+                rule[key] = value
+            rule["updatedDate"] = datetime.now().isoformat()
+            rule["updatedBy"] = {"id": 1, "name": "Admin"}
+            return {"data": rule}
+        else:
+            return {"error": f"Rule not found: {rule_id}"}
+
+    def _handle_delete_rule(self, rule_id: str) -> dict[str, Any]:
+        """Handle DELETE /rules/{id} request."""
+        if rule_id in self.data["pulse"]["rules"]:
+            # Delete the rule
+            del self.data["pulse"]["rules"][rule_id]
+            return {"success": True}
+        else:
+            return {"error": f"Rule not found: {rule_id}"}
+
+    def _handle_execute_rule(self, rule_id: str) -> dict[str, Any]:
+        """Handle POST /rules/{id}/execute request."""
+        if rule_id in self.data["pulse"]["rules"]:
+            # Return a success message
+            return {"data": {"message": f"Rule {rule_id} executed successfully"}}
+        else:
+            return {"error": f"Rule not found: {rule_id}"}
+
+    def _handle_get_triggers(self, project_id: int) -> dict[str, Any]:
+        """Handle GET /triggers request."""
+        # Filter by project ID
+        triggers = [
+            t for t in self.data["pulse"]["triggers"].values()
+            if t.get("projectId") == project_id
+        ]
+
+        return {"data": triggers}
+
+    def _handle_get_trigger(self, trigger_id: str) -> dict[str, Any]:
+        """Handle GET /triggers/{id} request."""
+        try:
+            trigger_id = int(trigger_id)
+            if trigger_id in self.data["pulse"]["triggers"]:
+                return {"data": self.data["pulse"]["triggers"][trigger_id]}
+            else:
+                return {"error": f"Trigger not found: {trigger_id}"}
+        except ValueError:
+            return {"error": f"Invalid trigger ID: {trigger_id}"}
+
+    def _handle_create_trigger(self, data: dict[str, Any]) -> dict[str, Any]:
+        """Handle POST /triggers request."""
+        # Generate trigger ID
+        trigger_id = max([0] + [id for id in self.data["pulse"]["triggers"].keys() if isinstance(id, int)]) + 1
+
+        # Create trigger
+        trigger = {
+            "id": trigger_id,
+                "name": data.get("name", ""),
+                "eventType": data.get("eventType", ""),
+                "projectId": data.get("projectId"),
+                "conditions": data.get("conditions", []),
+                "createdBy": {"id": 1, "name": "Admin"},
+                "createdDate": datetime.now().isoformat(),
+            }
+
+        # Store trigger
+        self.data["pulse"]["triggers"][trigger_id] = trigger
+
+        return {"data": trigger}
+
+    def _handle_update_trigger(self, trigger_id: str, data: dict[str, Any]) -> dict[str, Any]:
+        """Handle PUT /triggers/{id} request."""
+        try:
+            trigger_id = int(trigger_id)
+            if trigger_id in self.data["pulse"]["triggers"]:
+                # Update the trigger with new data
+                trigger = self.data["pulse"]["triggers"][trigger_id]
+                for key, value in data.items():
+                    trigger[key] = value
+                trigger["updatedDate"] = datetime.now().isoformat()
+                trigger["updatedBy"] = {"id": 1, "name": "Admin"}
+                return {"data": trigger}
+            else:
+                return {"error": f"Trigger not found: {trigger_id}"}
+        except ValueError:
+            return {"error": f"Invalid trigger ID: {trigger_id}"}
+
+    def _handle_delete_trigger(self, trigger_id: str) -> dict[str, Any]:
+        """Handle DELETE /triggers/{id} request."""
+        try:
+            trigger_id = int(trigger_id)
+            if trigger_id in self.data["pulse"]["triggers"]:
+                # Delete the trigger
+                del self.data["pulse"]["triggers"][trigger_id]
+                return {"success": True}
+            else:
+                return {"error": f"Trigger not found: {trigger_id}"}
+        except ValueError:
+            return {"error": f"Invalid trigger ID: {trigger_id}"}
+
+    def _handle_get_actions(self, project_id: int) -> dict[str, Any]:
+        """Handle GET /actions request."""
+        # Filter by project ID
+        actions = [
+            a for a in self.data["pulse"]["actions"].values()
+            if a.get("projectId") == project_id
+        ]
+
+        return {"data": actions}
+
+    def _handle_get_action(self, action_id: str) -> dict[str, Any]:
+        """Handle GET /actions/{id} request."""
+        try:
+            action_id = int(action_id)
+            if action_id in self.data["pulse"]["actions"]:
+                return {"data": self.data["pulse"]["actions"][action_id]}
+            else:
+                return {"error": f"Action not found: {action_id}"}
+        except ValueError:
+            return {"error": f"Invalid action ID: {action_id}"}
+
+    def _handle_create_action(self, data: dict[str, Any]) -> dict[str, Any]:
+        """Handle POST /actions request."""
+        # Generate action ID
+        action_id = max([0] + [id for id in self.data["pulse"]["actions"].keys() if isinstance(id, int)]) + 1
+
+        # Create action
+        action = {
+            "id": action_id,
+                "name": data.get("name", ""),
+                "actionType": data.get("actionType", ""),
+                "projectId": data.get("projectId"),
+                "parameters": data.get("parameters", []),
+                "createdBy": {"id": 1, "name": "Admin"},
+                "createdDate": datetime.now().isoformat(),
+            }
+
+        # Store action
+        self.data["pulse"]["actions"][action_id] = action
+
+        return {"data": action}
+
+    def _handle_update_action(self, action_id: str, data: dict[str, Any]) -> dict[str, Any]:
+        """Handle PUT /actions/{id} request."""
+        try:
+            action_id = int(action_id)
+            if action_id in self.data["pulse"]["actions"]:
+                # Update the action with new data
+                action = self.data["pulse"]["actions"][action_id]
+                for key, value in data.items():
+                    action[key] = value
+                action["updatedDate"] = datetime.now().isoformat()
+                action["updatedBy"] = {"id": 1, "name": "Admin"}
+                return {"data": action}
+            else:
+                return {"error": f"Action not found: {action_id}"}
+        except ValueError:
+            return {"error": f"Invalid action ID: {action_id}"}
+
+    def _handle_delete_action(self, action_id: str) -> dict[str, Any]:
+        """Handle DELETE /actions/{id} request."""
+        try:
+            action_id = int(action_id)
+            if action_id in self.data["pulse"]["actions"]:
+                # Delete the action
+                del self.data["pulse"]["actions"][action_id]
+                return {"success": True}
+            else:
+                return {"error": f"Action not found: {action_id}"}
+        except ValueError:
+            return {"error": f"Invalid action ID: {action_id}"}
+
+    def _handle_get_constants(self, project_id: int) -> dict[str, Any]:
+        """Handle GET /constants request."""
+        # Filter by project ID
+        constants = [
+            c for c in self.data["pulse"]["constants"].values()
+            if c.get("projectId") == project_id
+        ]
+
+        return {"data": constants}
+
+    def _handle_get_constant(self, constant_id: str) -> dict[str, Any]:
+        """Handle GET /constants/{id} request."""
+        try:
+            constant_id = int(constant_id)
+            if constant_id in self.data["pulse"]["constants"]:
+                return {"data": self.data["pulse"]["constants"][constant_id]}
+            else:
+                return {"error": f"Constant not found: {constant_id}"}
+        except ValueError:
+            return {"error": f"Invalid constant ID: {constant_id}"}
+
+    def _handle_create_constant(self, data: dict[str, Any]) -> dict[str, Any]:
+        """Handle POST /constants request."""
+        # Generate constant ID
+        constant_id = max([0] + [id for id in self.data["pulse"]["constants"].keys() if isinstance(id, int)]) + 1
+
+        # Create constant
+        constant = {
+            "id": constant_id,
+                "name": data.get("name", ""),
+                "value": data.get("value", ""),
+                "description": data.get("description", ""),
+                "projectId": data.get("projectId"),
+                "createdBy": {"id": 1, "name": "Admin"},
+                "createdDate": datetime.now().isoformat(),
+            }
+
+        # Store constant
+        self.data["pulse"]["constants"][constant_id] = constant
+
+        return {"data": constant}
+
+    def _handle_update_constant(self, constant_id: str, data: dict[str, Any]) -> dict[str, Any]:
+        """Handle PUT /constants/{id} request."""
+        try:
+            constant_id = int(constant_id)
+            if constant_id in self.data["pulse"]["constants"]:
+                # Update the constant with new data
+                constant = self.data["pulse"]["constants"][constant_id]
+                for key, value in data.items():
+                    constant[key] = value
+                constant["updatedDate"] = datetime.now().isoformat()
+                constant["updatedBy"] = {"id": 1, "name": "Admin"}
+                return {"data": constant}
+            else:
+                return {"error": f"Constant not found: {constant_id}"}
+        except ValueError:
+            return {"error": f"Invalid constant ID: {constant_id}"}
+
+    def _handle_delete_constant(self, constant_id: str) -> dict[str, Any]:
+        """Handle DELETE /constants/{id} request."""
+        try:
+            constant_id = int(constant_id)
+            if constant_id in self.data["pulse"]["constants"]:
+                # Delete the constant
+                del self.data["pulse"]["constants"][constant_id]
+                return {"success": True}
+            else:
+                return {"error": f"Constant not found: {constant_id}"}
+        except ValueError:
+            return {"error": f"Invalid constant ID: {constant_id}"}
+
+    def _handle_get_features(self, project_id: int) -> dict[str, Any]:
         """Handle GET /features request."""
         # Filter by project ID
         features = [
@@ -1323,7 +1710,7 @@ class QTestMockServer:
 
         return {"data": features}
 
-    def _handle_create_feature(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    def _handle_create_feature(self, data: dict[str, Any]) -> dict[str, Any]:
         """Handle POST /features request."""
         # Generate feature ID
         feature_id = str(uuid.uuid4())

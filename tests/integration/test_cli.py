@@ -4,22 +4,22 @@ This file is part of ZTOQ, licensed under the MIT License.
 See LICENSE file for details.
 """
 
+from unittest.mock import MagicMock, patch
 import pytest
-from unittest.mock import patch, MagicMock
 from typer.testing import CliRunner
 from ztoq.cli import app
 from ztoq.models import TestCase
 
-@pytest.mark.integration
+@pytest.mark.integration()
 
 
 class TestCLI:
-    @pytest.fixture
+    @pytest.fixture()
     def runner(self):
         """Create a CLI runner for testing."""
         return CliRunner()
 
-    @pytest.fixture
+    @pytest.fixture()
     def mock_openapi_spec(self):
         """Mock the OpenAPI spec for testing."""
         valid_spec = {

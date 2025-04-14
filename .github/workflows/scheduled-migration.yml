@@ -1,0 +1,515 @@
+name: Scheduled Migration
+
+on:
+  # Schedule migrations daily at specific times
+  schedule:
+    # Run daily at 2:00 AM UTC - adjust as needed
+    - cron: '0 2 * * *'
+  
+  # Allow manual triggering with configuration options
+  workflow_dispatch:
+    inputs:
+      project_key:
+        description: 'Zephyr Project Key to migrate'
+        required: true
+        type: string
+      batch_size:
+        description: 'Batch size for migration'
+        required: false
+        default: '50'
+        type: string
+      max_workers:
+        description: 'Maximum parallel workers'
+        required: false
+        default: '5'
+        type: string
+      send_report:
+        description: 'Send migration report via email'
+        required: false
+        default: 'true'
+        type: boolean
+      phase:
+        description: 'Migration phase to run (extract, transform, load, all)'
+        required: false
+        default: 'all'
+        type: choice
+        options:
+          - extract
+          - transform
+          - load
+          - all
+  
+  # Trigger migrations based on repository events (e.g., content changes)
+  repository_dispatch:
+    types: [trigger-migration]
+  
+  # Allow triggering when push to specific branches (optional)
+  push:
+    branches: [ migration-trigger ]
+    paths:
+      - 'migration-config/**'
+
+# Environment variables used by all jobs
+env:
+  DB_TYPE: postgresql
+  DB_NAME: ztoq_migration
+  DB_USER: postgres
+  DB_PASSWORD: postgres
+  DB_HOST: localhost
+  DB_PORT: 5432
+  ATTACHMENTS_DIR: ./attachments
+  REPORTS_DIR: ./reports
+
+jobs:
+  prepare:
+    name: Prepare Migration Environment
+    runs-on: ubuntu-latest
+    outputs:
+      project_key: ${{ steps.set-project-key.outputs.project_key }}
+      migration_id: ${{ steps.generate-migration-id.outputs.migration_id }}
+    
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install poetry
+          poetry config virtualenvs.create false
+          poetry install --no-dev
+      
+      - name: Set Project Key
+        id: set-project-key
+        run: |
+          # Use input from workflow_dispatch or from repository_dispatch payload
+          # Fall back to a default value from secrets for scheduled runs
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            PROJECT_KEY="${{ github.event.inputs.project_key }}"
+          elif [ "${{ github.event_name }}" == "repository_dispatch" ]; then
+            PROJECT_KEY="${{ github.event.client_payload.project_key }}"
+          else
+            # For scheduled runs, use multiple projects from config file
+            # Read from migration-config/projects.txt if exists, otherwise use default
+            if [ -f "migration-config/projects.txt" ]; then
+              # Get all non-empty lines that don't start with # (comments)
+              PROJECT_KEYS=$(grep -v "^#" migration-config/projects.txt | grep -v "^$")
+              # Take the first project key
+              PROJECT_KEY=$(echo "$PROJECT_KEYS" | head -n 1)
+            else
+              PROJECT_KEY="${{ secrets.DEFAULT_ZEPHYR_PROJECT_KEY }}"
+            fi
+          fi
+          echo "Using project key: $PROJECT_KEY"
+          echo "project_key=$PROJECT_KEY" >> $GITHUB_OUTPUT
+      
+      - name: Generate Migration ID
+        id: generate-migration-id
+        run: |
+          # Generate a unique ID for this migration
+          MIGRATION_ID="migration-$(date +%Y%m%d-%H%M%S)-${{ github.run_id }}"
+          echo "migration_id=$MIGRATION_ID" >> $GITHUB_OUTPUT
+          echo "Migration ID: $MIGRATION_ID"
+      
+      - name: Create directories
+        run: |
+          mkdir -p ${{ env.ATTACHMENTS_DIR }}
+          mkdir -p ${{ env.REPORTS_DIR }}
+          chmod -R 777 ${{ env.ATTACHMENTS_DIR }}
+          chmod -R 777 ${{ env.REPORTS_DIR }}
+      
+      - name: Cache migration data
+        uses: actions/cache@v3
+        with:
+          path: |
+            ${{ env.ATTACHMENTS_DIR }}
+            ${{ env.REPORTS_DIR }}
+          key: migration-${{ steps.set-project-key.outputs.project_key }}-${{ github.run_id }}
+          restore-keys: |
+            migration-${{ steps.set-project-key.outputs.project_key }}-
+
+  database-setup:
+    name: Set Up Database
+    needs: prepare
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: ${{ env.DB_NAME }}
+          POSTGRES_USER: ${{ env.DB_USER }}
+          POSTGRES_PASSWORD: ${{ env.DB_PASSWORD }}
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install poetry
+          poetry config virtualenvs.create false
+          poetry install --no-dev
+      
+      - name: Initialize database
+        run: |
+          echo "Initializing database schema"
+          poetry run ztoq db init \
+            --db-type ${{ env.DB_TYPE }} \
+            --host ${{ env.DB_HOST }} \
+            --port ${{ env.DB_PORT }} \
+            --database ${{ env.DB_NAME }} \
+            --username ${{ env.DB_USER }} \
+            --password ${{ env.DB_PASSWORD }}
+      
+      - name: Verify database connection
+        run: |
+          echo "Verifying database connection"
+          poetry run python -c "
+          from sqlalchemy import create_engine, text
+          engine = create_engine('postgresql://${{ env.DB_USER }}:${{ env.DB_PASSWORD }}@${{ env.DB_HOST }}:${{ env.DB_PORT }}/${{ env.DB_NAME }}')
+          with engine.connect() as connection:
+              result = connection.execute(text('SELECT 1'))
+              print(f'Database connection successful: {result.fetchone()[0] == 1}')
+          "
+
+  run-migration:
+    name: Run Migration
+    needs: [prepare, database-setup]
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: ${{ env.DB_NAME }}
+          POSTGRES_USER: ${{ env.DB_USER }}
+          POSTGRES_PASSWORD: ${{ env.DB_PASSWORD }}
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install poetry
+          poetry config virtualenvs.create false
+          poetry install --no-dev
+      
+      - name: Restore cached data
+        uses: actions/cache@v3
+        with:
+          path: |
+            ${{ env.ATTACHMENTS_DIR }}
+            ${{ env.REPORTS_DIR }}
+          key: migration-${{ needs.prepare.outputs.project_key }}-${{ github.run_id }}
+      
+      - name: Determine migration phase
+        id: determine-phase
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            PHASE="${{ github.event.inputs.phase }}"
+          elif [ "${{ github.event_name }}" == "repository_dispatch" ] && [ -n "${{ github.event.client_payload.phase }}" ]; then
+            PHASE="${{ github.event.client_payload.phase }}"
+          else
+            PHASE="all"
+          fi
+          echo "phase=$PHASE" >> $GITHUB_OUTPUT
+      
+      - name: Determine batch size
+        id: determine-batch-size
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            BATCH_SIZE="${{ github.event.inputs.batch_size }}"
+          elif [ "${{ github.event_name }}" == "repository_dispatch" ] && [ -n "${{ github.event.client_payload.batch_size }}" ]; then
+            BATCH_SIZE="${{ github.event.client_payload.batch_size }}"
+          else
+            BATCH_SIZE="50"
+          fi
+          echo "batch_size=$BATCH_SIZE" >> $GITHUB_OUTPUT
+      
+      - name: Determine max workers
+        id: determine-workers
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            MAX_WORKERS="${{ github.event.inputs.max_workers }}"
+          elif [ "${{ github.event_name }}" == "repository_dispatch" ] && [ -n "${{ github.event.client_payload.max_workers }}" ]; then
+            MAX_WORKERS="${{ github.event.client_payload.max_workers }}"
+          else
+            MAX_WORKERS="5"
+          fi
+          echo "max_workers=$MAX_WORKERS" >> $GITHUB_OUTPUT
+      
+      - name: Set migration timestamp
+        id: set-timestamp
+        run: echo "timestamp=$(date +%Y%m%d_%H%M%S)" >> $GITHUB_OUTPUT
+      
+      - name: Run migration
+        id: run-migration
+        run: |
+          echo "Running migration for project ${{ needs.prepare.outputs.project_key }}"
+          echo "Phase: ${{ steps.determine-phase.outputs.phase }}"
+          echo "Batch size: ${{ steps.determine-batch-size.outputs.batch_size }}"
+          echo "Max workers: ${{ steps.determine-workers.outputs.max_workers }}"
+          
+          # Set up environment variables for API access
+          export ZEPHYR_BASE_URL="${{ secrets.ZEPHYR_BASE_URL }}"
+          export ZEPHYR_API_TOKEN="${{ secrets.ZEPHYR_API_TOKEN }}"
+          export ZEPHYR_PROJECT_KEY="${{ needs.prepare.outputs.project_key }}"
+          export QTEST_BASE_URL="${{ secrets.QTEST_BASE_URL }}"
+          export QTEST_USERNAME="${{ secrets.QTEST_USERNAME }}"
+          export QTEST_PASSWORD="${{ secrets.QTEST_PASSWORD }}"
+          export QTEST_PROJECT_ID="${{ secrets.QTEST_PROJECT_ID }}"
+          
+          # Run the migration
+          set +e  # Don't exit on error
+          poetry run ztoq migrate run \
+            --project-key "${{ needs.prepare.outputs.project_key }}" \
+            --db-type "${{ env.DB_TYPE }}" \
+            --host "${{ env.DB_HOST }}" \
+            --port "${{ env.DB_PORT }}" \
+            --database "${{ env.DB_NAME }}" \
+            --username "${{ env.DB_USER }}" \
+            --password "${{ env.DB_PASSWORD }}" \
+            --batch-size "${{ steps.determine-batch-size.outputs.batch_size }}" \
+            --max-workers "${{ steps.determine-workers.outputs.max_workers }}" \
+            --attachments-dir "${{ env.ATTACHMENTS_DIR }}" \
+            --phase "${{ steps.determine-phase.outputs.phase }}" \
+            --migration-id "${{ needs.prepare.outputs.migration_id }}" \
+            > migration_output.log 2>&1
+          
+          MIGRATION_EXIT_CODE=$?
+          
+          # Save the output regardless of success/failure
+          echo "Migration completed with exit code: $MIGRATION_EXIT_CODE"
+          cat migration_output.log
+          
+          # Set output status for use in other jobs
+          if [ $MIGRATION_EXIT_CODE -eq 0 ]; then
+            echo "status=success" >> $GITHUB_OUTPUT
+          else
+            echo "status=failed" >> $GITHUB_OUTPUT
+          fi
+          
+          # Return success always so other steps can run (generate reports, notify, etc.)
+          exit 0
+      
+      - name: Check migration status
+        run: |
+          echo "Checking migration status for project ${{ needs.prepare.outputs.project_key }}"
+          
+          poetry run ztoq migrate status \
+            --project-key "${{ needs.prepare.outputs.project_key }}" \
+            --db-type "${{ env.DB_TYPE }}" \
+            --host "${{ env.DB_HOST }}" \
+            --port "${{ env.DB_PORT }}" \
+            --database "${{ env.DB_NAME }}" \
+            --username "${{ env.DB_USER }}" \
+            --password "${{ env.DB_PASSWORD }}" \
+            --migration-id "${{ needs.prepare.outputs.migration_id }}"
+      
+      - name: Generate report
+        run: |
+          echo "Generating migration report"
+          
+          REPORT_FILE="${{ env.REPORTS_DIR }}/migration-${{ needs.prepare.outputs.project_key }}-${{ steps.set-timestamp.outputs.timestamp }}.html"
+          
+          poetry run ztoq migrate report \
+            --project-key "${{ needs.prepare.outputs.project_key }}" \
+            --db-type "${{ env.DB_TYPE }}" \
+            --host "${{ env.DB_HOST }}" \
+            --port "${{ env.DB_PORT }}" \
+            --database "${{ env.DB_NAME }}" \
+            --username "${{ env.DB_USER }}" \
+            --password "${{ env.DB_PASSWORD }}" \
+            --output-format all \
+            --output-file "$REPORT_FILE" \
+            --migration-id "${{ needs.prepare.outputs.migration_id }}"
+      
+      - name: Upload migration logs
+        uses: actions/upload-artifact@v3
+        with:
+          name: migration-logs-${{ needs.prepare.outputs.project_key }}-${{ steps.set-timestamp.outputs.timestamp }}
+          path: migration_output.log
+          retention-days: 7
+      
+      - name: Upload migration reports
+        uses: actions/upload-artifact@v3
+        with:
+          name: migration-reports-${{ needs.prepare.outputs.project_key }}-${{ steps.set-timestamp.outputs.timestamp }}
+          path: ${{ env.REPORTS_DIR }}
+          retention-days: 7
+      
+      - name: Upload attachments
+        uses: actions/upload-artifact@v3
+        if: github.event_name == 'workflow_dispatch' && contains(github.event.inputs.phase, 'extract')
+        with:
+          name: migration-attachments-${{ needs.prepare.outputs.project_key }}-${{ steps.set-timestamp.outputs.timestamp }}
+          path: ${{ env.ATTACHMENTS_DIR }}
+          retention-days: 2
+
+  notify:
+    name: Send Notifications
+    needs: [prepare, run-migration]
+    runs-on: ubuntu-latest
+    if: always()
+    
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+      
+      - name: Determine notification recipients
+        id: determine-recipients
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ] && [ "${{ github.event.inputs.send_report }}" == "true" ]; then
+            SEND_REPORT="true"
+          elif [ "${{ github.event_name }}" == "repository_dispatch" ] && [ "${{ github.event.client_payload.send_report }}" == "true" ]; then
+            SEND_REPORT="true"
+          elif [ "${{ github.event_name }}" == "schedule" ]; then
+            SEND_REPORT="true"
+          else
+            SEND_REPORT="false"
+          fi
+          echo "send_report=$SEND_REPORT" >> $GITHUB_OUTPUT
+      
+      - name: Send email notification
+        if: steps.determine-recipients.outputs.send_report == 'true'
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: ${{ secrets.SMTP_SERVER }}
+          server_port: ${{ secrets.SMTP_PORT }}
+          username: ${{ secrets.SMTP_USERNAME }}
+          password: ${{ secrets.SMTP_PASSWORD }}
+          subject: "Migration Report: ${{ needs.prepare.outputs.project_key }} ${{ needs.run-migration.outputs.status }}"
+          body: |
+            Migration Summary for ${{ needs.prepare.outputs.project_key }}
+            
+            Status: ${{ needs.run-migration.outputs.status }}
+            Migration ID: ${{ needs.prepare.outputs.migration_id }}
+            Timestamp: ${{ steps.set-timestamp.outputs.timestamp }}
+            
+            View the full report in the GitHub Actions artifacts or check the GitHub repository for more details.
+            
+            ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          to: ${{ secrets.NOTIFICATION_EMAIL }}
+          from: ZTOQ Migration <${{ secrets.SMTP_USERNAME }}>
+      
+      - name: Send Slack notification
+        if: steps.determine-recipients.outputs.send_report == 'true' && secrets.SLACK_WEBHOOK_URL != ''
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          fields: repo,message,workflow,job,commit,eventName
+          text: |
+            Migration Summary for ${{ needs.prepare.outputs.project_key }}
+            
+            Status: ${{ needs.run-migration.outputs.status }}
+            Migration ID: ${{ needs.prepare.outputs.migration_id }}
+            
+            View the full report in GitHub Actions:
+            ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+      
+      - name: Update migration status in database
+        run: |
+          # Set up Python
+          python -m pip install --upgrade pip
+          pip install poetry
+          poetry config virtualenvs.create false
+          poetry install --no-dev
+          
+          # Update migration status
+          python -c "
+          from sqlalchemy import create_engine, text
+          engine = create_engine('postgresql://${{ env.DB_USER }}:${{ env.DB_PASSWORD }}@${{ env.DB_HOST }}:${{ env.DB_PORT }}/${{ env.DB_NAME }}')
+          with engine.connect() as connection:
+              connection.execute(text(
+                  \"\"\"
+                  UPDATE migration_status
+                  SET workflow_run_id = :workflow_run_id,
+                      workflow_status = :workflow_status,
+                      last_updated = CURRENT_TIMESTAMP
+                  WHERE migration_id = :migration_id
+                  \"\"\"
+              ), {
+                  'workflow_run_id': '${{ github.run_id }}',
+                  'workflow_status': '${{ job.status }}',
+                  'migration_id': '${{ needs.prepare.outputs.migration_id }}'
+              })
+              connection.commit()
+          "
+
+  multi-project:
+    name: Queue Next Project Migration
+    needs: [prepare, run-migration]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' && success()
+    
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+      
+      - name: Check for additional projects
+        id: check-projects
+        run: |
+          if [ -f "migration-config/projects.txt" ]; then
+            # Get all non-empty lines that don't start with # (comments)
+            PROJECT_KEYS=$(grep -v "^#" migration-config/projects.txt | grep -v "^$")
+            
+            # Skip first project (already processed)
+            REMAINING_PROJECTS=$(echo "$PROJECT_KEYS" | tail -n +2)
+            
+            # Check if there are more projects to process
+            if [ -n "$REMAINING_PROJECTS" ]; then
+              NEXT_PROJECT=$(echo "$REMAINING_PROJECTS" | head -n 1)
+              echo "has_more_projects=true" >> $GITHUB_OUTPUT
+              echo "next_project=$NEXT_PROJECT" >> $GITHUB_OUTPUT
+            else
+              echo "has_more_projects=false" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "has_more_projects=false" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Trigger next project migration
+        if: steps.check-projects.outputs.has_more_projects == 'true'
+        uses: peter-evans/repository-dispatch@v2
+        with:
+          token: ${{ secrets.REPO_ACCESS_TOKEN }}
+          event-type: trigger-migration
+          client-payload: '{"project_key": "${{ steps.check-projects.outputs.next_project }}", "batch_size": "50", "max_workers": "5", "phase": "all", "send_report": true}'

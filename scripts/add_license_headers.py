@@ -14,8 +14,6 @@ See LICENSE file for details.
 """
 
 import os
-import sys
-import re
 
 PYTHON_HEADER = '''"""
 Copyright (c) 2025 Eric C. Mumford (@heymumford)
@@ -25,15 +23,15 @@ See LICENSE file for details.
 
 '''
 
-MARKDOWN_FOOTER = '''
+MARKDOWN_FOOTER = """
 
 ---
-*Copyright (c) 2025 Eric C. Mumford (@heymumford) - Licensed under [MIT License](../../LICENSE)*'''
+*Copyright (c) 2025 Eric C. Mumford (@heymumford) - Licensed under [MIT License](../../LICENSE)*"""
 
-ROOT_MARKDOWN_FOOTER = '''
+ROOT_MARKDOWN_FOOTER = """
 
 ---
-*Copyright (c) 2025 Eric C. Mumford (@heymumford) - Licensed under [MIT License](LICENSE)*'''
+*Copyright (c) 2025 Eric C. Mumford (@heymumford) - Licensed under [MIT License](LICENSE)*"""
 
 PYTHON_FILES = [
     # ztoq files
@@ -56,7 +54,6 @@ PYTHON_FILES = [
     "ztoq/core/services.py",
     "ztoq/domain/__init__.py",
     "ztoq/domain/models.py",
-    
     # test files
     "tests/__init__.py",
     "tests/integration/test_api.py",
@@ -115,65 +112,65 @@ ROOT_MARKDOWN_FILES = [
 def add_python_header(file_path):
     """Add license header to a Python file if it doesn't already have it."""
     absolute_path = os.path.join(os.getcwd(), file_path)
-    
+
     # Check if file exists
     if not os.path.exists(absolute_path):
         print(f"Warning: File {absolute_path} does not exist, skipping.")
         return
-    
+
     # Read file content
-    with open(absolute_path, 'r') as f:
+    with open(absolute_path) as f:
         content = f.read()
-    
+
     # Check if header already exists
     if "Copyright (c) 2025 Eric C. Mumford" in content:
         print(f"Header already exists in {file_path}, skipping.")
         return
-    
+
     # Handle shebang line if it exists
-    if content.startswith('#!'):
-        shebang_end = content.find('\n') + 1
+    if content.startswith("#!"):
+        shebang_end = content.find("\n") + 1
         shebang = content[:shebang_end]
         content = content[shebang_end:]
         new_content = shebang + PYTHON_HEADER + content
     else:
         new_content = PYTHON_HEADER + content
-    
+
     # Write modified content back
-    with open(absolute_path, 'w') as f:
+    with open(absolute_path, "w") as f:
         f.write(new_content)
-    
+
     print(f"Added header to {file_path}")
 
 
 def add_markdown_footer(file_path):
     """Add license footer to a Markdown file if it doesn't already have it."""
     absolute_path = os.path.join(os.getcwd(), file_path)
-    
+
     # Check if file exists
     if not os.path.exists(absolute_path):
         print(f"Warning: File {absolute_path} does not exist, skipping.")
         return
-    
+
     # Read file content
-    with open(absolute_path, 'r') as f:
+    with open(absolute_path) as f:
         content = f.read()
-    
+
     # Check if footer already exists
     if "Copyright (c) 2025 Eric C. Mumford" in content:
         print(f"Footer already exists in {file_path}, skipping.")
         return
-    
+
     # Use appropriate footer based on file location
     footer = ROOT_MARKDOWN_FOOTER if file_path in ROOT_MARKDOWN_FILES else MARKDOWN_FOOTER
-    
+
     # Add footer
     new_content = content.rstrip() + footer
-    
+
     # Write modified content back
-    with open(absolute_path, 'w') as f:
+    with open(absolute_path, "w") as f:
         f.write(new_content)
-    
+
     print(f"Added footer to {file_path}")
 
 
@@ -182,11 +179,11 @@ def main():
     print("Adding license headers to Python files...")
     for file_path in PYTHON_FILES:
         add_python_header(file_path)
-    
+
     print("\nAdding license footers to Markdown files...")
     for file_path in MARKDOWN_FILES:
         add_markdown_footer(file_path)
-    
+
     print("\nDone!")
 
 

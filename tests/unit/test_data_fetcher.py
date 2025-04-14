@@ -8,29 +8,36 @@ See LICENSE file for details.
 Unit tests for the data_fetcher module.
 """
 
-import pytest
 from unittest.mock import MagicMock, patch
+import pytest
+from ztoq.data_fetcher import (
+    FetchResult,
+        create_authenticated_client,
+        fetch_all_project_data,
+        fetch_all_projects_data,
+        fetch_all_test_cases,
+        fetch_all_test_cycles,
+        fetch_all_test_executions,
+        fetch_environments,
+        fetch_folders,
+        fetch_priorities,
+        fetch_projects,
+        fetch_statuses,
+)
 from ztoq.models import (
-    ZephyrConfig, Project, Case, CycleInfo, Execution, 
-    Folder, Status, Priority, Environment
+    Case,
+        CycleInfo,
+        Environment,
+        Execution,
+        Folder,
+        Priority,
+        Project,
+        Status,
+        ZephyrConfig,
 )
 from ztoq.zephyr_client import ZephyrClient
-from ztoq.data_fetcher import (
-    create_authenticated_client,
-    fetch_projects,
-    fetch_all_test_cases,
-    fetch_all_test_cycles,
-    fetch_all_test_executions,
-    fetch_folders,
-    fetch_statuses,
-    fetch_priorities,
-    fetch_environments,
-    fetch_all_project_data,
-    fetch_all_projects_data,
-    FetchResult,
-)
 
-@pytest.fixture
+@pytest.fixture()
 
 
 def config():
@@ -42,16 +49,15 @@ def config():
         )
 
 
-@pytest.fixture
+@pytest.fixture()
 
 
 def mock_client():
     """Create a mock Zephyr client."""
-    client = MagicMock(spec=ZephyrClient)
-    return client
+    return MagicMock(spec=ZephyrClient)
 
 
-@pytest.mark.unit
+@pytest.mark.unit()
 
 
 class TestDataFetcher:

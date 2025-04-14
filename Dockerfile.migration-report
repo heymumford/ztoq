@@ -1,0 +1,56 @@
+FROM python:3.11-slim as builder
+
+WORKDIR /app
+
+# Install Poetry
+RUN pip install poetry==1.6.1
+
+# Copy project dependencies
+COPY pyproject.toml poetry.lock ./
+
+# Configure poetry to not create a virtual environment
+RUN poetry config virtualenvs.create false
+
+# Install project dependencies including visualization packages
+RUN poetry install --no-interaction --no-root --without dev
+
+# Copy project source
+COPY ztoq ./ztoq
+COPY examples ./examples
+COPY README.md ./
+
+# Install project
+RUN poetry install --no-interaction --only-root
+
+# Additional visualization dependencies
+RUN pip install matplotlib seaborn plotly kaleido
+
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install additional system dependencies for headless rendering
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    fonts-liberation \
+    libxcb-xinerama0 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy installed packages and source from builder
+COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
+COPY --from=builder /usr/local/bin /usr/local/bin
+COPY --from=builder /app /app
+
+# Create reports directory
+RUN mkdir -p /app/reports && chmod 777 /app/reports
+
+# Run as non-root user
+RUN useradd -m ztoq
+USER ztoq
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONPATH=/app
+
+# Default command to generate a report
+CMD ["python", "-m", "ztoq.migration_report", "--help"]

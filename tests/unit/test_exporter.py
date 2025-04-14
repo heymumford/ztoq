@@ -4,19 +4,19 @@ This file is part of ZTOQ, licensed under the MIT License.
 See LICENSE file for details.
 """
 
-import pytest
 from pathlib import Path
-from unittest.mock import patch, MagicMock
-from ztoq.models import ZephyrConfig, Execution, Attachment, CustomField
-from ztoq.zephyr_client import ZephyrClient
-from ztoq.storage import SQLiteStorage, JSONStorage
+from unittest.mock import MagicMock, patch
+import pytest
 from ztoq.exporter import ZephyrExporter, ZephyrExportManager
+from ztoq.models import Attachment, CustomField, Execution, ZephyrConfig
+from ztoq.storage import JSONStorage, SQLiteStorage
+from ztoq.zephyr_client import ZephyrClient
 
-@pytest.mark.unit
+@pytest.mark.unit()
 
 
 class TestZephyrExporter:
-    @pytest.fixture
+    @pytest.fixture()
     def config(self):
         """Create a test Zephyr configuration."""
         return ZephyrConfig(
@@ -25,31 +25,31 @@ class TestZephyrExporter:
                 project_key="TEST",
             )
 
-    @pytest.fixture
+    @pytest.fixture()
     def client(self, config):
         """Create a mock Zephyr client."""
         client = MagicMock(spec=ZephyrClient)
         client.config = config
         return client
 
-    @pytest.fixture
+    @pytest.fixture()
     def json_storage(self, tmp_path):
         """Create a JSON storage instance."""
         return JSONStorage(tmp_path / "json_output")
 
-    @pytest.fixture
+    @pytest.fixture()
     def sqlite_storage(self, tmp_path):
         """Create a SQLite storage instance."""
         return SQLiteStorage(tmp_path / "test.db")
 
-    @pytest.fixture
+    @pytest.fixture()
     def json_exporter(self, client, json_storage, monkeypatch):
         """Create a JSON exporter instance."""
         exporter = ZephyrExporter(client, output_format="json")
         monkeypatch.setattr(exporter, "storage", json_storage)
         return exporter
 
-    @pytest.fixture
+    @pytest.fixture()
     def sqlite_exporter(self, client, sqlite_storage, monkeypatch):
         """Create a SQLite exporter instance."""
         exporter = ZephyrExporter(client, output_format="sqlite")
@@ -196,11 +196,11 @@ class TestZephyrExporter:
         client.get_test_executions.assert_called_once_with(cycle_id="cycle-id")
 
 
-@pytest.mark.unit
+@pytest.mark.unit()
 
 
 class TestZephyrExportManager:
-    @pytest.fixture
+    @pytest.fixture()
     def config(self):
         """Create a test Zephyr configuration."""
         return ZephyrConfig(
@@ -209,7 +209,7 @@ class TestZephyrExportManager:
                 project_key="TEST",
             )
 
-    @pytest.fixture
+    @pytest.fixture()
     def export_manager(self, config, tmp_path):
         """Create a ZephyrExportManager instance."""
         return ZephyrExportManager(

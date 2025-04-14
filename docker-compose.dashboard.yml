@@ -1,0 +1,65 @@
+version: '3.8'
+
+services:
+  dashboard:
+    build: 
+      context: .
+      dockerfile: Dockerfile.migration-report
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./reports:/app/reports
+    environment:
+      - ZTOQ_LOG_LEVEL=INFO
+      - ZTOQ_DB_TYPE=postgresql
+      - ZTOQ_DB_HOST=postgres
+      - ZTOQ_DB_PORT=5432
+      - ZTOQ_DB_NAME=ztoq
+      - ZTOQ_DB_USER=ztoq
+      - ZTOQ_DB_PASSWORD=ztoq_password
+      - ZEPHYR_PROJECT_KEY=${ZEPHYR_PROJECT_KEY}
+    command: ["python", "-m", "ztoq.migration_dashboard", "--project-key", "${ZEPHYR_PROJECT_KEY}", "--port", "5000", "--refresh", "30"]
+    depends_on:
+      - postgres
+  
+  migration-report:
+    build: 
+      context: .
+      dockerfile: Dockerfile.migration-report
+    volumes:
+      - ./reports:/app/reports
+    environment:
+      - ZTOQ_DB_TYPE=postgresql
+      - ZTOQ_DB_HOST=postgres
+      - ZTOQ_DB_PORT=5432
+      - ZTOQ_DB_NAME=ztoq
+      - ZTOQ_DB_USER=ztoq
+      - ZTOQ_DB_PASSWORD=ztoq_password
+      - ZEPHYR_PROJECT_KEY=${ZEPHYR_PROJECT_KEY}
+    command: ["python", "-m", "ztoq.migration_report", "--db-type", "postgresql", "--project-key", "${ZEPHYR_PROJECT_KEY}", "--output-format", "all", "--output-file", "/app/reports/migration-report.html"]
+    depends_on:
+      - postgres
+  
+  postgres:
+    image: postgres:16-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=ztoq
+      - POSTGRES_PASSWORD=ztoq_password
+      - POSTGRES_DB=ztoq
+    ports:
+      - "5432:5432"
+  
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=admin@ztoq.local
+      - PGADMIN_DEFAULT_PASSWORD=pgadmin_password
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
+
+volumes:
+  postgres_data:

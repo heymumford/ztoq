@@ -13,14 +13,16 @@ apart from API interactions.
 """
 
 import logging
+from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
-from typing import Dict, List, Any, Optional, Callable, TypeVar
-from ztoq.models import ZephyrConfig, Project
+from typing import Any, TypeVar
+from ztoq.models import Project, ZephyrConfig
 from ztoq.zephyr_client import ZephyrClient
 
 T = TypeVar("T")
 logger = logging.getLogger(__name__)
+
 
 @dataclass(frozen=True)
 
@@ -30,10 +32,11 @@ class FetchResult:
 
     entity_type: str
     project_key: str
-    items: List[Any]
+    items: list[Any]
     count: int
     success: bool
-    error: Optional[str] = None
+    error: str | None = None
+
 
 def create_authenticated_client(config: ZephyrConfig) -> ZephyrClient:
     """
@@ -44,7 +47,8 @@ def create_authenticated_client(config: ZephyrConfig) -> ZephyrClient:
     """
     return ZephyrClient(config)
 
-def fetch_projects(client: ZephyrClient) -> List[Project]:
+
+def fetch_projects(client: ZephyrClient) -> list[Project]:
     """
     Retrieves all available projects from Zephyr Scale.
 
@@ -56,6 +60,7 @@ def fetch_projects(client: ZephyrClient) -> List[Project]:
     except Exception as e:
         logger.error(f"Failed to fetch projects: {str(e)}")
         return []
+
 
 def fetch_all_test_cases(client: ZephyrClient, project_key: str) -> FetchResult:
     """
@@ -86,12 +91,13 @@ def fetch_all_test_cases(client: ZephyrClient, project_key: str) -> FetchResult:
                 error=error_message,
             )
 
+
 def fetch_all_test_cycles(client: ZephyrClient, project_key: str) -> FetchResult:
     """
     Retrieves all test cycles for a specific project.
 
     Test cycles represent a collection of test executions for a specific timeframe,
-        milestone, or release. They provide context for when tests were executed.
+            milestone, or release. They provide context for when tests were executed.
     """
     try:
         logger.info(f"Fetching test cycles for project {project_key}")
@@ -114,6 +120,7 @@ def fetch_all_test_cycles(client: ZephyrClient, project_key: str) -> FetchResult
                 success=False,
                 error=error_message,
             )
+
 
 def fetch_all_test_executions(client: ZephyrClient, project_key: str) -> FetchResult:
     """
@@ -144,6 +151,7 @@ def fetch_all_test_executions(client: ZephyrClient, project_key: str) -> FetchRe
                 error=error_message,
             )
 
+
 def fetch_folders(client: ZephyrClient, project_key: str) -> FetchResult:
     """
     Retrieves all folders for a specific project.
@@ -172,12 +180,13 @@ def fetch_folders(client: ZephyrClient, project_key: str) -> FetchResult:
                 error=error_message,
             )
 
+
 def fetch_statuses(client: ZephyrClient, project_key: str) -> FetchResult:
     """
     Retrieves all statuses for a specific project.
 
     Statuses define the possible states for test cases and executions,
-        such as Pass, Fail, Blocked, etc.
+            such as Pass, Fail, Blocked, etc.
     """
     try:
         logger.info(f"Fetching statuses for project {project_key}")
@@ -200,6 +209,7 @@ def fetch_statuses(client: ZephyrClient, project_key: str) -> FetchResult:
                 success=False,
                 error=error_message,
             )
+
 
 def fetch_priorities(client: ZephyrClient, project_key: str) -> FetchResult:
     """
@@ -228,6 +238,7 @@ def fetch_priorities(client: ZephyrClient, project_key: str) -> FetchResult:
                 success=False,
                 error=error_message,
             )
+
 
 def fetch_environments(client: ZephyrClient, project_key: str) -> FetchResult:
     """
@@ -258,11 +269,12 @@ def fetch_environments(client: ZephyrClient, project_key: str) -> FetchResult:
                 error=error_message,
             )
 
+
 def fetch_all_project_data(
     client: ZephyrClient,
         project_key: str,
-        progress_callback: Optional[Callable[[str, str, bool], None]] = None,
-) -> Dict[str, FetchResult]:
+        progress_callback: Callable[[str, str, bool], None] | None = None,
+) -> dict[str, FetchResult]:
     """
     Retrieves all test data for a specific project using parallel processing.
 
@@ -288,7 +300,7 @@ def fetch_all_project_data(
             "environments": lambda: fetch_environments(client, project_key),
         }
 
-    results: Dict[str, FetchResult] = {}
+    results: dict[str, FetchResult] = {}
 
     # Execute all fetch operations in parallel
     with ThreadPoolExecutor(max_workers=5) as executor:
@@ -313,11 +325,12 @@ def fetch_all_project_data(
 
     return results
 
+
 def fetch_all_projects_data(
     client: ZephyrClient,
-        project_keys: Optional[List[str]] = None,
-        progress_callback: Optional[Callable[[str, str, bool], None]] = None,
-) -> Dict[str, Dict[str, FetchResult]]:
+        project_keys: list[str] | None = None,
+        progress_callback: Callable[[str, str, bool], None] | None = None,
+) -> dict[str, dict[str, FetchResult]]:
     """
     Retrieves all test data for multiple projects.
 
@@ -337,7 +350,7 @@ def fetch_all_projects_data(
         projects = fetch_projects(client)
         project_keys = [project.key for project in projects]
 
-    results: Dict[str, Dict[str, FetchResult]] = {}
+    results: dict[str, dict[str, FetchResult]] = {}
 
     for project_key in project_keys:
         logger.info(f"Fetching all data for project {project_key}")

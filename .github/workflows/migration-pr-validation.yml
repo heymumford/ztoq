@@ -1,0 +1,117 @@
+name: Migration PR Validation
+
+on:
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'ztoq/migration.py'
+      - 'ztoq/qtest_*.py'
+      - 'ztoq/zephyr_*.py'
+      - 'tests/unit/test_migration.py'
+      - 'tests/integration/test_migration*.py'
+
+jobs:
+  validate-migration-code:
+    name: Validate Migration Code
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install poetry
+          poetry install
+          
+      - name: Validate code with mypy
+        run: |
+          poetry run mypy ztoq/migration.py
+          
+      - name: Validate code with ruff
+        run: |
+          poetry run ruff check ztoq/migration.py
+          
+      - name: Run migration unit tests
+        run: |
+          poetry run pytest tests/unit/test_migration.py -v --cov=ztoq.migration --cov-report=xml:migration-coverage.xml
+          
+      - name: Check coverage thresholds
+        run: |
+          COVERAGE=$(grep -Po '(?<=<coverage line-rate=")[^"]*' migration-coverage.xml)
+          COVERAGE_PCT=$(echo "scale=2; $COVERAGE * 100" | bc)
+          echo "Coverage: $COVERAGE_PCT%"
+          
+          if (( $(echo "$COVERAGE_PCT < 80" | bc -l) )); then
+            echo "::warning::Migration test coverage is below 80%. Please add more tests."
+          fi
+          
+  validate-etl-workflow:
+    name: Validate ETL Workflow
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install poetry
+          poetry install
+          
+      - name: Run mock ETL workflow
+        run: |
+          # Run with mocked APIs
+          poetry run python -m ztoq migrate run \
+            --zephyr-base-url "http://mock-zephyr" \
+            --zephyr-access-key "mock-key" \
+            --zephyr-secret-key "mock-secret" \
+            --qtest-url "http://mock-qtest" \
+            --qtest-token "mock-token" \
+            --project-id "TEST" \
+            --mock \
+            --dry-run
+            
+  check-sql-injection:
+    name: Check for SQL Injection Vulnerabilities
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Check for potential SQL injection issues
+        uses: ShiftLeftSecurity/scan-action@master
+        with:
+          type: "python"
+          
+      - name: Manual check for SQL injection patterns
+        run: |
+          grep -r "execute(" ztoq/ --include="*.py" | grep -v "parameterized" || echo "No raw execute statements found"
+          grep -r "executemany(" ztoq/ --include="*.py" | grep -v "parameterized" || echo "No raw executemany statements found"
+          grep -r "cursor.execute" ztoq/ --include="*.py" | grep "%" && echo "WARNING: Possible string formatting in SQL detected" || echo "No string formatting in SQL detected"
+          
+  check-api-security:
+    name: Check API Security
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Check for hardcoded secrets
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Check for sensitive data handling
+        run: |
+          grep -r "password" ztoq/migration.py && echo "WARNING: Check password handling for security" || echo "No password references found"
+          grep -r "token" ztoq/migration.py && echo "WARNING: Check token handling for security" || echo "No token references found"
+          grep -r "print(" ztoq/migration.py && echo "WARNING: Check print statements for sensitive data" || echo "No print statements found"

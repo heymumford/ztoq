@@ -8,17 +8,15 @@ See LICENSE file for details.
 Unit tests for the ZephyrApiSpecWrapper class.
 """
 
+from typing import Any
 import pytest
-import json
-from typing import Dict, Any
-from pathlib import Path
 from ztoq.openapi_parser import ZephyrApiSpecWrapper
 
 # Sample OpenAPI specification for testing
-@pytest.fixture
+@pytest.fixture()
 
 
-def sample_spec() -> Dict[str, Any]:
+def sample_spec() -> dict[str, Any]:
     """Create a sample OpenAPI spec for testing."""
     return {
         "openapi": "3.0.1",
@@ -151,7 +149,7 @@ def sample_spec() -> Dict[str, Any]:
         }
 
 
-@pytest.fixture
+@pytest.fixture()
 
 
 def spec_wrapper(sample_spec):

@@ -8,15 +8,15 @@ See LICENSE file for details.
 Unit tests for the ZephyrTestGenerator class.
 """
 
-import pytest
 import json
 import tempfile
 from pathlib import Path
-from unittest.mock import patch, MagicMock
-from ztoq.test_generator import ZephyrTestGenerator
+from unittest.mock import MagicMock, patch
+import pytest
 from ztoq.openapi_parser import ZephyrApiSpecWrapper
+from ztoq.test_generator import ZephyrTestGenerator
 
-@pytest.fixture
+@pytest.fixture()
 
 
 def mock_spec_wrapper():
@@ -61,7 +61,7 @@ def mock_spec_wrapper():
     return mock_wrapper
 
 
-@pytest.fixture
+@pytest.fixture()
 
 
 def test_generator(mock_spec_wrapper):

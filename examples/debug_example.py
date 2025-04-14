@@ -2,7 +2,6 @@
 """
 Example script demonstrating how to use debug logging with ZTOQ.
 """
-import os
 import sys
 from pathlib import Path
 
@@ -11,8 +10,8 @@ if __name__ == "__main__":
     project_root = Path(__file__).parent.parent
     sys.path.insert(0, str(project_root))
 
-from ztoq.zephyr_client import ZephyrClient, configure_logging
 from ztoq.models import ZephyrConfig
+from ztoq.zephyr_client import ZephyrClient, configure_logging
 
 
 def main():
@@ -38,7 +37,9 @@ def main():
 
     # Initialize client with debug logging
     client = ZephyrClient.from_openapi_spec(
-        spec_path=openapi_path, config=config, log_level="DEBUG"  # Override global level if needed
+        spec_path=openapi_path,
+        config=config,
+        log_level="DEBUG",  # Override global level if needed
     )
 
     # Debug log will show API interactions in detail

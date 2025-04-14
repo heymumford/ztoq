@@ -8,12 +8,12 @@ The test pyramid consists of:
 """
 
 import argparse
-import subprocess
-import sys
 import os
 import re
-from typing import List, Dict, Any, Optional, Tuple
+import subprocess
+import sys
 from enum import Enum
+from typing import Any
 
 
 class TestLevel(Enum):
@@ -35,7 +35,7 @@ class BuildCommand(Enum):
     ALL = "all"
 
 
-def run_command(cmd: List[str], env: Optional[Dict[str, Any]] = None) -> bool:
+def run_command(cmd: list[str], env: dict[str, Any] | None = None) -> bool:
     """Run a command and return True if successful, False otherwise."""
     print(f"Running: {' '.join(cmd)}")
     result = subprocess.run(cmd, env=env, capture_output=True, text=True)
@@ -46,7 +46,7 @@ def run_command(cmd: List[str], env: Optional[Dict[str, Any]] = None) -> bool:
     return True
 
 
-def run_poetry_command(cmd: List[str], env: Optional[Dict[str, Any]] = None) -> bool:
+def run_poetry_command(cmd: list[str], env: dict[str, Any] | None = None) -> bool:
     """Run a poetry command and return True if successful, False otherwise."""
     return run_command(["poetry", "run"] + cmd, env=env)
 
@@ -89,30 +89,30 @@ def check_docs_naming_convention() -> bool:
     docs_dir = "docs"
     root_dir = os.path.abspath(os.path.dirname(__file__))
     docs_path = os.path.join(root_dir, docs_dir)
-    
+
     # Define pattern for kebab-case (lowercase with hyphens)
-    kebab_case_pattern = re.compile(r'^[a-z0-9]+(-[a-z0-9]+)*\.md$')
-    
+    kebab_case_pattern = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*\.md$")
+
     # Exceptions that don't need to follow kebab-case
     exceptions = ["README.md"]
-    
+
     violations = []
-    
+
     # Check all markdown files in the docs directory and subdirectories
     for root, _, files in os.walk(docs_path):
         for file in files:
-            if file.endswith('.md') and file not in exceptions:
+            if file.endswith(".md") and file not in exceptions:
                 if not kebab_case_pattern.match(file):
                     rel_path = os.path.relpath(os.path.join(root, file), root_dir)
                     violations.append(rel_path)
-    
+
     if violations:
         print("Documentation naming convention violations found:")
         for violation in violations:
             print(f"  - {violation} (should use kebab-case)")
         print("All documentation files should use kebab-case (lowercase with hyphens).")
         return False
-    
+
     print("All documentation files follow the kebab-case naming convention.")
     return True
 
@@ -128,11 +128,11 @@ def generate_docs() -> bool:
     if not check_docs_naming_convention():
         print("Warning: Some documentation files don't follow the naming convention.")
         # Continue anyway, but print a warning
-    
+
     # Synchronize versions before generating documentation
     if not sync_versions():
         print("Warning: Failed to synchronize versions, continuing anyway.")
-    
+
     # Generate API documentation
     if not run_command(["sphinx-apidoc", "-o", "docs/sphinx/source/api", "ztoq", "--force"]):
         return False

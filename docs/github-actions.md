@@ -11,8 +11,9 @@ ZTOQ uses GitHub Actions for continuous integration and security scanning. The f
 3. **Migration Tests** - Tests the Zephyr Scale to qTest migration functionality
 4. **ETL Integration** - Runs extensive tests for the ETL migration pipeline
 5. **Migration PR Validation** - Validates pull requests that modify migration code
-6. **Release** - Handles versioning, packaging, and documentation for releases
-7. **Dependabot** - Automatically updates dependencies
+6. **Scheduled Migration** - Runs automated migrations on a schedule or via triggers
+7. **Release** - Handles versioning, packaging, and documentation for releases
+8. **Dependabot** - Automatically updates dependencies
 
 ## Quality Gates Workflow
 
@@ -131,7 +132,7 @@ For real API tests, the following secrets are required in the `integration-testi
 
 ## Migration Workflow Suite
 
-The migration functionality in ZTOQ is tested by multiple specialized workflows:
+The migration functionality in ZTOQ is tested and executed by multiple specialized workflows:
 
 ### Migration Tests Workflow
 
@@ -224,6 +225,46 @@ The Migration PR Validation workflow (`migration-pr-validation.yml`) runs on:
 - Scans for hardcoded secrets or credentials
 - Checks token and password handling for security
 - Ensures sensitive data is properly protected
+
+### Scheduled Migration Workflow
+
+The Scheduled Migration workflow (`scheduled-migration.yml`) runs on:
+- Daily schedule at 2:00 AM UTC (configurable)
+- Manual triggers with customizable parameters
+- Repository dispatch events for programmatic triggering
+- Push to dedicated branches when configuration files change
+
+#### Jobs
+
+##### Prepare Migration Environment
+- Sets up the Python environment with dependencies
+- Determines which project to migrate
+- Generates a unique migration ID for tracking
+- Creates directories for attachments and reports
+
+##### Set Up Database
+- Launches a PostgreSQL database service
+- Initializes the database schema
+- Verifies database connection and readiness
+
+##### Run Migration
+- Runs the migration with specified parameters
+- Captures logs and handles errors gracefully
+- Generates detailed reports
+- Uploads logs, reports, and attachments as artifacts
+
+##### Send Notifications
+- Sends email notifications with migration status
+- Posts to Slack channels if configured
+- Updates migration status in the database
+
+##### Queue Next Project Migration
+- For scheduled runs with multiple projects
+- Checks for additional projects in the queue
+- Triggers a new workflow run for the next project
+- Continues until all projects are processed
+
+See [Scheduled Migrations](scheduled-migrations.md) for detailed information on setting up and using this workflow.
 
 ## Release Workflow
 

@@ -9,8 +9,8 @@ This example demonstrates how to:
 4. Generate a pytest file with test functions
 """
 
-import sys
 import logging
+import sys
 from pathlib import Path
 
 # Add the parent directory to the path to allow importing ztoq

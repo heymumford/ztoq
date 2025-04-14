@@ -4,23 +4,23 @@ This file is part of ZTOQ, licensed under the MIT License.
 See LICENSE file for details.
 """
 
-import pytest
 import json
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+import pytest
 from typer.testing import CliRunner
 from ztoq.cli import app
 from ztoq.models import Project, TestCase
 
-@pytest.mark.integration
+@pytest.mark.integration()
 
 
 class TestCLICommands:
-    @pytest.fixture
+    @pytest.fixture()
     def runner(self):
         """Create a CLI runner for testing."""
         return CliRunner()
 
-    @pytest.fixture
+    @pytest.fixture()
     def mock_openapi_spec(self):
         """Mock OpenAPI spec loading."""
         valid_spec = {
@@ -144,7 +144,7 @@ class TestCLICommands:
 
             # Verify the output file
             assert output_file.exists()
-            with open(output_file, "r") as f:
+            with open(output_file) as f:
                 saved_cases = json.load(f)
                 assert len(saved_cases) == 2
                 assert saved_cases[0]["key"] == "TEST-TC-1"

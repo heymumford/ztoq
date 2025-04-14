@@ -4,8 +4,8 @@ This file is part of ZTOQ, licensed under the MIT License.
 See LICENSE file for details.
 """
 
-from pathlib import Path
 from functools import lru_cache
+from pathlib import Path
 from ztoq.domain.models import OpenAPISpec
 from ztoq.openapi_parser import load_openapi_spec
 

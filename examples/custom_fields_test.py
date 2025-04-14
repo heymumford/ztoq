@@ -8,17 +8,13 @@ This example:
 3. Validates that custom fields and attachments are properly processed
 """
 
-import sys
 import logging
-import base64
+import sys
 from pathlib import Path
-from typing import Dict, Any, List
 
 # Add the parent directory to the path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from ztoq.models import ZephyrConfig, CustomField, Attachment, CustomFieldType
-from ztoq.zephyr_client import ZephyrClient, configure_logging
 from ztoq.test_generator import ZephyrTestGenerator
 
 # Configure logging
@@ -57,7 +53,7 @@ def generate_custom_field_tests(test_gen: ZephyrTestGenerator, output_dir: Path)
     # Find all endpoints that likely involve custom fields
     custom_field_endpoints = []
 
-    for path, method in test_gen.spec_wrapper.endpoints.keys():
+    for path, method in test_gen.spec_wrapper.endpoints:
         if test_gen._is_entity_endpoint(path):
             # Make sure it's an endpoint that accepts POST/PUT (can create/update entities)
             if method.lower() in ["post", "put", "patch"]:
@@ -144,7 +140,7 @@ def generate_attachment_tests(test_gen: ZephyrTestGenerator, output_dir: Path):
     # Find all endpoints that likely involve attachments
     attachment_endpoints = []
 
-    for path, method in test_gen.spec_wrapper.endpoints.keys():
+    for path, method in test_gen.spec_wrapper.endpoints:
         if test_gen._supports_attachments(path):
             attachment_endpoints.append((path, method))
 

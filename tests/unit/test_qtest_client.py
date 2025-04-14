@@ -4,34 +4,37 @@ This file is part of ZTOQ, licensed under the MIT License.
 See LICENSE file for details.
 """
 
+from unittest.mock import MagicMock, patch
 import pytest
-from unittest.mock import patch, MagicMock
 from ztoq.qtest_client import QTestClient, QTestPaginatedIterator
 from ztoq.qtest_models import (
+    QTestAttachment,
     QTestConfig,
+    QTestModule,
+    QTestParameter,
     QTestProject,
     QTestTestCase,
-    QTestModule,
-    QTestAttachment,
-    QTestParameter,
 )
-import time
+from ztoq.qtest_models import QTestPulseRule
+from ztoq.qtest_models import QTestPulseTrigger
+from ztoq.qtest_models import QTestPulseAction, QTestPulseActionParameter
+from ztoq.qtest_models import QTestPulseConstant
 
-@pytest.mark.unit
+@pytest.mark.unit()
 
 
 class TestQTestClient:
-    @pytest.fixture
+    @pytest.fixture()
     def config(self):
         """Create a test qTest configuration."""
         return QTestConfig(
             base_url="https://example.qtest.com",
-                username="test-user",
-                password="test-password",
-                project_id=12345,
-            )
+            username="test-user",
+            password="test-password",
+            project_id=12345,
+        )
 
-    @pytest.fixture
+    @pytest.fixture()
     def client(self, config):
         """Create a test qTest client with mocked authentication."""
         with patch("ztoq.qtest_client.requests.post") as mock_post:
@@ -537,13 +540,11 @@ class TestQTestClient:
     def test_rate_limiting(self, mock_request, client):
         """Test rate limiting behavior."""
 
-
         # Mock time.time and time.sleep
         with (
             patch("ztoq.qtest_client.time.time") as mock_time,
                 patch("ztoq.qtest_client.time.sleep") as mock_sleep,
             ):
-
             # Setup mock_time to simulate passage of time
             mock_time.side_effect = [100, 101]  # First call returns 100, second returns 101
 
@@ -594,6 +595,449 @@ class TestQTestClient:
 
         # Verify authenticate was called
         client._authenticate.assert_called_once()
+
+    @patch("ztoq.qtest_client.QTestClient._make_request")
+    def test_pulse_api_rules(self, mock_make_request, client):
+        """Test Pulse API rule operations."""
+        # Set API type to pulse for this test
+        client.api_type = "pulse"
+
+        # Setup mock responses
+        rule_data = {
+            "id": 4001,
+                "name": "JIRA Rule",
+                "description": "Create JIRA issue when test fails",
+                "projectId": 12345,
+                "enabled": True,
+                "triggerId": 1001,
+                "actionId": 2001,
+            }
+
+        new_rule_data = {
+            "id": 4002,
+                "name": "New Rule",
+                "description": "New rule description",
+                "projectId": 12345,
+                "enabled": True,
+                "triggerId": 1001,
+                "actionId": 2001,
+            }
+
+        updated_rule_data = {
+            "id": 4001,
+                "name": "Updated Rule",
+                "description": "Updated description",
+                "projectId": 12345,
+                "enabled": True,
+                "triggerId": 1001,
+                "actionId": 2001,
+            }
+
+        # Configure mock responses for each method call individually
+        # Using a dict to map method + endpoint to responses
+        responses = {}
+
+        # For get_pulse_rules
+        responses[("GET", "/pulse/rules")] = {"data": [rule_data]}
+
+        # For get_pulse_rule
+        responses[("GET", "/pulse/rules/4001")] = {"data": rule_data}
+
+        # For create_pulse_rule
+        responses[("POST", "/pulse/rules")] = {"data": new_rule_data}
+
+        # For update_pulse_rule
+        responses[("PUT", "/pulse/rules/4001")] = {"data": updated_rule_data}
+
+        # For delete_pulse_rule
+        responses[("DELETE", "/pulse/rules/4001")] = {}
+
+        # For execute_pulse_rule_manually
+        responses[("POST", "/pulse/rules/4001/execute")] = {"data": {"message": "Rule executed successfully"}}
+
+        # Mock _make_request to return responses based on method and endpoint
+        def mock_response(method, endpoint, **kwargs):
+            return responses.get((method, endpoint))
+
+        mock_make_request.side_effect = mock_response
+
+        # Setup iterator mock for get_pulse_rules
+        with patch("ztoq.qtest_client.QTestPaginatedIterator.__next__") as mock_next:
+
+
+            mock_next.side_effect = [
+                QTestPulseRule(**rule_data),
+                    StopIteration(),
+                ]
+
+            # Test get_pulse_rules
+            rules_iterator = client.get_pulse_rules()
+            rules = list(rules_iterator)
+            assert len(rules) == 1
+            assert rules[0].id == 4001
+            assert rules[0].name == "JIRA Rule"
+
+        # Test get_pulse_rule
+        rule = client.get_pulse_rule(4001)
+        assert rule.id == 4001
+        assert rule.name == "JIRA Rule"
+
+        # Test create_pulse_rule
+
+        new_rule = QTestPulseRule(
+            name="New Rule",
+                description="New rule description",
+                projectId=12345,
+                enabled=True,
+                triggerId=1001,
+                actionId=2001,
+            )
+        created_rule = client.create_pulse_rule(new_rule)
+        assert created_rule.id == 4002
+        assert created_rule.name == "New Rule"
+
+        # Test update_pulse_rule
+        update_data = QTestPulseRule(
+            id=4001,
+                name="Updated Rule",
+                description="Updated description",
+                projectId=12345,
+                enabled=True,
+                triggerId=1001,
+                actionId=2001,
+            )
+        updated_rule = client.update_pulse_rule(4001, update_data)
+        assert updated_rule.name == "Updated Rule"
+
+        # Test delete_pulse_rule
+        result = client.delete_pulse_rule(4001)
+        assert result == True
+
+        # Test execute_pulse_rule_manually
+        result = client.execute_pulse_rule_manually(4001)
+        assert result == True
+
+    @patch("ztoq.qtest_client.QTestClient._make_request")
+    def test_pulse_api_triggers(self, mock_make_request, client):
+        """Test Pulse API trigger operations."""
+        # Set API type to pulse for this test
+        client.api_type = "pulse"
+
+        # Setup mock responses
+        trigger_data = {
+            "id": 1001,
+                "name": "Test Log Created",
+                "eventType": "TEST_LOG_CREATED",
+                "projectId": 12345,
+                "conditions": [{"field": "status", "operator": "equals", "value": "FAIL"}],
+            }
+
+        new_trigger_data = {
+            "id": 1002,
+                "name": "New Trigger",
+                "eventType": "TEST_CASE_CREATED",
+                "projectId": 12345,
+                "conditions": [],
+            }
+
+        updated_trigger_data = {
+            "id": 1001,
+                "name": "Updated Trigger",
+                "eventType": "TEST_LOG_CREATED",
+                "projectId": 12345,
+                "conditions": [{"field": "status", "operator": "equals", "value": "FAIL"}],
+            }
+
+        # Configure mock responses for each method call individually
+        # Using a dict to map method + endpoint to responses
+        responses = {}
+
+        # For get_pulse_triggers
+        responses[("GET", "/pulse/triggers")] = {"data": [trigger_data]}
+
+        # For get_pulse_trigger
+        responses[("GET", "/pulse/triggers/1001")] = {"data": trigger_data}
+
+        # For create_pulse_trigger
+        responses[("POST", "/pulse/triggers")] = {"data": new_trigger_data}
+
+        # For update_pulse_trigger
+        responses[("PUT", "/pulse/triggers/1001")] = {"data": updated_trigger_data}
+
+        # For delete_pulse_trigger
+        responses[("DELETE", "/pulse/triggers/1001")] = {}
+
+        # Mock _make_request to return responses based on method and endpoint
+        def mock_response(method, endpoint, **kwargs):
+            return responses.get((method, endpoint))
+
+        mock_make_request.side_effect = mock_response
+
+        # Setup iterator mock for get_pulse_triggers
+        with patch("ztoq.qtest_client.QTestPaginatedIterator.__next__") as mock_next:
+
+
+            mock_next.side_effect = [
+                QTestPulseTrigger(**trigger_data),
+                    StopIteration(),
+                ]
+
+            # Test get_pulse_triggers
+            triggers_iterator = client.get_pulse_triggers()
+            triggers = list(triggers_iterator)
+            assert len(triggers) == 1
+            assert triggers[0].id == 1001
+            assert triggers[0].name == "Test Log Created"
+
+        # Test get_pulse_trigger
+        trigger = client.get_pulse_trigger(1001)
+        assert trigger.id == 1001
+        assert trigger.name == "Test Log Created"
+
+        # Test create_pulse_trigger
+
+        new_trigger = QTestPulseTrigger(
+            name="New Trigger",
+                eventType="TEST_CASE_CREATED",
+                projectId=12345,
+                conditions=[],
+            )
+        created_trigger = client.create_pulse_trigger(new_trigger)
+        assert created_trigger.id == 1002
+        assert created_trigger.name == "New Trigger"
+
+        # Test update_pulse_trigger
+        update_data = QTestPulseTrigger(
+            id=1001,
+                name="Updated Trigger",
+                eventType="TEST_LOG_CREATED",
+                projectId=12345,
+                conditions=[{"field": "status", "operator": "equals", "value": "FAIL"}],
+            )
+        updated_trigger = client.update_pulse_trigger(1001, update_data)
+        assert updated_trigger.name == "Updated Trigger"
+
+        # Test delete_pulse_trigger
+        result = client.delete_pulse_trigger(1001)
+        assert result == True
+
+    @patch("ztoq.qtest_client.QTestClient._make_request")
+    def test_pulse_api_actions(self, mock_make_request, client):
+        """Test Pulse API action operations."""
+        # Set API type to pulse for this test
+        client.api_type = "pulse"
+
+        # Setup mock responses
+        action_data = {
+            "id": 2001,
+                "name": "Create JIRA Issue",
+                "actionType": "CREATE_DEFECT",
+                "projectId": 12345,
+                "parameters": [
+                {"name": "issueType", "value": "Bug"},
+                ],
+            }
+
+        new_action_data = {
+            "id": 2002,
+                "name": "New Action",
+                "actionType": "SEND_MAIL",
+                "projectId": 12345,
+                "parameters": [
+                {"name": "recipients", "value": "test@example.com"},
+                ],
+            }
+
+        updated_action_data = {
+            "id": 2001,
+                "name": "Updated Action",
+                "actionType": "CREATE_DEFECT",
+                "projectId": 12345,
+                "parameters": [
+                {"name": "issueType", "value": "Bug"},
+                ],
+            }
+
+        # Configure mock responses for each method call individually
+        # Using a dict to map method + endpoint to responses
+        responses = {}
+
+        # For get_pulse_actions
+        responses[("GET", "/pulse/actions")] = {"data": [action_data]}
+
+        # For get_pulse_action
+        responses[("GET", "/pulse/actions/2001")] = {"data": action_data}
+
+        # For create_pulse_action
+        responses[("POST", "/pulse/actions")] = {"data": new_action_data}
+
+        # For update_pulse_action
+        responses[("PUT", "/pulse/actions/2001")] = {"data": updated_action_data}
+
+        # For delete_pulse_action
+        responses[("DELETE", "/pulse/actions/2001")] = {}
+
+        # Mock _make_request to return responses based on method and endpoint
+        def mock_response(method, endpoint, **kwargs):
+            return responses.get((method, endpoint))
+
+        mock_make_request.side_effect = mock_response
+
+        # Setup iterator mock for get_pulse_actions
+        with patch("ztoq.qtest_client.QTestPaginatedIterator.__next__") as mock_next:
+
+
+            mock_next.side_effect = [
+                QTestPulseAction(**action_data),
+                    StopIteration(),
+                ]
+
+            # Test get_pulse_actions
+            actions_iterator = client.get_pulse_actions()
+            actions = list(actions_iterator)
+            assert len(actions) == 1
+            assert actions[0].id == 2001
+            assert actions[0].name == "Create JIRA Issue"
+
+        # Test get_pulse_action
+        action = client.get_pulse_action(2001)
+        assert action.id == 2001
+        assert action.name == "Create JIRA Issue"
+
+        # Test create_pulse_action
+
+        new_action = QTestPulseAction(
+            name="New Action",
+                actionType="SEND_MAIL",
+                projectId=12345,
+                parameters=[
+                QTestPulseActionParameter(name="recipients", value="test@example.com"),
+                ],
+            )
+        created_action = client.create_pulse_action(new_action)
+        assert created_action.id == 2002
+        assert created_action.name == "New Action"
+
+        # Test update_pulse_action
+        update_data = QTestPulseAction(
+            id=2001,
+                name="Updated Action",
+                actionType="CREATE_DEFECT",
+                projectId=12345,
+                parameters=[
+                QTestPulseActionParameter(name="issueType", value="Bug"),
+                ],
+            )
+        updated_action = client.update_pulse_action(2001, update_data)
+        assert updated_action.name == "Updated Action"
+
+        # Test delete_pulse_action
+        result = client.delete_pulse_action(2001)
+        assert result == True
+
+    @patch("ztoq.qtest_client.QTestClient._make_request")
+    def test_pulse_api_constants(self, mock_make_request, client):
+        """Test Pulse API constant operations."""
+        # Set API type to pulse for this test
+        client.api_type = "pulse"
+
+        # Setup mock responses
+        constant_data = {
+            "id": 3001,
+                "name": "QA_EMAIL",
+                "value": "qa@example.com",
+                "description": "Email address for QA team",
+                "projectId": 12345,
+            }
+
+        new_constant_data = {
+            "id": 3002,
+                "name": "NEW_CONSTANT",
+                "value": "new value",
+                "description": "New constant description",
+                "projectId": 12345,
+            }
+
+        updated_constant_data = {
+            "id": 3001,
+                "name": "UPDATED_CONSTANT",
+                "value": "updated@example.com",
+                "description": "Email address for QA team",
+                "projectId": 12345,
+            }
+
+        # Configure mock responses for each method call individually
+        # Using a dict to map method + endpoint to responses
+        responses = {}
+
+        # For get_pulse_constants
+        responses[("GET", "/pulse/constants")] = {"data": [constant_data]}
+
+        # For get_pulse_constant
+        responses[("GET", "/pulse/constants/3001")] = {"data": constant_data}
+
+        # For create_pulse_constant
+        responses[("POST", "/pulse/constants")] = {"data": new_constant_data}
+
+        # For update_pulse_constant
+        responses[("PUT", "/pulse/constants/3001")] = {"data": updated_constant_data}
+
+        # For delete_pulse_constant
+        responses[("DELETE", "/pulse/constants/3001")] = {}
+
+        # Mock _make_request to return responses based on method and endpoint
+        def mock_response(method, endpoint, **kwargs):
+            return responses.get((method, endpoint))
+
+        mock_make_request.side_effect = mock_response
+
+        # Setup iterator mock for get_pulse_constants
+        with patch("ztoq.qtest_client.QTestPaginatedIterator.__next__") as mock_next:
+
+
+            mock_next.side_effect = [
+                QTestPulseConstant(**constant_data),
+                    StopIteration(),
+                ]
+
+            # Test get_pulse_constants
+            constants_iterator = client.get_pulse_constants()
+            constants = list(constants_iterator)
+            assert len(constants) == 1
+            assert constants[0].id == 3001
+            assert constants[0].name == "QA_EMAIL"
+
+        # Test get_pulse_constant
+        constant = client.get_pulse_constant(3001)
+        assert constant.id == 3001
+        assert constant.name == "QA_EMAIL"
+
+        # Test create_pulse_constant
+
+        new_constant = QTestPulseConstant(
+            name="NEW_CONSTANT",
+                value="new value",
+                description="New constant description",
+                projectId=12345,
+            )
+        created_constant = client.create_pulse_constant(new_constant)
+        assert created_constant.id == 3002
+        assert created_constant.name == "NEW_CONSTANT"
+
+        # Test update_pulse_constant
+        update_data = QTestPulseConstant(
+            id=3001,
+                name="UPDATED_CONSTANT",
+                value="updated@example.com",
+                description="Email address for QA team",
+                projectId=12345,
+            )
+        updated_constant = client.update_pulse_constant(3001, update_data)
+        assert updated_constant.name == "UPDATED_CONSTANT"
+
+        # Test delete_pulse_constant
+        result = client.delete_pulse_constant(3001)
+        assert result == True
 
     @patch("ztoq.qtest_client.requests.request")
     def test_get_rules(self, mock_request, client):

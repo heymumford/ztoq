@@ -4,28 +4,37 @@ This file is part of ZTOQ, licensed under the MIT License.
 See LICENSE file for details.
 """
 
-import pytest
 import json
 import sqlite3
 from datetime import datetime
 from unittest.mock import MagicMock, patch
-from ztoq.models import (
-    Project, Case, CycleInfo, Execution, Folder, Status,
-        Priority, Environment, CustomField, Link, CaseStep
-)
+import pytest
 from ztoq.data_fetcher import FetchResult
 from ztoq.database_manager import DatabaseManager
+from ztoq.models import (
+    Case,
+        CaseStep,
+        CustomField,
+        CycleInfo,
+        Environment,
+        Execution,
+        Folder,
+        Link,
+        Priority,
+        Project,
+        Status,
+)
 
-@pytest.mark.unit
+@pytest.mark.unit()
 
 
 class TestDatabaseManager:
-    @pytest.fixture
+    @pytest.fixture()
     def db_path(self, tmp_path):
         """Create a temporary database path."""
         return tmp_path / "test.db"
 
-    @pytest.fixture
+    @pytest.fixture()
     def db_manager(self, db_path):
         """Create a test database manager instance."""
         return DatabaseManager(db_path)

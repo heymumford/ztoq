@@ -4,12 +4,12 @@ This file is part of ZTOQ, licensed under the MIT License.
 See LICENSE file for details.
 """
 
-import pytest
 from pathlib import Path
-from unittest.mock import patch, mock_open
-from ztoq.openapi_parser import load_openapi_spec, validate_zephyr_spec, extract_api_endpoints
+from unittest.mock import mock_open, patch
+import pytest
+from ztoq.openapi_parser import extract_api_endpoints, load_openapi_spec, validate_zephyr_spec
 
-@pytest.mark.unit
+@pytest.mark.unit()
 
 
 class TestOpenAPIParser:
@@ -29,13 +29,12 @@ class TestOpenAPIParser:
         """
 
         m = mock_open(read_data=mock_yaml)
-        with patch("builtins.open", m):
-            with patch("ztoq.openapi_parser.Path.exists", return_value=True):
-                result = load_openapi_spec(Path("z-openapi.yml"))
+        with patch("builtins.open", m), patch("ztoq.openapi_parser.Path.exists", return_value=True):
+            result = load_openapi_spec(Path("z-openapi.yml"))
 
-                assert result is not None
-                assert result["openapi"] == "3.0.0"
-                assert result["info"]["title"] == "Zephyr Scale API"
+            assert result is not None
+            assert result["openapi"] == "3.0.0"
+            assert result["info"]["title"] == "Zephyr Scale API"
 
     def test_validate_zephyr_spec_valid(self):
         """Test validating a valid Zephyr Scale API spec."""

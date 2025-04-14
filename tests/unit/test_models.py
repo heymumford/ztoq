@@ -4,22 +4,22 @@ This file is part of ZTOQ, licensed under the MIT License.
 See LICENSE file for details.
 """
 
-import pytest
-from datetime import datetime
 import base64
+from datetime import datetime
+import pytest
 from pydantic import ValidationError
 from ztoq.models import (
-    ZephyrConfig,
-        Link,
-        CustomField,
-        CaseStep,
+    Attachment,
         Case,
-        Priority,
+        CaseStep,
+        CustomField,
+        Link,
         PaginatedResponse,
-        Attachment,
+        Priority,
+        ZephyrConfig,
 )
 
-@pytest.mark.unit
+@pytest.mark.unit()
 
 
 class TestModels:

@@ -4,10 +4,10 @@ This file is part of ZTOQ, licensed under the MIT License.
 See LICENSE file for details.
 """
 
-from typing import Any, List, Optional
+import base64
 from datetime import datetime
 from enum import Enum
-import base64
+from typing import Any
 from pydantic import BaseModel, Field, field_validator
 
 class ZephyrConfig(BaseModel):
@@ -21,10 +21,10 @@ class ZephyrConfig(BaseModel):
 class Link(BaseModel):
     """Represents a link to an issue, web page, or test cycle."""
 
-    id: Optional[str] = None
+    id: str | None = None
     name: str
     url: str
-    description: Optional[str] = None
+    description: str | None = None
     type: str  # "issue", "web", or "testCycle"
 
 
@@ -74,7 +74,7 @@ class CustomField(BaseModel):
         if field_type == CustomFieldType.CHECKBOX and not isinstance(v, bool):
             raise ValueError(f"Field type {field_type} requires a boolean value")
         elif field_type == CustomFieldType.NUMERIC and not (
-            isinstance(v, int) or isinstance(v, float)
+            isinstance(v, int | float)
         ):
             raise ValueError(f"Field type {field_type} requires a numeric value")
         elif field_type == CustomFieldType.TABLE and not isinstance(v, list):
@@ -88,13 +88,13 @@ class CustomField(BaseModel):
 class Attachment(BaseModel):
     """Represents a file attachment in Zephyr Scale."""
 
-    id: Optional[str] = None
+    id: str | None = None
     filename: str
     content_type: str = Field(..., alias="contentType")
-    size: Optional[int] = None
-    created_on: Optional[datetime] = Field(None, alias="createdOn")
-    created_by: Optional[str] = Field(None, alias="createdBy")
-    content: Optional[str] = None  # Base64 encoded content when applicable
+    size: int | None = None
+    created_on: datetime | None = Field(None, alias="createdOn")
+    created_by: str | None = Field(None, alias="createdBy")
+    content: str | None = None  # Base64 encoded content when applicable
 
     model_config = {"populate_by_name": True}
 
@@ -115,14 +115,14 @@ class Attachment(BaseModel):
 class CaseStep(BaseModel):
     """Represents a step in a test case or execution."""
 
-    id: Optional[str] = None
+    id: str | None = None
     index: int
     description: str
-    expected_result: Optional[str] = Field(None, alias="expectedResult")
-    data: Optional[str] = None
-    actual_result: Optional[str] = Field(None, alias="actualResult")
-    status: Optional[str] = None
-    attachments: List[Attachment] = Field(default_factory=list)
+    expected_result: str | None = Field(None, alias="expectedResult")
+    data: str | None = None
+    actual_result: str | None = Field(None, alias="actualResult")
+    status: str | None = None
+    attachments: list[Attachment] = Field(default_factory=list)
 
     model_config = {"populate_by_name": True}
 
@@ -133,7 +133,7 @@ class ScriptFile(BaseModel):
     id: str
     filename: str
     type: str  # e.g. "cucumber", "python", "javascript"
-    content: Optional[str] = None
+    content: str | None = None
 
 
 class CaseVersion(BaseModel):
@@ -141,10 +141,10 @@ class CaseVersion(BaseModel):
 
     id: str
     name: str
-    description: Optional[str] = None
-    status: Optional[str] = None
+    description: str | None = None
+    status: str | None = None
     created_at: datetime = Field(..., alias="createdAt")
-    created_by: Optional[str] = Field(None, alias="createdBy")
+    created_by: str | None = Field(None, alias="createdBy")
 
     model_config = {"populate_by_name": True}
 
@@ -155,7 +155,7 @@ class Folder(BaseModel):
     id: str
     name: str
     folder_type: str = Field(..., alias="folderType")  # "TEST_CASE", "TEST_CYCLE", etc.
-    parent_id: Optional[str] = Field(None, alias="parentId")
+    parent_id: str | None = Field(None, alias="parentId")
     project_key: str = Field(..., alias="projectKey")
 
     model_config = {"populate_by_name": True}
@@ -166,8 +166,8 @@ class Status(BaseModel):
 
     id: str
     name: str
-    description: Optional[str] = None
-    color: Optional[str] = None
+    description: str | None = None
+    color: str | None = None
     type: str  # "TEST_CASE", "TEST_CYCLE", "TEST_EXECUTION", etc.
 
 
@@ -176,8 +176,8 @@ class Priority(BaseModel):
 
     id: str
     name: str
-    description: Optional[str] = None
-    color: Optional[str] = None
+    description: str | None = None
+    color: str | None = None
     rank: int
 
 
@@ -186,7 +186,7 @@ class Environment(BaseModel):
 
     id: str
     name: str
-    description: Optional[str] = None
+    description: str | None = None
 
 
 class Case(BaseModel):
@@ -195,31 +195,31 @@ class Case(BaseModel):
     id: str
     key: str
     name: str
-    objective: Optional[str] = None
-    precondition: Optional[str] = None
-    description: Optional[str] = None
-    status: Optional[str] = None
-    priority: Optional[Priority] = None
-    priority_name: Optional[str] = Field(None, alias="priorityName")
-    folder: Optional[str] = None
-    folder_name: Optional[str] = Field(None, alias="folderName")
-    owner: Optional[str] = None
-    owner_name: Optional[str] = Field(None, alias="ownerName")
-    component: Optional[str] = None
-    component_name: Optional[str] = Field(None, alias="componentName")
-    created_on: Optional[datetime] = Field(None, alias="createdOn")
-    created_by: Optional[str] = Field(None, alias="createdBy")
-    updated_on: Optional[datetime] = Field(None, alias="updatedOn")
-    updated_by: Optional[str] = Field(None, alias="updatedBy")
-    version: Optional[str] = None
-    estimated_time: Optional[int] = Field(None, alias="estimatedTime")
-    labels: List[str] = Field(default_factory=list)
-    steps: List[CaseStep] = Field(default_factory=list)
-    custom_fields: List[CustomField] = Field(default_factory=list, alias="customFields")
-    links: List[Link] = Field(default_factory=list)
-    scripts: List[ScriptFile] = Field(default_factory=list)
-    versions: List[CaseVersion] = Field(default_factory=list, alias="caseVersions")
-    attachments: List[Attachment] = Field(default_factory=list)
+    objective: str | None = None
+    precondition: str | None = None
+    description: str | None = None
+    status: str | None = None
+    priority: Priority | None = None
+    priority_name: str | None = Field(None, alias="priorityName")
+    folder: str | None = None
+    folder_name: str | None = Field(None, alias="folderName")
+    owner: str | None = None
+    owner_name: str | None = Field(None, alias="ownerName")
+    component: str | None = None
+    component_name: str | None = Field(None, alias="componentName")
+    created_on: datetime | None = Field(None, alias="createdOn")
+    created_by: str | None = Field(None, alias="createdBy")
+    updated_on: datetime | None = Field(None, alias="updatedOn")
+    updated_by: str | None = Field(None, alias="updatedBy")
+    version: str | None = None
+    estimated_time: int | None = Field(None, alias="estimatedTime")
+    labels: list[str] = Field(default_factory=list)
+    steps: list[CaseStep] = Field(default_factory=list)
+    custom_fields: list[CustomField] = Field(default_factory=list, alias="customFields")
+    links: list[Link] = Field(default_factory=list)
+    scripts: list[ScriptFile] = Field(default_factory=list)
+    versions: list[CaseVersion] = Field(default_factory=list, alias="caseVersions")
+    attachments: list[Attachment] = Field(default_factory=list)
 
     model_config = {"populate_by_name": True}
 
@@ -230,21 +230,21 @@ class CycleInfo(BaseModel):
     id: str
     key: str
     name: str
-    description: Optional[str] = None
-    status: Optional[str] = None
-    status_name: Optional[str] = Field(None, alias="statusName")
-    folder: Optional[str] = None
-    folder_name: Optional[str] = Field(None, alias="folderName")
+    description: str | None = None
+    status: str | None = None
+    status_name: str | None = Field(None, alias="statusName")
+    folder: str | None = None
+    folder_name: str | None = Field(None, alias="folderName")
     project_key: str = Field(..., alias="projectKey")
-    owner: Optional[str] = None
-    owner_name: Optional[str] = Field(None, alias="ownerName")
-    created_on: Optional[datetime] = Field(None, alias="createdOn")
-    created_by: Optional[str] = Field(None, alias="createdBy")
-    updated_on: Optional[datetime] = Field(None, alias="updatedOn")
-    updated_by: Optional[str] = Field(None, alias="updatedBy")
-    custom_fields: List[CustomField] = Field(default_factory=list, alias="customFields")
-    links: List[Link] = Field(default_factory=list)
-    attachments: List[Attachment] = Field(default_factory=list)
+    owner: str | None = None
+    owner_name: str | None = Field(None, alias="ownerName")
+    created_on: datetime | None = Field(None, alias="createdOn")
+    created_by: str | None = Field(None, alias="createdBy")
+    updated_on: datetime | None = Field(None, alias="updatedOn")
+    updated_by: str | None = Field(None, alias="updatedBy")
+    custom_fields: list[CustomField] = Field(default_factory=list, alias="customFields")
+    links: list[Link] = Field(default_factory=list)
+    attachments: list[Attachment] = Field(default_factory=list)
 
     model_config = {"populate_by_name": True}
 
@@ -255,20 +255,20 @@ class Plan(BaseModel):
     id: str
     key: str
     name: str
-    description: Optional[str] = None
-    status: Optional[str] = None
-    status_name: Optional[str] = Field(None, alias="statusName")
-    folder: Optional[str] = None
-    folder_name: Optional[str] = Field(None, alias="folderName")
+    description: str | None = None
+    status: str | None = None
+    status_name: str | None = Field(None, alias="statusName")
+    folder: str | None = None
+    folder_name: str | None = Field(None, alias="folderName")
     project_key: str = Field(..., alias="projectKey")
-    owner: Optional[str] = None
-    owner_name: Optional[str] = Field(None, alias="ownerName")
-    created_on: Optional[datetime] = Field(None, alias="createdOn")
-    created_by: Optional[str] = Field(None, alias="createdBy")
-    updated_on: Optional[datetime] = Field(None, alias="updatedOn")
-    updated_by: Optional[str] = Field(None, alias="updatedBy")
-    custom_fields: List[CustomField] = Field(default_factory=list, alias="customFields")
-    links: List[Link] = Field(default_factory=list)
+    owner: str | None = None
+    owner_name: str | None = Field(None, alias="ownerName")
+    created_on: datetime | None = Field(None, alias="createdOn")
+    created_by: str | None = Field(None, alias="createdBy")
+    updated_on: datetime | None = Field(None, alias="updatedOn")
+    updated_by: str | None = Field(None, alias="updatedBy")
+    custom_fields: list[CustomField] = Field(default_factory=list, alias="customFields")
+    links: list[Link] = Field(default_factory=list)
 
     model_config = {"populate_by_name": True}
 
@@ -279,24 +279,24 @@ class Execution(BaseModel):
     id: str
     test_case_key: str = Field(..., alias="testCaseKey")
     cycle_id: str = Field(..., alias="cycleId")
-    cycle_name: Optional[str] = Field(None, alias="cycleName")
+    cycle_name: str | None = Field(None, alias="cycleName")
     status: str
-    status_name: Optional[str] = Field(None, alias="statusName")
-    environment: Optional[str] = None
-    environment_name: Optional[str] = Field(None, alias="environmentName")
-    executed_by: Optional[str] = Field(None, alias="executedBy")
-    executed_by_name: Optional[str] = Field(None, alias="executedByName")
-    executed_on: Optional[datetime] = Field(None, alias="executedOn")
-    created_on: Optional[datetime] = Field(None, alias="createdOn")
-    created_by: Optional[str] = Field(None, alias="createdBy")
-    updated_on: Optional[datetime] = Field(None, alias="updatedOn")
-    updated_by: Optional[str] = Field(None, alias="updatedBy")
-    actual_time: Optional[int] = Field(None, alias="actualTime")
-    comment: Optional[str] = None
-    steps: List[CaseStep] = Field(default_factory=list)
-    custom_fields: List[CustomField] = Field(default_factory=list, alias="customFields")
-    links: List[Link] = Field(default_factory=list)
-    attachments: List[Attachment] = Field(default_factory=list)
+    status_name: str | None = Field(None, alias="statusName")
+    environment: str | None = None
+    environment_name: str | None = Field(None, alias="environmentName")
+    executed_by: str | None = Field(None, alias="executedBy")
+    executed_by_name: str | None = Field(None, alias="executedByName")
+    executed_on: datetime | None = Field(None, alias="executedOn")
+    created_on: datetime | None = Field(None, alias="createdOn")
+    created_by: str | None = Field(None, alias="createdBy")
+    updated_on: datetime | None = Field(None, alias="updatedOn")
+    updated_by: str | None = Field(None, alias="updatedBy")
+    actual_time: int | None = Field(None, alias="actualTime")
+    comment: str | None = None
+    steps: list[CaseStep] = Field(default_factory=list)
+    custom_fields: list[CustomField] = Field(default_factory=list, alias="customFields")
+    links: list[Link] = Field(default_factory=list)
+    attachments: list[Attachment] = Field(default_factory=list)
 
     model_config = {"populate_by_name": True}
 
@@ -308,7 +308,7 @@ class PaginatedResponse(BaseModel):
     start_at: int = Field(..., alias="startAt")
     max_results: int = Field(..., alias="maxResults")
     is_last: bool = Field(..., alias="isLast")
-    values: List[Any] = Field(default_factory=list)
+    values: list[Any] = Field(default_factory=list)
 
     model_config = {"populate_by_name": True}
 
@@ -319,7 +319,7 @@ class Project(BaseModel):
     id: str
     key: str
     name: str
-    description: Optional[str] = None
+    description: str | None = None
 
 
 # Compatibility aliases for backward compatibility

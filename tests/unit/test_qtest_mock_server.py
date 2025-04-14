@@ -5,17 +5,13 @@ See LICENSE file for details.
 """
 
 import pytest
-import json
-from unittest.mock import MagicMock, patch
-import uuid
-from datetime import datetime
 from ztoq.qtest_mock_server import QTestMockServer
 
-@pytest.mark.unit
+@pytest.mark.unit()
 
 
 class TestQTestMockServer:
-    @pytest.fixture
+    @pytest.fixture()
     def mock_server(self):
         """Create a test qTest mock server instance."""
         return QTestMockServer()
@@ -216,54 +212,170 @@ class TestQTestMockServer:
             ]
             assert len(values) == len(param_data["values"])
 
-    def test_handle_get_rules(self, mock_server):
-        """Test getting Pulse rules."""
+    def test_handle_pulse_api(self, mock_server):
+        """Test Pulse API functionality."""
         # Get project ID from sample data
         project_id = mock_server.data["manager"]["projects"][0]["id"]
 
-        # Get rules
-        result = mock_server._handle_get_rules(project_id)
+        # Test getting rules
+        rules_result = mock_server._handle_get_rules(project_id)
+        assert "data" in rules_result
+        assert isinstance(rules_result["data"], list)
 
-        # Verify result
-        assert "data" in result
-        assert isinstance(result["data"], list)
-
-        # Should contain rules with matching project ID
-        for rule in result["data"]:
-            assert rule["projectId"] == project_id
-
-    def test_handle_create_rule(self, mock_server):
-        """Test creating a Pulse rule."""
-        # Get project ID from sample data
-        project_id = mock_server.data["manager"]["projects"][0]["id"]
-
-        # Rule data
+        # Test creating a rule
         rule_data = {
-            "name": "New Rule",
+            "name": "New Test Rule",
                 "description": "New rule description",
                 "projectId": project_id,
                 "enabled": True,
-                "conditions": [{"field": "status", "operator": "equals", "value": "PASS"}],
-                "actions": [
-                {
-                    "type": "email",
-                        "configuration": {"to": "test@example.com", "subject": "Test passed"},
-                    }
-            ],
-            }
+                "triggerId": 1001,  # Use existing sample trigger ID
+            "actionId": 2001    # Use existing sample action ID
+        }
+        create_rule_result = mock_server._handle_create_rule(rule_data)
+        assert "data" in create_rule_result
+        assert create_rule_result["data"]["name"] == "New Test Rule"
+        rule_id = create_rule_result["data"]["id"]
 
-        # Create rule
-        result = mock_server._handle_create_rule(rule_data)
+        # Test getting a specific rule
+        get_rule_result = mock_server._handle_get_rule(rule_id)
+        assert "data" in get_rule_result
+        assert get_rule_result["data"]["name"] == "New Test Rule"
 
-        # Verify result
-        assert "data" in result
-        assert result["data"]["name"] == "New Rule"
-        assert result["data"]["description"] == "New rule description"
-        assert result["data"]["projectId"] == project_id
+        # Test updating a rule
+        update_data = {"name": "Updated Rule Name", "description": "Updated description"}
+        update_rule_result = mock_server._handle_update_rule(rule_id, update_data)
+        assert "data" in update_rule_result
+        assert update_rule_result["data"]["name"] == "Updated Rule Name"
 
-        # Verify rule was stored
-        rule_id = result["data"]["id"]
-        assert rule_id in mock_server.data["pulse"]["rules"]
+        # Test executing a rule
+        execute_rule_result = mock_server._handle_execute_rule(rule_id)
+        assert "data" in execute_rule_result
+        assert "message" in execute_rule_result["data"]
+
+        # Test deleting a rule
+        delete_rule_result = mock_server._handle_delete_rule(rule_id)
+        assert "success" in delete_rule_result
+        assert rule_id not in mock_server.data["pulse"]["rules"]
+
+    def test_handle_pulse_triggers(self, mock_server):
+        """Test Pulse API trigger functionality."""
+        # Get project ID from sample data
+        project_id = mock_server.data["manager"]["projects"][0]["id"]
+
+        # Test getting triggers
+        triggers_result = mock_server._handle_get_triggers(project_id)
+        assert "data" in triggers_result
+        assert isinstance(triggers_result["data"], list)
+
+        # Test creating a trigger
+        trigger_data = {
+            "name": "New Test Trigger",
+                "eventType": "TEST_CASE_UPDATED",
+                "projectId": project_id,
+                "conditions": [{"field": "priority", "operator": "equals", "value": "High"}]
+        }
+        create_trigger_result = mock_server._handle_create_trigger(trigger_data)
+        assert "data" in create_trigger_result
+        assert create_trigger_result["data"]["name"] == "New Test Trigger"
+        trigger_id = create_trigger_result["data"]["id"]
+
+        # Test getting a specific trigger
+        get_trigger_result = mock_server._handle_get_trigger(str(trigger_id))
+        assert "data" in get_trigger_result
+        assert get_trigger_result["data"]["name"] == "New Test Trigger"
+
+        # Test updating a trigger
+        update_data = {"name": "Updated Trigger Name", "conditions": []}
+        update_trigger_result = mock_server._handle_update_trigger(str(trigger_id), update_data)
+        assert "data" in update_trigger_result
+        assert update_trigger_result["data"]["name"] == "Updated Trigger Name"
+
+        # Test deleting a trigger
+        delete_trigger_result = mock_server._handle_delete_trigger(str(trigger_id))
+        assert "success" in delete_trigger_result
+        assert trigger_id not in mock_server.data["pulse"]["triggers"]
+
+    def test_handle_pulse_actions(self, mock_server):
+        """Test Pulse API action functionality."""
+        # Get project ID from sample data
+        project_id = mock_server.data["manager"]["projects"][0]["id"]
+
+        # Test getting actions
+        actions_result = mock_server._handle_get_actions(project_id)
+        assert "data" in actions_result
+        assert isinstance(actions_result["data"], list)
+
+        # Test creating an action
+        action_data = {
+            "name": "New Test Action",
+                "actionType": "SEND_MAIL",
+                "projectId": project_id,
+                "parameters": [
+                {"name": "recipients", "value": "test@example.com"},
+                    {"name": "subject", "value": "Test Subject"}
+            ]
+        }
+        create_action_result = mock_server._handle_create_action(action_data)
+        assert "data" in create_action_result
+        assert create_action_result["data"]["name"] == "New Test Action"
+        action_id = create_action_result["data"]["id"]
+
+        # Test getting a specific action
+        get_action_result = mock_server._handle_get_action(str(action_id))
+        assert "data" in get_action_result
+        assert get_action_result["data"]["name"] == "New Test Action"
+
+        # Test updating an action
+        update_data = {
+            "name": "Updated Action Name",
+                "parameters": [{"name": "recipients", "value": "updated@example.com"}]
+        }
+        update_action_result = mock_server._handle_update_action(str(action_id), update_data)
+        assert "data" in update_action_result
+        assert update_action_result["data"]["name"] == "Updated Action Name"
+
+        # Test deleting an action
+        delete_action_result = mock_server._handle_delete_action(str(action_id))
+        assert "success" in delete_action_result
+        assert action_id not in mock_server.data["pulse"]["actions"]
+
+    def test_handle_pulse_constants(self, mock_server):
+        """Test Pulse API constant functionality."""
+        # Get project ID from sample data
+        project_id = mock_server.data["manager"]["projects"][0]["id"]
+
+        # Test getting constants
+        constants_result = mock_server._handle_get_constants(project_id)
+        assert "data" in constants_result
+        assert isinstance(constants_result["data"], list)
+
+        # Test creating a constant
+        constant_data = {
+            "name": "NEW_TEST_CONSTANT",
+                "value": "test value",
+                "description": "Test constant description",
+                "projectId": project_id
+        }
+        create_constant_result = mock_server._handle_create_constant(constant_data)
+        assert "data" in create_constant_result
+        assert create_constant_result["data"]["name"] == "NEW_TEST_CONSTANT"
+        constant_id = create_constant_result["data"]["id"]
+
+        # Test getting a specific constant
+        get_constant_result = mock_server._handle_get_constant(str(constant_id))
+        assert "data" in get_constant_result
+        assert get_constant_result["data"]["name"] == "NEW_TEST_CONSTANT"
+
+        # Test updating a constant
+        update_data = {"name": "UPDATED_CONSTANT", "value": "updated value"}
+        update_constant_result = mock_server._handle_update_constant(str(constant_id), update_data)
+        assert "data" in update_constant_result
+        assert update_constant_result["data"]["name"] == "UPDATED_CONSTANT"
+
+        # Test deleting a constant
+        delete_constant_result = mock_server._handle_delete_constant(str(constant_id))
+        assert "success" in delete_constant_result
+        assert constant_id not in mock_server.data["pulse"]["constants"]
 
     def test_handle_get_features(self, mock_server):
         """Test getting Scenario features."""

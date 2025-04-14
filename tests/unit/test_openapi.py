@@ -4,14 +4,14 @@ This file is part of ZTOQ, licensed under the MIT License.
 See LICENSE file for details.
 """
 
-import pytest
 from pathlib import Path
-from unittest.mock import patch, MagicMock
-from ztoq.openapi_parser import load_openapi_spec
+from unittest.mock import MagicMock, patch
+import pytest
 from ztoq.core.services import get_openapi_spec
 from ztoq.domain.models import OpenAPISpec
+from ztoq.openapi_parser import load_openapi_spec
 
-@pytest.mark.unit
+@pytest.mark.unit()
 
 
 class TestOpenAPILoader:
@@ -40,7 +40,7 @@ class TestOpenAPILoader:
         mock_yaml_load.assert_called_once()
 
 
-@pytest.mark.unit
+@pytest.mark.unit()
 
 
 class TestOpenAPIService:

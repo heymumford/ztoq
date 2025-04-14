@@ -1,10 +1,11 @@
 # Makefile for ZTOQ project
 
-.PHONY: setup install test lint format clean docs docs-clean build checkin
+.PHONY: setup install test lint format clean docs docs-clean build checkin security pre-commit docker-build docker-run validate-all test-unit test-integration test-docker test-docker-no-containers
 
 setup:
 	pip install poetry
 	poetry install
+	poetry run pre-commit install
 
 install:
 	poetry install
@@ -18,14 +19,39 @@ test-unit:
 test-integration:
 	poetry run pytest -m integration
 
+test-docker:
+	poetry run pytest -m docker
+
+test-docker-no-containers:
+	SKIP_DOCKER_TESTS=1 poetry run pytest -m docker
+
 test-cov:
-	poetry run pytest --cov=ztoq --cov-report=term --cov-report=html
+	poetry run pytest --cov=ztoq --cov-report=term --cov-report=html --cov-report=xml
 
 lint:
-	poetry run flake8 ztoq tests
+	poetry run ruff check .
+	poetry run mypy ztoq
+	poetry run pylint ztoq
 
 format:
-	poetry run black ztoq tests
+	poetry run ruff format .
+	poetry run ruff check --fix .
+	poetry run isort .
+
+security:
+	poetry run bandit -r ztoq -c pyproject.toml
+	poetry run safety check
+
+pre-commit:
+	poetry run pre-commit run --all-files
+
+docker-build:
+	docker build -t ztoq:latest .
+
+docker-run:
+	docker run --rm -it ztoq:latest
+
+validate-all: format lint test security
 
 validate:
 	poetry run ztoq validate z-openapi.yml
@@ -68,3 +94,9 @@ clean:
 	rm -rf htmlcov
 	rm -rf .coverage
 	rm -rf docs/sphinx/build
+
+docker-build:
+	docker build -t ztoq:latest .
+
+docker-run:
+	docker run --rm -it ztoq:latest

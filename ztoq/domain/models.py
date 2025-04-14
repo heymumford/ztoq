@@ -4,16 +4,16 @@ This file is part of ZTOQ, licensed under the MIT License.
 See LICENSE file for details.
 """
 
+from typing import Any
 from pydantic import BaseModel
-from typing import Dict, Any, Optional
 
 class OpenAPISpec(BaseModel):
     """OpenAPI specification model."""
 
     title: str
     version: str
-    data: Dict[str, Any]
-    path: Optional[str] = None
+    data: dict[str, Any]
+    path: str | None = None
 
     class Config:
         allow_population_by_field_name = True

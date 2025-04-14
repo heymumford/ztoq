@@ -4,20 +4,21 @@ This file is part of ZTOQ, licensed under the MIT License.
 See LICENSE file for details.
 """
 
-import yaml
-import re
-from pathlib import Path
-from typing import Dict, Any, List, Optional, Tuple
+import base64
 import logging
 import random
+import re
 import string
-import base64
-from datetime import datetime, date
+from datetime import date, datetime
+from pathlib import Path
+from typing import Any
+import yaml
 
 # Set up module logger
 logger = logging.getLogger("ztoq.openapi_parser")
 
-def load_openapi_spec(spec_path: Path) -> Dict[str, Any]:
+
+def load_openapi_spec(spec_path: Path) -> dict[str, Any]:
     """Load and parse an OpenAPI specification file.
 
     Args:
@@ -33,7 +34,7 @@ def load_openapi_spec(spec_path: Path) -> Dict[str, Any]:
         raise FileNotFoundError(f"OpenAPI spec file not found at {spec_path}")
 
     try:
-        with open(spec_path, "r") as f:
+        with open(spec_path) as f:
             spec = yaml.safe_load(f)
 
         # Validate the spec
@@ -62,7 +63,8 @@ def load_openapi_spec(spec_path: Path) -> Dict[str, Any]:
         logger.error(f"Error loading OpenAPI spec: {e}")
         raise
 
-def validate_zephyr_spec(spec: Dict[str, Any]) -> bool:
+
+def validate_zephyr_spec(spec: dict[str, Any]) -> bool:
     """Validate that the OpenAPI spec is for Zephyr Scale API.
 
     Args:
@@ -88,7 +90,8 @@ def validate_zephyr_spec(spec: Dict[str, Any]) -> bool:
 
     return is_zephyr
 
-def extract_api_endpoints(spec: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
+
+def extract_api_endpoints(spec: dict[str, Any]) -> dict[str, dict[str, Any]]:
     """Extract API endpoints from the OpenAPI spec.
 
     Args:
@@ -119,6 +122,7 @@ def extract_api_endpoints(spec: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
     logger.info(f"Extracted {len(endpoints)} endpoints from OpenAPI spec")
     return endpoints
 
+
 class ZephyrApiSpecWrapper:
     """A wrapper class for the Zephyr Scale OpenAPI specification.
 
@@ -129,7 +133,7 @@ class ZephyrApiSpecWrapper:
     - Mock data generation for testing
     """
 
-    def __init__(self, spec: Dict[str, Any]):
+    def __init__(self, spec: dict[str, Any]):
         """Initialize the spec wrapper.
 
         Args:
@@ -141,7 +145,7 @@ class ZephyrApiSpecWrapper:
 
         logger.info(f"Initialized ZephyrApiSpecWrapper with {len(self.endpoints)} endpoints")
 
-    def _extract_endpoints(self) -> Dict[str, Dict[str, Any]]:
+    def _extract_endpoints(self) -> dict[str, dict[str, Any]]:
         """Extract detailed endpoint information from the spec.
 
         Returns:
@@ -169,7 +173,7 @@ class ZephyrApiSpecWrapper:
 
         return endpoints
 
-    def get_endpoint_info(self, path: str, method: str) -> Optional[Dict[str, Any]]:
+    def get_endpoint_info(self, path: str, method: str) -> dict[str, Any] | None:
         """Get detailed information about a specific endpoint.
 
         Args:
@@ -182,7 +186,7 @@ class ZephyrApiSpecWrapper:
         key = (path, method.lower())
         return self.endpoints.get(key)
 
-    def find_endpoints_by_tag(self, tag: str) -> List[Tuple[str, str]]:
+    def find_endpoints_by_tag(self, tag: str) -> list[tuple[str, str]]:
         """Find all endpoints with a specific tag.
 
         Args:
@@ -197,7 +201,7 @@ class ZephyrApiSpecWrapper:
                 matches.append((path, method))
         return matches
 
-    def find_endpoints_by_operation_id(self, operation_id: str) -> Optional[Tuple[str, str]]:
+    def find_endpoints_by_operation_id(self, operation_id: str) -> tuple[str, str] | None:
         """Find an endpoint by its operationId.
 
         Args:
@@ -211,7 +215,7 @@ class ZephyrApiSpecWrapper:
                 return (path, method)
         return None
 
-    def find_endpoints_by_pattern(self, pattern: str) -> List[Tuple[str, str]]:
+    def find_endpoints_by_pattern(self, pattern: str) -> list[tuple[str, str]]:
         """Find endpoints with paths matching a pattern.
 
         Args:
@@ -227,7 +231,7 @@ class ZephyrApiSpecWrapper:
                 matches.append((path, method))
         return matches
 
-    def get_request_schema(self, path: str, method: str) -> Optional[Dict[str, Any]]:
+    def get_request_schema(self, path: str, method: str) -> dict[str, Any] | None:
         """Get the request body schema for an endpoint.
 
         Args:
@@ -252,7 +256,7 @@ class ZephyrApiSpecWrapper:
 
     def get_response_schema(
         self, path: str, method: str, status_code: str = "200"
-    ) -> Optional[Dict[str, Any]]:
+    ) -> dict[str, Any] | None:
         """Get the response schema for an endpoint.
 
         Args:
@@ -278,8 +282,8 @@ class ZephyrApiSpecWrapper:
         return None
 
     def validate_request(
-        self, path: str, method: str, data: Dict[str, Any]
-    ) -> Tuple[bool, Optional[str]]:
+        self, path: str, method: str, data: dict[str, Any]
+    ) -> tuple[bool, str | None]:
         """Validate a request body against the schema.
 
         Args:
@@ -306,8 +310,8 @@ class ZephyrApiSpecWrapper:
             return False, error_message
 
     def validate_response(
-        self, path: str, method: str, status_code: str, data: Dict[str, Any]
-    ) -> Tuple[bool, Optional[str]]:
+        self, path: str, method: str, status_code: str, data: dict[str, Any]
+    ) -> tuple[bool, str | None]:
         """Validate a response against the schema.
 
         Args:
@@ -336,7 +340,7 @@ class ZephyrApiSpecWrapper:
             logger.error(error_message)
             return False, error_message
 
-    def _resolve_schema_refs(self, schema: Dict[str, Any]) -> Dict[str, Any]:
+    def _resolve_schema_refs(self, schema: dict[str, Any]) -> dict[str, Any]:
         """Recursively resolve $ref references in a schema.
 
         This is a simplified implementation that only handles basic references.
@@ -375,7 +379,7 @@ class ZephyrApiSpecWrapper:
 
         return result
 
-    def generate_mock_data(self, schema: Dict[str, Any]) -> Any:
+    def generate_mock_data(self, schema: dict[str, Any]) -> Any:
         """Generate mock data based on a schema.
 
         Args:
@@ -434,7 +438,7 @@ class ZephyrApiSpecWrapper:
                 return random.choice(schema["enum"])
             elif schema.get("contentEncoding") == "base64":
                 # Generate mock base64 content for binary data
-                return base64.b64encode(f"Mock binary data for {schema}".encode("utf-8")).decode(
+                return base64.b64encode(f"Mock binary data for {schema}".encode()).decode(
                     "utf-8"
                 )
             else:
@@ -490,7 +494,7 @@ class ZephyrApiSpecWrapper:
         logger.warning(f"Cannot generate mock data for schema: {schema}")
         return "mock_data"
 
-    def _generate_mock_custom_fields(self) -> List[Dict[str, Any]]:
+    def _generate_mock_custom_fields(self) -> list[dict[str, Any]]:
         """Generate a list of mock custom fields with different types.
 
         Returns:
@@ -554,7 +558,7 @@ class ZephyrApiSpecWrapper:
         num_fields = min(5, len(custom_fields))
         return random.sample(custom_fields, random.randint(2, num_fields))
 
-    def _generate_mock_attachments(self) -> List[Dict[str, Any]]:
+    def _generate_mock_attachments(self) -> list[dict[str, Any]]:
         """Generate a list of mock attachments.
 
         Returns:
@@ -609,7 +613,7 @@ class ZephyrApiSpecWrapper:
         num_attachments = min(3, len(attachment_types))
         return random.sample(attachment_types, random.randint(1, num_attachments))
 
-    def _generate_mock_steps(self) -> List[Dict[str, Any]]:
+    def _generate_mock_steps(self) -> list[dict[str, Any]]:
         """Generate a list of mock test steps with attachments.
 
         Returns:
@@ -643,7 +647,7 @@ class ZephyrApiSpecWrapper:
 
         return steps
 
-    def generate_mock_request(self, path: str, method: str) -> Dict[str, Any]:
+    def generate_mock_request(self, path: str, method: str) -> dict[str, Any]:
         """Generate a mock request body for an endpoint.
 
         Args:
@@ -661,7 +665,7 @@ class ZephyrApiSpecWrapper:
 
     def generate_mock_response(
         self, path: str, method: str, status_code: str = "200"
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Generate a mock response for an endpoint.
 
         Args:
@@ -678,7 +682,7 @@ class ZephyrApiSpecWrapper:
 
         return self.generate_mock_data(schema)
 
-    def get_parameters(self, path: str, method: str) -> Dict[str, Dict[str, Any]]:
+    def get_parameters(self, path: str, method: str) -> dict[str, dict[str, Any]]:
         """Get parameter definitions for an endpoint.
 
         Args:
@@ -704,9 +708,9 @@ class ZephyrApiSpecWrapper:
         self,
             path: str,
             method: str,
-            query_params: Dict[str, Any],
-            path_params: Dict[str, Any] = None,
-        ) -> Tuple[bool, Optional[str]]:
+            query_params: dict[str, Any],
+            path_params: dict[str, Any] = None,
+        ) -> tuple[bool, str | None]:
         """Validate request parameters against the schema.
 
         Args:
@@ -804,7 +808,7 @@ class ZephyrApiSpecWrapper:
 
         return "\n".join(output)
 
-    def _get_python_type(self, schema: Dict[str, Any]) -> str:
+    def _get_python_type(self, schema: dict[str, Any]) -> str:
         """Convert a JSON Schema type to a Python type annotation.
 
         Args:
@@ -882,7 +886,7 @@ class ZephyrApiSpecWrapper:
         # Add parameters
         for param_def in endpoint_info.get("parameters", []):
             param_name = param_def.get("name", "").replace("-", "_")
-            param_in = param_def.get("in")
+            param_def.get("in")
             required = param_def.get("required", False)
             schema = param_def.get("schema", {})
             python_type = self._get_python_type(schema)
@@ -899,6 +903,5 @@ class ZephyrApiSpecWrapper:
             params.append("body: Dict[str, Any]")
 
         # Build the full signature
-        signature = f"def {operation_id}({', '.join(params)}) -> Dict[str, Any]:"
+        return f"def {operation_id}({', '.join(params)}) -> Dict[str, Any]:"
 
-        return signature

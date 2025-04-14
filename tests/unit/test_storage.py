@@ -4,22 +4,22 @@ This file is part of ZTOQ, licensed under the MIT License.
 See LICENSE file for details.
 """
 
-import pytest
 import json
 from datetime import datetime
+import pytest
 from ztoq.models import Case, TestCase  # Using compatibility alias
-from ztoq.storage import SQLiteStorage, JSONStorage
+from ztoq.storage import JSONStorage, SQLiteStorage
 
-@pytest.mark.unit
+@pytest.mark.unit()
 
 
 class TestSQLiteStorage:
-    @pytest.fixture
+    @pytest.fixture()
     def db_path(self, tmp_path):
         """Create a temporary database path."""
         return tmp_path / "test.db"
 
-    @pytest.fixture
+    @pytest.fixture()
     def storage(self, db_path):
         """Create a test SQLite storage instance."""
         storage = SQLiteStorage(db_path)
@@ -126,16 +126,16 @@ class TestSQLiteStorage:
         assert storage._serialize_value(None) is None
 
 
-@pytest.mark.unit
+@pytest.mark.unit()
 
 
 class TestJSONStorage:
-    @pytest.fixture
+    @pytest.fixture()
     def output_dir(self, tmp_path):
         """Create a temporary output directory."""
         return tmp_path / "output"
 
-    @pytest.fixture
+    @pytest.fixture()
     def storage(self, output_dir):
         """Create a test JSON storage instance."""
         return JSONStorage(output_dir)
@@ -158,7 +158,7 @@ class TestJSONStorage:
         assert project_file.exists()
 
         # Check the content
-        with open(project_file, "r") as f:
+        with open(project_file) as f:
             project_data = json.load(f)
 
         assert project_data["id"] == "123"
@@ -190,7 +190,7 @@ class TestJSONStorage:
         assert test_cases_file.exists()
 
         # Check the content
-        with open(test_cases_file, "r") as f:
+        with open(test_cases_file) as f:
             saved_cases = json.load(f)
 
         assert len(saved_cases) == 2
@@ -221,7 +221,7 @@ class TestJSONStorage:
         test_cases_file = output_dir / "test_cases.json"
         assert test_cases_file.exists()
 
-        with open(test_cases_file, "r") as f:
+        with open(test_cases_file) as f:
             saved_cases = json.load(f)
 
         assert len(saved_cases) == 2
@@ -237,7 +237,7 @@ class TestJSONStorage:
             )
         storage.save_test_case(updated_case, "TEST")
 
-        with open(test_cases_file, "r") as f:
+        with open(test_cases_file) as f:
             saved_cases = json.load(f)
 
         assert len(saved_cases) == 2  # Still only 2 cases
