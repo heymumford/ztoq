@@ -8,11 +8,16 @@ This directory contains the testing framework for the ZTOQ project, organized ac
 tests/
 ├── fixtures/               # Test fixtures and factories
 │   ├── base.py             # Base fixtures for all test levels
-│   ├── factories.py        # Base factory classes
+│   ├── unit.py             # Unit test fixtures
 │   ├── integration.py      # Integration test fixtures
-│   ├── model_factories.py  # Model-specific factories
 │   ├── system.py           # System test fixtures
-│   └── unit.py             # Unit test fixtures
+│   ├── factories.py        # Base factory classes
+│   ├── model_factories.py  # Model-specific factories
+│   ├── database.py         # Database fixtures
+│   ├── api_clients.py      # API client fixtures
+│   └── mocks/              # API mocking framework
+│       ├── api_harness.py  # API mocking harness
+│       └── conftest.py     # API mocking fixtures
 │
 ├── unit/                   # Unit tests (fast, isolated)
 │   ├── test_module_1.py
@@ -29,8 +34,11 @@ tests/
 │   ├── test_workflow_2.py
 │   └── ...
 │
-└── conftest.py             # Global pytest configuration
+├── conftest.py             # Global pytest configuration
+└── test_pyramid.md         # Detailed guidelines for test organization
 ```
+
+For detailed guidance on test organization and the test pyramid approach, see [test_pyramid.md](test_pyramid.md).
 
 ## Test Pyramid
 
