@@ -33,6 +33,7 @@ Features
    test-strategy
    kanban
    maintenance
+   open-source-decisions
    adrs/index
    c4_lucidchart
    
