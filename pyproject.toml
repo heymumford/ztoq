@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "ztoq"
-version = "0.3.5"
+version = "0.3.6"
 description = "A Python tool that extracts test data from Zephyr Scale and migrates it to qTest"
 authors = ["Eric C. Mumford (@heymumford)"]
 readme = "README.md"
