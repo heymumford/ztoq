@@ -1,4 +1,4 @@
-FROM python:3.11-slim as builder
+FROM python:3.13-slim as builder
 
 WORKDIR /app
 
@@ -21,7 +21,7 @@ COPY README.md ./
 # Install project
 RUN poetry install --no-interaction --only-root
 
-FROM python:3.11-slim
+FROM python:3.13-slim
 
 WORKDIR /app
 

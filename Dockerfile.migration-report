@@ -1,4 +1,4 @@
-FROM python:3.11-slim as builder
+FROM python:3.13-slim as builder
 
 WORKDIR /app
 
@@ -25,7 +25,7 @@ RUN poetry install --no-interaction --only-root
 # Additional visualization dependencies
 RUN pip install matplotlib seaborn plotly kaleido
 
-FROM python:3.11-slim
+FROM python:3.13-slim
 
 WORKDIR /app
 
