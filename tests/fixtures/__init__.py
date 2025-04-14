@@ -40,6 +40,45 @@ from tests.fixtures.system import (
     run_cli_command
 )
 
+# Export database fixtures
+from tests.fixtures.database import (
+    schema_tables,
+    sqlite_test_db,
+    sqlalchemy_memory_engine,
+    sqlalchemy_memory_session,
+    sqlalchemy_file_engine,
+    sqlalchemy_file_session,
+    populate_test_db,
+    mock_sqlalchemy_engine,
+    mock_sqlalchemy_session,
+    transaction_fixture,
+    concurrent_sessions
+)
+
+# Export API client fixtures
+from tests.fixtures.api_clients import (
+    zephyr_config,
+    qtest_config,
+    mock_zephyr_client,
+    mock_qtest_client,
+    patch_zephyr_client,
+    patch_qtest_client,
+    zephyr_client_with_mock_api,
+    qtest_client_with_mock_api,
+    mock_response_factory
+)
+
+# Export API mocking fixtures
+from tests.fixtures.mocks.conftest import (
+    mock_zephyr_api,
+    mock_qtest_api,
+    mock_both_apis,
+    api_server,
+    mock_zephyr_client,
+    mock_qtest_client,
+    mock_both_clients
+)
+
 # Export factory base classes
 from tests.fixtures.factories import (
     BaseFactory,

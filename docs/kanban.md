@@ -7,6 +7,7 @@
 ### Phase 1: Core Infrastructure
 
 #### Test Foundations
+- [x] **[TEST-INFRA-2]** Create base test fixtures and factories
 - [x] **[TEST-INFRA-3]** Implement test harness for API mocking
 
 #### Unit Tests First
@@ -265,7 +266,6 @@
 
 ## In Progress
 - [ ] **[TEST-INFRA-1]** Setup test pyramid structure (unit, integration, acceptance) *(Working on test structure standardization)*
-- [ ] **[TEST-INFRA-2]** Create base test fixtures and factories *(Developing foundational test patterns)*
 - [ ] **[TEST-UNIT-15]** Write unit tests for qTest mock server endpoints *(Implementing test cases for mock services)*
 - [ ] **[MOCK-4]** Build mock server for qTest API endpoints *(Implementation complete, needs testing)*
 - [ ] **[TEST-UNIT-21]** Write unit tests for qTest entity models *(Creating comprehensive test suite)*
@@ -278,6 +278,7 @@
 - [ ] **[EXTRACT-1]** Create Zephyr API client with robust error handling and retry logic *(Ready for code review)*
 
 ## Completed
+- [x] **[TEST-INFRA-2]** Create base test fixtures and factories
 - [x] **[TEST-INFRA-3]** Implement test harness for API mocking
 - [x] **[TEST-UNIT-14]** Define unit tests for qTest mock factories
 - [x] **[MOCK-3]** Create mock factory for qTest API responses

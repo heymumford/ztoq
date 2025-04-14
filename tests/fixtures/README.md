@@ -52,6 +52,10 @@ Our fixtures are organized by test level and purpose:
 - `integration.py`: Fixtures for integration tests
 - `system.py`: Fixtures for system/E2E tests
 - `factories.py`: Test data factories for generating consistent test data
+- `model_factories.py`: Factories for domain-specific models
+- `database.py`: Database fixtures for all test levels
+- `api_clients.py`: API client fixtures for all test levels
+- `mocks/`: API mocking framework and fixtures
 
 ## Usage
 
@@ -94,6 +98,102 @@ def test_with_fixtures(
     # Test implementation
 ```
 
+### Database Fixtures
+
+Database fixtures are available for different testing scenarios:
+
+```python
+@pytest.mark.unit
+def test_with_mock_database(mock_sqlalchemy_session):
+    # Mock session for unit testing without actual database access
+    mock_sqlalchemy_session.query.return_value.all.return_value = []
+    # Test implementation
+
+@pytest.mark.integration
+def test_with_in_memory_database(sqlalchemy_memory_session, populate_test_db):
+    # Real in-memory SQLite database for integration testing
+    populate_test_db(sqlalchemy_memory_session)
+    result = sqlalchemy_memory_session.execute("SELECT * FROM Project").fetchall()
+    # Test implementation
+
+@pytest.mark.integration
+def test_with_file_database(sqlalchemy_file_session):
+    # Real file-based SQLite database for persistent testing
+    # Test implementation
+
+@pytest.mark.integration
+def test_with_transaction(transaction_fixture):
+    # Testing database transactions with automatic rollback
+    session, savepoint = transaction_fixture
+    # Test implementation with transaction support
+
+@pytest.mark.integration
+def test_concurrent_operations(concurrent_sessions):
+    # Testing concurrent database operations
+    session1, session2, session3 = concurrent_sessions
+    # Test implementation with multiple sessions
+```
+
+### API Client Fixtures
+
+API client fixtures for testing with external APIs:
+
+```python
+@pytest.mark.unit
+def test_with_mock_clients(mock_zephyr_client, mock_qtest_client):
+    # Simple mock clients for unit testing
+    mock_zephyr_client.get_test_cases.return_value = []
+    # Test implementation
+
+@pytest.mark.integration
+def test_with_patched_clients(patch_zephyr_client, patch_qtest_client):
+    # Patching the client classes for tests that create their own instances
+    from ztoq.zephyr_client import ZephyrClient
+    client = ZephyrClient(config)
+    # Test implementation
+
+@pytest.mark.integration
+def test_with_mock_api(zephyr_client_with_mock_api, qtest_client_with_mock_api):
+    # Real clients with mocked API responses for integration testing
+    projects = zephyr_client_with_mock_api.get_projects()
+    # Test implementation
+
+@pytest.mark.integration
+def test_with_api_harness(mock_zephyr_api, mock_qtest_api):
+    # Direct access to the API mocking harness for custom responses
+    mock_zephyr_api.add_response("GET", "/projects", {"values": []})
+    # Test implementation
+```
+
+### API Mocking Harness
+
+The API mocking harness provides sophisticated API simulation:
+
+```python
+@pytest.mark.integration
+def test_with_api_harness(mock_zephyr_api):
+    # Configure the harness
+    mock_zephyr_api.add_response(
+        "GET",
+        "/projects",
+        {"values": [{"id": "1", "key": "TEST"}]}
+    )
+
+    # Configure network conditions (optional)
+    mock_zephyr_api.set_delay(100)  # 100ms delay
+    mock_zephyr_api.set_error_rate(0.1)  # 10% error rate
+
+    # Use a real client with the mock API
+    client = ZephyrClient(config)
+    projects = client.get_projects()
+
+    # Inspect captured requests
+    requests = mock_zephyr_api.get_requests()
+    assert len(requests) == 1
+    assert requests[0].method == "GET"
+    assert requests[0].url.endswith("/projects")
+```
+
 ### Factories
 
 Use factories to create test data consistently:
@@ -122,6 +222,32 @@ def test_with_factory():
     users = UserFactory.create_batch(5)
 ```
 
+### Model-Specific Factories
+
+Domain-specific model factories are available:
+
+```python
+def test_with_domain_factories():
+    # Create Zephyr models
+    project = ProjectFactory.create()
+    test_case = TestCaseFactory.create(folder=project.id)
+    test_case_with_steps = TestCaseFactory.create_with_steps(step_count=3)
+
+    # Create qTest models
+    qtest_project = QTestProjectFactory.create()
+    qtest_test_case = QTestTestCaseFactory.create(project_id=qtest_project.id)
+```
+
+## Examples and Guides
+
+Complete examples of fixture usage are available in:
+
+- `tests/fixtures/test_fixtures_example.py`: General fixture examples
+- `tests/unit/test_fixtures_example.py`: Unit testing examples
+- `tests/integration/test_fixtures_example.py`: Integration testing examples
+- `tests/system/test_fixtures_example.py`: System testing examples
+- `tests/fixtures/mocks/test_api_harness_examples.py`: API mocking examples
+
 ## Best Practices
 
 1. **Use the right test level**: Match your test to the appropriate level in the pyramid
@@ -132,3 +258,5 @@ def test_with_factory():
 6. **Test isolation**: Ensure tests don't depend on each other
 7. **Keep tests focused**: Test one thing per test
 8. **Mind performance**: Minimize slow operations in unit tests
+9. **Mock external systems**: Use the API mocking harness for external dependencies
+10. **Use transactions**: Leverage transaction fixtures for database state isolation
