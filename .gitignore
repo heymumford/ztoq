@@ -34,5 +34,24 @@ env/
 # Logs
 *.log
 
-# Build info
+# Test artifacts
+.coverage
+htmlcov/
+.pytest_cache/
+test-reports/
+
+# Build & migration artifacts
 .build_info.json
+zephyr_export*/
+ztoq_data.db
+*.db
+migration-config/*
+!migration-config/settings.json.example
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Documentation build
+docs/sphinx/build/
