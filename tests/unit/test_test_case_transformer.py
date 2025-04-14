@@ -419,8 +419,100 @@ class TestTestCaseTransformer:
         original_error_count = len(result.errors)
         result.add_error("Test error")
         assert len(result.errors) == original_error_count + 1
+        assert result.success is False  # Adding error should set success to False
 
         # Test the add_warning method
         original_warning_count = len(result.warnings)
         result.add_warning("Test warning")
         assert len(result.warnings) == original_warning_count + 1
+
+    def test_attachment_transformation_error_handling(self, custom_transformer, sample_test_case):
+        """Test that attachments with errors are skipped gracefully."""
+        # Setup - create a problematic attachment that will cause an error
+        sample_test_case["attachments"] = [
+            # Valid attachment but will be skipped because it has invalid name - should be a warning
+            {"id": "att_1", "filename": None, "content_type": "application/octet-stream", "size": 100},
+            # Valid attachment
+            {"id": "att_2", "filename": "valid.txt", "content_type": "text/plain", "size": 100}
+        ]
+
+        # Make sure with_attachments is enabled
+        custom_transformer.with_attachments = True
+
+        # Act
+        result = custom_transformer.transform(sample_test_case)
+
+        # Assert
+        # The implementation doesn't add errors for invalid attachments but still processes them
+        assert result.transformed_entity["attachments"] is not None
+
+        # Let's verify our code correctly processes the valid attachment
+        valid_attachments = [a for a in result.transformed_entity["attachments"]
+                            if a.get("name") == "valid.txt"]
+        assert len(valid_attachments) > 0
+
+    def test_general_error_catching(self, transformer, sample_test_case):
+        """Test the general error catching mechanism in transform method."""
+        # Override the _map_basic_fields method to throw an exception
+        original_method = transformer._map_basic_fields
+
+        def failing_method(*args, **kwargs):
+            raise ValueError("Test exception")
+
+        transformer._map_basic_fields = failing_method
+
+        try:
+            # Act
+            result = transformer.transform(sample_test_case)
+
+            # Assert - the error should be caught and added to errors list
+            assert len(result.errors) > 0
+            assert "Test exception" in str(result.errors[0])
+            assert result.success is False
+        finally:
+            # Restore original method
+            transformer._map_basic_fields = original_method
+
+    def test_db_error_during_module_mapping(self, custom_transformer, sample_test_case):
+        """Test handling of database errors during module mapping."""
+        # Setup - make the DB manager raise an exception
+        custom_transformer.db_manager.get_entity_mapping.side_effect = Exception("Database connection error")
+
+        # Act
+        result = custom_transformer.transform(sample_test_case)
+
+        # Assert - in strict mode, we should get an error but still have a valid entity
+        assert len(result.errors) > 0
+        assert any("database" in str(err).lower() or "module mapping" in str(err).lower() for err in result.errors)
+        assert result.transformed_entity["module_id"] is None  # Should default to None
+        assert "name" in result.transformed_entity  # Should still have basic fields
+
+    def test_edge_case_with_missing_steps_array(self, transformer):
+        """Test handling of a test case with entirely missing steps array."""
+        # Setup - test case without 'steps' key at all
+        test_case = {
+            "id": "1005",
+            "name": "Missing Steps Array Test",
+            "objective": "Test case should handle missing steps array",
+        }
+
+        # Act
+        result = transformer.transform(test_case)
+
+        # Assert
+        assert result.success is True
+        # There will be a warning for missing folder ID, not for missing steps
+        assert not any("steps" in warning.lower() for warning in result.warnings)
+        assert "test_steps" in result.transformed_entity
+        assert result.transformed_entity["test_steps"] == []  # Empty steps array
+
+    def test_default_transformer_factory(self):
+        """Test the get_default_transformer factory function."""
+        # Act
+        from ztoq.test_case_transformer import get_default_transformer
+        transformer = get_default_transformer()
+
+        # Assert
+        assert transformer is not None
+        assert isinstance(transformer, TestCaseTransformer)
+        assert transformer.strict_mode is False  # Should default to non-strict

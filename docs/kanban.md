@@ -100,8 +100,8 @@
 #### Unit Tests
 - [x] **[TEST-UNIT-16]** Write unit tests for entity mapping definitions
 - [x] **[TRANSFORM-1]** Create entity mapping definitions with validation rules
-- [ ] **[TEST-UNIT-17]** Write unit tests for test case transformer
-- [ ] **[TRANSFORM-2]** Implement test case transformer with error boundaries
+- [x] **[TEST-UNIT-17]** Write unit tests for test case transformer
+- [x] **[TRANSFORM-2]** Implement test case transformer with error boundaries
 - [ ] **[TEST-UNIT-18]** Write unit tests for test cycle transformer
 - [ ] **[TRANSFORM-3]** Implement test cycle transformer with validation
 - [ ] **[TEST-UNIT-19]** Write unit tests for test execution transformer
@@ -265,7 +265,6 @@
 - [ ] **[ANTIFRAGILE-13]** Document barbell strategy for feature development
 
 ## In Progress
-- [ ] **[TEST-UNIT-17]** Write unit tests for test case transformer
 
 ## Review
 
@@ -273,6 +272,8 @@
 - [x] **[TEST-INFRA-1]** Setup test pyramid structure (unit, integration, acceptance)
 - [x] **[TEST-INFRA-2]** Create base test fixtures and factories
 - [x] **[TEST-INFRA-3]** Implement test harness for API mocking
+- [x] **[TEST-UNIT-17]** Write unit tests for test case transformer
+- [x] **[TRANSFORM-2]** Implement test case transformer with error boundaries
 - [x] **[TEST-UNIT-22]** Write unit tests for qTest authentication
 - [x] **[QTEST-2]** Implement qTest authentication and token management *(Added comprehensive token management with bearer token and username/password authentication, automatic token refresh, rate limit handling, and debugging tools)*
 - [x] **[TEST-UNIT-3]** Write unit tests for Zephyr API client *(Added comprehensive tests for retry logic, circuit breaker, and error handling)*
