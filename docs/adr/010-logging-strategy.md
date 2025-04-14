@@ -289,3 +289,6 @@ class LogRedactor:
 - [Python Logging Cookbook](https://docs.python.org/3/howto/logging-cookbook.html)
 - [Structured Logging Best Practices](https://www.datadoghq.com/blog/python-logging-best-practices/)
 - [12-Factor App: Logs](https://12factor.net/logs)
+
+---
+*Copyright (c) 2025 Eric C. Mumford (@heymumford) - Licensed under [MIT License](../../LICENSE)*

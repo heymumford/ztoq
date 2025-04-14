@@ -138,3 +138,6 @@ This approach will be reviewed after implementing the first full migration to as
 2. Performance (entities per minute)
 3. Resource utilization
 4. Error recovery effectiveness
+
+---
+*Copyright (c) 2025 Eric C. Mumford (@heymumford) - Licensed under [MIT License](../../LICENSE)*

@@ -1,4 +1,10 @@
 """
+Copyright (c) 2025 Eric C. Mumford (@heymumford)
+This file is part of ZTOQ, licensed under the MIT License.
+See LICENSE file for details.
+"""
+
+"""
 Test generation utilities for Zephyr Scale API testing.
 
 This module provides tools for generating test cases based on OpenAPI specifications.

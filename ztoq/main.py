@@ -1,3 +1,9 @@
+"""
+Copyright (c) 2025 Eric C. Mumford (@heymumford)
+This file is part of ZTOQ, licensed under the MIT License.
+See LICENSE file for details.
+"""
+
 import uvicorn
 
 from ztoq.core.services import get_openapi_spec

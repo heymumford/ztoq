@@ -169,3 +169,6 @@ The Zephyr to qTest Migration system (ZTOQ) is designed to facilitate a reliable
 ## Conclusion
 
 The ZTOQ system provides a robust, reliable solution for migrating test assets from Zephyr Scale to qTest. The architecture emphasizes data integrity, error resilience, and performance, ensuring a successful migration even with large datasets and complex entity relationships.
+
+---
+*Copyright (c) 2025 Eric C. Mumford (@heymumford) - Licensed under [MIT License](../../LICENSE)*

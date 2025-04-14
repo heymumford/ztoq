@@ -20,3 +20,6 @@ ADRs are documents that capture an important architectural decision made along w
 | [ADR-008](008-test-driven-development.md) | Test-Driven Development Approach | Accepted | 2025-04-13 |
 | [ADR-009](009-error-handling-strategy.md) | Error Handling Strategy | Accepted | 2025-04-13 |
 | [ADR-010](010-logging-strategy.md) | Logging Strategy | Accepted | 2025-04-13 |
+
+---
+*Copyright (c) 2025 Eric C. Mumford (@heymumford) - Licensed under [MIT License](../../LICENSE)*

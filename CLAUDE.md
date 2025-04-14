@@ -25,3 +25,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   - Constants: UPPER_SNAKE_CASE
 - **Documentation**: Docstrings for all public classes and methods
 - **Testing**: Follow TDD approach (test-driven development) with pytest
+
+---
+*Copyright (c) 2025 Eric C. Mumford (@heymumford) - Licensed under [MIT License](LICENSE)*

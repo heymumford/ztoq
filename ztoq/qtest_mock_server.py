@@ -1,4 +1,10 @@
 """
+Copyright (c) 2025 Eric C. Mumford (@heymumford)
+This file is part of ZTOQ, licensed under the MIT License.
+See LICENSE file for details.
+"""
+
+"""
 Mock server for qTest API testing.
 
 This module provides a mock server that simulates the qTest APIs for testing.

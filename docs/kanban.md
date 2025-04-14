@@ -341,3 +341,6 @@ For each task in the above Kanban board, we will follow this TDD (Test-Driven De
 - Include validation at all stages of the ETL process
 - Logging should capture sufficient context for production troubleshooting
 - All errors should be gracefully handled with clear user feedback
+
+---
+*Copyright (c) 2025 Eric C. Mumford (@heymumford) - Licensed under [MIT License](../../LICENSE)*

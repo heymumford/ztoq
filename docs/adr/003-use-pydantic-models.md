@@ -85,3 +85,6 @@ class TestCase(BaseModel):
 ```
 
 This approach will ensure consistent validation and serialization across the application.
+
+---
+*Copyright (c) 2025 Eric C. Mumford (@heymumford) - Licensed under [MIT License](../../LICENSE)*

@@ -109,3 +109,6 @@ with Progress(
 ```
 
 This structure will provide a consistent, user-friendly interface that is easy to extend as we add more functionality.
+
+---
+*Copyright (c) 2025 Eric C. Mumford (@heymumford) - Licensed under [MIT License](../../LICENSE)*

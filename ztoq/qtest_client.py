@@ -1,4 +1,10 @@
 """
+Copyright (c) 2025 Eric C. Mumford (@heymumford)
+This file is part of ZTOQ, licensed under the MIT License.
+See LICENSE file for details.
+"""
+
+"""
 qTest API Client for interacting with qTest Manager, Parameters, Pulse and Scenario.
 
 This module provides a unified client for working with all qTest APIs.

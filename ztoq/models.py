@@ -1,3 +1,9 @@
+"""
+Copyright (c) 2025 Eric C. Mumford (@heymumford)
+This file is part of ZTOQ, licensed under the MIT License.
+See LICENSE file for details.
+"""
+
 from typing import Any, List, Optional
 from datetime import datetime
 from enum import Enum

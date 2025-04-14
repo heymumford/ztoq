@@ -71,3 +71,6 @@ We'll implement a storage layer with these components:
    def save_test_case(self, test_case: TestCase, project_key: str):
        # Update test_cases.json file with new test case
    ```
+
+---
+*Copyright (c) 2025 Eric C. Mumford (@heymumford) - Licensed under [MIT License](../../LICENSE)*

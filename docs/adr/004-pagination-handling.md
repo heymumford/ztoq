@@ -133,3 +133,6 @@ for test_case in client.get_test_cases():
 # Convert to list - fetches all pages immediately
 all_test_cases = list(client.get_test_cases())
 ```
+
+---
+*Copyright (c) 2025 Eric C. Mumford (@heymumford) - Licensed under [MIT License](../../LICENSE)*

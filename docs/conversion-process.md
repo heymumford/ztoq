@@ -144,3 +144,6 @@ ztoq [options]
    - Add rollback capability
 
 This architecture provides a robust, efficient framework for migrating test assets from Zephyr to qTest while maintaining data integrity and optimizing for performance through parallel processing.
+
+---
+*Copyright (c) 2025 Eric C. Mumford (@heymumford) - Licensed under [MIT License](../../LICENSE)*

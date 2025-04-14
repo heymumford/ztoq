@@ -349,3 +349,6 @@ PROJECT
 ├── Priorities
 └── Environments
 ```
+
+---
+*Copyright (c) 2025 Eric C. Mumford (@heymumford) - Licensed under [MIT License](LICENSE)*

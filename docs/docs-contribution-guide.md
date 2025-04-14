@@ -96,3 +96,6 @@ As the project evolves:
 2. Archive outdated documentation (don't delete it)
 3. Mark experimental features as such
 4. Note version compatibility where relevant
+
+---
+*Copyright (c) 2025 Eric C. Mumford (@heymumford) - Licensed under [MIT License](../../LICENSE)*

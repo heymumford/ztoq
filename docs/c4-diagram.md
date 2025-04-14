@@ -300,3 +300,6 @@ Our architecture follows these key principles, which are reflected in the C4 dia
 8. **Extensibility**: Modular design that supports adding new features
 9. **Data Integrity**: Validation at all stages of data processing
 10. **Resumability**: Operations designed to be interruptible and resumable
+
+---
+*Copyright (c) 2025 Eric C. Mumford (@heymumford) - Licensed under [MIT License](../../LICENSE)*

@@ -108,3 +108,6 @@ python build.py test --with-docs
 - [Sphinx Documentation](https://www.sphinx-doc.org/)
 - [Read the Docs Theme](https://sphinx-rtd-theme.readthedocs.io/)
 - [MyST Parser for Markdown](https://myst-parser.readthedocs.io/)
+
+---
+*Copyright (c) 2025 Eric C. Mumford (@heymumford) - Licensed under [MIT License](../../LICENSE)*

@@ -206,3 +206,6 @@ def handle_cli_error(error: Exception, verbose: bool = False) -> None:
 - [Railway Oriented Programming](https://fsharpforfunandprofit.com/rop/)
 - [Python Exception Best Practices](https://docs.python-guide.org/writing/structure/#error-handling)
 - [Functional Error Handling](https://medium.com/swlh/functional-error-handling-in-python-296c09d34b3c)
+
+---
+*Copyright (c) 2025 Eric C. Mumford (@heymumford) - Licensed under [MIT License](../../LICENSE)*

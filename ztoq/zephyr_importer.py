@@ -1,4 +1,10 @@
 """
+Copyright (c) 2025 Eric C. Mumford (@heymumford)
+This file is part of ZTOQ, licensed under the MIT License.
+See LICENSE file for details.
+"""
+
+"""
 Main application module for importing Zephyr Scale test data into a SQL database.
 
 This module provides a high-level interface for the entire import process,

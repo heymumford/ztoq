@@ -79,3 +79,6 @@ ztoq = "ztoq.cli:app"
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 ```
+
+---
+*Copyright (c) 2025 Eric C. Mumford (@heymumford) - Licensed under [MIT License](../../LICENSE)*

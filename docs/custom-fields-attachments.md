@@ -173,3 +173,6 @@ poetry run pytest tests/generated/test_attachments.py
 5. Test step-specific attachments in test cases and executions
 
 These tests ensure that the ZTOQ tool correctly handles all custom field types and binary attachments for a comprehensive data extraction from Zephyr Scale and migration to qTest.
+
+---
+*Copyright (c) 2025 Eric C. Mumford (@heymumford) - Licensed under [MIT License](../../LICENSE)*

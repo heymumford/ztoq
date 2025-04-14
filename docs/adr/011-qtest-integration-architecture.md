@@ -113,3 +113,6 @@ Our client will be designed to work with:
 - Use batched operations where possible
 - Support parallel processing for independent entities
 - Implement intelligent retry mechanisms with exponential backoff
+
+---
+*Copyright (c) 2025 Eric C. Mumford (@heymumford) - Licensed under [MIT License](../../LICENSE)*

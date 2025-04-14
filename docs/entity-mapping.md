@@ -199,3 +199,6 @@ The mapping engine should be extensible to support:
 - Entity relationship customizations
 - Organization-specific naming conventions
 - Integration with external systems (JIRA, etc.)
+
+---
+*Copyright (c) 2025 Eric C. Mumford (@heymumford) - Licensed under [MIT License](../../LICENSE)*

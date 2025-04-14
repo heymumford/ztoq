@@ -120,3 +120,6 @@ The DatabaseManager implementation follows Test-Driven Development principles wi
 - [SQLite Foreign Key Documentation](https://www.sqlite.org/foreignkeys.html)
 - [Python contextlib Documentation](https://docs.python.org/3/library/contextlib.html)
 - [SQLite Transaction Documentation](https://www.sqlite.org/lang_transaction.html)
+
+---
+*Copyright (c) 2025 Eric C. Mumford (@heymumford) - Licensed under [MIT License](../../LICENSE)*

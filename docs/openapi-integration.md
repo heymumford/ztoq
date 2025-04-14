@@ -92,3 +92,6 @@ Potential future enhancements:
 4. Implement more advanced schema validation
 5. Generate JSON Schema files from OpenAPI schemas for external tools
 6. Enhance schema resolution to handle complex references
+
+---
+*Copyright (c) 2025 Eric C. Mumford (@heymumford) - Licensed under [MIT License](../../LICENSE)*
