@@ -5,7 +5,6 @@
 
 import os
 import sys
-import sphinx_rtd_theme
 
 # Add the project root directory to the path
 sys.path.insert(0, os.path.abspath("../../../"))
@@ -16,7 +15,7 @@ sys.path.insert(0, os.path.abspath("../../../"))
 project = "ztoq"
 copyright = "2025, Eric C. Mumford (@heymumford)"
 author = "Eric C. Mumford (@heymumford)"
-release = "0.3.2"
+release = "0.3.4"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration

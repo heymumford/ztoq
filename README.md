@@ -3,7 +3,7 @@
 ![Tests](https://img.shields.io/badge/tests-passing-brightgreen)
 ![Unit Tests](https://img.shields.io/badge/unit%20tests-passing-brightgreen)
 ![Integration Tests](https://img.shields.io/badge/integration%20tests-passing-brightgreen)
-![Coverage](https://img.shields.io/badge/coverage-85%25-green)
+![Coverage](https://img.shields.io/badge/coverage-88%25-green)
 
 A Python CLI tool that extracts test data from Zephyr Scale and migrates it to qTest. This tool reads the Zephyr Scale OpenAPI specification and provides a complete migration pathway between these two test management systems.
 
@@ -12,11 +12,11 @@ A Python CLI tool that extracts test data from Zephyr Scale and migrates it to q
 ```
 Test Type       | Count | Passing | Coverage
 --------------- | ----- | ------- | --------
-Unit Tests      | 15    | 15      | 90%
+Unit Tests      | 40    | 40      | 92%
 Integration     | 3     | 3       | 75%
 E2E Tests       | 2     | 2       | 80%
 --------------- | ----- | ------- | --------
-Total           | 20    | 20      | 85%
+Total           | 45    | 45      | 88%
 ```
 
 *Updated: 2025-04-14*

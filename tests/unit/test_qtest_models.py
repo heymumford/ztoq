@@ -4,33 +4,40 @@ This file is part of ZTOQ, licensed under the MIT License.
 See LICENSE file for details.
 """
 
+import base64
+from datetime import datetime
 import pytest
 from pydantic import ValidationError
-from datetime import datetime
-import base64
 from ztoq.qtest_models import (
-
-QTestConfig,
+    QTestAttachment,
+        QTestConfig,
+        QTestCustomField,
+        QTestDataset,
+        QTestDatasetRow,
+        QTestLink,
+        QTestModule,
+        QTestPaginatedResponse,
+        QTestParameter,
+        QTestParameterValue,
         QTestProject,
+        QTestPulseAction,
+        QTestPulseActionParameter,
+        QTestPulseActionType,
+        QTestPulseCondition,
+        QTestPulseConstant,
+        QTestPulseEventType,
+        QTestPulseRule,
+        QTestPulseTrigger,
+        QTestRelease,
+        QTestStep,
         QTestTestCase,
         QTestTestCycle,
-        QTestRelease,
-        QTestModule,
-        QTestAttachment,
-        QTestCustomField,
-        QTestStep,
-        QTestTestRun,
-        QTestTestLog,
         QTestTestExecution,
-        QTestParameter,
-        QTestDataset,
-        QTestPaginatedResponse,
+        QTestTestLog,
+        QTestTestRun,
 )
-from ztoq.qtest_models import QTestLink
-from ztoq.qtest_models import QTestParameterValue
-from ztoq.qtest_models import QTestDatasetRow
 
-@pytest.mark.unit
+@pytest.mark.unit()
 
 
 class TestQTestModels:
@@ -82,7 +89,6 @@ class TestQTestModels:
 
     def test_qtest_link(self):
         """Test QTestLink model."""
-
 
         # Create with all fields
         link = QTestLink(
@@ -451,7 +457,6 @@ class TestQTestModels:
         """Test QTestParameter model."""
         # Create with all fields
 
-
         parameter = QTestParameter(
             id=1,
                 name="Browser",
@@ -481,10 +486,192 @@ class TestQTestModels:
         assert min_parameter.status is None
         assert len(min_parameter.values) == 0
 
+    def test_qtest_pulse_event_type(self):
+        """Test QTestPulseEventType enum."""
+        # Verify enum values
+        assert "TEST_CASE_CREATED" in QTestPulseEventType.__members__
+        assert "TEST_LOG_CREATED" in QTestPulseEventType.__members__
+        assert "TEST_CASE_UPDATED" in QTestPulseEventType.__members__
+
+        # Use enum values
+        assert QTestPulseEventType.TEST_CASE_CREATED == "TEST_CASE_CREATED"
+        assert QTestPulseEventType.TEST_LOG_CREATED == "TEST_LOG_CREATED"
+
+    def test_qtest_pulse_action_type(self):
+        """Test QTestPulseActionType enum."""
+        # Verify enum values
+        assert "CREATE_DEFECT" in QTestPulseActionType.__members__
+        assert "SEND_MAIL" in QTestPulseActionType.__members__
+        assert "UPDATE_FIELD_VALUE" in QTestPulseActionType.__members__
+
+        # Use enum values
+        assert QTestPulseActionType.CREATE_DEFECT == "CREATE_DEFECT"
+        assert QTestPulseActionType.SEND_MAIL == "SEND_MAIL"
+
+    def test_qtest_pulse_trigger(self):
+        """Test QTestPulseTrigger model."""
+        # Create with all fields
+        now = datetime.now().isoformat()
+
+        trigger = QTestPulseTrigger(
+            id=1,
+                name="Test Trigger",
+                event_type=QTestPulseEventType.TEST_CASE_CREATED,
+                project_id=12345,
+                conditions=[
+                QTestPulseCondition(field="status", operator="equals", value="FAIL")
+            ],
+                created_by={"id": 100, "name": "Admin"},
+                created_date=now
+        )
+
+        assert trigger.id == 1
+        assert trigger.name == "Test Trigger"
+        assert trigger.event_type == "TEST_CASE_CREATED"
+        assert trigger.project_id == 12345
+        assert len(trigger.conditions) == 1
+        assert trigger.conditions[0].field == "status"
+        assert trigger.created_by["id"] == 100
+        assert isinstance(trigger.created_date, datetime)
+        assert trigger.updated_by is None
+        assert trigger.updated_date is None
+
+        # Create with minimum fields
+        min_trigger = QTestPulseTrigger(
+            name="Minimal Trigger",
+                event_type="TEST_CASE_CREATED",
+                project_id=12345,
+                created_by={"id": 100, "name": "Admin"},
+                created_date=now
+        )
+        assert min_trigger.id is None
+        assert min_trigger.name == "Minimal Trigger"
+        assert min_trigger.event_type == "TEST_CASE_CREATED"
+        assert len(min_trigger.conditions) == 0
+
+    def test_qtest_pulse_action(self):
+        """Test QTestPulseAction model."""
+        # Create with all fields
+        now = datetime.now().isoformat()
+        action = QTestPulseAction(
+            id=1,
+                name="Send Email",
+                action_type=QTestPulseActionType.SEND_MAIL,
+                project_id=12345,
+                parameters=[
+                QTestPulseActionParameter(name="recipients", value="test@example.com"),
+                    QTestPulseActionParameter(name="subject", value="Test Failed")
+            ],
+                created_by={"id": 100, "name": "Admin"},
+                created_date=now
+        )
+
+        assert action.id == 1
+        assert action.name == "Send Email"
+        assert action.action_type == "SEND_MAIL"
+        assert action.project_id == 12345
+        assert len(action.parameters) == 2
+        assert action.parameters[0].name == "recipients"
+        assert action.created_by["id"] == 100
+        assert isinstance(action.created_date, datetime)
+        assert action.updated_by is None
+        assert action.updated_date is None
+
+        # Create with minimum fields
+        min_action = QTestPulseAction(
+            name="Minimal Action",
+                action_type="CREATE_DEFECT",
+                project_id=12345,
+                created_by={"id": 100, "name": "Admin"},
+                created_date=now
+        )
+        assert min_action.id is None
+        assert min_action.name == "Minimal Action"
+        assert min_action.action_type == "CREATE_DEFECT"
+        assert len(min_action.parameters) == 0
+
+    def test_qtest_pulse_constant(self):
+        """Test QTestPulseConstant model."""
+        # Create with all fields
+        now = datetime.now().isoformat()
+        constant = QTestPulseConstant(
+            id=1,
+                name="EMAIL_RECIPIENT",
+                value="test@example.com",
+                description="Default email recipient",
+                project_id=12345,
+                created_by={"id": 100, "name": "Admin"},
+                created_date=now
+        )
+
+        assert constant.id == 1
+        assert constant.name == "EMAIL_RECIPIENT"
+        assert constant.value == "test@example.com"
+        assert constant.description == "Default email recipient"
+        assert constant.project_id == 12345
+        assert constant.created_by["id"] == 100
+        assert isinstance(constant.created_date, datetime)
+        assert constant.updated_by is None
+        assert constant.updated_date is None
+
+        # Create with minimum fields
+        min_constant = QTestPulseConstant(
+            name="API_KEY",
+                value="abc123",
+                project_id=12345,
+                created_by={"id": 100, "name": "Admin"},
+                created_date=now
+        )
+        assert min_constant.id is None
+        assert min_constant.name == "API_KEY"
+        assert min_constant.value == "abc123"
+        assert min_constant.description is None
+
+    def test_qtest_pulse_rule(self):
+        """Test QTestPulseRule model."""
+        # Create with all fields
+        now = datetime.now().isoformat()
+        rule = QTestPulseRule(
+            id=1,
+                name="Test Failure Notification",
+                description="Send email when test fails",
+                project_id=12345,
+                enabled=True,
+                trigger_id=101,
+                action_id=201,
+                created_by={"id": 100, "name": "Admin"},
+                created_date=now
+        )
+
+        assert rule.id == 1
+        assert rule.name == "Test Failure Notification"
+        assert rule.description == "Send email when test fails"
+        assert rule.project_id == 12345
+        assert rule.enabled is True
+        assert rule.trigger_id == 101
+        assert rule.action_id == 201
+        assert rule.created_by["id"] == 100
+        assert isinstance(rule.created_date, datetime)
+        assert rule.updated_by is None
+        assert rule.updated_date is None
+
+        # Create with minimum fields
+        min_rule = QTestPulseRule(
+            name="Minimal Rule",
+                project_id=12345,
+                trigger_id=101,
+                action_id=201,
+                created_by={"id": 100, "name": "Admin"},
+                created_date=now
+        )
+        assert min_rule.id is None
+        assert min_rule.name == "Minimal Rule"
+        assert min_rule.description is None
+        assert min_rule.enabled is True  # Default value
+
     def test_qtest_dataset(self):
         """Test QTestDataset model."""
         # Create with all fields
-
 
         dataset = QTestDataset(
             id=1,
