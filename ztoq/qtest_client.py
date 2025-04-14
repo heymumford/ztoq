@@ -14,7 +14,7 @@ from pathlib import Path
 from datetime import datetime
 import base64
 
-from ztoq.models import (
+from ztoq.qtest_models import (
     QTestConfig,
     QTestProject,
     QTestTestCase,

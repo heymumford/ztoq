@@ -5,7 +5,7 @@ from datetime import datetime
 import json
 
 from ztoq.qtest_client import QTestClient, QTestPaginatedIterator
-from ztoq.models import (
+from ztoq.qtest_models import (
     QTestConfig,
     QTestProject,
     QTestTestCase,

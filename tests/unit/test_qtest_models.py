@@ -3,7 +3,7 @@ from pydantic import ValidationError
 from datetime import datetime
 import base64
 
-from ztoq.models import (
+from ztoq.qtest_models import (
     QTestConfig,
     QTestProject,
     QTestTestCase,
@@ -72,7 +72,7 @@ class TestQTestModels:
 
     def test_qtest_link(self):
         """Test QTestLink model."""
-        from ztoq.models import QTestLink
+        from ztoq.qtest_models import QTestLink
 
         # Create with all fields
         link = QTestLink(
@@ -402,7 +402,7 @@ class TestQTestModels:
         assert min_test_log.execution_date is None
         assert min_test_log.note is None
         assert len(min_test_log.attachments) == 0
-        assert min_test_log.properties is None
+        assert len(min_test_log.properties) == 0
 
     def test_qtest_test_execution(self):
         """Test QTestTestExecution model."""
@@ -440,7 +440,7 @@ class TestQTestModels:
     def test_qtest_parameter(self):
         """Test QTestParameter model."""
         # Create with all fields
-        from ztoq.models import QTestParameterValue
+        from ztoq.qtest_models import QTestParameterValue
 
         parameter = QTestParameter(
             id=1,
@@ -474,7 +474,7 @@ class TestQTestModels:
     def test_qtest_dataset(self):
         """Test QTestDataset model."""
         # Create with all fields
-        from ztoq.models import QTestDatasetRow
+        from ztoq.qtest_models import QTestDatasetRow
 
         dataset = QTestDataset(
             id=1,

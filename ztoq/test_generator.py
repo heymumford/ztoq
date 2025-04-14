@@ -6,6 +6,7 @@ This module provides tools for generating test cases based on OpenAPI specificat
 
 import logging
 import json
+import base64
 from typing import Dict, Any, List, Optional, Tuple, Set, Union
 from pathlib import Path
 
@@ -641,7 +642,7 @@ class ZephyrTestGenerator:
         Returns:
             Dictionary mapping endpoint identifiers to test definitions
         """
-        logger.info(f"Generating test suite" + (f" for tag: {tag}" if tag else ""))
+        logger.info("Generating test suite" + (f" for tag: {tag}" if tag else ""))
 
         # Get endpoints to test
         endpoints = []
@@ -691,9 +692,9 @@ class ZephyrTestGenerator:
         description = test.get("description", "")
 
         lines = [f"def {name}(zephyr_client):"]
-        lines.append(f'    """')
+        lines.append('    """')
         lines.append(f"    {description}")
-        lines.append(f'    """')
+        lines.append('    """')
 
         # Set up request parameters
         if "params" in test and test["params"]:
@@ -710,13 +711,13 @@ class ZephyrTestGenerator:
         # Set up file upload if needed
         if "file_upload" in test:
             file_upload = test["file_upload"]
-            lines.append(f"    # Prepare file upload")
+            lines.append("    # Prepare file upload")
             lines.append(f"    filename = '{file_upload['filename']}'")
             lines.append(f"    content_type = '{file_upload['content_type']}'")
 
             # For base64 content, decode it to binary
             if "content" in file_upload:
-                lines.append(f"    # Base64 encoded content")
+                lines.append("    # Base64 encoded content")
                 lines.append(f"    import base64")
                 lines.append(f"    content = base64.b64decode('{file_upload['content']}')")
 
@@ -725,17 +726,17 @@ class ZephyrTestGenerator:
 
             # Add step_id if provided (for test step attachments)
             if "step_id" in file_upload:
-                lines.append(f"    # This is a test step attachment")
+                lines.append("    # This is a test step attachment")
                 lines.append(f"    params['stepId'] = '{file_upload['step_id']}'")
 
         # Handle authentication setup
         if "auth" in test:
-            if test["auth"] == False:
-                lines.append(f"    # Test without authentication")
+            if test["auth"] is False:
+                lines.append("    # Test without authentication")
                 lines.append(f"    saved_token = zephyr_client.headers['Authorization']")
                 lines.append(f"    zephyr_client.headers['Authorization'] = ''")
             elif test["auth"] == "invalid":
-                lines.append(f"    # Test with invalid authentication")
+                lines.append("    # Test with invalid authentication")
                 lines.append(f"    saved_token = zephyr_client.headers['Authorization']")
                 lines.append(f"    zephyr_client.headers['Authorization'] = 'Bearer invalid_token'")
 
@@ -745,7 +746,7 @@ class ZephyrTestGenerator:
         # Add expectations based on status code
         if expected_status < 400:
             # Success case
-            lines.append(f"    try:")
+            lines.append("    try:")
             lines.append(f"        # Make API request")
             lines.append(f"        response = zephyr_client._make_request(")
             lines.append(f"            '{method.upper()}',")
@@ -764,23 +765,23 @@ class ZephyrTestGenerator:
 
             lines.append(f"            validate={test.get('validate_schema', True)}")
             lines.append(f"        )")
-            lines.append(f"        # Check response")
-            lines.append(f"        assert response is not None")
+            lines.append("        # Check response")
+            lines.append("        assert response is not None")
 
             # Add response validation for specific test types
             if "file_upload" in test:
-                lines.append(f"        # Validate attachment response")
-                lines.append(f"        assert 'id' in response")
-                lines.append(f"        assert 'filename' in response")
+                lines.append("        # Validate attachment response")
+                lines.append("        assert 'id' in response")
+                lines.append("        assert 'filename' in response")
                 lines.append(f"        assert response['filename'] == filename")
 
             # Add custom field validation if relevant
             if "request_data" in test and "customFields" in test["request_data"]:
-                lines.append(f"        # Validate custom fields in response if present")
-                lines.append(f"        if 'customFields' in response:")
-                lines.append(f"            assert len(response['customFields']) > 0")
+                lines.append("        # Validate custom fields in response if present")
+                lines.append("        if 'customFields' in response:")
+                lines.append("            assert len(response['customFields']) > 0")
 
-            lines.append(f"    except Exception as e:")
+            lines.append("    except Exception as e:")
             lines.append(
                 f"        pytest.fail(f'Expected successful response but got error: {{e}}')"
             )

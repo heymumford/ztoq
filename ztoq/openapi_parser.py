@@ -7,6 +7,7 @@ from typing import Dict, Any, List, Optional, Union, Tuple, Set, Callable, Type,
 import logging
 import random
 import string
+import base64
 from datetime import datetime, date
 
 # Set up module logger
@@ -426,9 +427,9 @@ class ZephyrApiSpecWrapper:
             elif schema.get("format") == "date":
                 return date.today().isoformat()
             elif schema.get("format") == "email":
-                return f"user{random.randint(1,1000)}@example.com"
+                return f"user{random.randint(1, 1000)}@example.com"
             elif schema.get("format") == "uri":
-                return f"https://example.com/{random.randint(1,1000)}"
+                return f"https://example.com/{random.randint(1, 1000)}"
             elif "enum" in schema:
                 return random.choice(schema["enum"])
             elif schema.get("contentEncoding") == "base64":
@@ -441,7 +442,7 @@ class ZephyrApiSpecWrapper:
                 pattern = schema.get("pattern")
                 if pattern:
                     # For simplicity, just return a basic string for patterns
-                    return f"pattern-{random.randint(1,1000)}"
+                    return f"pattern-{random.randint(1, 1000)}"
                 else:
                     min_length = schema.get("minLength", 5)
                     max_length = schema.get("maxLength", 20)

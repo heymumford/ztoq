@@ -2,7 +2,7 @@ from typing import Any, List, Optional
 from datetime import datetime
 from enum import Enum
 import base64
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 
 
 class ZephyrConfig(BaseModel):
@@ -56,9 +56,10 @@ class CustomField(BaseModel):
     type: str
     value: Any
 
-    @validator("value")
-    def validate_value_by_type(cls, v, values):
+    @field_validator("value")
+    def validate_value_by_type(cls, v, info):
         """Validate that the value is appropriate for the field type."""
+        values = info.data
         if "type" not in values:
             return v
 
