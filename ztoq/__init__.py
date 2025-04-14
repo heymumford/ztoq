@@ -9,4 +9,4 @@ ZTOQ - Zephyr to qTest
 A CLI tool for extracting test data from Zephyr Scale and migrating it to qTest
 """
 
-__version__ = "0.3.7"
+__version__ = "0.3.8"
