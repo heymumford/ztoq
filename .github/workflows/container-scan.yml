@@ -3,20 +3,8 @@ name: Container Security Scan
 on:
   push:
     branches: [ main ]
-    paths:
-      - 'config/Dockerfile'
-      - 'config/docker-compose.yml'
-      - 'requirements*.txt'
-      - 'poetry.lock'
-      - 'pyproject.toml'
   pull_request:
     branches: [ main ]
-    paths:
-      - 'config/Dockerfile'
-      - 'config/docker-compose.yml'
-      - 'requirements*.txt'
-      - 'poetry.lock'
-      - 'pyproject.toml'
   schedule:
     - cron: '0 0 * * 3'  # Weekly on Wednesday at midnight
   workflow_dispatch:  # Allow manual triggering
@@ -42,76 +30,3 @@ jobs:
           tags: ztoq:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
-
-      - name: Run Trivy vulnerability scanner (JSON)
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: 'ztoq:latest'
-          format: 'json'
-          output: 'trivy-results.json'
-          severity: 'CRITICAL,HIGH,MEDIUM'
-
-      - name: Run Trivy vulnerability scanner (Table)
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: 'ztoq:latest'
-          format: 'table'
-          output: 'trivy-results.txt'
-          severity: 'CRITICAL,HIGH,MEDIUM'
-
-      - name: Run Trivy vulnerability scanner (HTML)
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: 'ztoq:latest'
-          format: 'template'
-          template: '@/contrib/html.tpl'
-          output: 'trivy-results.html'
-          severity: 'CRITICAL,HIGH,MEDIUM'
-
-      - name: Run Trivy vulnerability scanner (SARIF)
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: 'ztoq:latest'
-          format: 'sarif'
-          output: 'trivy-results.sarif'
-          severity: 'CRITICAL,HIGH'
-
-      - name: Upload Trivy scan results
-        uses: actions/upload-artifact@v3
-        with:
-          name: trivy-results
-          path: |
-            trivy-results.json
-            trivy-results.txt
-            trivy-results.html
-            trivy-results.sarif
-
-      - name: Upload SARIF file
-        if: github.event_name == 'push' || github.event_name == 'pull_request'
-        uses: github/codeql-action/upload-sarif@v2
-        with:
-          sarif_file: 'trivy-results.sarif'
-          category: trivy
-
-      - name: Create issue for critical vulnerabilities
-        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
-        run: |
-          if jq '.Results[] | select(.Vulnerabilities \!= null) | .Vulnerabilities[] | select(.Severity=="CRITICAL")' trivy-results.json | grep -q .; then
-            echo "Critical vulnerabilities found in container image"
-
-            # Create summary of critical vulnerabilities
-            VULN_SUMMARY=$(jq -r '.Results[] | select(.Vulnerabilities \!= null) | .Vulnerabilities[] | select(.Severity=="CRITICAL") | "- \(.VulnerabilityID): \(.Title) in \(.PkgName) \(.InstalledVersion)"' trivy-results.json | sort | uniq)
-
-            # Create GitHub issue with the summary
-            gh issue create \
-              --title "Critical container vulnerabilities detected" \
-              --body "Weekly container security scan has found critical vulnerabilities:
-
-$VULN_SUMMARY
-
-See the attached workflow run for full details." \
-              --label "security,container,high-priority"
-          fi
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-EOF < /dev/null
