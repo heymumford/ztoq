@@ -8,6 +8,7 @@ packages = [{include = "ztoq"}, {include = "scripts"}]
 
 [tool.poetry.dependencies]
 python = "^3.11"
+# Core dependencies
 pyyaml = "^6.0"
 pydantic = "^2.0"
 requests = "^2.30.0"
@@ -26,8 +27,7 @@ matplotlib = "^3.10.1"
 seaborn = "^0.13.2"
 psutil = "^7.0.0"
 uvicorn = "^0.34.1"
-
-[tool.poetry.group.dev.dependencies]
+# Testing and development
 pytest = "^7.0"
 pytest-cov = "^4.1"
 mypy = "^1.5"
@@ -35,22 +35,14 @@ tox = "^4.11"
 httpx = "^0.28.1"
 types-pyyaml = "^6.0.12.20250402"
 types-requests = "^2.32.0.20250328"
-uvicorn = "^0.34.1"
-ruff = "^0.1.8"  # Updated to latest version for better linting coverage
+ruff = "^0.1.8"
 pre-commit = "^3.3.3"
 safety = "^2.3.5"
 interrogate = "^1.5.0"
 radon = "^6.0.1"
 xenon = "^0.9.0"
 pytest-benchmark = "^4.0.0"
-responses = "^0.25.7"
-matplotlib = "^3.10.1"
-numpy = "^2.2.4"
-pandas = "^2.2.3"
-# Removed: black, flake8, isort, bandit, pydocstyle, docformatter, pylint
-# These are now handled by ruff
-
-[tool.poetry.group.docs.dependencies]
+# Documentation
 sphinx = "^8.2"
 sphinx-rtd-theme = "^3.0"
 recommonmark = "^0.7"
@@ -246,8 +238,7 @@ warn_no_return = true
 warn_unreachable = true
 plugins = [
     "pydantic.mypy",
-    # Temporarily disabling sqlalchemy plugin due to import error
-    # "sqlalchemy.ext.mypy.plugin",
+    "sqlalchemy.ext.mypy.plugin",
 ]
 exclude = [
     "^tests/.*$",
