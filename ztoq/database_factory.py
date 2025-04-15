@@ -18,18 +18,26 @@ from typing import Any, Optional, TypeVar, Union
 from ztoq.core.db_manager import DatabaseConfig, SQLDatabaseManager
 from ztoq.database_manager import DatabaseManager
 from ztoq.pg_database_manager import PostgreSQLDatabaseManager
+from ztoq.optimized_database_manager import OptimizedDatabaseManager
 
 logger = logging.getLogger(__name__)
 
 # Type variable for database managers
-T = TypeVar("T", bound=Union[DatabaseManager, SQLDatabaseManager, PostgreSQLDatabaseManager])
+T = TypeVar(
+    "T",
+    bound=Union[
+        DatabaseManager, SQLDatabaseManager, PostgreSQLDatabaseManager, OptimizedDatabaseManager
+    ],
+)
 
 
 class DatabaseType:
     """Database type constants."""
+
     SQLITE = "sqlite"
     POSTGRESQL = "postgresql"
     SQLALCHEMY = "sqlalchemy"  # For the SQLAlchemy-based implementation
+    OPTIMIZED = "optimized"  # For the optimized database implementation
 
 
 class DatabaseFactory:
@@ -43,23 +51,26 @@ class DatabaseFactory:
     @staticmethod
     def create_database_manager(
         db_type: str,
-            db_path: Optional[str] = None,
-            host: Optional[str] = None,
-            port: Optional[int] = None,
-            username: Optional[str] = None,
-            password: Optional[str] = None,
-            database: Optional[str] = None,
-            min_connections: int = 5,
-            max_connections: int = 20,
-            pool_size: int = 5,
-            max_overflow: int = 10,
-            echo: bool = False,
-        ) -> Union[DatabaseManager, SQLDatabaseManager, PostgreSQLDatabaseManager]:
+        db_path: Optional[str] = None,
+        host: Optional[str] = None,
+        port: Optional[int] = None,
+        username: Optional[str] = None,
+        password: Optional[str] = None,
+        database: Optional[str] = None,
+        min_connections: int = 5,
+        max_connections: int = 20,
+        pool_size: int = 5,
+        max_overflow: int = 10,
+        echo: bool = False,
+        optimize: bool = False,
+    ) -> Union[
+        DatabaseManager, SQLDatabaseManager, PostgreSQLDatabaseManager, OptimizedDatabaseManager
+    ]:
         """
         Create a database manager based on configuration.
 
         Args:
-            db_type: Database type (sqlite, postgresql, sqlalchemy)
+            db_type: Database type (sqlite, postgresql, sqlalchemy, optimized)
             db_path: Path to SQLite database file (for SQLite)
             host: Database host (for PostgreSQL)
             port: Database port (for PostgreSQL)
@@ -71,6 +82,7 @@ class DatabaseFactory:
             pool_size: Connection pool size (for SQLAlchemy)
             max_overflow: Maximum number of connections to overflow (for SQLAlchemy)
             echo: Whether to echo SQL statements (for SQLAlchemy)
+            optimize: Whether to use optimized database access patterns (overrides db_type if True)
 
         Returns:
             Database manager instance
@@ -103,12 +115,12 @@ class DatabaseFactory:
             logger.info(f"Creating PostgreSQL database manager for {database} on {host}:{port}")
             return PostgreSQLDatabaseManager(
                 host=host,
-                    database=database,
-                    user=username,
-                    password=password,
-                    port=port or 5432,
-                    min_connections=min_connections,
-                    max_connections=max_connections
+                database=database,
+                user=username,
+                password=password,
+                port=port or 5432,
+                min_connections=min_connections,
+                max_connections=max_connections,
             )
 
         elif db_type == DatabaseType.SQLALCHEMY:
@@ -116,23 +128,53 @@ class DatabaseFactory:
             # Create database configuration
             db_config = DatabaseConfig(
                 db_type=DatabaseType.SQLITE if not host else DatabaseType.POSTGRESQL,
-                    db_path=db_path,
-                    host=host,
-                    port=port,
-                    username=username,
-                    password=password,
-                    database=database,
-                    pool_size=pool_size,
-                    max_overflow=max_overflow,
-                    echo=echo,
-                )
+                db_path=db_path,
+                host=host,
+                port=port,
+                username=username,
+                password=password,
+                database=database,
+                pool_size=pool_size,
+                max_overflow=max_overflow,
+                echo=echo,
+            )
             return SQLDatabaseManager(config=db_config)
+
+        elif db_type == DatabaseType.OPTIMIZED or optimize:
+            logger.info("Creating optimized database manager")
+
+            # Determine the base database type
+            base_db_type = db_type if db_type != DatabaseType.OPTIMIZED else DatabaseType.SQLALCHEMY
+
+            # Create the base database manager
+            base_manager = DatabaseFactory.create_database_manager(
+                db_type=base_db_type,
+                db_path=db_path,
+                host=host,
+                port=port,
+                username=username,
+                password=password,
+                database=database,
+                min_connections=min_connections,
+                max_connections=max_connections,
+                pool_size=pool_size,
+                max_overflow=max_overflow,
+                echo=echo,
+                optimize=False,  # Prevent infinite recursion
+            )
+
+            # Create and return the optimized database manager
+            return OptimizedDatabaseManager(base_manager=base_manager)
 
         else:
             raise ValueError(f"Unsupported database type: {db_type}")
 
     @staticmethod
-    def from_config(config: dict[str, Any]) -> Union[DatabaseManager, SQLDatabaseManager, PostgreSQLDatabaseManager]:
+    def from_config(
+        config: dict[str, Any]
+    ) -> Union[
+        DatabaseManager, SQLDatabaseManager, PostgreSQLDatabaseManager, OptimizedDatabaseManager
+    ]:
         """
         Create a database manager from a configuration dictionary.
 
@@ -146,29 +188,35 @@ class DatabaseFactory:
 
         return DatabaseFactory.create_database_manager(
             db_type=db_type,
-                db_path=config.get("db_path"),
-                host=config.get("host"),
-                port=config.get("port"),
-                username=config.get("username"),
-                password=config.get("password"),
-                database=config.get("database"),
-                min_connections=config.get("min_connections", 5),
-                max_connections=config.get("max_connections", 20),
-                pool_size=config.get("pool_size", 5),
-                max_overflow=config.get("max_overflow", 10),
-                echo=config.get("echo", False),
-            )
+            db_path=config.get("db_path"),
+            host=config.get("host"),
+            port=config.get("port"),
+            username=config.get("username"),
+            password=config.get("password"),
+            database=config.get("database"),
+            min_connections=config.get("min_connections", 5),
+            max_connections=config.get("max_connections", 20),
+            pool_size=config.get("pool_size", 5),
+            max_overflow=config.get("max_overflow", 10),
+            echo=config.get("echo", False),
+            optimize=config.get("optimize", False),
+        )
 
 
 def get_database_manager(
     db_type: str = os.environ.get("ZTOQ_DB_TYPE", DatabaseType.SQLITE),
-        db_path: Optional[str] = os.environ.get("ZTOQ_DB_PATH"),
-        host: Optional[str] = os.environ.get("ZTOQ_PG_HOST"),
-        port: Optional[int] = int(os.environ.get("ZTOQ_PG_PORT", "5432")) if os.environ.get("ZTOQ_PG_PORT") else None,
-        username: Optional[str] = os.environ.get("ZTOQ_PG_USER"),
-        password: Optional[str] = os.environ.get("ZTOQ_PG_PASSWORD"),
-        database: Optional[str] = os.environ.get("ZTOQ_PG_DATABASE"),
-) -> Union[DatabaseManager, SQLDatabaseManager, PostgreSQLDatabaseManager]:
+    db_path: Optional[str] = os.environ.get("ZTOQ_DB_PATH"),
+    host: Optional[str] = os.environ.get("ZTOQ_PG_HOST"),
+    port: Optional[int] = int(os.environ.get("ZTOQ_PG_PORT", "5432"))
+    if os.environ.get("ZTOQ_PG_PORT")
+    else None,
+    username: Optional[str] = os.environ.get("ZTOQ_PG_USER"),
+    password: Optional[str] = os.environ.get("ZTOQ_PG_PASSWORD"),
+    database: Optional[str] = os.environ.get("ZTOQ_PG_DATABASE"),
+    optimize: bool = os.environ.get("ZTOQ_OPTIMIZE_DB", "").lower() == "true",
+) -> Union[
+    DatabaseManager, SQLDatabaseManager, PostgreSQLDatabaseManager, OptimizedDatabaseManager
+]:
     """
     Helper function to get a database manager using environment variables or defaults.
 
@@ -183,16 +231,18 @@ def get_database_manager(
         username: PostgreSQL username
         password: PostgreSQL password
         database: PostgreSQL database name
+        optimize: Whether to use optimized database access patterns (can be set with ZTOQ_OPTIMIZE_DB=true)
 
     Returns:
         Database manager instance
     """
     return DatabaseFactory.create_database_manager(
         db_type=db_type,
-            db_path=db_path,
-            host=host,
-            port=port,
-            username=username,
-            password=password,
-            database=database,
-        )
+        db_path=db_path,
+        host=host,
+        port=port,
+        username=username,
+        password=password,
+        database=database,
+        optimize=optimize,
+    )
