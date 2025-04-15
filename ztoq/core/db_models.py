@@ -24,6 +24,7 @@ from sqlalchemy import (
         ForeignKey,
         Index,
         Integer,
+        JSON,
         LargeBinary,
         String,
         Table,
@@ -650,6 +651,37 @@ class MigrationState(Base):
 
     def __repr__(self):
         return f"<MigrationState(project='{self.project_key}', extraction='{self.extraction_status}', transformation='{self.transformation_status}', loading='{self.loading_status}')>"
+
+    @property
+    def metadata_dict(self) -> dict[str, Any]:
+        """Get metadata as a dictionary."""
+        if self.meta_data:
+            return json.loads(self.meta_data)
+        return {}
+
+
+class RecommendationHistory(Base):
+    """Track recommendations made over time for historical analysis."""
+
+    __tablename__ = "recommendation_history"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    project_key = Column(String(50), nullable=False, index=True)
+    timestamp = Column(DateTime, default=datetime.utcnow, index=True)
+    recommendation_id = Column(String(50), nullable=False, index=True)  # Unique ID for each recommendation
+    priority = Column(String(10), nullable=False)  # high, medium, low
+    category = Column(String(50), nullable=False)
+    issue = Column(Text, nullable=False)
+    action = Column(Text, nullable=False)
+    status = Column(String(20), default="open")  # open, implemented, rejected, pending
+    implemented_at = Column(DateTime, nullable=True)
+    impact_score = Column(Float, nullable=True)  # Optional tracking of recommendation impact
+    migration_phase = Column(String(20), nullable=True)  # Which phase of migration it relates to
+    entity_type = Column(String(50), nullable=True)  # Which entity type it relates to
+    meta_data = Column(JSON, nullable=True)  # Additional context/details
+
+    def __repr__(self):
+        return f"<RecommendationHistory(project='{self.project_key}', id='{self.recommendation_id}', priority='{self.priority}', status='{self.status}')>"
 
     @property
     def metadata_dict(self) -> dict[str, Any]:
