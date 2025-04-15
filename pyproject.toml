@@ -47,7 +47,7 @@ responses = "^0.25.7"
 matplotlib = "^3.10.1"
 numpy = "^2.2.4"
 pandas = "^2.2.3"
-# Removed: black, flake8, isort, bandit, pydocstyle, docformatter, pylint 
+# Removed: black, flake8, isort, bandit, pydocstyle, docformatter, pylint
 # These are now handled by ruff
 
 [tool.poetry.group.docs.dependencies]
@@ -136,7 +136,7 @@ select = [
     # String formatting
     "F",   # string formatting
     # Imports
-    "ICN", # import conventions  
+    "ICN", # import conventions
     "G",   # logging format
     "INP", # implicit namespace packages
     "PIE", # pie rules
@@ -179,7 +179,7 @@ unfixable = []
 "tests/**/*.py" = [
     "S101",  # Allow assert in tests
     "S105",  # Allow hardcoded passwords in tests
-    "S106",  # Allow hardcoded password arguments in tests  
+    "S106",  # Allow hardcoded password arguments in tests
     "T201",  # Allow print in tests
     "B011",  # Allow assert False in tests
     "PT012", # Allow pytest.raises() without match
@@ -246,7 +246,8 @@ warn_no_return = true
 warn_unreachable = true
 plugins = [
     "pydantic.mypy",
-    "sqlalchemy.ext.mypy.plugin",
+    # Temporarily disabling sqlalchemy plugin due to import error
+    # "sqlalchemy.ext.mypy.plugin",
 ]
 exclude = [
     "^tests/.*$",
