@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "ztoq"
-version = "0.3.11"
+version = "0.4.0"
 description = "A Python tool that extracts test data from Zephyr Scale and migrates it to qTest"
 authors = ["Eric C. Mumford (@heymumford)"]
 readme = "README.md"
@@ -81,7 +81,7 @@ include = '\.pyi?$'
 
 [tool.ruff]
 line-length = 100
-target-version = "0.3.11"
+target-version = "0.4.0"
 select = [
     "E",   # pycodestyle errors
     "F",   # pyflakes
@@ -125,7 +125,7 @@ known-first-party = ["ztoq"]
 known-third-party = ["pydantic", "fastapi", "sqlalchemy", "pytest", "typer", "requests"]
 
 [tool.mypy]
-python_version = "0.3.11"
+python_version = "0.4.0"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true
