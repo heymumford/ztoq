@@ -24,8 +24,23 @@ from rich.progress import (
 from rich.table import Table
 
 # Use absolute import to ensure we get the installed package, not local directory
+import sys
+import os
+import inspect
+from pathlib import Path
+
+# Temporarily remove the current working directory from sys.path to avoid local imports
+cwd = os.getcwd()
+if cwd in sys.path:
+    sys.path.remove(cwd)
+
+# Import the installed alembic modules
 import alembic.command as alembic_command
-import alembic.config
+import alembic.config as alembic_config
+
+# Restore the path
+if cwd not in sys.path:
+    sys.path.insert(0, cwd)
 from ztoq.core.config import (
     DatabaseConfig,
     QTestConfig,
@@ -428,7 +443,7 @@ def export_project(
             console.print("Ensuring database schema is up to date...")
 
             # Get Alembic config
-            alembic_cfg = alembic.config.Config(str(Path(__file__).parent.parent / "alembic.ini"))
+            alembic_cfg = alembic_config.Config(str(Path(__file__).parent.parent / "alembic.ini"))
             alembic_cfg.set_main_option("sqlalchemy.url", db_config.get_connection_string())
 
             # Apply migrations
@@ -754,7 +769,7 @@ def init_database(
             console.print("Existing tables dropped", style="green")
 
         # Get Alembic config
-        alembic_cfg = alembic.config.Config(str(Path(__file__).parent.parent / "alembic.ini"))
+        alembic_cfg = alembic_config.Config(str(Path(__file__).parent.parent / "alembic.ini"))
         alembic_cfg.set_main_option("sqlalchemy.url", db_config.get_connection_string())
 
         # Apply migrations
@@ -908,7 +923,7 @@ def run_migrations(
         )
 
         # Get Alembic config
-        alembic_cfg = alembic.config.Config(str(Path(__file__).parent.parent / "alembic.ini"))
+        alembic_cfg = alembic_config.Config(str(Path(__file__).parent.parent / "alembic.ini"))
         alembic_cfg.set_main_option("sqlalchemy.url", db_config.get_connection_string())
 
         # Apply migrations
@@ -1240,7 +1255,7 @@ def run_migration(
 
         # Ensure the database is initialized
         console.print("Ensuring database schema is up to date...")
-        alembic_cfg = alembic.config.Config(str(Path(__file__).parent.parent / "alembic.ini"))
+        alembic_cfg = alembic_config.Config(str(Path(__file__).parent.parent / "alembic.ini"))
         alembic_cfg.set_main_option("sqlalchemy.url", db_config.get_connection_string())
         alembic_command.upgrade(alembic_cfg, "head")
 
