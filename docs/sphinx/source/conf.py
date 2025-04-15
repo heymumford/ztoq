@@ -15,7 +15,7 @@ sys.path.insert(0, os.path.abspath("../../../"))
 project = "ztoq"
 copyright = "2025, Eric C. Mumford (@heymumford)"
 author = "Eric C. Mumford (@heymumford)"
-release = "0.3.9"
+release = "0.3.10"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
