@@ -13,9 +13,9 @@ the optimized database manager for improved performance.
 
 import logging
 import os
-from typing import Any, Dict, List, Optional, Type, Union
+from typing import Any, Dict, Optional
 
-from ztoq.core.db_manager import DatabaseConfig, SQLDatabaseManager
+from ztoq.core.db_manager import SQLDatabaseManager
 from ztoq.database_factory import DatabaseFactory, DatabaseType
 from ztoq.database_optimizations import db_stats, query_cache
 from ztoq.optimized_database_manager import OptimizedDatabaseManager

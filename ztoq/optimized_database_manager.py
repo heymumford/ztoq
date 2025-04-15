@@ -13,16 +13,11 @@ access patterns for improved performance with large datasets.
 
 import json
 import logging
-import time
-from contextlib import contextmanager
 from datetime import datetime
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Tuple, Type, TypeVar, Union, cast
+from typing import Any, Dict, List, Optional, TypeVar
 
-from sqlalchemy import Column, Table, func, text
-from sqlalchemy.engine import create_engine
-from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm import Query, Session, sessionmaker
+from sqlalchemy import func
+from sqlalchemy.orm import Session
 
 from ztoq.core.db_manager import SQLDatabaseManager
 from ztoq.core.db_models import (
@@ -37,18 +32,14 @@ from ztoq.core.db_models import (
 from ztoq.database_optimizations import (
     QueryCache,
     bulk_insert,
-    bulk_update,
     cached_query,
-    chunked_fetch,
     db_stats,
     keyset_pagination,
     transaction_scope,
     tracked_execution,
-    with_retry,
 )
 from ztoq.models import (
     Case as CaseModel,
-    CustomField as CustomFieldModel,
     CycleInfo as CycleInfoModel,
     Execution as ExecutionModel,
     Folder as FolderModel,

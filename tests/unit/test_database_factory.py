@@ -5,7 +5,6 @@ See LICENSE file for details.
 """
 
 import unittest
-import os
 from pathlib import Path
 from unittest.mock import patch, MagicMock, PropertyMock
 from ztoq.database_factory import DatabaseFactory, DatabaseType, get_database_manager

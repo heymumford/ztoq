@@ -13,44 +13,19 @@ for improved performance with large datasets.
 
 import functools
 import logging
-import os
 import time
-from typing import Any, Callable, Dict, List, Optional, Tuple, TypeVar, Union
+from typing import Any, Callable, Dict, List
 
-from sqlalchemy import func, text
-from sqlalchemy.orm import Query, Session
+from sqlalchemy import text
+from sqlalchemy.orm import Session
 
-from ztoq.core.db_manager import DatabaseConfig
-from ztoq.core.db_models import (
-    EntityBatchState,
-    Folder,
-    Project,
-    TestCase,
-    TestCycle,
-    TestExecution,
-)
-from ztoq.database_optimizations import (
-    QueryCache,
-    cached_query,
-    chunked_fetch,
-    db_stats,
-    keyset_pagination,
-    tracked_execution,
-)
+from ztoq.database_optimizations import keyset_pagination
 from ztoq.db_optimization_helpers import (
     get_database_performance_report,
     get_optimized_database_manager,
-    migrate_to_optimized_manager,
     optimize_for_reads,
     optimize_for_writes,
     reset_performance_tracking,
-)
-from ztoq.models import (
-    Case as CaseModel,
-    CycleInfo as CycleInfoModel,
-    Execution as ExecutionModel,
-    Folder as FolderModel,
-    Project as ProjectModel,
 )
 from ztoq.optimized_database_manager import OptimizedDatabaseManager
 

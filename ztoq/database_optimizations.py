@@ -26,17 +26,14 @@ from typing import (
     Iterable,
     List,
     Optional,
-    Set,
     Tuple,
     TypeVar,
-    Union,
-    cast,
+    Union
 )
 
-from sqlalchemy import Column, func, text
-from sqlalchemy.engine import Engine, CursorResult
+from sqlalchemy import Column, text
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm import Query, Session, declarative_base
+from sqlalchemy.orm import Query, Session
 from sqlalchemy.sql import Select
 
 # Setup logging
