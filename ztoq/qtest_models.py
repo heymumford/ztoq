@@ -38,10 +38,12 @@ class QTestConfig(BaseModel):
         description="Base URL for qTest API (e.g., https://example.qtest.com)",
     )
     username: str = Field(
-        default="", description="Username for qTest authentication (not needed with bearer token)",
+        default="",
+        description="Username for qTest authentication (not needed with bearer token)",
     )
     password: str = Field(
-        default="", description="Password for qTest authentication (not needed with bearer token)",
+        default="",
+        description="Password for qTest authentication (not needed with bearer token)",
     )
     project_id: int = Field(..., description="Project ID to work with", gt=0)
     bearer_token: str = Field(
@@ -54,6 +56,7 @@ class QTestConfig(BaseModel):
     ENV_BASE_URL_NAME: ClassVar[str] = "qtest_base_url"
 
     @field_validator("base_url")
+    @classmethod
     def validate_base_url(cls, value):
         """Validate base URL format."""
         if not value:
@@ -86,10 +89,12 @@ class QTestConfig(BaseModel):
         Create a config using environment variables.
 
         Args:
+        ----
             project_id: The project ID to work with
             base_url: Optional base URL override (otherwise uses qtest_base_url env var)
 
         Returns:
+        -------
             QTestConfig instance
 
         """
@@ -98,6 +103,7 @@ class QTestConfig(BaseModel):
             bearer_token=os.environ.get(cls.ENV_TOKEN_NAME, ""),
             project_id=project_id,
         )
+
 
 class QTestPaginatedResponse(BaseModel):
     """Represents a paginated response from the qTest API."""
@@ -109,6 +115,7 @@ class QTestPaginatedResponse(BaseModel):
     limit: int | None = None
     total: int
     is_last: bool
+
 
 class QTestLink(BaseModel):
     """
@@ -133,6 +140,7 @@ class QTestLink(BaseModel):
 
     model_config = {"populate_by_name": True}
 
+
 class QTestCustomField(BaseModel):
     """
     Represents a custom field in qTest.
@@ -146,10 +154,14 @@ class QTestCustomField(BaseModel):
     field_type: str = Field(..., alias="type", description="Data type of the custom field")
     field_value: Any | None = Field(None, alias="value", description="Value of the custom field")
     is_required: bool | None = Field(
-        None, alias="required", description="Whether the field is required",
+        None,
+        alias="required",
+        description="Whether the field is required",
     )
     entity_type: str | None = Field(
-        None, alias="entityType", description="Type of entity this field is associated with",
+        None,
+        alias="entityType",
+        description="Type of entity this field is associated with",
     )
 
     # List of supported custom field types in qTest
@@ -342,6 +354,7 @@ class QTestCustomField(BaseModel):
 
     model_config = {"populate_by_name": True}
 
+
 class QTestAttachment(BaseModel):
     """
     Represents a file attachment in qTest.
@@ -356,19 +369,27 @@ class QTestAttachment(BaseModel):
     content_type: str = Field(..., alias="contentType", description="MIME type of the attachment")
     size: int | None = Field(None, description="Size of the attachment in bytes", gt=0)
     data: str | None = Field(
-        None, description="Base64 encoded attachment data (for upload/download)",
+        None,
+        description="Base64 encoded attachment data (for upload/download)",
     )
     created_date: datetime | None = Field(
-        None, alias="createdDate", description="Date when the attachment was created",
+        None,
+        alias="createdDate",
+        description="Date when the attachment was created",
     )
     created_by: dict | None = Field(
-        None, alias="createdBy", description="User who created the attachment",
+        None,
+        alias="createdBy",
+        description="User who created the attachment",
     )
     web_url: str | None = Field(
-        None, alias="webUrl", description="URL to access the attachment in qTest web UI",
+        None,
+        alias="webUrl",
+        description="URL to access the attachment in qTest web UI",
     )
     checksum: str | None = Field(
-        None, description="MD5 checksum for attachment integrity verification",
+        None,
+        description="MD5 checksum for attachment integrity verification",
     )
     related_entity_type: str | None = Field(
         None,
@@ -551,11 +572,13 @@ class QTestAttachment(BaseModel):
         Create an attachment from binary data.
 
         Args:
+        ----
             name: Filename of the attachment
             content_type: MIME type of the attachment
             binary_data: Binary content of the attachment
 
         Returns:
+        -------
             Dictionary representation of the attachment suitable for API upload
 
         """
@@ -578,9 +601,11 @@ class QTestAttachment(BaseModel):
         Calculate MD5 checksum for binary data.
 
         Args:
+        ----
             binary_data: Binary content to calculate checksum for
 
         Returns:
+        -------
             MD5 checksum hexadecimal string
 
         """
@@ -593,9 +618,11 @@ class QTestAttachment(BaseModel):
         Verify that binary data matches this attachment's checksum.
 
         Args:
+        ----
             binary_data: Binary content to verify
 
         Returns:
+        -------
             True if checksum matches, False otherwise
 
         """
@@ -604,6 +631,7 @@ class QTestAttachment(BaseModel):
 
         calculated = self.calculate_checksum(binary_data)
         return calculated == self.checksum
+
 
 class QTestProject(BaseModel):
     """
@@ -619,22 +647,34 @@ class QTestProject(BaseModel):
     start_date: datetime | None = Field(None, alias="startDate", description="Project start date")
     end_date: datetime | None = Field(None, alias="endDate", description="Project end date")
     status_name: str | None = Field(
-        None, alias="statusName", description="Status of the project (e.g., Active, Inactive)",
+        None,
+        alias="statusName",
+        description="Status of the project (e.g., Active, Inactive)",
     )
     created_date: datetime | None = Field(
-        None, alias="createdDate", description="Date when the project was created",
+        None,
+        alias="createdDate",
+        description="Date when the project was created",
     )
     created_by: dict | None = Field(
-        None, alias="createdBy", description="User who created the project",
+        None,
+        alias="createdBy",
+        description="User who created the project",
     )
     updated_date: datetime | None = Field(
-        None, alias="updatedDate", description="Date when the project was last updated",
+        None,
+        alias="updatedDate",
+        description="Date when the project was last updated",
     )
     updated_by: dict | None = Field(
-        None, alias="updatedBy", description="User who last updated the project",
+        None,
+        alias="updatedBy",
+        description="User who last updated the project",
     )
     avatar_path: str | None = Field(
-        None, alias="avatarPath", description="Path to project avatar image",
+        None,
+        alias="avatarPath",
+        description="Path to project avatar image",
     )
 
     # Project statuses supported by qTest
@@ -662,6 +702,7 @@ class QTestProject(BaseModel):
 
     model_config = {"populate_by_name": True}
 
+
 class QTestModule(BaseModel):
     """
     Represents a qTest module.
@@ -674,11 +715,15 @@ class QTestModule(BaseModel):
     name: str = Field(..., description="Name of the module", min_length=1, max_length=255)
     description: str | None = Field(None, description="Description of the module")
     parent_id: int | None = Field(
-        None, alias="parentId", description="ID of the parent module (for nested modules)",
+        None,
+        alias="parentId",
+        description="ID of the parent module (for nested modules)",
     )
     pid: str | None = Field(None, description="Project-specific ID (e.g., 'MD-123')")
     project_id: int | None = Field(
-        None, alias="projectId", description="ID of the project containing this module",
+        None,
+        alias="projectId",
+        description="ID of the project containing this module",
     )
     path: str | None = Field(None, description="Full path to the module in the hierarchy")
 
@@ -690,6 +735,7 @@ class QTestModule(BaseModel):
         return value
 
     model_config = {"populate_by_name": True}
+
 
 class QTestField(BaseModel):
     """
@@ -705,13 +751,18 @@ class QTestField(BaseModel):
     label: str = Field(..., description="Display label of the field", min_length=1)
     field_type: str = Field(..., alias="fieldType", description="Data type of the field")
     entity_type: str = Field(
-        ..., alias="entityType", description="Entity type this field applies to",
+        ...,
+        alias="entityType",
+        description="Entity type this field applies to",
     )
     allowed_values: list[str] | None = Field(
-        None, alias="allowedValues", description="List of allowed values for this field",
+        None,
+        alias="allowedValues",
+        description="List of allowed values for this field",
     )
     required: bool = Field(
-        False, description="Whether the field is required when creating/updating entities",
+        False,
+        description="Whether the field is required when creating/updating entities",
     )
 
     # Valid field types in qTest
@@ -762,6 +813,7 @@ class QTestField(BaseModel):
 
     model_config = {"populate_by_name": True}
 
+
 class QTestStep(BaseModel):
     """
     Represents a test step in qTest.
@@ -773,14 +825,19 @@ class QTestStep(BaseModel):
 
     id: int | None = Field(None, description="Unique identifier for the test step")
     description: str = Field(
-        ..., description="Description of the action to take in this step", min_length=1,
+        ...,
+        description="Description of the action to take in this step",
+        min_length=1,
     )
     expected_result: str | None = Field(
-        None, alias="expectedResult", description="Expected outcome of this step",
+        None,
+        alias="expectedResult",
+        description="Expected outcome of this step",
     )
     order: int = Field(..., description="Sequential order of this step in the test case", ge=1)
     attachments: list[QTestAttachment] = Field(
-        default_factory=list, description="Attachments related to this step",
+        default_factory=list,
+        description="Attachments related to this step",
     )
 
     @field_validator("description")
@@ -799,6 +856,7 @@ class QTestStep(BaseModel):
 
     model_config = {"populate_by_name": True}
 
+
 class QTestAutomationSettings(BaseModel):
     """
     Represents automation settings for a test case in qTest.
@@ -814,19 +872,28 @@ class QTestAutomationSettings(BaseModel):
         description="ID used in the automation framework to identify this test",
     )
     framework_id: int | None = Field(
-        None, alias="frameworkId", description="ID of the automation framework used for this test",
+        None,
+        alias="frameworkId",
+        description="ID of the automation framework used for this test",
     )
     framework_name: str | None = Field(
-        None, alias="frameworkName", description="Name of the automation framework",
+        None,
+        alias="frameworkName",
+        description="Name of the automation framework",
     )
     parameters: dict[str, str] | None = Field(
-        None, description="Custom parameters for automated execution",
+        None,
+        description="Custom parameters for automated execution",
     )
     is_parameterized: bool | None = Field(
-        None, alias="isParameterized", description="Whether the automated test accepts parameters",
+        None,
+        alias="isParameterized",
+        description="Whether the automated test accepts parameters",
     )
     external_id: str | None = Field(
-        None, alias="externalId", description="External system ID for this test",
+        None,
+        alias="externalId",
+        description="External system ID for this test",
     )
 
     @field_validator("automation_id")
@@ -837,6 +904,7 @@ class QTestAutomationSettings(BaseModel):
         return value
 
     model_config = {"populate_by_name": True}
+
 
 class QTestTestCase(BaseModel):
     """
@@ -853,10 +921,13 @@ class QTestTestCase(BaseModel):
     description: str | None = Field(None, description="Detailed description of the test case")
     precondition: str | None = Field(None, description="Prerequisites for running the test case")
     test_steps: list[QTestStep] = Field(
-        default_factory=list, alias="steps", description="Steps to execute the test case",
+        default_factory=list,
+        alias="steps",
+        description="Steps to execute the test case",
     )
     properties: list[QTestCustomField] | None = Field(
-        default_factory=list, description="Custom fields associated with the test case",
+        default_factory=list,
+        description="Custom fields associated with the test case",
     )
     parent_id: int | None = Field(
         None,
@@ -864,35 +935,51 @@ class QTestTestCase(BaseModel):
         description="ID of the parent test case (for hierarchical test cases)",
     )
     module_id: int | None = Field(
-        None, alias="moduleId", description="ID of the module containing this test case",
+        None,
+        alias="moduleId",
+        description="ID of the module containing this test case",
     )
     priority_id: int | None = Field(
-        None, alias="priorityId", description="Priority of the test case",
+        None,
+        alias="priorityId",
+        description="Priority of the test case",
     )
     creator_id: int | None = Field(
-        None, alias="creatorId", description="ID of the user who created the test case",
+        None,
+        alias="creatorId",
+        description="ID of the user who created the test case",
     )
     attachments: list[QTestAttachment] = Field(
-        default_factory=list, description="Attachments associated with the test case",
+        default_factory=list,
+        description="Attachments associated with the test case",
     )
     create_date: datetime | None = Field(
-        None, alias="createdDate", description="Date when the test case was created",
+        None,
+        alias="createdDate",
+        description="Date when the test case was created",
     )
     last_modified_date: datetime | None = Field(
-        None, alias="lastModifiedDate", description="Date when the test case was last updated",
+        None,
+        alias="lastModifiedDate",
+        description="Date when the test case was last updated",
     )
     automation: QTestAutomationSettings | None = Field(
-        None, description="Automation settings for the test case",
+        None,
+        description="Automation settings for the test case",
     )
     shared: bool | None = Field(None, description="Whether the test case is shared across projects")
     test_case_version_id: int | None = Field(
-        None, alias="testCaseVersionId", description="ID of the test case version",
+        None,
+        alias="testCaseVersionId",
+        description="ID of the test case version",
     )
     version: int | None = Field(None, description="Version number of the test case")
 
     # Additional fields for test case creation/update
     project_id: int | None = Field(
-        None, alias="projectId", description="ID of the project containing the test case",
+        None,
+        alias="projectId",
+        description="ID of the project containing the test case",
     )
     origin: str | None = Field(None, description="Origin of the test case")
 
@@ -913,6 +1000,7 @@ class QTestTestCase(BaseModel):
 
     model_config = {"populate_by_name": True}
 
+
 class QTestRelease(BaseModel):
     """
     Represents a release in qTest.
@@ -926,22 +1014,33 @@ class QTestRelease(BaseModel):
     description: str | None = Field(None, description="Detailed description of the release")
     pid: str | None = Field(None, description="Project-specific ID (e.g., 'RL-123')")
     project_id: int | None = Field(
-        None, alias="projectId", description="ID of the project containing this release",
+        None,
+        alias="projectId",
+        description="ID of the project containing this release",
     )
     start_date: datetime | None = Field(
-        None, alias="startDate", description="Planned start date for the release",
+        None,
+        alias="startDate",
+        description="Planned start date for the release",
     )
     end_date: datetime | None = Field(
-        None, alias="endDate", description="Planned end date for the release",
+        None,
+        alias="endDate",
+        description="Planned end date for the release",
     )
     status: str | None = Field(
-        None, description="Status of the release (e.g., Planning, In Progress, Completed)",
+        None,
+        description="Status of the release (e.g., Planning, In Progress, Completed)",
     )
     created_date: datetime | None = Field(
-        None, alias="createdDate", description="Date when the release was created",
+        None,
+        alias="createdDate",
+        description="Date when the release was created",
     )
     created_by: dict | None = Field(
-        None, alias="createdBy", description="User who created the release",
+        None,
+        alias="createdBy",
+        description="User who created the release",
     )
 
     # Common release statuses in qTest
@@ -982,6 +1081,7 @@ class QTestRelease(BaseModel):
 
     model_config = {"populate_by_name": True}
 
+
 class QTestTestCycle(BaseModel):
     """
     Represents a test cycle in qTest.
@@ -995,32 +1095,49 @@ class QTestTestCycle(BaseModel):
     name: str = Field(..., description="Name of the test cycle", min_length=1, max_length=255)
     description: str | None = Field(None, description="Detailed description of the test cycle")
     parent_id: int | None = Field(
-        None, alias="parentId", description="ID of the parent test cycle (for nested cycles)",
+        None,
+        alias="parentId",
+        description="ID of the parent test cycle (for nested cycles)",
     )
     pid: str | None = Field(None, description="Project-specific ID (e.g., 'CY-123')")
     release_id: int | None = Field(
-        None, alias="releaseId", description="ID of the release containing this test cycle",
+        None,
+        alias="releaseId",
+        description="ID of the release containing this test cycle",
     )
     project_id: int | None = Field(
-        None, alias="projectId", description="ID of the project containing this test cycle",
+        None,
+        alias="projectId",
+        description="ID of the project containing this test cycle",
     )
     properties: list[QTestCustomField] | None = Field(
-        default_factory=list, description="Custom fields associated with the test cycle",
+        default_factory=list,
+        description="Custom fields associated with the test cycle",
     )
     start_date: datetime | None = Field(
-        None, alias="startDate", description="Planned start date for the test cycle",
+        None,
+        alias="startDate",
+        description="Planned start date for the test cycle",
     )
     end_date: datetime | None = Field(
-        None, alias="endDate", description="Planned end date for the test cycle",
+        None,
+        alias="endDate",
+        description="Planned end date for the test cycle",
     )
     creator_id: int | None = Field(
-        None, alias="creatorId", description="ID of the user who created the test cycle",
+        None,
+        alias="creatorId",
+        description="ID of the user who created the test cycle",
     )
     created_date: datetime | None = Field(
-        None, alias="createdDate", description="Date when the test cycle was created",
+        None,
+        alias="createdDate",
+        description="Date when the test cycle was created",
     )
     last_modified_date: datetime | None = Field(
-        None, alias="lastModifiedDate", description="Date when the test cycle was last updated",
+        None,
+        alias="lastModifiedDate",
+        description="Date when the test cycle was last updated",
     )
     status: str | None = Field(None, description="Status of the test cycle")
 
@@ -1062,6 +1179,7 @@ class QTestTestCycle(BaseModel):
 
     model_config = {"populate_by_name": True}
 
+
 class QTestTestRun(BaseModel):
     """
     Represents a test run in qTest.
@@ -1073,7 +1191,8 @@ class QTestTestRun(BaseModel):
 
     id: int | None = Field(None, description="Unique identifier for the test run")
     name: str | None = Field(
-        None, description="Name of the test run (often derived from test case)",
+        None,
+        description="Name of the test run (often derived from test case)",
     )
     description: str | None = Field(None, description="Detailed description of the test run")
     pid: str | None = Field(None, description="Project-specific ID (e.g., 'TR-123')")
@@ -1083,37 +1202,57 @@ class QTestTestRun(BaseModel):
         description="ID of the test case version this run is based on",
     )
     test_case_id: int | None = Field(
-        None, alias="testCaseId", description="ID of the test case this run is based on",
+        None,
+        alias="testCaseId",
+        description="ID of the test case this run is based on",
     )
     test_cycle_id: int | None = Field(
-        None, alias="testCycleId", description="ID of the test cycle containing this run",
+        None,
+        alias="testCycleId",
+        description="ID of the test cycle containing this run",
     )
     project_id: int | None = Field(
-        None, alias="projectId", description="ID of the project containing this test run",
+        None,
+        alias="projectId",
+        description="ID of the project containing this test run",
     )
     properties: list[QTestCustomField] | None = Field(
-        default_factory=list, description="Custom fields associated with the test run",
+        default_factory=list,
+        description="Custom fields associated with the test run",
     )
     status: str | None = Field(
-        None, description="Current status of the test run (e.g., Not Run, Passed, Failed)",
+        None,
+        description="Current status of the test run (e.g., Not Run, Passed, Failed)",
     )
     assigned_to: dict | None = Field(
-        None, alias="assignedTo", description="User assigned to execute this test run",
+        None,
+        alias="assignedTo",
+        description="User assigned to execute this test run",
     )
     created_date: datetime | None = Field(
-        None, alias="createdDate", description="Date when the test run was created",
+        None,
+        alias="createdDate",
+        description="Date when the test run was created",
     )
     created_by: dict | None = Field(
-        None, alias="createdBy", description="User who created the test run",
+        None,
+        alias="createdBy",
+        description="User who created the test run",
     )
     planned_execution_date: datetime | None = Field(
-        None, alias="plannedExecutionDate", description="Planned date for execution",
+        None,
+        alias="plannedExecutionDate",
+        description="Planned date for execution",
     )
     actual_execution_date: datetime | None = Field(
-        None, alias="actualExecutionDate", description="Actual date of execution",
+        None,
+        alias="actualExecutionDate",
+        description="Actual date of execution",
     )
     latest_test_log_id: int | None = Field(
-        None, alias="latestTestLogId", description="ID of the most recent test log for this run",
+        None,
+        alias="latestTestLogId",
+        description="ID of the most recent test log for this run",
     )
 
     # Common test run statuses in qTest
@@ -1154,6 +1293,7 @@ class QTestTestRun(BaseModel):
 
     model_config = {"populate_by_name": True}
 
+
 class QTestTestLog(BaseModel):
     """
     Represents a test log in qTest.
@@ -1167,29 +1307,42 @@ class QTestTestLog(BaseModel):
     id: int | None = Field(None, description="Unique identifier for the test log")
     status: str = Field(..., description="Status of the test execution (e.g., Passed, Failed)")
     execution_date: datetime | None = Field(
-        None, alias="executionDate", description="Date and time of execution",
+        None,
+        alias="executionDate",
+        description="Date and time of execution",
     )
     note: str | None = Field(None, description="Notes or comments about the test execution")
     attachments: list[QTestAttachment] = Field(
-        default_factory=list, description="Attachments related to the test execution",
+        default_factory=list,
+        description="Attachments related to the test execution",
     )
     properties: list[QTestCustomField] | None = Field(
-        default_factory=list, description="Custom fields associated with the test log",
+        default_factory=list,
+        description="Custom fields associated with the test log",
     )
     test_run_id: int | None = Field(
-        None, alias="testRunId", description="ID of the test run this log belongs to",
+        None,
+        alias="testRunId",
+        description="ID of the test run this log belongs to",
     )
     executed_by: dict | None = Field(
-        None, alias="executedBy", description="User who executed the test",
+        None,
+        alias="executedBy",
+        description="User who executed the test",
     )
     defects: list[dict] | None = Field(
-        default_factory=list, description="Defects associated with this test execution",
+        default_factory=list,
+        description="Defects associated with this test execution",
     )
     test_step_logs: list[dict] | None = Field(
-        None, alias="testStepLogs", description="Logs for individual test steps",
+        None,
+        alias="testStepLogs",
+        description="Logs for individual test steps",
     )
     actual_results: str | None = Field(
-        None, alias="actualResults", description="Overall actual results of the test execution",
+        None,
+        alias="actualResults",
+        description="Overall actual results of the test execution",
     )
 
     # Valid test execution statuses in qTest
@@ -1233,6 +1386,7 @@ class QTestTestLog(BaseModel):
 
     model_config = {"populate_by_name": True}
 
+
 class QTestTestExecution(BaseModel):
     """
     Represents a test execution in qTest.
@@ -1245,30 +1399,45 @@ class QTestTestExecution(BaseModel):
 
     id: int | None = Field(None, description="Unique identifier for the test execution")
     test_run_id: int = Field(
-        ..., alias="testRunId", description="ID of the test run this execution belongs to", gt=0,
+        ...,
+        alias="testRunId",
+        description="ID of the test run this execution belongs to",
+        gt=0,
     )
     status: str = Field(
-        ..., description="Overall status of the test execution (e.g., Passed, Failed)",
+        ...,
+        description="Overall status of the test execution (e.g., Passed, Failed)",
     )
     execution_date: datetime = Field(
-        ..., alias="executionDate", description="Date and time of execution",
+        ...,
+        alias="executionDate",
+        description="Date and time of execution",
     )
     executed_by: int | None = Field(
-        None, alias="executedBy", description="ID of the user who executed the test",
+        None,
+        alias="executedBy",
+        description="ID of the user who executed the test",
     )
     note: str | None = Field(None, description="Notes or comments about the test execution")
     attachments: list[QTestAttachment] = Field(
-        default_factory=list, description="Attachments related to the test execution",
+        default_factory=list,
+        description="Attachments related to the test execution",
     )
     test_step_logs: list[dict[str, Any]] | None = Field(
-        None, alias="testStepLogs", description="Logs for individual test steps",
+        None,
+        alias="testStepLogs",
+        description="Logs for individual test steps",
     )
     build: str | None = Field(None, description="Build version tested in this execution")
     build_url: str | None = Field(
-        None, alias="buildUrl", description="URL to the build used for this execution",
+        None,
+        alias="buildUrl",
+        description="URL to the build used for this execution",
     )
     duration: int | None = Field(
-        None, description="Duration of the test execution in milliseconds", ge=0,
+        None,
+        description="Duration of the test execution in milliseconds",
+        ge=0,
     )
 
     # Valid test execution statuses in qTest
@@ -1321,6 +1490,7 @@ class QTestTestExecution(BaseModel):
 
     model_config = {"populate_by_name": True}
 
+
 class QTestParameterValue(BaseModel):
     """
     Represents a parameter value in qTest Parameters.
@@ -1332,7 +1502,9 @@ class QTestParameterValue(BaseModel):
     id: int | None = Field(None, description="Unique identifier for the parameter value")
     value: str = Field(..., description="The actual value", min_length=1)
     parameter_id: int | None = Field(
-        None, alias="parameterId", description="ID of the parameter this value belongs to",
+        None,
+        alias="parameterId",
+        description="ID of the parameter this value belongs to",
     )
 
     @field_validator("value")
@@ -1343,6 +1515,7 @@ class QTestParameterValue(BaseModel):
         return value
 
     model_config = {"populate_by_name": True}
+
 
 class QTestParameter(BaseModel):
     """
@@ -1357,17 +1530,24 @@ class QTestParameter(BaseModel):
     name: str = Field(..., description="Name of the parameter", min_length=1, max_length=255)
     description: str | None = Field(None, description="Detailed description of the parameter")
     project_id: int | None = Field(
-        None, alias="projectId", description="ID of the project containing this parameter",
+        None,
+        alias="projectId",
+        description="ID of the project containing this parameter",
     )
     status: str | None = Field(None, description="Status of the parameter (e.g., Active, Inactive)")
     values: list[QTestParameterValue] = Field(
-        default_factory=list, description="List of values for this parameter",
+        default_factory=list,
+        description="List of values for this parameter",
     )
     created_date: datetime | None = Field(
-        None, alias="createdDate", description="Date when the parameter was created",
+        None,
+        alias="createdDate",
+        description="Date when the parameter was created",
     )
     created_by: dict | None = Field(
-        None, alias="createdBy", description="User who created the parameter",
+        None,
+        alias="createdBy",
+        description="User who created the parameter",
     )
 
     # Valid parameter statuses in qTest
@@ -1391,6 +1571,7 @@ class QTestParameter(BaseModel):
 
     model_config = {"populate_by_name": True}
 
+
 class QTestDatasetRow(BaseModel):
     """
     Represents a dataset row in qTest Parameters.
@@ -1401,10 +1582,13 @@ class QTestDatasetRow(BaseModel):
 
     id: int | None = Field(None, description="Unique identifier for the dataset row")
     dataset_id: int | None = Field(
-        None, alias="datasetId", description="ID of the dataset this row belongs to",
+        None,
+        alias="datasetId",
+        description="ID of the dataset this row belongs to",
     )
     values: dict[str, Any] = Field(
-        default_factory=dict, description="Parameter name to value mappings for this row",
+        default_factory=dict,
+        description="Parameter name to value mappings for this row",
     )
     name: str | None = Field(None, description="Optional name for this dataset row")
     description: str | None = Field(None, description="Optional description of this dataset row")
@@ -1417,6 +1601,7 @@ class QTestDatasetRow(BaseModel):
         return value
 
     model_config = {"populate_by_name": True}
+
 
 class QTestDataset(BaseModel):
     """
@@ -1431,20 +1616,29 @@ class QTestDataset(BaseModel):
     name: str = Field(..., description="Name of the dataset", min_length=1, max_length=255)
     description: str | None = Field(None, description="Detailed description of the dataset")
     project_id: int | None = Field(
-        None, alias="projectId", description="ID of the project containing this dataset",
+        None,
+        alias="projectId",
+        description="ID of the project containing this dataset",
     )
     status: str | None = Field(None, description="Status of the dataset (e.g., Active, Inactive)")
     rows: list[QTestDatasetRow] = Field(
-        default_factory=list, description="Rows of parameter values in this dataset",
+        default_factory=list,
+        description="Rows of parameter values in this dataset",
     )
     created_date: datetime | None = Field(
-        None, alias="createdDate", description="Date when the dataset was created",
+        None,
+        alias="createdDate",
+        description="Date when the dataset was created",
     )
     created_by: dict | None = Field(
-        None, alias="createdBy", description="User who created the dataset",
+        None,
+        alias="createdBy",
+        description="User who created the dataset",
     )
     parameter_names: list[str] | None = Field(
-        None, alias="parameterNames", description="Names of parameters used in this dataset",
+        None,
+        alias="parameterNames",
+        description="Names of parameters used in this dataset",
     )
 
     # Valid dataset statuses in qTest
@@ -1485,7 +1679,9 @@ class QTestDataset(BaseModel):
 
     model_config = {"populate_by_name": True}
 
+
 # Pulse API Models
+
 
 class QTestPulseEventType(str, Enum):
     """Types of events that can trigger Pulse rules."""
@@ -1505,6 +1701,7 @@ class QTestPulseEventType(str, Enum):
     SCHEDULED = "SCHEDULED"
     MANUAL = "MANUAL"
 
+
 class QTestPulseActionType(str, Enum):
     """Types of actions that can be performed by Pulse rules."""
 
@@ -1519,6 +1716,7 @@ class QTestPulseActionType(str, Enum):
     UPDATE_TEST_CASE = "UPDATE_TEST_CASE"
     EXECUTE_SCRIPT = "EXECUTE_SCRIPT"
 
+
 class QTestPulseCondition(BaseModel):
     """
     Represents a condition in a Pulse rule.
@@ -1532,7 +1730,8 @@ class QTestPulseCondition(BaseModel):
     operator: str = Field(..., description="The comparison operator to use", min_length=1)
     value: Any = Field(..., description="The value to compare against")
     value_type: str | None = Field(
-        None, description="The data type of the value (string, number, boolean)",
+        None,
+        description="The data type of the value (string, number, boolean)",
     )
 
     # Valid comparison operators in qTest Pulse
@@ -1597,6 +1796,7 @@ class QTestPulseCondition(BaseModel):
 
     model_config = {"populate_by_name": True}
 
+
 class QTestPulseActionParameter(BaseModel):
     """
     Represents a parameter for a Pulse action.
@@ -1608,7 +1808,8 @@ class QTestPulseActionParameter(BaseModel):
     name: str = Field(..., description="Name of the parameter", min_length=1)
     value: Any = Field(..., description="Value of the parameter")
     value_type: str | None = Field(
-        None, description="The data type of the value (string, number, boolean)",
+        None,
+        description="The data type of the value (string, number, boolean)",
     )
 
     # Valid value types in qTest Pulse
@@ -1657,6 +1858,7 @@ class QTestPulseActionParameter(BaseModel):
 
     model_config = {"populate_by_name": True}
 
+
 class QTestPulseAction(BaseModel):
     """
     Represents an action in a Pulse rule.
@@ -1670,22 +1872,34 @@ class QTestPulseAction(BaseModel):
     name: str = Field(..., description="Name of the action", min_length=1, max_length=255)
     action_type: str = Field(..., alias="actionType", description="Type of action to perform")
     project_id: int = Field(
-        ..., alias="projectId", description="ID of the project containing this action", gt=0,
+        ...,
+        alias="projectId",
+        description="ID of the project containing this action",
+        gt=0,
     )
     parameters: list[QTestPulseActionParameter] = Field(
-        default_factory=list, description="Parameters configuring this action",
+        default_factory=list,
+        description="Parameters configuring this action",
     )
     created_by: dict[str, Any] | None = Field(
-        None, alias="createdBy", description="User who created the action",
+        None,
+        alias="createdBy",
+        description="User who created the action",
     )
     created_date: datetime | None = Field(
-        None, alias="createdDate", description="Date when the action was created",
+        None,
+        alias="createdDate",
+        description="Date when the action was created",
     )
     updated_by: dict[str, Any] | None = Field(
-        None, alias="updatedBy", description="User who last updated the action",
+        None,
+        alias="updatedBy",
+        description="User who last updated the action",
     )
     updated_date: datetime | None = Field(
-        None, alias="updatedDate", description="Date when the action was last updated",
+        None,
+        alias="updatedDate",
+        description="Date when the action was last updated",
     )
 
     @field_validator("name")
@@ -1736,6 +1950,7 @@ class QTestPulseAction(BaseModel):
 
     model_config = {"populate_by_name": True}
 
+
 class QTestPulseTrigger(BaseModel):
     """
     Represents a trigger in a Pulse rule.
@@ -1748,25 +1963,39 @@ class QTestPulseTrigger(BaseModel):
     id: int | None = Field(None, description="Unique identifier for the trigger")
     name: str = Field(..., description="Name of the trigger", min_length=1, max_length=255)
     event_type: str = Field(
-        ..., alias="eventType", description="Type of event that activates this trigger",
+        ...,
+        alias="eventType",
+        description="Type of event that activates this trigger",
     )
     project_id: int = Field(
-        ..., alias="projectId", description="ID of the project containing this trigger", gt=0,
+        ...,
+        alias="projectId",
+        description="ID of the project containing this trigger",
+        gt=0,
     )
     conditions: list[QTestPulseCondition] = Field(
-        default_factory=list, description="Conditions that must be met for the trigger to fire",
+        default_factory=list,
+        description="Conditions that must be met for the trigger to fire",
     )
     created_by: dict[str, Any] | None = Field(
-        None, alias="createdBy", description="User who created the trigger",
+        None,
+        alias="createdBy",
+        description="User who created the trigger",
     )
     created_date: datetime | None = Field(
-        None, alias="createdDate", description="Date when the trigger was created",
+        None,
+        alias="createdDate",
+        description="Date when the trigger was created",
     )
     updated_by: dict[str, Any] | None = Field(
-        None, alias="updatedBy", description="User who last updated the trigger",
+        None,
+        alias="updatedBy",
+        description="User who last updated the trigger",
     )
     updated_date: datetime | None = Field(
-        None, alias="updatedDate", description="Date when the trigger was last updated",
+        None,
+        alias="updatedDate",
+        description="Date when the trigger was last updated",
     )
 
     @field_validator("name")
@@ -1804,6 +2033,7 @@ class QTestPulseTrigger(BaseModel):
 
     model_config = {"populate_by_name": True}
 
+
 class QTestPulseRule(BaseModel):
     """
     Represents a Pulse rule.
@@ -1816,32 +2046,52 @@ class QTestPulseRule(BaseModel):
     id: int | None = Field(None, description="Unique identifier for the rule")
     name: str = Field(..., description="Name of the rule", min_length=1, max_length=255)
     project_id: int = Field(
-        ..., alias="projectId", description="ID of the project containing this rule", gt=0,
+        ...,
+        alias="projectId",
+        description="ID of the project containing this rule",
+        gt=0,
     )
     enabled: bool = Field(True, description="Whether the rule is currently active")
     trigger_id: int = Field(
-        ..., alias="triggerId", description="ID of the trigger that activates this rule", gt=0,
+        ...,
+        alias="triggerId",
+        description="ID of the trigger that activates this rule",
+        gt=0,
     )
     action_id: int = Field(
-        ..., alias="actionId", description="ID of the action to execute when triggered", gt=0,
+        ...,
+        alias="actionId",
+        description="ID of the action to execute when triggered",
+        gt=0,
     )
     description: str | None = Field(
-        None, description="Detailed description of the rule and its purpose",
+        None,
+        description="Detailed description of the rule and its purpose",
     )
     created_by: dict[str, Any] | None = Field(
-        None, alias="createdBy", description="User who created the rule",
+        None,
+        alias="createdBy",
+        description="User who created the rule",
     )
     created_date: datetime | None = Field(
-        None, alias="createdDate", description="Date when the rule was created",
+        None,
+        alias="createdDate",
+        description="Date when the rule was created",
     )
     updated_by: dict[str, Any] | None = Field(
-        None, alias="updatedBy", description="User who last updated the rule",
+        None,
+        alias="updatedBy",
+        description="User who last updated the rule",
     )
     updated_date: datetime | None = Field(
-        None, alias="updatedDate", description="Date when the rule was last updated",
+        None,
+        alias="updatedDate",
+        description="Date when the rule was last updated",
     )
     priority: int | None = Field(
-        None, description="Priority order for rule execution (lower runs first)", ge=1,
+        None,
+        description="Priority order for rule execution (lower runs first)",
+        ge=1,
     )
 
     @field_validator("name")
@@ -1859,6 +2109,7 @@ class QTestPulseRule(BaseModel):
         return value
 
     model_config = {"populate_by_name": True}
+
 
 class QTestPulseConstant(BaseModel):
     """
@@ -1878,22 +2129,34 @@ class QTestPulseConstant(BaseModel):
     )
     value: str = Field(..., description="Value of the constant", min_length=1)
     description: str | None = Field(
-        None, description="Detailed description of the constant and its purpose",
+        None,
+        description="Detailed description of the constant and its purpose",
     )
     project_id: int = Field(
-        ..., alias="projectId", description="ID of the project containing this constant", gt=0,
+        ...,
+        alias="projectId",
+        description="ID of the project containing this constant",
+        gt=0,
     )
     created_by: dict[str, Any] | None = Field(
-        None, alias="createdBy", description="User who created the constant",
+        None,
+        alias="createdBy",
+        description="User who created the constant",
     )
     created_date: datetime | None = Field(
-        None, alias="createdDate", description="Date when the constant was created",
+        None,
+        alias="createdDate",
+        description="Date when the constant was created",
     )
     updated_by: dict[str, Any] | None = Field(
-        None, alias="updatedBy", description="User who last updated the constant",
+        None,
+        alias="updatedBy",
+        description="User who last updated the constant",
     )
     updated_date: datetime | None = Field(
-        None, alias="updatedDate", description="Date when the constant was last updated",
+        None,
+        alias="updatedDate",
+        description="Date when the constant was last updated",
     )
 
     @field_validator("name")
@@ -1932,6 +2195,7 @@ class QTestPulseConstant(BaseModel):
 
     model_config = {"populate_by_name": True}
 
+
 class QTestScenarioStep(BaseModel):
     """
     Represents a step in a BDD scenario.
@@ -1945,7 +2209,8 @@ class QTestScenarioStep(BaseModel):
     keyword: str = Field(..., description="Step keyword (Given, When, Then, And, But)")
     text: str = Field(..., description="Step text content", min_length=1)
     argument: dict | None = Field(
-        None, description="Optional arguments like data tables or doc strings",
+        None,
+        description="Optional arguments like data tables or doc strings",
     )
     line: int | None = Field(None, description="Line number in the feature file")
 
@@ -1975,6 +2240,7 @@ class QTestScenarioStep(BaseModel):
 
     model_config = {"populate_by_name": True}
 
+
 class QTestScenarioBackground(BaseModel):
     """
     Represents a background in a BDD feature.
@@ -1987,7 +2253,8 @@ class QTestScenarioBackground(BaseModel):
     name: str | None = Field(None, description="Optional name or title for the background")
     description: str | None = Field(None, description="Optional description of the background")
     steps: list[QTestScenarioStep] = Field(
-        default_factory=list, description="Steps in the background",
+        default_factory=list,
+        description="Steps in the background",
     )
     line: int | None = Field(None, description="Line number in the feature file")
 
@@ -2004,6 +2271,7 @@ class QTestScenarioBackground(BaseModel):
         return value
 
     model_config = {"populate_by_name": True}
+
 
 class QTestScenarioExample(BaseModel):
     """
@@ -2056,6 +2324,7 @@ class QTestScenarioExample(BaseModel):
 
     model_config = {"populate_by_name": True}
 
+
 class QTestScenarioOutline(BaseModel):
     """
     Represents a scenario outline in a BDD feature.
@@ -2066,18 +2335,22 @@ class QTestScenarioOutline(BaseModel):
     """
 
     id: str | None = Field(
-        None, description="Unique identifier for the scenario outline (UUID format)",
+        None,
+        description="Unique identifier for the scenario outline (UUID format)",
     )
     name: str = Field(..., description="Name of the scenario outline", min_length=1)
     description: str | None = Field(
-        None, description="Detailed description of the scenario outline",
+        None,
+        description="Detailed description of the scenario outline",
     )
     steps: list[QTestScenarioStep] = Field(..., description="Steps in the scenario outline")
     examples: list[QTestScenarioExample] = Field(
-        ..., description="Example tables for the scenario outline",
+        ...,
+        description="Example tables for the scenario outline",
     )
     tags: list[str] = Field(
-        default_factory=list, description="Tags associated with this scenario outline",
+        default_factory=list,
+        description="Tags associated with this scenario outline",
     )
     line: int | None = Field(None, description="Line number in the feature file")
 
@@ -2137,6 +2410,7 @@ class QTestScenarioOutline(BaseModel):
 
     model_config = {"populate_by_name": True}
 
+
 class QTestScenario(BaseModel):
     """
     Represents a BDD scenario in qTest Scenario.
@@ -2173,6 +2447,7 @@ class QTestScenario(BaseModel):
 
     model_config = {"populate_by_name": True}
 
+
 class QTestScenarioFeature(BaseModel):
     """
     Represents a BDD feature in qTest Scenario.
@@ -2186,18 +2461,24 @@ class QTestScenarioFeature(BaseModel):
     name: str = Field(..., description="Name of the feature", min_length=1, max_length=255)
     description: str | None = Field(None, description="Detailed description of the feature")
     project_id: int = Field(
-        ..., alias="projectId", description="ID of the project containing this feature", gt=0,
+        ...,
+        alias="projectId",
+        description="ID of the project containing this feature",
+        gt=0,
     )
     content: str = Field(..., description="Full Gherkin content of the feature", min_length=1)
     path: str | None = Field(None, description="File path where this feature is stored")
     tags: list[str] | None = Field(
-        default_factory=list, description="Tags associated with this feature",
+        default_factory=list,
+        description="Tags associated with this feature",
     )
     background: QTestScenarioBackground | None = Field(
-        None, description="Background steps for all scenarios",
+        None,
+        description="Background steps for all scenarios",
     )
     scenarios: list[QTestScenario] = Field(
-        default_factory=list, description="Scenarios in this feature",
+        default_factory=list,
+        description="Scenarios in this feature",
     )
     scenario_outlines: list[QTestScenarioOutline] = Field(
         default_factory=list,
@@ -2205,13 +2486,19 @@ class QTestScenarioFeature(BaseModel):
         description="Scenario outlines in this feature",
     )
     created_date: datetime | None = Field(
-        None, alias="createdDate", description="Date when the feature was created",
+        None,
+        alias="createdDate",
+        description="Date when the feature was created",
     )
     created_by: dict | None = Field(
-        None, alias="createdBy", description="User who created the feature",
+        None,
+        alias="createdBy",
+        description="User who created the feature",
     )
     updated_date: datetime | None = Field(
-        None, alias="updatedDate", description="Date when the feature was last updated",
+        None,
+        alias="updatedDate",
+        description="Date when the feature was last updated",
     )
 
     @field_validator("id", mode="before")

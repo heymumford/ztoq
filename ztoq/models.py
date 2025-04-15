@@ -29,6 +29,7 @@ class ZephyrConfig(BaseModel):
     ENV_TOKEN_NAME: ClassVar[str] = "zephyr_access_token"
 
     @field_validator("api_token")
+    @classmethod
     def validate_api_token(cls, v: str) -> str:
         """Validate that the API token is not empty."""
         if not v:
@@ -92,6 +93,7 @@ class CustomField(BaseModel):
     value: Any
 
     @field_validator("value")
+    @classmethod
     def validate_value_by_type(cls, v, info):
         """Validate that the value is appropriate for the field type."""
         values = info.data

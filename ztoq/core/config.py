@@ -35,9 +35,11 @@ class BaseConfig(BaseModel):
         Create a configuration instance from environment variables.
 
         Args:
+        ----
             **overrides: Key-value pairs that override environment variables
 
         Returns:
+        -------
             An instance of the configuration class
 
         """
@@ -49,10 +51,12 @@ class BaseConfig(BaseModel):
         Get an environment variable with the class prefix.
 
         Args:
+        ----
             key: Key name without prefix
             default: Default value if environment variable is not found
 
         Returns:
+        -------
             The environment variable value or default
 
         """
@@ -96,7 +100,8 @@ class LoggingConfig(BaseConfig):
     ENV_PREFIX: ClassVar[str] = "ZTOQ_"
 
     @field_validator("level")
-    def validate_level(self, value):
+    @classmethod
+    def validate_level(cls, value):
         """Validate that the log level is valid."""
         valid_levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
         value = value.upper()
@@ -115,7 +120,8 @@ class LoggingConfig(BaseConfig):
             "use_rich": cls.get_env_var("LOG_USE_RICH", "true").lower() == "true",
             "log_file": cls.get_env_var("LOG_FILE", None),
             "json_format": cls.get_env_var("LOG_JSON", "false").lower() == "true",
-            "include_correlation_id": cls.get_env_var("LOG_CORRELATION_ID", "true").lower() == "true",
+            "include_correlation_id": cls.get_env_var("LOG_CORRELATION_ID", "true").lower()
+            == "true",
         }
 
         # Override with any directly provided values
@@ -132,6 +138,7 @@ class LoggingConfig(BaseConfig):
         Configure logging based on the settings.
 
         Args:
+        ----
             debug: Whether to force debug mode
 
         """
@@ -148,7 +155,9 @@ class LoggingConfig(BaseConfig):
             debug=debug,
         )
 
-        logger.debug(f"Logging configured with level {logging.getLevelName(self.get_log_level_int() if not debug else logging.DEBUG)}")
+        logger.debug(
+            f"Logging configured with level {logging.getLevelName(self.get_log_level_int() if not debug else logging.DEBUG)}",
+        )
 
 
 class DatabaseConfig(BaseConfig):
@@ -257,23 +266,27 @@ class DatabaseConfig(BaseConfig):
         if db_type == "sqlite":
             config["db_path"] = cls.get_env_var("DB_PATH")
         elif db_type == "postgresql":
-            config.update({
-                "host": cls.get_env_var("PG_HOST"),
-                "port": int(cls.get_env_var("PG_PORT", "5432")),
-                "username": cls.get_env_var("PG_USER"),
-                "password": cls.get_env_var("PG_PASSWORD"),
-                "database": cls.get_env_var("PG_DATABASE"),
-            })
+            config.update(
+                {
+                    "host": cls.get_env_var("PG_HOST"),
+                    "port": int(cls.get_env_var("PG_PORT", "5432")),
+                    "username": cls.get_env_var("PG_USER"),
+                    "password": cls.get_env_var("PG_PASSWORD"),
+                    "database": cls.get_env_var("PG_DATABASE"),
+                },
+            )
         elif db_type == "snowflake":
-            config.update({
-                "account": cls.get_env_var("SF_ACCOUNT"),
-                "username": cls.get_env_var("SF_USER"),
-                "password": cls.get_env_var("SF_PASSWORD"),
-                "database": cls.get_env_var("SF_DATABASE"),
-                "warehouse": cls.get_env_var("SF_WAREHOUSE"),
-                "schema": cls.get_env_var("SF_SCHEMA"),
-                "role": cls.get_env_var("SF_ROLE"),
-            })
+            config.update(
+                {
+                    "account": cls.get_env_var("SF_ACCOUNT"),
+                    "username": cls.get_env_var("SF_USER"),
+                    "password": cls.get_env_var("SF_PASSWORD"),
+                    "database": cls.get_env_var("SF_DATABASE"),
+                    "warehouse": cls.get_env_var("SF_WAREHOUSE"),
+                    "schema": cls.get_env_var("SF_SCHEMA"),
+                    "role": cls.get_env_var("SF_ROLE"),
+                },
+            )
 
         # Override with any directly provided values
         config.update(overrides)
@@ -284,7 +297,8 @@ class DatabaseConfig(BaseConfig):
         """
         Get the database connection string based on the configuration.
 
-        Returns:
+        Returns
+        -------
             Database connection string for SQLAlchemy
 
         """
@@ -513,8 +527,7 @@ class AppConfig(BaseConfig):
         }
 
         # Add optional configurations if their environment variables are present
-        if any(key.startswith(("DB_", "PG_", "SF_"))
-               for key in os.environ):
+        if any(key.startswith(("DB_", "PG_", "SF_")) for key in os.environ):
             config["database"] = DatabaseConfig.from_env()
 
         if any(key.startswith("ZEPHYR_") for key in os.environ):
@@ -550,7 +563,8 @@ def get_app_config() -> AppConfig:
     """
     Get the global application configuration.
 
-    Returns:
+    Returns
+    -------
         The application configuration instance
 
     """
@@ -565,10 +579,12 @@ def init_app_config(config: AppConfig = None, **kwargs) -> AppConfig:
     Initialize the global application configuration.
 
     Args:
+    ----
         config: An existing AppConfig instance
         **kwargs: Key-value pairs for creating a new AppConfig
 
     Returns:
+    -------
         The application configuration instance
 
     """
@@ -583,6 +599,7 @@ def configure_logging(debug: bool = False) -> None:
     Configure logging with optional debug mode.
 
     Args:
+    ----
         debug: Whether to force debug mode
 
     """
