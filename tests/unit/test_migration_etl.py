@@ -13,28 +13,27 @@ from ztoq.migration import ZephyrToQTestMigration
 from ztoq.models import ZephyrConfig
 from ztoq.qtest_models import QTestConfig, QTestModule, QTestTestCase, QTestTestCycle, QTestTestRun
 
+
 @pytest.mark.unit()
-
-
 class TestMigrationETLProcess:
     @pytest.fixture()
     def zephyr_config(self):
         """Create a test Zephyr configuration."""
         return ZephyrConfig(
             base_url="https://api.zephyrscale.example.com/v2",
-                api_token="zephyr-token",
-                project_key="DEMO",
-            )
+            api_token="zephyr-token",
+            project_key="DEMO",
+        )
 
     @pytest.fixture()
     def qtest_config(self):
         """Create a test qTest configuration."""
         return QTestConfig(
             base_url="https://example.qtest.com",
-                username="test-user",
-                password="test-password",
-                project_id=12345,
-            )
+            username="test-user",
+            password="test-password",
+            project_id=12345,
+        )
 
     @pytest.fixture()
     def db_mock(self):
@@ -48,85 +47,93 @@ class TestMigrationETLProcess:
         # Mock project data
         db.get_project.return_value = {
             "id": "10001",
-                "key": "DEMO",
-                "name": "Demo Project",
-                "description": "Project for testing migrations"
+            "key": "DEMO",
+            "name": "Demo Project",
+            "description": "Project for testing migrations",
         }
 
         # Mock folder data
         db.get_folders.return_value = [
             {"id": "folder-1", "name": "Folder 1", "parentId": None, "description": "Root folder"},
-                {"id": "folder-2", "name": "Folder 2", "parentId": "folder-1", "description": "Subfolder"},
-                {"id": "folder-3", "name": "Folder 3", "parentId": "folder-1", "description": "Another subfolder"}
+            {
+                "id": "folder-2",
+                "name": "Folder 2",
+                "parentId": "folder-1",
+                "description": "Subfolder",
+            },
+            {
+                "id": "folder-3",
+                "name": "Folder 3",
+                "parentId": "folder-1",
+                "description": "Another subfolder",
+            },
         ]
 
         # Mock test case data
         db.get_test_cases_with_steps.return_value = [
             {
                 "id": "tc-001",
-                    "name": "Test Case 1",
-                    "description": "First test case",
-                    "precondition": "System is running",
-                    "folderId": "folder-2",
-                    "priority": "high",
-                    "steps": [
+                "name": "Test Case 1",
+                "description": "First test case",
+                "precondition": "System is running",
+                "folderId": "folder-2",
+                "priority": "high",
+                "steps": [
                     {"id": "step-1", "description": "Step 1", "expectedResult": "Result 1"},
-                        {"id": "step-2", "description": "Step 2", "expectedResult": "Result 2"}
+                    {"id": "step-2", "description": "Step 2", "expectedResult": "Result 2"},
                 ],
-                    "customFields": {"field1": "value1", "field2": True}
+                "customFields": {"field1": "value1", "field2": True},
             },
-                {
+            {
                 "id": "tc-002",
-                    "name": "Test Case 2",
-                    "description": "Second test case",
-                    "precondition": "User is logged in",
-                    "folderId": "folder-3",
-                    "priority": "medium",
-                    "steps": [
-                    {"id": "step-3", "description": "Step 3", "expectedResult": "Result 3"}
-                ],
-                    "customFields": {"field1": "value2", "field3": 42}
-            }
+                "name": "Test Case 2",
+                "description": "Second test case",
+                "precondition": "User is logged in",
+                "folderId": "folder-3",
+                "priority": "medium",
+                "steps": [{"id": "step-3", "description": "Step 3", "expectedResult": "Result 3"}],
+                "customFields": {"field1": "value2", "field3": 42},
+            },
         ]
 
         # Mock test cycle data
         db.get_test_cycles.return_value = [
             {
                 "id": "cycle-1",
-                    "name": "Sprint 1",
-                    "description": "First sprint cycle",
-                    "folderId": "folder-1",
-                    "startDate": "2025-01-01",
-                    "endDate": "2025-01-15"
+                "name": "Sprint 1",
+                "description": "First sprint cycle",
+                "folderId": "folder-1",
+                "startDate": "2025-01-01",
+                "endDate": "2025-01-15",
             },
-                {
+            {
                 "id": "cycle-2",
-                    "name": "Sprint 2",
-                    "description": "Second sprint cycle",
-                    "folderId": "folder-2",
-                    "startDate": "2025-01-16",
-                    "endDate": "2025-01-31"
-            }
+                "name": "Sprint 2",
+                "description": "Second sprint cycle",
+                "folderId": "folder-2",
+                "startDate": "2025-01-16",
+                "endDate": "2025-01-31",
+            },
         ]
 
         # Mock test execution data
         db.get_test_executions.return_value = [
             {
                 "id": "exec-1",
-                    "testCaseId": "tc-001",
-                    "testCycleId": "cycle-1",
-                    "status": "pass",
-                    "executionTime": "2025-01-02",
-                    "comment": "All tests passed"
+                "testCaseId": "tc-001",
+                "testCycleId": "cycle-1",
+                "status": "pass",
+                "executionTime": "2025-01-02",
+                "comment": "All tests passed",
             },
-                {
+            {
                 "id": "exec-2",
-                    "testCaseId": "tc-002",
-                    "testCycleId": "cycle-1",
-                    "status": "fail",
-                    "executionTime": "2025-01-03",
-                    "comment": "Failed at step 3"
-            }
+                "testCaseId": "tc-002",
+                "testCycleId": "cycle-1",
+                "status": "fail",
+                "executionTime": "2025-01-03",
+                "comment": "Failed at step 3",
+            },
         ]
 
         # Mock attachments
@@ -162,102 +169,121 @@ class TestMigrationETLProcess:
         # Mock transformed data
         db.get_transformed_modules_by_level.return_value = [
             # Level 0 (root modules)
-            [{"source_id": "folder-1", "module": {"name": "Folder 1", "description": "Root folder", "parent_id": None}}],
-                # Level 1 (child modules)
             [
-                {"source_id": "folder-2", "module": {"name": "Folder 2", "description": "Subfolder", "parent_id": "module-1"}},
-                    {"source_id": "folder-3", "module": {"name": "Folder 3", "description": "Another subfolder", "parent_id": "module-1"}}
-            ]
+                {
+                    "source_id": "folder-1",
+                    "module": {"name": "Folder 1", "description": "Root folder", "parent_id": None},
+                }
+            ],
+            # Level 1 (child modules)
+            [
+                {
+                    "source_id": "folder-2",
+                    "module": {
+                        "name": "Folder 2",
+                        "description": "Subfolder",
+                        "parent_id": "module-1",
+                    },
+                },
+                {
+                    "source_id": "folder-3",
+                    "module": {
+                        "name": "Folder 3",
+                        "description": "Another subfolder",
+                        "parent_id": "module-1",
+                    },
+                },
+            ],
         ]
 
         db.get_transformed_test_cases.return_value = [
             {
                 "source_id": "tc-001",
-                    "test_case": {
+                "test_case": {
                     "name": "Test Case 1",
-                        "description": "First test case",
-                        "precondition": "System is running",
-                        "module_id": "module-2",
-                        "priority_id": 2,
-                        "test_steps": [
+                    "description": "First test case",
+                    "precondition": "System is running",
+                    "module_id": "module-2",
+                    "priority_id": 2,
+                    "test_steps": [
                         {"description": "Step 1", "expected_result": "Result 1", "order": 1},
-                            {"description": "Step 2", "expected_result": "Result 2", "order": 2}
+                        {"description": "Step 2", "expected_result": "Result 2", "order": 2},
                     ],
-                        "properties": [
+                    "properties": [
                         {"field_name": "field1", "field_type": "STRING", "field_value": "value1"},
-                            {"field_name": "field2", "field_type": "BOOLEAN", "field_value": "true"}
-                    ]
-                }
+                        {"field_name": "field2", "field_type": "BOOLEAN", "field_value": "true"},
+                    ],
+                },
             },
-                {
+            {
                 "source_id": "tc-002",
-                    "test_case": {
+                "test_case": {
                     "name": "Test Case 2",
-                        "description": "Second test case",
-                        "precondition": "User is logged in",
-                        "module_id": "module-3",
-                        "priority_id": 3,
-                        "test_steps": [
+                    "description": "Second test case",
+                    "precondition": "User is logged in",
+                    "module_id": "module-3",
+                    "priority_id": 3,
+                    "test_steps": [
                         {"description": "Step 3", "expected_result": "Result 3", "order": 1}
                     ],
-                        "properties": [
+                    "properties": [
                         {"field_name": "field1", "field_type": "STRING", "field_value": "value2"},
-                            {"field_name": "field3", "field_type": "NUMBER", "field_value": "42"}
-                    ]
-                }
-            }
+                        {"field_name": "field3", "field_type": "NUMBER", "field_value": "42"},
+                    ],
+                },
+            },
         ]
 
         db.get_transformed_test_cycles.return_value = [
             {
                 "source_id": "cycle-1",
-                    "test_cycle": {
+                "test_cycle": {
                     "name": "Sprint 1",
-                        "description": "First sprint cycle",
-                        "parent_id": "module-1",
-                        "start_date": "2025-01-01",
-                        "end_date": "2025-01-15"
-                }
+                    "description": "First sprint cycle",
+                    "parent_id": "module-1",
+                    "start_date": "2025-01-01",
+                    "end_date": "2025-01-15",
+                },
             },
-                {
+            {
                 "source_id": "cycle-2",
-                    "test_cycle": {
+                "test_cycle": {
                     "name": "Sprint 2",
-                        "description": "Second sprint cycle",
-                        "parent_id": "module-2",
-                        "start_date": "2025-01-16",
-                        "end_date": "2025-01-31"
-                }
-            }
+                    "description": "Second sprint cycle",
+                    "parent_id": "module-2",
+                    "start_date": "2025-01-16",
+                    "end_date": "2025-01-31",
+                },
+            },
         ]
 
         db.get_transformed_executions.return_value = [
             {
                 "source_id": "exec-1",
-                    "test_run": {
+                "test_run": {
                     "name": "Run for tc-001 in cycle cycle-1",
-                        "test_case_id": "qtc-001",
-                        "test_cycle_id": "qcycle-001"
+                    "test_case_id": "qtc-001",
+                    "test_cycle_id": "qcycle-001",
                 },
-                    "test_log": {
+                "test_log": {
                     "status": "PASSED",
-                        "execution_date": "2025-01-02",
-                        "note": "All tests passed"
-                }
-            },
-                {
-                "source_id": "exec-2",
-                    "test_run": {
-                    "name": "Run for tc-002 in cycle cycle-1",
-                        "test_case_id": "qtc-002",
-                        "test_cycle_id": "qcycle-001"
+                    "execution_date": "2025-01-02",
+                    "note": "All tests passed",
                 },
-                    "test_log": {
+            },
+            {
+                "source_id": "exec-2",
+                "test_run": {
+                    "name": "Run for tc-002 in cycle cycle-1",
+                    "test_case_id": "qtc-002",
+                    "test_cycle_id": "qcycle-001",
+                },
+                "test_log": {
                     "status": "FAILED",
-                        "execution_date": "2025-01-03",
-                        "note": "Failed at step 3"
-                }
-            }
+                    "execution_date": "2025-01-03",
+                    "note": "Failed at step 3",
+                },
+            },
         ]
 
         return db
@@ -275,40 +301,55 @@ class TestMigrationETLProcess:
             # Set up mock Zephyr client responses
             mock_zephyr_client.get_project.return_value = {
                 "id": "10001",
-                    "key": "DEMO",
-                    "name": "Demo Project",
-                    "description": "Project for testing migrations"
+                "key": "DEMO",
+                "name": "Demo Project",
+                "description": "Project for testing migrations",
             }
 
             mock_zephyr_client.get_folders.return_value = [
-                {"id": "folder-1", "name": "Folder 1", "parentId": None, "description": "Root folder"},
-                    {"id": "folder-2", "name": "Folder 2", "parentId": "folder-1", "description": "Subfolder"},
-                    {"id": "folder-3", "name": "Folder 3", "parentId": "folder-1", "description": "Another subfolder"}
+                {
+                    "id": "folder-1",
+                    "name": "Folder 1",
+                    "parentId": None,
+                    "description": "Root folder",
+                },
+                {
+                    "id": "folder-2",
+                    "name": "Folder 2",
+                    "parentId": "folder-1",
+                    "description": "Subfolder",
+                },
+                {
+                    "id": "folder-3",
+                    "name": "Folder 3",
+                    "parentId": "folder-1",
+                    "description": "Another subfolder",
+                },
             ]
 
             mock_zephyr_client.get_test_cases.return_value = [
                 {
                     "id": "tc-001",
-                        "name": "Test Case 1",
-                        "description": "First test case",
-                        "precondition": "System is running",
-                        "folderId": "folder-2",
-                        "priority": "high"
+                    "name": "Test Case 1",
+                    "description": "First test case",
+                    "precondition": "System is running",
+                    "folderId": "folder-2",
+                    "priority": "high",
                 },
-                    {
+                {
                     "id": "tc-002",
-                        "name": "Test Case 2",
-                        "description": "Second test case",
-                        "precondition": "User is logged in",
-                        "folderId": "folder-3",
-                        "priority": "medium"
-                }
+                    "name": "Test Case 2",
+                    "description": "Second test case",
+                    "precondition": "User is logged in",
+                    "folderId": "folder-3",
+                    "priority": "medium",
+                },
             ]
 
             mock_zephyr_client.get_test_steps.side_effect = lambda tc_id: (
                 [
                     {"id": "step-1", "description": "Step 1", "expectedResult": "Result 1"},
-                        {"id": "step-2", "description": "Step 2", "expectedResult": "Result 2"}
+                    {"id": "step-2", "description": "Step 2", "expectedResult": "Result 2"},
                 ]
                 if tc_id == "tc-001"
                 else [{"id": "step-3", "description": "Step 3", "expectedResult": "Result 3"}]
@@ -317,39 +358,39 @@ class TestMigrationETLProcess:
             mock_zephyr_client.get_test_cycles.return_value = [
                 {
                     "id": "cycle-1",
-                        "name": "Sprint 1",
-                        "description": "First sprint cycle",
-                        "folderId": "folder-1",
-                        "startDate": "2025-01-01",
-                        "endDate": "2025-01-15"
+                    "name": "Sprint 1",
+                    "description": "First sprint cycle",
+                    "folderId": "folder-1",
+                    "startDate": "2025-01-01",
+                    "endDate": "2025-01-15",
                 },
-                    {
+                {
                     "id": "cycle-2",
-                        "name": "Sprint 2",
-                        "description": "Second sprint cycle",
-                        "folderId": "folder-2",
-                        "startDate": "2025-01-16",
-                        "endDate": "2025-01-31"
-                }
+                    "name": "Sprint 2",
+                    "description": "Second sprint cycle",
+                    "folderId": "folder-2",
+                    "startDate": "2025-01-16",
+                    "endDate": "2025-01-31",
+                },
             ]
 
             mock_zephyr_client.get_test_executions.return_value = [
                 {
                     "id": "exec-1",
-                        "testCaseId": "tc-001",
-                        "testCycleId": "cycle-1",
-                        "status": "pass",
-                        "executionTime": "2025-01-02",
-                        "comment": "All tests passed"
+                    "testCaseId": "tc-001",
+                    "testCycleId": "cycle-1",
+                    "status": "pass",
+                    "executionTime": "2025-01-02",
+                    "comment": "All tests passed",
                 },
-                    {
+                {
                     "id": "exec-2",
-                        "testCaseId": "tc-002",
-                        "testCycleId": "cycle-1",
-                        "status": "fail",
-                        "executionTime": "2025-01-03",
-                        "comment": "Failed at step 3"
-                }
+                    "testCaseId": "tc-002",
+                    "testCycleId": "cycle-1",
+                    "status": "fail",
+                    "executionTime": "2025-01-03",
+                    "comment": "Failed at step 3",
+                },
             ]
 
             mock_zephyr_client.download_attachment.return_value = b"mock-image-data"
@@ -358,9 +399,9 @@ class TestMigrationETLProcess:
             def create_module_side_effect(module):
                 result = QTestModule(
                     id=f"qmodule-{module.name.lower().replace(' ', '-')}",
-                        name=module.name,
-                        description=module.description,
-                        parent_id=module.parent_id
+                    name=module.name,
+                    description=module.description,
+                    parent_id=module.parent_id,
                 )
                 return result
 
@@ -369,13 +410,13 @@ class TestMigrationETLProcess:
             def create_test_case_side_effect(test_case):
                 result = QTestTestCase(
                     id=f"qtc-{test_case.name.lower().replace(' ', '-')}",
-                        name=test_case.name,
-                        description=test_case.description,
-                        precondition=test_case.precondition,
-                        module_id=test_case.module_id,
-                        priority_id=test_case.priority_id,
-                        test_steps=test_case.test_steps,
-                        properties=test_case.properties
+                    name=test_case.name,
+                    description=test_case.description,
+                    precondition=test_case.precondition,
+                    module_id=test_case.module_id,
+                    priority_id=test_case.priority_id,
+                    test_steps=test_case.test_steps,
+                    properties=test_case.properties,
                 )
                 return result
 
@@ -384,11 +425,11 @@ class TestMigrationETLProcess:
             def create_test_cycle_side_effect(test_cycle):
                 result = QTestTestCycle(
                     id=f"qcycle-{test_cycle.name.lower().replace(' ', '-')}",
-                        name=test_cycle.name,
-                        description=test_cycle.description,
-                        parent_id=test_cycle.parent_id,
-                        start_date=test_cycle.start_date,
-                        end_date=test_cycle.end_date
+                    name=test_cycle.name,
+                    description=test_cycle.description,
+                    parent_id=test_cycle.parent_id,
+                    start_date=test_cycle.start_date,
+                    end_date=test_cycle.end_date,
                 )
                 return result
 
@@ -397,9 +438,9 @@ class TestMigrationETLProcess:
             def create_test_run_side_effect(test_run):
                 result = QTestTestRun(
                     id=f"qrun-{test_run.test_case_id}-{test_run.test_cycle_id}",
-                        name=test_run.name,
-                        test_case_id=test_run.test_case_id,
-                        test_cycle_id=test_run.test_cycle_id
+                    name=test_run.name,
+                    test_case_id=test_run.test_case_id,
+                    test_cycle_id=test_run.test_cycle_id,
                 )
                 return result
 
@@ -414,11 +455,11 @@ class TestMigrationETLProcess:
 
             migration = ZephyrToQTestMigration(
                 zephyr_config,
-                    qtest_config,
-                    db_mock,
-                    batch_size=10,
-                    max_workers=2,
-                    attachments_dir=attachments_dir
+                qtest_config,
+                db_mock,
+                batch_size=10,
+                max_workers=2,
+                attachments_dir=attachments_dir,
             )
 
             # Store test objects for cleanup
@@ -468,30 +509,18 @@ class TestMigrationETLProcess:
         db_mock.save_transformed_module.assert_has_calls(
             [
                 call("DEMO", "folder-1", ANY),
-                    # The next calls depend on the recursive function implementation
+                # The next calls depend on the recursive function implementation
             ],
-                any_order=True
+            any_order=True,
         )
         db_mock.save_transformed_test_case.assert_has_calls(
-            [
-                call("DEMO", "tc-001", ANY),
-                    call("DEMO", "tc-002", ANY)
-            ],
-                any_order=True
+            [call("DEMO", "tc-001", ANY), call("DEMO", "tc-002", ANY)], any_order=True
         )
         db_mock.save_transformed_test_cycle.assert_has_calls(
-            [
-                call("DEMO", "cycle-1", ANY),
-                    call("DEMO", "cycle-2", ANY)
-            ],
-                any_order=True
+            [call("DEMO", "cycle-1", ANY), call("DEMO", "cycle-2", ANY)], any_order=True
         )
         db_mock.save_transformed_execution.assert_has_calls(
-            [
-                call("DEMO", "exec-1", ANY, ANY),
-                    call("DEMO", "exec-2", ANY, ANY)
-            ],
-                any_order=True
+            [call("DEMO", "exec-1", ANY, ANY), call("DEMO", "exec-2", ANY, ANY)], any_order=True
         )
 
     def test_load_data(self, migration, db_mock):
@@ -520,10 +549,10 @@ class TestMigrationETLProcess:
         # Add attachments to a test case
         test_case = {
             "id": "tc-001",
-                "name": "Test Case with Attachments",
-                "attachments": [
+            "name": "Test Case with Attachments",
+            "attachments": [
                 {"id": "att-1", "filename": "screenshot.png", "url": "http://example.com/att-1"}
-            ]
+            ],
         }
 
         # Run the attachment extraction method
@@ -533,10 +562,10 @@ class TestMigrationETLProcess:
         migration.zephyr_client_mock.download_attachment.assert_called_once_with("att-1")
         db_mock.save_attachment.assert_called_once_with(
             related_type="TestCase",
-                related_id="tc-001",
-                name="screenshot.png",
-                content=b"mock-image-data",
-                url="http://example.com/att-1"
+            related_id="tc-001",
+            name="screenshot.png",
+            content=b"mock-image-data",
+            url="http://example.com/att-1",
         )
 
         # Verify attachment was saved to filesystem
@@ -614,8 +643,6 @@ class TestMigrationETLProcess:
 
 
 @pytest.mark.unit()
-
-
 class TestMigrationRestartability:
     """Test the ability to restart a migration from a specific point."""
 
@@ -624,25 +651,25 @@ class TestMigrationRestartability:
         """Create a migration instance with some progress already made."""
         zephyr_config = ZephyrConfig(
             base_url="https://api.zephyrscale.example.com/v2",
-                api_token="zephyr-token",
-                project_key="DEMO",
-            )
+            api_token="zephyr-token",
+            project_key="DEMO",
+        )
 
         qtest_config = QTestConfig(
             base_url="https://example.qtest.com",
-                username="test-user",
-                password="test-password",
-                project_id=12345,
-            )
+            username="test-user",
+            password="test-password",
+            project_id=12345,
+        )
 
         db_mock = MagicMock()
 
         # Mock migration that completed extraction but failed during transformation
         db_mock.get_migration_state.return_value = {
             "extraction_status": "completed",
-                "transformation_status": "failed",
-                "loading_status": "not_started",
-                "error_message": "Transform error: API timeout"
+            "transformation_status": "failed",
+            "loading_status": "not_started",
+            "error_message": "Transform error: API timeout",
         }
 
         # Empty mappings

@@ -13,31 +13,30 @@ from sqlalchemy import create_engine, inspect
 from sqlalchemy.orm import sessionmaker
 from ztoq.core.db_models import (
     Attachment,
-        Base,
-        CaseVersion,
-        CustomFieldDefinition,
-        CustomFieldValue,
-        EntityBatchState,
-        EntityType,
-        Environment,
-        Folder,
-        Label,
-        Link,
-        MigrationState,
-        Priority,
-        Project,
-        ScriptFile,
-        Status,
-        TestCase,
-        TestCycle,
-        TestExecution,
-        TestPlan,
-        TestStep,
+    Base,
+    CaseVersion,
+    CustomFieldDefinition,
+    CustomFieldValue,
+    EntityBatchState,
+    EntityType,
+    Environment,
+    Folder,
+    Label,
+    Link,
+    MigrationState,
+    Priority,
+    Project,
+    ScriptFile,
+    Status,
+    TestCase,
+    TestCycle,
+    TestExecution,
+    TestPlan,
+    TestStep,
 )
 
+
 @pytest.mark.unit()
-
-
 class TestDBModels:
     @pytest.fixture(scope="class")
     def db_path(self):
@@ -77,25 +76,25 @@ class TestDBModels:
         """Test that all model classes have appropriate table names."""
         expected_tables = {
             Project: "projects",
-                Folder: "folders",
-                Status: "statuses",
-                Priority: "priorities",
-                Environment: "environments",
-                Label: "labels",
-                CustomFieldDefinition: "custom_field_definitions",
-                CustomFieldValue: "custom_field_values",
-                Link: "links",
-                Attachment: "attachments",
-                ScriptFile: "script_files",
-                CaseVersion: "case_versions",
-                TestStep: "test_steps",
-                TestCase: "test_cases",
-                TestCycle: "test_cycles",
-                TestPlan: "test_plans",
-                TestExecution: "test_executions",
-                MigrationState: "migration_state",
-                EntityBatchState: "entity_batch_state",
-            }
+            Folder: "folders",
+            Status: "statuses",
+            Priority: "priorities",
+            Environment: "environments",
+            Label: "labels",
+            CustomFieldDefinition: "custom_field_definitions",
+            CustomFieldValue: "custom_field_values",
+            Link: "links",
+            Attachment: "attachments",
+            ScriptFile: "script_files",
+            CaseVersion: "case_versions",
+            TestStep: "test_steps",
+            TestCase: "test_cases",
+            TestCycle: "test_cycles",
+            TestPlan: "test_plans",
+            TestExecution: "test_executions",
+            MigrationState: "migration_state",
+            EntityBatchState: "entity_batch_state",
+        }
 
         for model_class, expected_tablename in expected_tables.items():
             assert model_class.__tablename__ == expected_tablename
@@ -105,12 +104,12 @@ class TestDBModels:
         enum_values = [e.value for e in EntityType]
         expected_values = [
             "TEST_CASE",
-                "TEST_EXECUTION",
-                "TEST_STEP",
-                "TEST_CYCLE",
-                "TEST_PLAN",
-                "FOLDER",
-            ]
+            "TEST_EXECUTION",
+            "TEST_STEP",
+            "TEST_CYCLE",
+            "TEST_PLAN",
+            "FOLDER",
+        ]
 
         for expected in expected_values:
             assert expected in enum_values
@@ -135,11 +134,11 @@ class TestDBModels:
         # Create related entities
         folder = Folder(
             id="FOLD-1",
-                name="Test Folder",
-                folder_type="TEST_CASE",
-                project_key="TEST",
-                project=project,
-            )
+            name="Test Folder",
+            folder_type="TEST_CASE",
+            project_key="TEST",
+            project=project,
+        )
         status = Status(
             id="STAT-1", name="Active", type="TEST_CASE", project_key="TEST", project=project
         )
@@ -171,23 +170,23 @@ class TestDBModels:
         # Create a parent folder
         parent_folder = Folder(
             id="FOLD-PARENT",
-                name="Parent Folder",
-                folder_type="TEST_CASE",
-                project_key="TEST-FOLDER",
-                project=project,
-            )
+            name="Parent Folder",
+            folder_type="TEST_CASE",
+            project_key="TEST-FOLDER",
+            project=project,
+        )
         session.add(parent_folder)
         session.commit()
 
         # Create a child folder with parent relationship
         child_folder = Folder(
             id="FOLD-CHILD",
-                name="Child Folder",
-                folder_type="TEST_CASE",
-                parent_id="FOLD-PARENT",
-                project_key="TEST-FOLDER",
-                project=project,
-            )
+            name="Child Folder",
+            folder_type="TEST_CASE",
+            parent_id="FOLD-PARENT",
+            project_key="TEST-FOLDER",
+            project=project,
+        )
         session.add(child_folder)
         session.commit()
 
@@ -211,11 +210,11 @@ class TestDBModels:
         # Create a folder
         folder = Folder(
             id="FOLD-CASES",
-                name="Test Folder for Cases",
-                folder_type="TEST_CASE",
-                project_key="TEST-CASES",
-                project=project,
-            )
+            name="Test Folder for Cases",
+            folder_type="TEST_CASE",
+            project_key="TEST-CASES",
+            project=project,
+        )
         session.add(folder)
 
         # Create a priority
@@ -228,44 +227,44 @@ class TestDBModels:
         # Create a test case
         test_case = TestCase(
             id="TC-CASES",
-                key="TESTCASE-1",
-                name="Login Test",
-                objective="Verify user login",
-                precondition="User exists in system",
-                description="Test the login functionality",
-                status="Active",
-                priority_id="PRI-CASES",
-                priority_name="High",
-                folder_id="FOLD-CASES",
-                folder_name="Test Folder for Cases",
-                owner="user1",
-                owner_name="Test User",
-                created_on=datetime.datetime.now(),
-                created_by="user1",
-                project_key="TEST-CASES",
-                project=project,
-                priority=priority,
-                folder=folder,
-            )
+            key="TESTCASE-1",
+            name="Login Test",
+            objective="Verify user login",
+            precondition="User exists in system",
+            description="Test the login functionality",
+            status="Active",
+            priority_id="PRI-CASES",
+            priority_name="High",
+            folder_id="FOLD-CASES",
+            folder_name="Test Folder for Cases",
+            owner="user1",
+            owner_name="Test User",
+            created_on=datetime.datetime.now(),
+            created_by="user1",
+            project_key="TEST-CASES",
+            project=project,
+            priority=priority,
+            folder=folder,
+        )
         session.add(test_case)
 
         # Create test steps
         step1 = TestStep(
             id="STEP-CASES-1",
-                index=0,
-                description="Navigate to login page",
-                expected_result="Login page displayed",
-                test_case_id="TC-CASES",
-                test_case=test_case,
-            )
+            index=0,
+            description="Navigate to login page",
+            expected_result="Login page displayed",
+            test_case_id="TC-CASES",
+            test_case=test_case,
+        )
         step2 = TestStep(
             id="STEP-CASES-2",
-                index=1,
-                description="Enter credentials and submit",
-                expected_result="User logged in successfully",
-                test_case_id="TC-CASES",
-                test_case=test_case,
-            )
+            index=1,
+            description="Enter credentials and submit",
+            expected_result="User logged in successfully",
+            test_case_id="TC-CASES",
+            test_case=test_case,
+        )
         session.add_all([step1, step2])
 
         # Add label
@@ -276,12 +275,12 @@ class TestDBModels:
         # Create script file
         script = ScriptFile(
             id="SCRIPT-CASES",
-                filename="login_test.py",
-                type="python",
-                content="import pytest\ndef test_login():\n    assert True",
-                test_case_id="TC-CASES",
-                test_case=test_case,
-            )
+            filename="login_test.py",
+            type="python",
+            content="import pytest\ndef test_login():\n    assert True",
+            test_case_id="TC-CASES",
+            test_case=test_case,
+        )
         session.add(script)
         session.commit()
 
@@ -316,34 +315,34 @@ class TestDBModels:
         # Create a folder
         folder = Folder(
             id="FOLD-CYCLES",
-                name="Test Cycles",
-                folder_type="TEST_CYCLE",
-                project_key="TEST-CYCLES",
-                project=project,
-            )
+            name="Test Cycles",
+            folder_type="TEST_CYCLE",
+            project_key="TEST-CYCLES",
+            project=project,
+        )
         session.add(folder)
         session.commit()
 
         # Create a test cycle
         test_cycle = TestCycle(
             id="CYCLE-TEST",
-                key="CYCLE-1",
-                name="Sprint 1 Testing",
-                description="Testing for Sprint 1",
-                status="Active",
-                status_name="Active",
-                folder_id="FOLD-CYCLES",
-                folder_name="Test Cycles",
-                owner="user1",
-                owner_name="Test User",
-                created_on=datetime.datetime.now(),
-                created_by="user1",
-                planned_start_date=datetime.datetime.now(),
-                planned_end_date=datetime.datetime.now() + datetime.timedelta(days=14),
-                project_key="TEST-CYCLES",
-                project=project,
-                folder=folder,
-            )
+            key="CYCLE-1",
+            name="Sprint 1 Testing",
+            description="Testing for Sprint 1",
+            status="Active",
+            status_name="Active",
+            folder_id="FOLD-CYCLES",
+            folder_name="Test Cycles",
+            owner="user1",
+            owner_name="Test User",
+            created_on=datetime.datetime.now(),
+            created_by="user1",
+            planned_start_date=datetime.datetime.now(),
+            planned_end_date=datetime.datetime.now() + datetime.timedelta(days=14),
+            project_key="TEST-CYCLES",
+            project=project,
+            folder=folder,
+        )
         session.add(test_cycle)
         session.commit()
 
@@ -367,21 +366,21 @@ class TestDBModels:
         # Create a test case
         test_case = TestCase(
             id="TC-EXEC",
-                key="EXEC-CASE-1",
-                name="Login Test for Execution",
-                project_key="TEST-EXEC",
-                project=project,
-            )
+            key="EXEC-CASE-1",
+            name="Login Test for Execution",
+            project_key="TEST-EXEC",
+            project=project,
+        )
         session.add(test_case)
 
         # Create a test cycle
         test_cycle = TestCycle(
             id="CYCLE-EXEC",
-                key="EXEC-CYCLE-1",
-                name="Cycle for Execution Tests",
-                project_key="TEST-EXEC",
-                project=project,
-            )
+            key="EXEC-CYCLE-1",
+            name="Cycle for Execution Tests",
+            project_key="TEST-EXEC",
+            project=project,
+        )
         session.add(test_cycle)
 
         # Create an environment
@@ -394,38 +393,38 @@ class TestDBModels:
         # Create a test execution
         execution = TestExecution(
             id="EXEC-TEST",
-                test_case_key="EXEC-CASE-1",
-                cycle_id="CYCLE-EXEC",
-                cycle_name="Cycle for Execution Tests",
-                status="PASS",
-                status_name="Passed",
-                environment_id="ENV-EXEC",
-                environment_name="Production Exec",
-                executed_by="user1",
-                executed_by_name="Test User",
-                executed_on=datetime.datetime.now(),
-                created_on=datetime.datetime.now(),
-                created_by="user1",
-                comment="Test passed with no issues",
-                project_key="TEST-EXEC",
-                project=project,
-                test_case=test_case,
-                test_cycle=test_cycle,
-                environment=environment,
-            )
+            test_case_key="EXEC-CASE-1",
+            cycle_id="CYCLE-EXEC",
+            cycle_name="Cycle for Execution Tests",
+            status="PASS",
+            status_name="Passed",
+            environment_id="ENV-EXEC",
+            environment_name="Production Exec",
+            executed_by="user1",
+            executed_by_name="Test User",
+            executed_on=datetime.datetime.now(),
+            created_on=datetime.datetime.now(),
+            created_by="user1",
+            comment="Test passed with no issues",
+            project_key="TEST-EXEC",
+            project=project,
+            test_case=test_case,
+            test_cycle=test_cycle,
+            environment=environment,
+        )
         session.add(execution)
 
         # Create execution steps
         exec_step = TestStep(
             id="EXEC-STEP-TEST",
-                index=0,
-                description="Navigate to login page",
-                expected_result="Login page displayed",
-                actual_result="Login page displayed correctly",
-                status="PASS",
-                test_execution_id="EXEC-TEST",
-                test_execution=execution,
-            )
+            index=0,
+            description="Navigate to login page",
+            expected_result="Login page displayed",
+            actual_result="Login page displayed correctly",
+            status="PASS",
+            test_execution_id="EXEC-TEST",
+            test_execution=execution,
+        )
         session.add(exec_step)
         session.commit()
 
@@ -466,21 +465,21 @@ class TestDBModels:
         values = [
             CustomFieldValue(
                 id="CFV-CASE",
-                    field_id="CF-TEST",
-                    entity_type=EntityType.TEST_CASE,
-                    entity_id="TC-CF-TEST",
-                    value_text="Integration test",
-                    field_definition=field_def,
-                ),
-                CustomFieldValue(
+                field_id="CF-TEST",
+                entity_type=EntityType.TEST_CASE,
+                entity_id="TC-CF-TEST",
+                value_text="Integration test",
+                field_definition=field_def,
+            ),
+            CustomFieldValue(
                 id="CFV-CYCLE",
-                    field_id="CF-TEST",
-                    entity_type=EntityType.TEST_CYCLE,
-                    entity_id="CYCLE-CF-TEST",
-                    value_text="Regression cycle",
-                    field_definition=field_def,
-                ),
-            ]
+                field_id="CF-TEST",
+                entity_type=EntityType.TEST_CYCLE,
+                entity_id="CYCLE-CF-TEST",
+                value_text="Regression cycle",
+                field_definition=field_def,
+            ),
+        ]
         session.add_all(values)
         session.commit()
 
@@ -505,15 +504,15 @@ class TestDBModels:
         # Create an attachment
         attachment = Attachment(
             id="ATT-1",
-                filename="screenshot.png",
-                content_type="image/png",
-                size=1024,
-                created_on=datetime.datetime.now(),
-                created_by="user1",
-                content=b"test binary data",
-                entity_type=EntityType.TEST_EXECUTION,
-                entity_id="EXEC-123",
-            )
+            filename="screenshot.png",
+            content_type="image/png",
+            size=1024,
+            created_on=datetime.datetime.now(),
+            created_by="user1",
+            content=b"test binary data",
+            entity_type=EntityType.TEST_EXECUTION,
+            entity_id="EXEC-123",
+        )
         session.add(attachment)
         session.commit()
 
@@ -532,18 +531,18 @@ class TestDBModels:
         # Create migration state
         migration_state = MigrationState(
             project_key="TEST",
-                extraction_status="completed",
-                transformation_status="in_progress",
-                loading_status="not_started",
-                error_message=None,
-                meta_data=json.dumps(
+            extraction_status="completed",
+            transformation_status="in_progress",
+            loading_status="not_started",
+            error_message=None,
+            meta_data=json.dumps(
                 {
                     "extraction_complete_time": "2025-04-13T10:00:00",
-                        "items_extracted": 150,
-                        "items_transformed": 75,
-                    }
+                    "items_extracted": 150,
+                    "items_transformed": 75,
+                }
             ),
-            )
+        )
         session.add(migration_state)
         session.commit()
 
@@ -566,15 +565,15 @@ class TestDBModels:
         # Create entity batch state
         batch_state = EntityBatchState(
             project_key="TEST",
-                entity_type="test_case",
-                batch_number=1,
-                total_batches=5,
-                items_count=100,
-                processed_count=50,
-                status="in_progress",
-                started_at=datetime.datetime.now() - datetime.timedelta(minutes=5),
-                error_message=None,
-            )
+            entity_type="test_case",
+            batch_number=1,
+            total_batches=5,
+            items_count=100,
+            processed_count=50,
+            status="in_progress",
+            started_at=datetime.datetime.now() - datetime.timedelta(minutes=5),
+            error_message=None,
+        )
         session.add(batch_state)
         session.commit()
 
@@ -623,33 +622,33 @@ class TestDBModels:
         # Create a test case
         test_case = TestCase(
             id="TC-ASSOC",
-                key="ASSOC-CASE-1",
-                name="Association Test Case",
-                project_key="TEST-ASSOC",
-                project=project,
-            )
+            key="ASSOC-CASE-1",
+            name="Association Test Case",
+            project_key="TEST-ASSOC",
+            project=project,
+        )
         session.add(test_case)
 
         # Create labels
         labels = [
             Label(id="LABEL-A1", name="Regression-A"),
-                Label(id="LABEL-A2", name="Smoke-A"),
-                Label(id="LABEL-A3", name="API-A"),
-            ]
+            Label(id="LABEL-A2", name="Smoke-A"),
+            Label(id="LABEL-A3", name="API-A"),
+        ]
         session.add_all(labels)
 
         # Create case versions
         versions = [
             CaseVersion(
                 id="VER-A1",
-                    name="v1.0-A",
-                    created_at=datetime.datetime.now() - datetime.timedelta(days=30),
-                    created_by="user1",
-                ),
-                CaseVersion(
+                name="v1.0-A",
+                created_at=datetime.datetime.now() - datetime.timedelta(days=30),
+                created_by="user1",
+            ),
+            CaseVersion(
                 id="VER-A2", name="v2.0-A", created_at=datetime.datetime.now(), created_by="user1"
             ),
-            ]
+        ]
         session.add_all(versions)
 
         # Associate labels and versions with test case

@@ -12,146 +12,143 @@ from typing import Any
 import pytest
 from ztoq.openapi_parser import ZephyrApiSpecWrapper
 
+
 # Sample OpenAPI specification for testing
 @pytest.fixture()
-
-
 def sample_spec() -> dict[str, Any]:
     """Create a sample OpenAPI spec for testing."""
     return {
         "openapi": "3.0.1",
-            "info": {
+        "info": {
             "title": "Zephyr Scale API",
-                "description": "API for Zephyr Scale test management",
-                "version": "1.0.0",
-            },
-            "paths": {
+            "description": "API for Zephyr Scale test management",
+            "version": "1.0.0",
+        },
+        "paths": {
             "/testcases": {
                 "get": {
                     "summary": "Get test cases",
-                        "operationId": "getTestCases",
-                        "tags": ["test-cases"],
-                        "parameters": [
+                    "operationId": "getTestCases",
+                    "tags": ["test-cases"],
+                    "parameters": [
                         {
                             "name": "projectKey",
-                                "in": "query",
-                                "required": True,
-                                "schema": {"type": "string"},
-                            },
-                            {
+                            "in": "query",
+                            "required": True,
+                            "schema": {"type": "string"},
+                        },
+                        {
                             "name": "maxResults",
-                                "in": "query",
-                                "required": False,
-                                "schema": {"type": "integer", "minimum": 1, "maximum": 1000},
-                            },
-                        ],
-                        "responses": {
+                            "in": "query",
+                            "required": False,
+                            "schema": {"type": "integer", "minimum": 1, "maximum": 1000},
+                        },
+                    ],
+                    "responses": {
                         "200": {
                             "description": "Successful response",
-                                "content": {
+                            "content": {
                                 "application/json": {
                                     "schema": {"$ref": "#/components/schemas/TestCasesResponse"}
                                 }
                             },
-                            },
-                            "400": {"description": "Invalid parameters"},
-                            "401": {"description": "Unauthorized"},
                         },
+                        "400": {"description": "Invalid parameters"},
+                        "401": {"description": "Unauthorized"},
                     },
-                    "post": {
+                },
+                "post": {
                     "summary": "Create test case",
-                        "operationId": "createTestCase",
-                        "tags": ["test-cases"],
-                        "requestBody": {
+                    "operationId": "createTestCase",
+                    "tags": ["test-cases"],
+                    "requestBody": {
                         "content": {
                             "application/json": {
                                 "schema": {"$ref": "#/components/schemas/TestCaseInput"}
                             }
                         },
-                            "required": True,
-                        },
-                        "responses": {
+                        "required": True,
+                    },
+                    "responses": {
                         "201": {
                             "description": "Test case created",
-                                "content": {
+                            "content": {
                                 "application/json": {
                                     "schema": {"$ref": "#/components/schemas/TestCase"}
                                 }
                             },
-                            }
-                    },
+                        }
                     },
                 },
-                "/testcases/{id}": {
+            },
+            "/testcases/{id}": {
                 "get": {
                     "summary": "Get test case by ID",
-                        "operationId": "getTestCaseById",
-                        "tags": ["test-cases"],
-                        "parameters": [
+                    "operationId": "getTestCaseById",
+                    "tags": ["test-cases"],
+                    "parameters": [
                         {"name": "id", "in": "path", "required": True, "schema": {"type": "string"}}
                     ],
-                        "responses": {
+                    "responses": {
                         "200": {
                             "description": "Successful response",
-                                "content": {
+                            "content": {
                                 "application/json": {
                                     "schema": {"$ref": "#/components/schemas/TestCase"}
                                 }
                             },
-                            },
-                            "404": {"description": "Test case not found"},
                         },
-                    }
+                        "404": {"description": "Test case not found"},
+                    },
+                }
             },
-            },
-            "components": {
+        },
+        "components": {
             "schemas": {
                 "TestCasesResponse": {
                     "type": "object",
-                        "properties": {
+                    "properties": {
                         "values": {
                             "type": "array",
-                                "items": {"$ref": "#/components/schemas/TestCase"},
-                            },
-                            "total": {"type": "integer"},
-                            "startAt": {"type": "integer"},
-                            "isLast": {"type": "boolean"},
+                            "items": {"$ref": "#/components/schemas/TestCase"},
                         },
-                        "required": ["values", "total", "startAt", "isLast"],
+                        "total": {"type": "integer"},
+                        "startAt": {"type": "integer"},
+                        "isLast": {"type": "boolean"},
                     },
-                    "TestCase": {
+                    "required": ["values", "total", "startAt", "isLast"],
+                },
+                "TestCase": {
                     "type": "object",
-                        "properties": {
+                    "properties": {
                         "id": {"type": "string"},
-                            "key": {"type": "string"},
-                            "name": {"type": "string"},
-                            "status": {"type": "string"},
-                            "priority": {"type": "string"},
-                            "folder": {"type": "string"},
-                            "createdOn": {"type": "string", "format": "date-time"},
-                            "updatedOn": {"type": "string", "format": "date-time"},
-                        },
-                        "required": ["id", "key", "name"],
+                        "key": {"type": "string"},
+                        "name": {"type": "string"},
+                        "status": {"type": "string"},
+                        "priority": {"type": "string"},
+                        "folder": {"type": "string"},
+                        "createdOn": {"type": "string", "format": "date-time"},
+                        "updatedOn": {"type": "string", "format": "date-time"},
                     },
-                    "TestCaseInput": {
+                    "required": ["id", "key", "name"],
+                },
+                "TestCaseInput": {
                     "type": "object",
-                        "properties": {
+                    "properties": {
                         "projectKey": {"type": "string"},
-                            "name": {"type": "string"},
-                            "status": {"type": "string"},
-                            "priority": {"type": "string"},
-                            "folder": {"type": "string"},
-                        },
-                        "required": ["projectKey", "name"],
+                        "name": {"type": "string"},
+                        "status": {"type": "string"},
+                        "priority": {"type": "string"},
+                        "folder": {"type": "string"},
                     },
-                }
+                    "required": ["projectKey", "name"],
+                },
+            }
         },
-        }
+    }
 
 
 @pytest.fixture()
-
-
 def spec_wrapper(sample_spec):
     """Create a spec wrapper for testing."""
     return ZephyrApiSpecWrapper(sample_spec)
@@ -250,10 +247,10 @@ def test_validate_response(spec_wrapper):
     # Valid response
     valid_data = {
         "values": [{"id": "1", "key": "TEST-1", "name": "Test Case"}],
-            "total": 1,
-            "startAt": 0,
-            "isLast": True,
-        }
+        "total": 1,
+        "startAt": 0,
+        "isLast": True,
+    }
     is_valid, error = spec_wrapper.validate_response("/testcases", "get", "200", valid_data)
     assert is_valid
     assert error is None
@@ -263,14 +260,14 @@ def test_validate_response(spec_wrapper):
         "values": [
             {
                 "id": "1",
-                    "key": "TEST-1",
-                    # missing 'name'
+                "key": "TEST-1",
+                # missing 'name'
             }
         ],
-            "total": 1,
-            "startAt": 0,
-            "isLast": True,
-        }
+        "total": 1,
+        "startAt": 0,
+        "isLast": True,
+    }
     is_valid, error = spec_wrapper.validate_response("/testcases", "get", "200", invalid_data)
     assert not is_valid
     assert error is not None
@@ -292,13 +289,13 @@ def test_generate_mock_data(spec_wrapper):
     # Simple object schema
     schema = {
         "type": "object",
-            "properties": {
+        "properties": {
             "id": {"type": "string"},
-                "count": {"type": "integer"},
-                "isActive": {"type": "boolean"},
-            },
-            "required": ["id", "count"],
-        }
+            "count": {"type": "integer"},
+            "isActive": {"type": "boolean"},
+        },
+        "required": ["id", "count"],
+    }
     mock_data = spec_wrapper.generate_mock_data(schema)
     assert isinstance(mock_data, dict)
     assert "id" in mock_data

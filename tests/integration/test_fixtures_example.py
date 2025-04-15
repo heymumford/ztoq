@@ -19,19 +19,17 @@ from tests.fixtures import (
     # Core fixtures
     mock_env_vars,
     temp_dir,
-
     # Integration test fixtures
     sqlite_memory_engine,
     sqlite_memory_connection,
     sqlite_file_engine,
     mock_external_api,
     test_data_dir,
-
     # Factories
     ProjectFactory,
     TestCaseFactory,
     QTestProjectFactory,
-    QTestTestCaseFactory
+    QTestTestCaseFactory,
 )
 
 
@@ -41,20 +39,28 @@ def test_sqlite_memory_database(sqlite_memory_connection):
     # sqlite_memory_connection is a SQLAlchemy session with an in-memory database
 
     # Create a test table
-    sqlite_memory_connection.execute(text("""
+    sqlite_memory_connection.execute(
+        text(
+            """
         CREATE TABLE test_table (
             id INTEGER PRIMARY KEY,
             name TEXT NOT NULL
         )
-    """))
+    """
+        )
+    )
 
     # Insert some data
-    sqlite_memory_connection.execute(text("""
+    sqlite_memory_connection.execute(
+        text(
+            """
         INSERT INTO test_table (name) VALUES
         ('Item 1'),
         ('Item 2'),
         ('Item 3')
-    """))
+    """
+        )
+    )
 
     # Query the data
     result = sqlite_memory_connection.execute(text("SELECT * FROM test_table")).fetchall()
@@ -74,20 +80,28 @@ def test_sqlite_file_database(sqlite_file_engine):
     # Create a connection
     with sqlite_file_engine.connect() as conn:
         # Create a test table
-        conn.execute(text("""
+        conn.execute(
+            text(
+                """
             CREATE TABLE test_table (
                 id INTEGER PRIMARY KEY,
                 name TEXT NOT NULL
             )
-        """))
+        """
+            )
+        )
 
         # Insert some data
-        conn.execute(text("""
+        conn.execute(
+            text(
+                """
             INSERT INTO test_table (name) VALUES
             ('Item 1'),
             ('Item 2'),
             ('Item 3')
-        """))
+        """
+            )
+        )
 
         # Commit the transaction
         conn.commit()
@@ -110,12 +124,12 @@ def test_mocked_external_apis(mock_external_api):
     # Configure the mocks
     mock_external_api["zephyr"].get_test_cases.return_value = [
         {"id": 1, "key": "TC-1", "name": "Test Case 1"},
-        {"id": 2, "key": "TC-2", "name": "Test Case 2"}
+        {"id": 2, "key": "TC-2", "name": "Test Case 2"},
     ]
 
     mock_external_api["qtest"].get_test_cases.return_value = [
         {"id": 101, "pid": "TC-101", "name": "qTest Case 1"},
-        {"id": 102, "pid": "TC-102", "name": "qTest Case 2"}
+        {"id": 102, "pid": "TC-102", "name": "qTest Case 2"},
     ]
 
     # Use the mock clients
@@ -158,15 +172,9 @@ def test_test_data_directory(test_data_dir):
 def test_factories_with_mock_api(mock_external_api):
     """Demonstrate using factories with mock API."""
     # Create test data using factories
-    zephyr_project = ProjectFactory.create(
-        key="DEMO",
-        name="Demo Zephyr Project"
-    )
+    zephyr_project = ProjectFactory.create(key="DEMO", name="Demo Zephyr Project")
 
-    qtest_project = QTestProjectFactory.create(
-        id=1001,
-        name="Demo qTest Project"
-    )
+    qtest_project = QTestProjectFactory.create(id=1001, name="Demo qTest Project")
 
     # Configure the mock APIs to return our factory-generated data
     mock_external_api["zephyr"].get_project.return_value = zephyr_project.model_dump()
@@ -188,8 +196,12 @@ def test_factories_with_mock_api(mock_external_api):
     qtest_test_cases = QTestTestCaseFactory.create_batch(3)
 
     # Configure mocks to return batches
-    mock_external_api["zephyr"].get_test_cases.return_value = [tc.model_dump() for tc in zephyr_test_cases]
-    mock_external_api["qtest"].get_test_cases.return_value = [tc.model_dump() for tc in qtest_test_cases]
+    mock_external_api["zephyr"].get_test_cases.return_value = [
+        tc.model_dump() for tc in zephyr_test_cases
+    ]
+    mock_external_api["qtest"].get_test_cases.return_value = [
+        tc.model_dump() for tc in qtest_test_cases
+    ]
 
     # Use the mock APIs for batch retrieval
     zephyr_cases = mock_external_api["zephyr"].get_test_cases()

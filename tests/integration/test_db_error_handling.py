@@ -30,8 +30,6 @@ logger = logging.getLogger(__name__)
 
 
 @pytest.mark.integration()
-
-
 class TestDatabaseErrorHandling:
     """Integration tests for database error handling and recovery."""
 
@@ -488,16 +486,16 @@ class TestDatabaseErrorHandling:
         for i in range(5):
             test_case = CaseModel(
                 id=f"CORRUPT-{i}",
-                    key=f"ERROR-CORRUPT-{i}",
-                    name=f"Corruption Test Case {i}",
-                    status="Draft",
-                    custom_fields=[],
-                    attachments=[],
-                    links=[],
-                    steps=[],
-                    scripts=[],
-                    versions=[],
-                )
+                key=f"ERROR-CORRUPT-{i}",
+                name=f"Corruption Test Case {i}",
+                status="Draft",
+                custom_fields=[],
+                attachments=[],
+                links=[],
+                steps=[],
+                scripts=[],
+                versions=[],
+            )
             db_manager.save_test_case(test_case, test_project.key)
 
         # Verify data was saved
@@ -662,8 +660,6 @@ class TestDatabaseErrorHandling:
         """Test recovery from an interrupted database operation."""
         # Create a migration state to track operation
         with db_manager.get_session() as session:
-
-
             # Add a migration state record
             migration_state = MigrationState(
                 project_key=test_project.key,
@@ -705,9 +701,9 @@ class TestDatabaseErrorHandling:
             # Expected interruption
             db_manager.update_migration_state(
                 test_project.key,
-                    extraction_status="failed",
-                    error_message="Operation was interrupted",
-                )
+                extraction_status="failed",
+                error_message="Operation was interrupted",
+            )
 
         # Verify the partial progress
         with db_manager.get_session() as session:
@@ -763,16 +759,16 @@ class TestDatabaseErrorHandling:
             # Mark as completed
             db_manager.update_migration_state(
                 test_project.key,
-                    extraction_status="completed",
-                    metadata={"processed_items": 10, "total_items": 10, "completed_at": time.time()},
-                )
+                extraction_status="completed",
+                metadata={"processed_items": 10, "total_items": 10, "completed_at": time.time()},
+            )
         except Exception as e:
             logger.error(f"Error resuming operation: {e}")
             db_manager.update_migration_state(
                 test_project.key,
-                    extraction_status="failed",
-                    error_message=f"Resume failed: {str(e)}",
-                )
+                extraction_status="failed",
+                error_message=f"Resume failed: {str(e)}",
+            )
             raise
 
         # Verify the operation was completed

@@ -93,8 +93,8 @@ class ImportProgress:
                 progress = (self.projects_completed / self.projects_total) * 100
                 print(
                     f"\rProjects: {self.projects_completed}/{self.projects_total} ({progress:.1f}%)",
-                        end="",
-                    )
+                    end="",
+                )
 
     def entity_callback(self, entity_type: str, project_key: str, success: bool) -> None:
         """
@@ -149,11 +149,11 @@ class ImportProgress:
 
         return {
             "duration": duration,
-                "projects_total": self.projects_total,
-                "projects_completed": self.projects_completed,
-                "entities_completed": self.entities_completed,
-                "entities_failed": self.entities_failed,
-            }
+            "projects_total": self.projects_total,
+            "projects_completed": self.projects_completed,
+            "entities_completed": self.entities_completed,
+            "entities_failed": self.entities_failed,
+        }
 
 
 def import_zephyr_data(config: ImportConfig) -> dict[str, Any]:
@@ -179,9 +179,9 @@ def import_zephyr_data(config: ImportConfig) -> dict[str, Any]:
     # Create Zephyr configuration
     zephyr_config = ZephyrConfig(
         base_url=config.base_url,
-            api_token=config.api_token,
-            project_key="" if config.project_keys else "placeholder",
-        )
+        api_token=config.api_token,
+        project_key="" if config.project_keys else "placeholder",
+    )
 
     # Create authenticated client
     client = create_authenticated_client(zephyr_config)
@@ -234,19 +234,19 @@ def parse_args() -> ImportConfig:
 
     parser.add_argument(
         "--base-url",
-            type=str,
-            default="https://api.zephyrscale.smartbear.com/v2",
-            help="Zephyr Scale API base URL",
-        )
+        type=str,
+        default="https://api.zephyrscale.smartbear.com/v2",
+        help="Zephyr Scale API base URL",
+    )
 
     parser.add_argument("--api-token", type=str, required=True, help="Zephyr Scale API token")
 
     parser.add_argument(
         "--project-keys",
-            type=str,
-            nargs="*",
-            help="List of project keys to import (omit to import all projects)",
-        )
+        type=str,
+        nargs="*",
+        help="List of project keys to import (omit to import all projects)",
+    )
 
     parser.add_argument(
         "--db-path", type=str, default="zephyr_data.db", help="Path to SQLite database file"
@@ -262,12 +262,12 @@ def parse_args() -> ImportConfig:
 
     return ImportConfig(
         base_url=args.base_url,
-            api_token=args.api_token,
-            project_keys=args.project_keys,
-            db_path=args.db_path,
-            concurrency=args.concurrency,
-            verbose=args.verbose,
-        )
+        api_token=args.api_token,
+        project_keys=args.project_keys,
+        db_path=args.db_path,
+        concurrency=args.concurrency,
+        verbose=args.verbose,
+    )
 
 
 def main() -> int:

@@ -22,8 +22,6 @@ logger = logging.getLogger(__name__)
 
 
 @pytest.mark.integration()
-
-
 class TestDatabaseMigrations:
     """Integration tests for database migrations using Alembic."""
 
@@ -101,8 +99,8 @@ class TestDatabaseMigrations:
         # Add import for our models and metadata
         env_content = env_content.replace(
             "from alembic import context",
-                "from alembic import context\nfrom ztoq.core.db_models import Base",
-            )
+            "from alembic import context\nfrom ztoq.core.db_models import Base",
+        )
 
         # Set target metadata
         env_content = env_content.replace(
@@ -116,11 +114,11 @@ class TestDatabaseMigrations:
         # Create an initial migration
         command.revision(
             alembic_cfg,
-                autogenerate=True,
-                message="Initial schema creation",
-                rev_id="001",
-                version_path=str(migrations_dir / "versions"),
-            )
+            autogenerate=True,
+            message="Initial schema creation",
+            rev_id="001",
+            version_path=str(migrations_dir / "versions"),
+        )
 
         # Verify the migration file was created
         version_files = list((migrations_dir / "versions").glob("*_initial_schema_creation.py"))
@@ -143,11 +141,11 @@ class TestDatabaseMigrations:
         # For this test, we'll just verify a new revision can be created
         command.revision(
             alembic_cfg,
-                autogenerate=True,
-                message="Add new column",
-                rev_id="002",
-                version_path=str(migrations_dir / "versions"),
-            )
+            autogenerate=True,
+            message="Add new column",
+            rev_id="002",
+            version_path=str(migrations_dir / "versions"),
+        )
 
         # Verify the new migration file was created
         version_files = list((migrations_dir / "versions").glob("*_add_new_column.py"))
@@ -181,8 +179,8 @@ class TestDatabaseMigrations:
         # Add import for our models and metadata
         env_content = env_content.replace(
             "from alembic import context",
-                "from alembic import context\nfrom ztoq.core.db_models import Base",
-            )
+            "from alembic import context\nfrom ztoq.core.db_models import Base",
+        )
 
         # Set target metadata
         env_content = env_content.replace(
@@ -196,11 +194,11 @@ class TestDatabaseMigrations:
         # Create initial migration
         command.revision(
             alembic_cfg,
-                autogenerate=True,
-                message="Initial migration",
-                rev_id="001",
-                version_path=str(migrations_dir / "versions"),
-            )
+            autogenerate=True,
+            message="Initial migration",
+            rev_id="001",
+            version_path=str(migrations_dir / "versions"),
+        )
 
         # Apply the migration
         command.upgrade(alembic_cfg, "head")
@@ -231,10 +229,10 @@ class TestDatabaseMigrations:
         # Add some test data
         project = ProjectModel(
             id="TEST-1",
-                key="TEST",
-                name="Test Project",
-                description="A test project for migrations",
-            )
+            key="TEST",
+            name="Test Project",
+            description="A test project for migrations",
+        )
         db_manager.save_project(project)
 
         # Initialize migrations
@@ -252,8 +250,8 @@ class TestDatabaseMigrations:
         # Add import for our models and metadata
         env_content = env_content.replace(
             "from alembic import context",
-                "from alembic import context\nfrom ztoq.core.db_models import Base",
-            )
+            "from alembic import context\nfrom ztoq.core.db_models import Base",
+        )
 
         # Set target metadata
         env_content = env_content.replace(
@@ -268,11 +266,11 @@ class TestDatabaseMigrations:
         # We'll simulate this by modifying the migration script after generation
         command.revision(
             alembic_cfg,
-                autogenerate=True,
-                message="Add new column",
-                rev_id="001",
-                version_path=str(migrations_dir / "versions"),
-            )
+            autogenerate=True,
+            message="Add new column",
+            rev_id="001",
+            version_path=str(migrations_dir / "versions"),
+        )
 
         version_files = list((migrations_dir / "versions").glob("*_add_new_column.py"))
         migration_path = version_files[0]
@@ -386,10 +384,10 @@ class TestDatabaseMigrations:
         for i in range(5):
             project = ProjectModel(
                 id=f"FAIL-{i}",
-                    key=f"FAIL{i}",
-                    name=f"Failure Test {i}",
-                    description=f"Test project for failure recovery {i}",
-                )
+                key=f"FAIL{i}",
+                name=f"Failure Test {i}",
+                description=f"Test project for failure recovery {i}",
+            )
             db_manager.save_project(project)
 
         # Verify data is in the database
@@ -434,8 +432,8 @@ class TestDatabaseMigrations:
                 for project in session.query(Project).filter(Project.key.like("FAIL%")).all():
                     result = session.execute(
                         text("SELECT recovery_test FROM projects WHERE id = :id"),
-                            {"id": project.id},
-                        )
+                        {"id": project.id},
+                    )
                     row = result.fetchone()
                     assert row[0] == "recovered", "Recovery should be successful"
             except Exception as e:

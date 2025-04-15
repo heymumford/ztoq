@@ -196,6 +196,7 @@ class TestCycleTransformer:
                 if isinstance(start_date, str):
                     # Try to parse string date
                     from dateutil import parser
+
                     start_date = parser.parse(start_date)
 
                 if isinstance(start_date, datetime):
@@ -220,6 +221,7 @@ class TestCycleTransformer:
                 if isinstance(end_date, str):
                     # Try to parse string date
                     from dateutil import parser
+
                     end_date = parser.parse(end_date)
 
                 if isinstance(end_date, datetime):
@@ -330,7 +332,9 @@ class TestCycleTransformer:
                 # Create qTest attachment
                 qtest_attachment = {
                     "name": attachment.get("filename"),
-                    "content_type": attachment.get("content_type") or attachment.get("contentType") or "application/octet-stream",
+                    "content_type": attachment.get("content_type")
+                    or attachment.get("contentType")
+                    or "application/octet-stream",
                     "size": attachment.get("size", 0),
                     "content": attachment.get("content"),
                 }

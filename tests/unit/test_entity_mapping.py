@@ -40,7 +40,7 @@ class TestFieldMapping:
         mapping = FieldMapping(
             source_field="name",
             target_field="name",
-            transform_function=lambda x: x.upper() if isinstance(x, str) else x
+            transform_function=lambda x: x.upper() if isinstance(x, str) else x,
         )
 
         # Valid transform
@@ -57,11 +57,7 @@ class TestFieldMapping:
 
     def test_required_field(self):
         """Test validation of required fields."""
-        mapping = FieldMapping(
-            source_field="name",
-            target_field="name",
-            required=True
-        )
+        mapping = FieldMapping(source_field="name", target_field="name", required=True)
 
         # Valid value
         is_valid, value, error = mapping.validate_and_transform("test")
@@ -80,7 +76,7 @@ class TestFieldMapping:
         mapping = FieldMapping(
             source_field="age",
             target_field="age",
-            validation_function=lambda x: isinstance(x, int) and x >= 18
+            validation_function=lambda x: isinstance(x, int) and x >= 18,
         )
 
         # Valid value
@@ -108,7 +104,7 @@ class TestFieldMapping:
             source_field="age",
             target_field="age",
             validation_function=lambda x: isinstance(x, int) and x >= 18,
-            validation_action=ValidationAction.ERROR
+            validation_action=ValidationAction.ERROR,
         )
 
         with pytest.raises(ValueError):
@@ -120,7 +116,7 @@ class TestFieldMapping:
             target_field="age",
             validation_function=lambda x: isinstance(x, int) and x >= 18,
             validation_action=ValidationAction.DEFAULT,
-            default_value=18
+            default_value=18,
         )
 
         is_valid, value, error = default_mapping.validate_and_transform(15)
@@ -133,7 +129,7 @@ class TestFieldMapping:
             source_field="age",
             target_field="age",
             validation_function=lambda x: isinstance(x, int) and x >= 18,
-            validation_action=ValidationAction.SKIP
+            validation_action=ValidationAction.SKIP,
         )
 
         is_valid, value, error = skip_mapping.validate_and_transform(15)
@@ -147,7 +143,7 @@ class TestFieldMapping:
             source_field="date",
             target_field="date",
             transform_function=lambda x: datetime.strptime(x, "%Y-%m-%d"),
-            validation_action=ValidationAction.WARNING
+            validation_action=ValidationAction.WARNING,
         )
 
         # Valid transform
@@ -173,16 +169,10 @@ class TestEntityMapping:
             source_type=EntityType.PROJECT,
             target_type="QTestProject",
             field_mappings=[
-                FieldMapping(
-                    source_field="name",
-                    target_field="name"
-                ),
-                FieldMapping(
-                    source_field="description",
-                    target_field="description"
-                )
+                FieldMapping(source_field="name", target_field="name"),
+                FieldMapping(source_field="description", target_field="description"),
             ],
-            custom_field_mapping_enabled=False
+            custom_field_mapping_enabled=False,
         )
 
         # Source entity
@@ -190,7 +180,7 @@ class TestEntityMapping:
             "name": "Test Project",
             "description": "This is a test project",
             "id": 12345,  # Not mapped
-            "other_field": "value"  # Not mapped
+            "other_field": "value",  # Not mapped
         }
 
         # Map the entity
@@ -209,24 +199,18 @@ class TestEntityMapping:
             source_type=EntityType.TEST_CASE,
             target_type="QTestTestCase",
             field_mappings=[
-                FieldMapping(
-                    source_field="name",
-                    target_field="name"
-                ),
+                FieldMapping(source_field="name", target_field="name"),
                 FieldMapping(
                     source_field="priority",
                     target_field="priority_id",
-                    transform_function=lambda p: {"high": 1, "medium": 2, "low": 3}.get(p, 2)
-                )
+                    transform_function=lambda p: {"high": 1, "medium": 2, "low": 3}.get(p, 2),
+                ),
             ],
-            custom_field_mapping_enabled=False
+            custom_field_mapping_enabled=False,
         )
 
         # Source entity
-        source = {
-            "name": "Test Case 1",
-            "priority": "high"
-        }
+        source = {"name": "Test Case 1", "priority": "high"}
 
         # Map the entity
         target = mapping.map_entity(source)
@@ -246,24 +230,21 @@ class TestEntityMapping:
                     source_field="name",
                     target_field="name",
                     required=True,
-                    validation_action=ValidationAction.ERROR
+                    validation_action=ValidationAction.ERROR,
                 ),
                 FieldMapping(
                     source_field="status",
                     target_field="status",
                     validation_function=lambda s: s in ["PASS", "FAIL", "NOT RUN"],
                     validation_action=ValidationAction.DEFAULT,
-                    default_value="NOT RUN"
-                )
+                    default_value="NOT RUN",
+                ),
             ],
-            custom_field_mapping_enabled=False
+            custom_field_mapping_enabled=False,
         )
 
         # Source entity with valid data
-        valid_source = {
-            "name": "Test Execution 1",
-            "status": "PASS"
-        }
+        valid_source = {"name": "Test Execution 1", "status": "PASS"}
 
         # Map the entity
         target = mapping.map_entity(valid_source)
@@ -273,10 +254,7 @@ class TestEntityMapping:
         assert target["status"] == "PASS"
 
         # Source entity with invalid status
-        invalid_status = {
-            "name": "Test Execution 2",
-            "status": "INVALID"
-        }
+        invalid_status = {"name": "Test Execution 2", "status": "INVALID"}
 
         # Map entity with invalid status should use default
         target = mapping.map_entity(invalid_status)
@@ -284,9 +262,7 @@ class TestEntityMapping:
         assert target["status"] == "NOT RUN"
 
         # Source entity with missing required field
-        missing_required = {
-            "status": "PASS"
-        }
+        missing_required = {"status": "PASS"}
 
         # Map entity with missing required field should raise ValueError
         with pytest.raises(ValueError):
@@ -298,13 +274,8 @@ class TestEntityMapping:
         mapping = EntityMapping(
             source_type=EntityType.TEST_CASE,
             target_type="QTestTestCase",
-            field_mappings=[
-                FieldMapping(
-                    source_field="name",
-                    target_field="name"
-                )
-            ],
-            custom_field_mapping_enabled=True
+            field_mappings=[FieldMapping(source_field="name", target_field="name")],
+            custom_field_mapping_enabled=True,
         )
 
         # Source entity with custom fields
@@ -312,8 +283,8 @@ class TestEntityMapping:
             "name": "Test Case with Custom Fields",
             "customFields": [
                 {"name": "Custom1", "type": "TEXT", "value": "Value1"},
-                {"name": "Custom2", "type": "CHECKBOX", "value": True}
-            ]
+                {"name": "Custom2", "type": "CHECKBOX", "value": True},
+            ],
         }
 
         # Create a mock field mapper
@@ -369,12 +340,9 @@ class TestMappingRegistry:
             source_type=EntityType.PROJECT,  # Override existing
             target_type="CustomTarget",
             field_mappings=[
-                FieldMapping(
-                    source_field="custom_field",
-                    target_field="custom_target_field"
-                )
+                FieldMapping(source_field="custom_field", target_field="custom_target_field")
             ],
-            custom_field_mapping_enabled=False
+            custom_field_mapping_enabled=False,
         )
 
         # Register custom mapping
@@ -391,11 +359,7 @@ class TestMappingRegistry:
         registry = MappingRegistry()
 
         # Source entity
-        source = {
-            "name": "Test Project",
-            "description": "Project description",
-            "key": "TEST"
-        }
+        source = {"name": "Test Project", "description": "Project description", "key": "TEST"}
 
         # Map through registry
         target = registry.map_entity(EntityType.PROJECT, source)
@@ -440,11 +404,7 @@ class TestGlobalMappingFunctions:
         assert mapped_folder["name"] == "Test Folder"
 
         # Test case mapping
-        test_case = {
-            "name": "Test Case",
-            "objective": "Test objective",
-            "priority": "high"
-        }
+        test_case = {"name": "Test Case", "objective": "Test objective", "priority": "high"}
         mapped_test_case = map_test_case(test_case)
         assert mapped_test_case["name"] == "Test Case"
         assert mapped_test_case["description"] == "Test objective"
@@ -457,11 +417,7 @@ class TestGlobalMappingFunctions:
         assert mapped_cycle["name"] == "Test Cycle"
 
         # Test execution mapping
-        test_execution = {
-            "name": "Test Execution",
-            "status": "pass",
-            "testCaseId": "TC-001"
-        }
+        test_execution = {"name": "Test Execution", "status": "pass", "testCaseId": "TC-001"}
         mapped_execution = map_test_execution(test_execution)
         assert mapped_execution["name"] == "Test Execution"
 
@@ -479,12 +435,14 @@ class TestSpecificMappingRules:
             project_mapping.map_entity({"key": "TEST"})
 
         # Test with all fields
-        mapped = project_mapping.map_entity({
-            "name": "Project Name",
-            "description": "Description",
-            "key": "PROJ",
-            "id": 123  # Not mapped
-        })
+        mapped = project_mapping.map_entity(
+            {
+                "name": "Project Name",
+                "description": "Description",
+                "key": "PROJ",
+                "id": 123,  # Not mapped
+            }
+        )
 
         assert mapped["name"] == "Project Name"
         assert mapped["description"] == "Description"
@@ -495,8 +453,16 @@ class TestSpecificMappingRules:
         """Test transform functions work directly as expected."""
         # Test priority transform function
         priority_transform = lambda p: {
-            "highest": 1, "high": 2, "medium": 3, "low": 4, "lowest": 5,
-            "critical": 1, "blocker": 1, "major": 2, "minor": 4, "trivial": 5
+            "highest": 1,
+            "high": 2,
+            "medium": 3,
+            "low": 4,
+            "lowest": 5,
+            "critical": 1,
+            "blocker": 1,
+            "major": 2,
+            "minor": 4,
+            "trivial": 5,
         }.get(str(p).lower() if p else "", 3)
 
         assert priority_transform("high") == 2
@@ -510,11 +476,19 @@ class TestSpecificMappingRules:
                 return "NOT_RUN"
 
             status_map = {
-                "pass": "PASSED", "fail": "FAILED", "wip": "IN_PROGRESS",
-                "blocked": "BLOCKED", "unexecuted": "NOT_RUN",
-                "not_executed": "NOT_RUN", "passed": "PASSED", "failed": "FAILED",
-                "in_progress": "IN_PROGRESS", "executing": "IN_PROGRESS",
-                "aborted": "BLOCKED", "canceled": "NOT_RUN", "pending": "NOT_RUN"
+                "pass": "PASSED",
+                "fail": "FAILED",
+                "wip": "IN_PROGRESS",
+                "blocked": "BLOCKED",
+                "unexecuted": "NOT_RUN",
+                "not_executed": "NOT_RUN",
+                "passed": "PASSED",
+                "failed": "FAILED",
+                "in_progress": "IN_PROGRESS",
+                "executing": "IN_PROGRESS",
+                "aborted": "BLOCKED",
+                "canceled": "NOT_RUN",
+                "pending": "NOT_RUN",
             }
             return status_map.get(str(status).lower(), "NOT_RUN")
 
@@ -530,9 +504,17 @@ class TestSpecificMappingRules:
             source_field="priority",
             target_field="priority_id",
             transform_function=lambda p: {
-                "highest": 1, "high": 2, "medium": 3, "low": 4, "lowest": 5,
-                "critical": 1, "blocker": 1, "major": 2, "minor": 4, "trivial": 5
-            }.get(str(p).lower() if p else "", 3)
+                "highest": 1,
+                "high": 2,
+                "medium": 3,
+                "low": 4,
+                "lowest": 5,
+                "critical": 1,
+                "blocker": 1,
+                "major": 2,
+                "minor": 4,
+                "trivial": 5,
+            }.get(str(p).lower() if p else "", 3),
         )
 
         # Test the field mapping directly
@@ -552,18 +534,24 @@ class TestSpecificMappingRules:
                 return "NOT_RUN"
 
             status_map = {
-                "pass": "PASSED", "fail": "FAILED", "wip": "IN_PROGRESS",
-                "blocked": "BLOCKED", "unexecuted": "NOT_RUN",
-                "not_executed": "NOT_RUN", "passed": "PASSED", "failed": "FAILED",
-                "in_progress": "IN_PROGRESS", "executing": "IN_PROGRESS",
-                "aborted": "BLOCKED", "canceled": "NOT_RUN", "pending": "NOT_RUN"
+                "pass": "PASSED",
+                "fail": "FAILED",
+                "wip": "IN_PROGRESS",
+                "blocked": "BLOCKED",
+                "unexecuted": "NOT_RUN",
+                "not_executed": "NOT_RUN",
+                "passed": "PASSED",
+                "failed": "FAILED",
+                "in_progress": "IN_PROGRESS",
+                "executing": "IN_PROGRESS",
+                "aborted": "BLOCKED",
+                "canceled": "NOT_RUN",
+                "pending": "NOT_RUN",
             }
             return status_map.get(str(status).lower(), "NOT_RUN")
 
         status_field = FieldMapping(
-            source_field="status",
-            target_field="status",
-            transform_function=status_transform
+            source_field="status", target_field="status", transform_function=status_transform
         )
 
         # Test the field mapping directly

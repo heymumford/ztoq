@@ -38,7 +38,7 @@ from ztoq.models import (
     Priority,
     Project,
     Status,
-    ZephyrConfig
+    ZephyrConfig,
 )
 
 from ztoq.zephyr_mock_factory import (
@@ -55,7 +55,7 @@ from ztoq.zephyr_mock_factory import (
     PlanFactory,
     PriorityFactory,
     ProjectFactory,
-    StatusFactory
+    StatusFactory,
 )
 
 logger = logging.getLogger("ztoq.zephyr_mock_server")
@@ -95,7 +95,9 @@ class ZephyrMockServer:
         # Initialize with sample data
         self._initialize_sample_data()
 
-    def _validate_model(self, data: dict, model_class, exclude_none: bool = True) -> Tuple[bool, Optional[dict], Optional[str]]:
+    def _validate_model(
+        self, data: dict, model_class, exclude_none: bool = True
+    ) -> Tuple[bool, Optional[dict], Optional[str]]:
         """
         Validate data against a Pydantic model.
 
@@ -141,7 +143,7 @@ class ZephyrMockServer:
             "error": {
                 "message": message,
                 "code": status_code,
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
         }
 
@@ -153,7 +155,7 @@ class ZephyrMockServer:
                 id=str(i),
                 key=f"PROJ{i}",
                 name=f"Project {i}",
-                description=f"Description for Project {i}"
+                description=f"Description for Project {i}",
             ).model_dump()
             self.data["projects"][project["id"]] = project
 
@@ -162,7 +164,7 @@ class ZephyrMockServer:
         status_names = {
             "TEST_CASE": ["Active", "Draft", "Deprecated"],
             "TEST_CYCLE": ["Active", "Draft", "Completed"],
-            "TEST_EXECUTION": ["Passed", "Failed", "Blocked", "Not Run"]
+            "TEST_EXECUTION": ["Passed", "Failed", "Blocked", "Not Run"],
         }
 
         status_id = 1
@@ -172,7 +174,7 @@ class ZephyrMockServer:
                     id=str(status_id),
                     name=status_name,
                     type=status_type,
-                    description=f"{status_name} status for {status_type}"
+                    description=f"{status_name} status for {status_type}",
                 ).model_dump()
                 self.data["statuses"][status["id"]] = status
                 status_id += 1
@@ -181,10 +183,7 @@ class ZephyrMockServer:
         priority_names = ["High", "Medium", "Low"]
         for i, name in enumerate(priority_names, 1):
             priority = PriorityFactory.create(
-                id=str(i),
-                name=name,
-                rank=i,
-                description=f"{name} priority"
+                id=str(i), name=name, rank=i, description=f"{name} priority"
             ).model_dump()
             self.data["priorities"][priority["id"]] = priority
 
@@ -192,9 +191,7 @@ class ZephyrMockServer:
         env_names = ["Development", "Testing", "Production"]
         for i, name in enumerate(env_names, 1):
             env = EnvironmentFactory.create(
-                id=str(i),
-                name=name,
-                description=f"{name} environment"
+                id=str(i), name=name, description=f"{name} environment"
             ).model_dump()
             self.data["environments"][env["id"]] = env
 
@@ -208,14 +205,14 @@ class ZephyrMockServer:
                     id=f"{project_id}01",
                     name="Test Cases Root",
                     folder_type="TEST_CASE",
-                    project_key=project_key
+                    project_key=project_key,
                 ).model_dump(),
                 "TEST_CYCLE": FolderFactory.create(
                     id=f"{project_id}02",
                     name="Test Cycles Root",
                     folder_type="TEST_CYCLE",
-                    project_key=project_key
-                ).model_dump()
+                    project_key=project_key,
+                ).model_dump(),
             }
 
             for folder in root_folders.values():
@@ -230,7 +227,7 @@ class ZephyrMockServer:
                     name=name,
                     folder_type="TEST_CASE",
                     parent_id=root_folders["TEST_CASE"]["id"],
-                    project_key=project_key
+                    project_key=project_key,
                 ).model_dump()
                 self.data["folders"][tc_folder["id"]] = tc_folder
 
@@ -240,7 +237,7 @@ class ZephyrMockServer:
                     name=name,
                     folder_type="TEST_CYCLE",
                     parent_id=root_folders["TEST_CYCLE"]["id"],
-                    project_key=project_key
+                    project_key=project_key,
                 ).model_dump()
                 self.data["folders"][cycle_folder["id"]] = cycle_folder
 
@@ -256,8 +253,11 @@ class ZephyrMockServer:
     def _add_sample_test_cases(self, project_id: str, project_key: str):
         """Add sample test cases for a project."""
         # Find folders for this project
-        project_folders = [f for f in self.data["folders"].values()
-                          if f["project_key"] == project_key and f["folder_type"] == "TEST_CASE"]
+        project_folders = [
+            f
+            for f in self.data["folders"].values()
+            if f["project_key"] == project_key and f["folder_type"] == "TEST_CASE"
+        ]
 
         # Create test cases in each folder
         test_case_count = 1
@@ -277,11 +277,10 @@ class ZephyrMockServer:
                     folder_name=folder["name"],
                     project_key=project_key,
                     priority=PriorityFactory.create(
-                        id=str(random.randint(1, 3)),
-                        name=random.choice(["High", "Medium", "Low"])
+                        id=str(random.randint(1, 3)), name=random.choice(["High", "Medium", "Low"])
                     ),
                     status=random.choice(["Active", "Draft", "Deprecated"]),
-                    step_count=random.randint(2, 5)
+                    step_count=random.randint(2, 5),
                 ).model_dump()
 
                 self.data["test_cases"][test_case["id"]] = test_case
@@ -290,8 +289,11 @@ class ZephyrMockServer:
     def _add_sample_test_cycles(self, project_id: str, project_key: str):
         """Add sample test cycles for a project."""
         # Find folders for this project
-        project_folders = [f for f in self.data["folders"].values()
-                          if f["project_key"] == project_key and f["folder_type"] == "TEST_CYCLE"]
+        project_folders = [
+            f
+            for f in self.data["folders"].values()
+            if f["project_key"] == project_key and f["folder_type"] == "TEST_CYCLE"
+        ]
 
         # Create test cycles in each folder
         test_cycle_count = 1
@@ -319,10 +321,12 @@ class ZephyrMockServer:
     def _add_sample_test_executions(self, project_id: str, project_key: str):
         """Add sample test executions for a project."""
         # Get test cases and test cycles for this project
-        project_test_cases = [tc for tc in self.data["test_cases"].values()
-                             if tc["key"].startswith(f"{project_key}-")]
-        project_test_cycles = [tc for tc in self.data["test_cycles"].values()
-                              if tc["project_key"] == project_key]
+        project_test_cases = [
+            tc for tc in self.data["test_cases"].values() if tc["key"].startswith(f"{project_key}-")
+        ]
+        project_test_cycles = [
+            tc for tc in self.data["test_cycles"].values() if tc["project_key"] == project_key
+        ]
 
         if not project_test_cases or not project_test_cycles:
             return
@@ -344,7 +348,7 @@ class ZephyrMockServer:
                     cycle_name=test_cycle["name"],
                     status=random.choice(["Passed", "Failed", "Blocked", "Not Run"]),
                     environment=random.choice(["1", "2", "3"]),
-                    environment_name=random.choice(["Development", "Testing", "Production"])
+                    environment_name=random.choice(["Development", "Testing", "Production"]),
                 ).model_dump()
 
                 self.data["test_executions"][execution["id"]] = execution
@@ -360,9 +364,15 @@ class ZephyrMockServer:
         """Check if a token is valid."""
         return token in self.valid_tokens
 
-    def handle_request(self, method: str, endpoint: str, params: Optional[Dict[str, Any]] = None,
-                      data: Optional[Dict[str, Any]] = None, headers: Optional[Dict[str, Any]] = None,
-                      files: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    def handle_request(
+        self,
+        method: str,
+        endpoint: str,
+        params: Optional[Dict[str, Any]] = None,
+        data: Optional[Dict[str, Any]] = None,
+        headers: Optional[Dict[str, Any]] = None,
+        files: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
         """
         Handle a mock API request.
 
@@ -390,15 +400,17 @@ class ZephyrMockServer:
             time.sleep(self.response_delay)
 
         # Track request
-        self.request_history.append({
-            "timestamp": datetime.now().isoformat(),
-            "method": method,
-            "endpoint": endpoint,
-            "params": params,
-            "data": data,
-            "headers": headers,
-            "files": files is not None,
-        })
+        self.request_history.append(
+            {
+                "timestamp": datetime.now().isoformat(),
+                "method": method,
+                "endpoint": endpoint,
+                "params": params,
+                "data": data,
+                "headers": headers,
+                "files": files is not None,
+            }
+        )
 
         # Randomly generate errors based on error rate
         if random.random() < self.error_rate:
@@ -463,13 +475,11 @@ class ZephyrMockServer:
         # For mock server, we don't validate actual credentials
         token = self._generate_token()
 
-        return {
-            "access_token": token,
-            "token_type": "bearer",
-            "expires_in": 3600
-        }
+        return {"access_token": token, "token_type": "bearer", "expires_in": 3600}
 
-    def _handle_projects(self, method: str, endpoint: str, params: Dict[str, Any], data: Dict[str, Any]) -> Dict[str, Any]:
+    def _handle_projects(
+        self, method: str, endpoint: str, params: Dict[str, Any], data: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Handle projects endpoint requests."""
         # List projects
         if endpoint == "/projects" and method == "GET":
@@ -480,26 +490,30 @@ class ZephyrMockServer:
             max_results = int(params.get("maxResults", 50))
 
             # Apply pagination
-            paginated_projects = projects[start_at:start_at + max_results]
+            paginated_projects = projects[start_at : start_at + max_results]
 
             return {
                 "values": paginated_projects,
                 "maxResults": max_results,
                 "startAt": start_at,
                 "isLast": (start_at + max_results) >= len(projects),
-                "totalCount": len(projects)
+                "totalCount": len(projects),
             }
 
         # Get project by key
         project_key_match = re.match(r"^/projects/([A-Za-z0-9]+)$", endpoint)
         if project_key_match and method == "GET":
             project_key = project_key_match.group(1)
-            project = next((p for p in self.data["projects"].values() if p["key"] == project_key), None)
+            project = next(
+                (p for p in self.data["projects"].values() if p["key"] == project_key), None
+            )
 
             if project:
                 return project
             else:
-                return self._format_error_response(f"Project not found with key: {project_key}", 404)
+                return self._format_error_response(
+                    f"Project not found with key: {project_key}", 404
+                )
 
         # Create project
         if endpoint == "/projects" and method == "POST":
@@ -520,9 +534,13 @@ class ZephyrMockServer:
 
             return validated_data
 
-        return self._format_error_response(f"Unsupported operation for projects: {method} {endpoint}", 400)
+        return self._format_error_response(
+            f"Unsupported operation for projects: {method} {endpoint}", 400
+        )
 
-    def _handle_folders(self, method: str, endpoint: str, params: Dict[str, Any], data: Dict[str, Any]) -> Dict[str, Any]:
+    def _handle_folders(
+        self, method: str, endpoint: str, params: Dict[str, Any], data: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Handle folders endpoint requests."""
         # List folders
         if endpoint == "/folders" and method == "GET":
@@ -541,14 +559,14 @@ class ZephyrMockServer:
             max_results = int(params.get("maxResults", 50))
 
             # Apply pagination
-            paginated_folders = list(folders)[start_at:start_at + max_results]
+            paginated_folders = list(folders)[start_at : start_at + max_results]
 
             return {
                 "values": paginated_folders,
                 "maxResults": max_results,
                 "startAt": start_at,
                 "isLast": (start_at + max_results) >= len(folders),
-                "totalCount": len(folders)
+                "totalCount": len(folders),
             }
 
         # Get folder by ID
@@ -580,9 +598,13 @@ class ZephyrMockServer:
 
             return validated_data
 
-        return self._format_error_response(f"Unsupported operation for folders: {method} {endpoint}", 400)
+        return self._format_error_response(
+            f"Unsupported operation for folders: {method} {endpoint}", 400
+        )
 
-    def _handle_test_cases(self, method: str, endpoint: str, params: Dict[str, Any], data: Dict[str, Any]) -> Dict[str, Any]:
+    def _handle_test_cases(
+        self, method: str, endpoint: str, params: Dict[str, Any], data: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Handle test cases endpoint requests."""
         # List test cases
         if endpoint == "/testcases" and method == "GET":
@@ -598,26 +620,30 @@ class ZephyrMockServer:
             max_results = int(params.get("maxResults", 50))
 
             # Apply pagination
-            paginated_test_cases = list(test_cases)[start_at:start_at + max_results]
+            paginated_test_cases = list(test_cases)[start_at : start_at + max_results]
 
             return {
                 "values": paginated_test_cases,
                 "maxResults": max_results,
                 "startAt": start_at,
                 "isLast": (start_at + max_results) >= len(test_cases),
-                "totalCount": len(test_cases)
+                "totalCount": len(test_cases),
             }
 
         # Get test case by key
         test_case_key_match = re.match(r"^/testcases/([A-Za-z0-9\-]+)$", endpoint)
         if test_case_key_match and method == "GET":
             test_case_key = test_case_key_match.group(1)
-            test_case = next((tc for tc in self.data["test_cases"].values() if tc["key"] == test_case_key), None)
+            test_case = next(
+                (tc for tc in self.data["test_cases"].values() if tc["key"] == test_case_key), None
+            )
 
             if test_case:
                 return test_case
             else:
-                return self._format_error_response(f"Test case not found with key: {test_case_key}", 404)
+                return self._format_error_response(
+                    f"Test case not found with key: {test_case_key}", 404
+                )
 
         # Create test case
         if endpoint == "/testcases" and method == "POST":
@@ -638,9 +664,13 @@ class ZephyrMockServer:
 
             return validated_data
 
-        return self._format_error_response(f"Unsupported operation for test cases: {method} {endpoint}", 400)
+        return self._format_error_response(
+            f"Unsupported operation for test cases: {method} {endpoint}", 400
+        )
 
-    def _handle_test_cycles(self, method: str, endpoint: str, params: Dict[str, Any], data: Dict[str, Any]) -> Dict[str, Any]:
+    def _handle_test_cycles(
+        self, method: str, endpoint: str, params: Dict[str, Any], data: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Handle test cycles endpoint requests."""
         # List test cycles
         if endpoint == "/testcycles" and method == "GET":
@@ -656,26 +686,31 @@ class ZephyrMockServer:
             max_results = int(params.get("maxResults", 50))
 
             # Apply pagination
-            paginated_test_cycles = list(test_cycles)[start_at:start_at + max_results]
+            paginated_test_cycles = list(test_cycles)[start_at : start_at + max_results]
 
             return {
                 "values": paginated_test_cycles,
                 "maxResults": max_results,
                 "startAt": start_at,
                 "isLast": (start_at + max_results) >= len(test_cycles),
-                "totalCount": len(test_cycles)
+                "totalCount": len(test_cycles),
             }
 
         # Get test cycle by key
         test_cycle_key_match = re.match(r"^/testcycles/([A-Za-z0-9\-]+)$", endpoint)
         if test_cycle_key_match and method == "GET":
             test_cycle_key = test_cycle_key_match.group(1)
-            test_cycle = next((tc for tc in self.data["test_cycles"].values() if tc["key"] == test_cycle_key), None)
+            test_cycle = next(
+                (tc for tc in self.data["test_cycles"].values() if tc["key"] == test_cycle_key),
+                None,
+            )
 
             if test_cycle:
                 return test_cycle
             else:
-                return self._format_error_response(f"Test cycle not found with key: {test_cycle_key}", 404)
+                return self._format_error_response(
+                    f"Test cycle not found with key: {test_cycle_key}", 404
+                )
 
         # Create test cycle
         if endpoint == "/testcycles" and method == "POST":
@@ -696,9 +731,13 @@ class ZephyrMockServer:
 
             return validated_data
 
-        return self._format_error_response(f"Unsupported operation for test cycles: {method} {endpoint}", 400)
+        return self._format_error_response(
+            f"Unsupported operation for test cycles: {method} {endpoint}", 400
+        )
 
-    def _handle_test_plans(self, method: str, endpoint: str, params: Dict[str, Any], data: Dict[str, Any]) -> Dict[str, Any]:
+    def _handle_test_plans(
+        self, method: str, endpoint: str, params: Dict[str, Any], data: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Handle test plans endpoint requests."""
         # List test plans
         if endpoint == "/testplans" and method == "GET":
@@ -714,26 +753,30 @@ class ZephyrMockServer:
             max_results = int(params.get("maxResults", 50))
 
             # Apply pagination
-            paginated_test_plans = list(test_plans)[start_at:start_at + max_results]
+            paginated_test_plans = list(test_plans)[start_at : start_at + max_results]
 
             return {
                 "values": paginated_test_plans,
                 "maxResults": max_results,
                 "startAt": start_at,
                 "isLast": (start_at + max_results) >= len(test_plans),
-                "totalCount": len(test_plans)
+                "totalCount": len(test_plans),
             }
 
         # Get test plan by key
         test_plan_key_match = re.match(r"^/testplans/([A-Za-z0-9\-]+)$", endpoint)
         if test_plan_key_match and method == "GET":
             test_plan_key = test_plan_key_match.group(1)
-            test_plan = next((tp for tp in self.data["test_plans"].values() if tp["key"] == test_plan_key), None)
+            test_plan = next(
+                (tp for tp in self.data["test_plans"].values() if tp["key"] == test_plan_key), None
+            )
 
             if test_plan:
                 return test_plan
             else:
-                return self._format_error_response(f"Test plan not found with key: {test_plan_key}", 404)
+                return self._format_error_response(
+                    f"Test plan not found with key: {test_plan_key}", 404
+                )
 
         # Create test plan
         if endpoint == "/testplans" and method == "POST":
@@ -754,9 +797,13 @@ class ZephyrMockServer:
 
             return validated_data
 
-        return self._format_error_response(f"Unsupported operation for test plans: {method} {endpoint}", 400)
+        return self._format_error_response(
+            f"Unsupported operation for test plans: {method} {endpoint}", 400
+        )
 
-    def _handle_test_executions(self, method: str, endpoint: str, params: Dict[str, Any], data: Dict[str, Any]) -> Dict[str, Any]:
+    def _handle_test_executions(
+        self, method: str, endpoint: str, params: Dict[str, Any], data: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Handle test executions endpoint requests."""
         # List test executions
         if endpoint == "/testexecutions" and method == "GET":
@@ -767,9 +814,14 @@ class ZephyrMockServer:
             test_executions = self.data["test_executions"].values()
             if project_key:
                 # For executions, we'd need to look up the case to get project key
-                test_case_keys = [tc["key"] for tc in self.data["test_cases"].values()
-                                 if tc["key"].startswith(f"{project_key}-")]
-                test_executions = [te for te in test_executions if te["test_case_key"] in test_case_keys]
+                test_case_keys = [
+                    tc["key"]
+                    for tc in self.data["test_cases"].values()
+                    if tc["key"].startswith(f"{project_key}-")
+                ]
+                test_executions = [
+                    te for te in test_executions if te["test_case_key"] in test_case_keys
+                ]
 
             if cycle_id:
                 test_executions = [te for te in test_executions if te["cycle_id"] == cycle_id]
@@ -779,14 +831,14 @@ class ZephyrMockServer:
             max_results = int(params.get("maxResults", 50))
 
             # Apply pagination
-            paginated_test_executions = list(test_executions)[start_at:start_at + max_results]
+            paginated_test_executions = list(test_executions)[start_at : start_at + max_results]
 
             return {
                 "values": paginated_test_executions,
                 "maxResults": max_results,
                 "startAt": start_at,
                 "isLast": (start_at + max_results) >= len(test_executions),
-                "totalCount": len(test_executions)
+                "totalCount": len(test_executions),
             }
 
         # Get test execution by ID
@@ -797,7 +849,9 @@ class ZephyrMockServer:
             if test_execution_id in self.data["test_executions"]:
                 return self.data["test_executions"][test_execution_id]
             else:
-                return self._format_error_response(f"Test execution not found with ID: {test_execution_id}", 404)
+                return self._format_error_response(
+                    f"Test execution not found with ID: {test_execution_id}", 404
+                )
 
         # Create test execution
         if endpoint == "/testexecutions" and method == "POST":
@@ -818,10 +872,18 @@ class ZephyrMockServer:
 
             return validated_data
 
-        return self._format_error_response(f"Unsupported operation for test executions: {method} {endpoint}", 400)
+        return self._format_error_response(
+            f"Unsupported operation for test executions: {method} {endpoint}", 400
+        )
 
-    def _handle_attachments(self, method: str, endpoint: str, params: Dict[str, Any],
-                           data: Dict[str, Any], files: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+    def _handle_attachments(
+        self,
+        method: str,
+        endpoint: str,
+        params: Dict[str, Any],
+        data: Dict[str, Any],
+        files: Optional[Dict[str, Any]],
+    ) -> Dict[str, Any]:
         """Handle attachments endpoint requests."""
         # Upload attachment
         entity_attachment_match = re.match(r"^/(\w+)s/([A-Za-z0-9\-]+)/attachments$", endpoint)
@@ -853,7 +915,7 @@ class ZephyrMockServer:
                 content_type=content_type,
                 size=len(content) if content else 0,
                 created_on=datetime.now(),
-                created_by="mock_user"
+                created_by="mock_user",
             ).model_dump()
 
             self.data["attachments"][attachment_id] = attachment
@@ -874,7 +936,7 @@ class ZephyrMockServer:
                 "maxResults": 50,
                 "startAt": 0,
                 "isLast": True,
-                "totalCount": len(attachments)
+                "totalCount": len(attachments),
             }
 
         # Get attachment content
@@ -887,11 +949,17 @@ class ZephyrMockServer:
                 # But for testing, we'll return a mock response
                 return b"Mock attachment content"
             else:
-                return self._format_error_response(f"Attachment not found with ID: {attachment_id}", 404)
+                return self._format_error_response(
+                    f"Attachment not found with ID: {attachment_id}", 404
+                )
 
-        return self._format_error_response(f"Unsupported operation for attachments: {method} {endpoint}", 400)
+        return self._format_error_response(
+            f"Unsupported operation for attachments: {method} {endpoint}", 400
+        )
 
-    def _handle_statuses(self, method: str, endpoint: str, params: Dict[str, Any], data: Dict[str, Any]) -> Dict[str, Any]:
+    def _handle_statuses(
+        self, method: str, endpoint: str, params: Dict[str, Any], data: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Handle statuses endpoint requests."""
         # List statuses
         if endpoint == "/statuses" and method == "GET":
@@ -908,19 +976,23 @@ class ZephyrMockServer:
             max_results = int(params.get("maxResults", 50))
 
             # Apply pagination
-            paginated_statuses = list(statuses)[start_at:start_at + max_results]
+            paginated_statuses = list(statuses)[start_at : start_at + max_results]
 
             return {
                 "values": paginated_statuses,
                 "maxResults": max_results,
                 "startAt": start_at,
                 "isLast": (start_at + max_results) >= len(statuses),
-                "totalCount": len(statuses)
+                "totalCount": len(statuses),
             }
 
-        return self._format_error_response(f"Unsupported operation for statuses: {method} {endpoint}", 400)
+        return self._format_error_response(
+            f"Unsupported operation for statuses: {method} {endpoint}", 400
+        )
 
-    def _handle_priorities(self, method: str, endpoint: str, params: Dict[str, Any], data: Dict[str, Any]) -> Dict[str, Any]:
+    def _handle_priorities(
+        self, method: str, endpoint: str, params: Dict[str, Any], data: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Handle priorities endpoint requests."""
         # List priorities
         if endpoint == "/priorities" and method == "GET":
@@ -934,19 +1006,23 @@ class ZephyrMockServer:
             max_results = int(params.get("maxResults", 50))
 
             # Apply pagination
-            paginated_priorities = list(priorities)[start_at:start_at + max_results]
+            paginated_priorities = list(priorities)[start_at : start_at + max_results]
 
             return {
                 "values": paginated_priorities,
                 "maxResults": max_results,
                 "startAt": start_at,
                 "isLast": (start_at + max_results) >= len(priorities),
-                "totalCount": len(priorities)
+                "totalCount": len(priorities),
             }
 
-        return self._format_error_response(f"Unsupported operation for priorities: {method} {endpoint}", 400)
+        return self._format_error_response(
+            f"Unsupported operation for priorities: {method} {endpoint}", 400
+        )
 
-    def _handle_environments(self, method: str, endpoint: str, params: Dict[str, Any], data: Dict[str, Any]) -> Dict[str, Any]:
+    def _handle_environments(
+        self, method: str, endpoint: str, params: Dict[str, Any], data: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Handle environments endpoint requests."""
         # List environments
         if endpoint == "/environments" and method == "GET":
@@ -960,19 +1036,23 @@ class ZephyrMockServer:
             max_results = int(params.get("maxResults", 50))
 
             # Apply pagination
-            paginated_environments = list(environments)[start_at:start_at + max_results]
+            paginated_environments = list(environments)[start_at : start_at + max_results]
 
             return {
                 "values": paginated_environments,
                 "maxResults": max_results,
                 "startAt": start_at,
                 "isLast": (start_at + max_results) >= len(environments),
-                "totalCount": len(environments)
+                "totalCount": len(environments),
             }
 
-        return self._format_error_response(f"Unsupported operation for environments: {method} {endpoint}", 400)
+        return self._format_error_response(
+            f"Unsupported operation for environments: {method} {endpoint}", 400
+        )
 
-    def _handle_custom_fields(self, method: str, endpoint: str, params: Dict[str, Any], data: Dict[str, Any]) -> Dict[str, Any]:
+    def _handle_custom_fields(
+        self, method: str, endpoint: str, params: Dict[str, Any], data: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Handle custom fields endpoint requests."""
         # List custom fields
         if endpoint == "/customfields" and method == "GET":
@@ -985,9 +1065,7 @@ class ZephyrMockServer:
             for i in range(3):
                 field_type = random.choice(["TEXT", "PARAGRAPH", "CHECKBOX", "NUMERIC", "DATE"])
                 custom_field = CustomFieldFactory.create(
-                    id=str(i + 1),
-                    name=f"Custom Field {i + 1}",
-                    type=field_type
+                    id=str(i + 1), name=f"Custom Field {i + 1}", type=field_type
                 ).model_dump()
                 custom_fields.append(custom_field)
 
@@ -996,7 +1074,9 @@ class ZephyrMockServer:
                 "maxResults": 50,
                 "startAt": 0,
                 "isLast": True,
-                "totalCount": len(custom_fields)
+                "totalCount": len(custom_fields),
             }
 
-        return self._format_error_response(f"Unsupported operation for custom fields: {method} {endpoint}", 400)
+        return self._format_error_response(
+            f"Unsupported operation for custom fields: {method} {endpoint}", 400
+        )

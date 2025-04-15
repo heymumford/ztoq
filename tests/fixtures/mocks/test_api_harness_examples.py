@@ -47,16 +47,16 @@ class TestAPIHarnessWithBaseClass(MockAPITestBase):
             {
                 "values": [
                     {"id": "1001", "key": "DEMO", "name": "Demo Project"},
-                    {"id": "1002", "key": "TEST", "name": "Test Project"}
+                    {"id": "1002", "key": "TEST", "name": "Test Project"},
                 ]
-            }
+            },
         )
 
         # Create Zephyr client
         config = ZephyrConfig(
             base_url="https://api.zephyrscale.example.com/v2",
             api_token="mock-token",
-            project_key="DEMO"
+            project_key="DEMO",
         )
         client = ZephyrClient(config)
 
@@ -80,11 +80,7 @@ class TestAPIHarnessWithBaseClass(MockAPITestBase):
         mock_qtest_api.add_response(
             "POST",
             "/oauth/token",
-            {
-                "access_token": "mock-qtest-token",
-                "token_type": "bearer",
-                "expires_in": 3600
-            }
+            {"access_token": "mock-qtest-token", "token_type": "bearer", "expires_in": 3600},
         )
 
         mock_qtest_api.add_response(
@@ -94,11 +90,8 @@ class TestAPIHarnessWithBaseClass(MockAPITestBase):
                 "total": 2,
                 "page": 1,
                 "pageSize": 100,
-                "items": [
-                    {"id": 1, "name": "Project One"},
-                    {"id": 2, "name": "Project Two"}
-                ]
-            }
+                "items": [{"id": 1, "name": "Project One"}, {"id": 2, "name": "Project Two"}],
+            },
         )
 
         # Create qTest client
@@ -106,7 +99,7 @@ class TestAPIHarnessWithBaseClass(MockAPITestBase):
             base_url="https://api.qtest.example.com",
             username="test-user",
             password="test-password",
-            project_id=1
+            project_id=1,
         )
         client = QTestClient(config)
 
@@ -140,10 +133,7 @@ class TestAPIHarnessWithFixtures:
         """Test handling API errors with the Zephyr harness."""
         # Configure mock to return an error response
         mock_zephyr_api.add_error_response(
-            "GET",
-            "/testcases",
-            "Invalid project key",
-            status_code=400
+            "GET", "/testcases", "Invalid project key", status_code=400
         )
 
         # Set error rate for random failures
@@ -153,7 +143,7 @@ class TestAPIHarnessWithFixtures:
         config = ZephyrConfig(
             base_url="https://api.zephyrscale.example.com/v2",
             api_token="mock-token",
-            project_key="INVALID"
+            project_key="INVALID",
         )
         client = ZephyrClient(config)
 
@@ -174,11 +164,7 @@ class TestAPIHarnessWithFixtures:
         mock_qtest_api.add_response(
             "POST",
             "/oauth/token",
-            {
-                "access_token": "mock-qtest-token",
-                "token_type": "bearer",
-                "expires_in": 3600
-            }
+            {"access_token": "mock-qtest-token", "token_type": "bearer", "expires_in": 3600},
         )
 
         # First page of test cases
@@ -189,11 +175,8 @@ class TestAPIHarnessWithFixtures:
                 "total": 3,
                 "page": 1,
                 "pageSize": 2,
-                "items": [
-                    {"id": 101, "name": "Test Case 1"},
-                    {"id": 102, "name": "Test Case 2"}
-                ]
-            }
+                "items": [{"id": 101, "name": "Test Case 1"}, {"id": 102, "name": "Test Case 2"}],
+            },
         )
 
         # Second page of test cases (with page=2 parameter)
@@ -204,9 +187,7 @@ class TestAPIHarnessWithFixtures:
                         "total": 3,
                         "page": 2,
                         "pageSize": 2,
-                        "items": [
-                            {"id": 103, "name": "Test Case 3"}
-                        ]
+                        "items": [{"id": 103, "name": "Test Case 3"}],
                     }
                 }, 200
             return None, 404
@@ -219,7 +200,7 @@ class TestAPIHarnessWithFixtures:
             base_url="https://api.qtest.example.com",
             username="test-user",
             password="test-password",
-            project_id=1
+            project_id=1,
         )
 
         # Here we would simulate the pagination
@@ -241,13 +222,7 @@ class TestAPIHarnessWithContextManagers:
 
         # Configure test data
         zephyr_harness.add_response(
-            "GET",
-            "/projects",
-            {
-                "values": [
-                    {"id": "1001", "key": "DEMO", "name": "Demo Project"}
-                ]
-            }
+            "GET", "/projects", {"values": [{"id": "1001", "key": "DEMO", "name": "Demo Project"}]}
         )
 
         # Use context manager to patch requests
@@ -256,7 +231,7 @@ class TestAPIHarnessWithContextManagers:
             config = ZephyrConfig(
                 base_url="https://api.zephyrscale.example.com/v2",
                 api_token="mock-token",
-                project_key="DEMO"
+                project_key="DEMO",
             )
             client = ZephyrClient(config)
 
@@ -279,44 +254,27 @@ class TestAPIHarnessWithContextManagers:
 
         # Configure Zephyr responses
         zephyr_harness.add_response(
-            "GET",
-            "/projects",
-            {
-                "values": [
-                    {"id": "1001", "key": "DEMO", "name": "Demo Project"}
-                ]
-            }
+            "GET", "/projects", {"values": [{"id": "1001", "key": "DEMO", "name": "Demo Project"}]}
         )
 
         # Configure qTest responses
         qtest_harness.add_response(
             "POST",
             "/oauth/token",
-            {
-                "access_token": "mock-qtest-token",
-                "token_type": "bearer",
-                "expires_in": 3600
-            }
+            {"access_token": "mock-qtest-token", "token_type": "bearer", "expires_in": 3600},
         )
 
         qtest_harness.add_response(
             "GET",
             "/api/v3/projects",
-            {
-                "total": 1,
-                "page": 1,
-                "pageSize": 100,
-                "items": [
-                    {"id": 1, "name": "Project One"}
-                ]
-            }
+            {"total": 1, "page": 1, "pageSize": 100, "items": [{"id": 1, "name": "Project One"}]},
         )
 
         # Create clients
         zephyr_config = ZephyrConfig(
             base_url="https://api.zephyrscale.example.com/v2",
             api_token="mock-token",
-            project_key="DEMO"
+            project_key="DEMO",
         )
         zephyr_client = ZephyrClient(zephyr_config)
 
@@ -324,7 +282,7 @@ class TestAPIHarnessWithContextManagers:
             base_url="https://api.qtest.example.com",
             username="test-user",
             password="test-password",
-            project_id=1
+            project_id=1,
         )
         qtest_client = QTestClient(qtest_config)
 
@@ -359,9 +317,7 @@ class TestWithFastAPIHarness:
         """Test using a real API server."""
         # Create clients using server URLs
         zephyr_config = ZephyrConfig(
-            base_url=f"{api_server.zephyr_url}",
-            api_token="test-token",
-            project_key="TEST"
+            base_url=f"{api_server.zephyr_url}", api_token="test-token", project_key="TEST"
         )
         zephyr_client = ZephyrClient(zephyr_config)
 
@@ -369,16 +325,19 @@ class TestWithFastAPIHarness:
             base_url=f"{api_server.base_url}",
             username="test-user",
             password="test-password",
-            project_id=1
+            project_id=1,
         )
         qtest_client = QTestClient(qtest_config)
 
         # Make requests to the running server
         # Note: These will hit the actual FastAPI server running locally
-        zephyr_response = requests.get(f"{api_server.zephyr_url}/projects",
-                                      headers={"Authorization": "Bearer test-token"})
-        qtest_response = requests.post(f"{api_server.base_url}/oauth/token",
-                                      json={"username": "test-user", "password": "test-password"})
+        zephyr_response = requests.get(
+            f"{api_server.zephyr_url}/projects", headers={"Authorization": "Bearer test-token"}
+        )
+        qtest_response = requests.post(
+            f"{api_server.base_url}/oauth/token",
+            json={"username": "test-user", "password": "test-password"},
+        )
 
         # Verify responses
         assert zephyr_response.status_code == 200
@@ -389,8 +348,9 @@ class TestWithFastAPIHarness:
 
 
 # Example a real-world scenario: Testing a migration function that uses both APIs
-def migrate_test_case(zephyr_client: ZephyrClient, qtest_client: QTestClient,
-                      zephyr_case_key: str) -> int:
+def migrate_test_case(
+    zephyr_client: ZephyrClient, qtest_client: QTestClient, zephyr_case_key: str
+) -> int:
     """
     Migrate a test case from Zephyr Scale to qTest.
 
@@ -418,10 +378,10 @@ def migrate_test_case(zephyr_client: ZephyrClient, qtest_client: QTestClient,
             {
                 "description": step.get("description", ""),
                 "expectedResult": step.get("expectedResult", ""),
-                "order": i + 1
+                "order": i + 1,
             }
             for i, step in enumerate(getattr(zephyr_case, "steps", []))
-        ]
+        ],
     )
 
     # Create in qTest
@@ -446,13 +406,10 @@ class TestMigrationFunction:
             "steps": [
                 {
                     "description": "Navigate to login page",
-                    "expectedResult": "Login page is displayed"
+                    "expectedResult": "Login page is displayed",
                 },
-                {
-                    "description": "Enter valid credentials",
-                    "expectedResult": "User is logged in"
-                }
-            ]
+                {"description": "Enter valid credentials", "expectedResult": "User is logged in"},
+            ],
         }
 
         zephyr_harness.add_response(
@@ -463,19 +420,15 @@ class TestMigrationFunction:
                 "startAt": 0,
                 "maxResults": 50,
                 "isLast": True,
-                "values": [zephyr_test_case]
-            }
+                "values": [zephyr_test_case],
+            },
         )
 
         # Configure qTest mock
         qtest_harness.add_response(
             "POST",
             "/oauth/token",
-            {
-                "access_token": "mock-qtest-token",
-                "token_type": "bearer",
-                "expires_in": 3600
-            }
+            {"access_token": "mock-qtest-token", "token_type": "bearer", "expires_in": 3600},
         )
 
         # Mock the create test case response
@@ -491,22 +444,22 @@ class TestMigrationFunction:
                     {
                         "description": "Navigate to login page",
                         "expectedResult": "Login page is displayed",
-                        "order": 1
+                        "order": 1,
                     },
                     {
                         "description": "Enter valid credentials",
                         "expectedResult": "User is logged in",
-                        "order": 2
-                    }
-                ]
-            }
+                        "order": 2,
+                    },
+                ],
+            },
         )
 
         # Create clients
         zephyr_config = ZephyrConfig(
             base_url="https://api.zephyrscale.example.com/v2",
             api_token="mock-token",
-            project_key="DEMO"
+            project_key="DEMO",
         )
         zephyr_client = ZephyrClient(zephyr_config)
 
@@ -514,7 +467,7 @@ class TestMigrationFunction:
             base_url="https://api.qtest.example.com",
             username="test-user",
             password="test-password",
-            project_id=1
+            project_id=1,
         )
         qtest_client = QTestClient(qtest_config)
 
@@ -528,7 +481,9 @@ class TestMigrationFunction:
         zephyr_requests = zephyr_harness.get_requests(method="GET", path="/testcases")
         assert len(zephyr_requests) == 1
 
-        qtest_requests = qtest_harness.get_requests(method="POST", path="/api/v3/projects/1/test-cases")
+        qtest_requests = qtest_harness.get_requests(
+            method="POST", path="/api/v3/projects/1/test-cases"
+        )
         assert len(qtest_requests) == 1
         assert "Login Test" in json.dumps(qtest_requests[0]["data"])
 
@@ -544,10 +499,7 @@ class TestErrorConditions:
 
         # Add a rate limit error for the first request
         mock_zephyr_api.add_error_response(
-            "GET",
-            "/testcases",
-            "Rate limit exceeded",
-            status_code=429
+            "GET", "/testcases", "Rate limit exceeded", status_code=429
         )
 
         # Add success response for subsequent requests
@@ -562,7 +514,7 @@ class TestErrorConditions:
                     "startAt": 0,
                     "maxResults": 50,
                     "isLast": True,
-                    "values": [{"id": "12345", "key": "DEMO-T1", "name": "Test Case"}]
+                    "values": [{"id": "12345", "key": "DEMO-T1", "name": "Test Case"}],
                 }, 200
 
             # Default to using the configured responses (which has our 429 error)
@@ -575,7 +527,7 @@ class TestErrorConditions:
         config = ZephyrConfig(
             base_url="https://api.zephyrscale.example.com/v2",
             api_token="mock-token",
-            project_key="DEMO"
+            project_key="DEMO",
         )
         client = ZephyrClient(config)
 
@@ -596,8 +548,8 @@ class TestErrorConditions:
                 "startAt": 0,
                 "maxResults": 50,
                 "isLast": True,
-                "values": [{"id": "12345", "key": "DEMO-T1", "name": "Test Case"}]
-            }
+                "values": [{"id": "12345", "key": "DEMO-T1", "name": "Test Case"}],
+            },
         )
 
         # Verify successful request
@@ -617,25 +569,20 @@ class TestPerformanceSimulation:
 
         # Add response
         mock_zephyr_api.add_response(
-            "GET",
-            "/projects",
-            {
-                "values": [
-                    {"id": "1001", "key": "DEMO", "name": "Demo Project"}
-                ]
-            }
+            "GET", "/projects", {"values": [{"id": "1001", "key": "DEMO", "name": "Demo Project"}]}
         )
 
         # Create client
         config = ZephyrConfig(
             base_url="https://api.zephyrscale.example.com/v2",
             api_token="mock-token",
-            project_key="DEMO"
+            project_key="DEMO",
         )
         client = ZephyrClient(config)
 
         # Call API and measure time
         import time
+
         start_time = time.time()
         projects = client.get_projects()
         end_time = time.time()

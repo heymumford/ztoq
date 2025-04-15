@@ -17,7 +17,7 @@ from rich.table import Table
 from alembic import command
 from alembic.config import Config
 from ztoq.core.db_manager import DatabaseConfig, SQLDatabaseManager
-from ztoq.database_factory import DatabaseFactory, DatabaseType, get_database_manager
+from ztoq.database_factory import DatabaseFactory, DatabaseType
 from ztoq.workflow_cli import workflow_app
 from ztoq.exporter import ZephyrExportManager
 from ztoq.migration import ZephyrToQTestMigration
@@ -33,9 +33,9 @@ QTEST_SPEC_PATH = Path(__file__).parent.parent / "docs" / "specs" / "qtest-opena
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
-        format="%(message)s",
-        datefmt="[%X]",
-        handlers=[RichHandler(rich_tracebacks=True)],
+    format="%(message)s",
+    datefmt="[%X]",
+    handlers=[RichHandler(rich_tracebacks=True)],
 )
 logger = logging.getLogger("ztoq")
 
@@ -62,8 +62,6 @@ class MigrationPhase(str, Enum):
 
 
 @app.command("validate")
-
-
 def validate_spec(spec_path: Path = typer.Argument(..., help="Path to the OpenAPI spec file")):
     """Validate that the OpenAPI spec is for Zephyr Scale API."""
     try:
@@ -83,8 +81,6 @@ def validate_spec(spec_path: Path = typer.Argument(..., help="Path to the OpenAP
 
 
 @app.command("list-endpoints")
-
-
 def list_endpoints(spec_path: Path = typer.Argument(..., help="Path to the OpenAPI spec file")):
     """List all API endpoints in the OpenAPI spec."""
     try:
@@ -101,9 +97,9 @@ def list_endpoints(spec_path: Path = typer.Argument(..., help="Path to the OpenA
         for _endpoint_id, details in endpoints.items():
             table.add_row(
                 details["method"].upper(),
-                    details["path"],
-                    details["summary"],
-                )
+                details["path"],
+                details["summary"],
+            )
 
         console.print(table)
 
@@ -113,20 +109,18 @@ def list_endpoints(spec_path: Path = typer.Argument(..., help="Path to the OpenA
 
 
 @app.command("get-projects")
-
-
 def get_projects(
     spec_path: Path = typer.Argument(..., help="Path to the OpenAPI spec file"),
-        base_url: str = typer.Option(..., help="Zephyr Scale API base URL"),
-        api_token: str = typer.Option(..., help="Zephyr Scale API token"),
-        output_file: Path | None = typer.Option(None, help="Output file path for projects (JSON)"),
+    base_url: str = typer.Option(..., help="Zephyr Scale API base URL"),
+    api_token: str = typer.Option(..., help="Zephyr Scale API token"),
+    output_file: Path | None = typer.Option(None, help="Output file path for projects (JSON)"),
 ):
     """Get all projects available in Zephyr Scale."""
     try:
         config = ZephyrConfig(
             base_url=base_url,
-                api_token=api_token,
-                project_key="",  # Not needed for listing projects
+            api_token=api_token,
+            project_key="",  # Not needed for listing projects
         )
 
         client = ZephyrClient.from_openapi_spec(spec_path, config)
@@ -149,9 +143,9 @@ def get_projects(
             for project in projects:
                 table.add_row(
                     project.key,
-                        project.name,
-                        project.id,
-                    )
+                    project.name,
+                    project.id,
+                )
 
             console.print(table)
 
@@ -161,23 +155,21 @@ def get_projects(
 
 
 @app.command("get-test-cases")
-
-
 def get_test_cases(
     spec_path: Path = typer.Argument(..., help="Path to the OpenAPI spec file"),
-        base_url: str = typer.Option(..., help="Zephyr Scale API base URL"),
-        api_token: str = typer.Option(..., help="Zephyr Scale API token"),
-        project_key: str = typer.Option(..., help="JIRA project key"),
-        output_file: Path | None = typer.Option(None, help="Output file path for test cases (JSON)"),
-        limit: int = typer.Option(100, help="Maximum number of test cases to fetch"),
+    base_url: str = typer.Option(..., help="Zephyr Scale API base URL"),
+    api_token: str = typer.Option(..., help="Zephyr Scale API token"),
+    project_key: str = typer.Option(..., help="JIRA project key"),
+    output_file: Path | None = typer.Option(None, help="Output file path for test cases (JSON)"),
+    limit: int = typer.Option(100, help="Maximum number of test cases to fetch"),
 ):
     """Get test cases for a project."""
     try:
         config = ZephyrConfig(
             base_url=base_url,
-                api_token=api_token,
-                project_key=project_key,
-            )
+            api_token=api_token,
+            project_key=project_key,
+        )
 
         client = ZephyrClient.from_openapi_spec(spec_path, config)
 
@@ -187,11 +179,11 @@ def get_test_cases(
 
         with Progress(
             TextColumn("[progress.description]{task.description}"),
-                BarColumn(),
-                TaskProgressColumn(),
-                TimeElapsedColumn(),
-                console=console,
-            ) as progress:
+            BarColumn(),
+            TaskProgressColumn(),
+            TimeElapsedColumn(),
+            console=console,
+        ) as progress:
             task = progress.add_task("Fetching test cases", total=limit)
 
             for tc in test_case_iter:
@@ -216,9 +208,9 @@ def get_test_cases(
             for tc in test_cases:
                 table.add_row(
                     tc.key,
-                        tc.name,
-                        tc.status or "N/A",
-                    )
+                    tc.name,
+                    tc.status or "N/A",
+                )
 
             console.print(table)
 
@@ -228,24 +220,20 @@ def get_test_cases(
 
 
 @app.command("get-test-cycles")
-
-
 def get_test_cycles(
     spec_path: Path = typer.Argument(..., help="Path to the OpenAPI spec file"),
-        base_url: str = typer.Option(..., help="Zephyr Scale API base URL"),
-        api_token: str = typer.Option(..., help="Zephyr Scale API token"),
-        project_key: str = typer.Option(..., help="JIRA project key"),
-        output_file: Path | None = typer.Option(
-        None, help="Output file path for test cycles (JSON)"
-    ),
+    base_url: str = typer.Option(..., help="Zephyr Scale API base URL"),
+    api_token: str = typer.Option(..., help="Zephyr Scale API token"),
+    project_key: str = typer.Option(..., help="JIRA project key"),
+    output_file: Path | None = typer.Option(None, help="Output file path for test cycles (JSON)"),
 ):
     """Get test cycles for a project."""
     try:
         config = ZephyrConfig(
             base_url=base_url,
-                api_token=api_token,
-                project_key=project_key,
-            )
+            api_token=api_token,
+            project_key=project_key,
+        )
 
         client = ZephyrClient.from_openapi_spec(spec_path, config)
 
@@ -267,9 +255,9 @@ def get_test_cycles(
             for tc in test_cycles:
                 table.add_row(
                     tc.key,
-                        tc.name,
-                        tc.status or "N/A",
-                    )
+                    tc.name,
+                    tc.status or "N/A",
+                )
 
             console.print(table)
 
@@ -279,38 +267,34 @@ def get_test_cycles(
 
 
 @app.command("export-project")
-
-
 def export_project(
     spec_path: Path = typer.Argument(..., help="Path to the OpenAPI spec file"),
-        base_url: str = typer.Option(..., help="Zephyr Scale API base URL"),
-        api_token: str = typer.Option(..., help="Zephyr Scale API token"),
-        project_key: str = typer.Option(..., help="JIRA project key"),
-        output_dir: Path = typer.Option(..., help="Output directory for all test data"),
-        format: OutputFormat = typer.Option(
+    base_url: str = typer.Option(..., help="Zephyr Scale API base URL"),
+    api_token: str = typer.Option(..., help="Zephyr Scale API token"),
+    project_key: str = typer.Option(..., help="JIRA project key"),
+    output_dir: Path = typer.Option(..., help="Output directory for all test data"),
+    format: OutputFormat = typer.Option(
         OutputFormat.JSON, help="Output format (json, sqlite, sql)"
     ),
-        concurrency: int = typer.Option(2, help="Number of concurrent API requests"),
-        # Added database options for SQL format
+    concurrency: int = typer.Option(2, help="Number of concurrent API requests"),
+    # Added database options for SQL format
     db_type: DatabaseType = typer.Option(
         DatabaseType.SQLITE, help="Database type for SQL format (sqlite or postgresql)"
     ),
-        db_path: Path | None = typer.Option(
+    db_path: Path
+    | None = typer.Option(
         None, help="Path to SQLite database file for SQL format (for SQLite only)"
     ),
-        host: str | None = typer.Option(
-        None, help="PostgreSQL host for SQL format (for PostgreSQL only)"
-    ),
-        port: int | None = typer.Option(
-        None, help="PostgreSQL port for SQL format (for PostgreSQL only)"
-    ),
-        username: str | None = typer.Option(
-        None, help="PostgreSQL username for SQL format (for PostgreSQL only)"
-    ),
-        password: str | None = typer.Option(
-        None, help="PostgreSQL password for SQL format (for PostgreSQL only)"
-    ),
-        database: str | None = typer.Option(
+    host: str
+    | None = typer.Option(None, help="PostgreSQL host for SQL format (for PostgreSQL only)"),
+    port: int
+    | None = typer.Option(None, help="PostgreSQL port for SQL format (for PostgreSQL only)"),
+    username: str
+    | None = typer.Option(None, help="PostgreSQL username for SQL format (for PostgreSQL only)"),
+    password: str
+    | None = typer.Option(None, help="PostgreSQL password for SQL format (for PostgreSQL only)"),
+    database: str
+    | None = typer.Option(
         None, help="PostgreSQL database name for SQL format (for PostgreSQL only)"
     ),
 ):
@@ -318,9 +302,9 @@ def export_project(
     try:
         config = ZephyrConfig(
             base_url=base_url,
-                api_token=api_token,
-                project_key=project_key,
-            )
+            api_token=api_token,
+            project_key=project_key,
+        )
 
         # For SQL format, check if database options are properly provided
         if format == OutputFormat.SQL:
@@ -348,13 +332,13 @@ def export_project(
             # Create database configuration
             db_config = DatabaseConfig(
                 db_type=db_type.value,
-                    db_path=str(db_path) if db_path else None,
-                    host=host,
-                    port=port,
-                    username=username,
-                    password=password,
-                    database=database,
-                )
+                db_path=str(db_path) if db_path else None,
+                host=host,
+                port=port,
+                username=username,
+                password=password,
+                database=database,
+            )
 
             # Create database manager
             db_manager = SQLDatabaseManager(config=db_config)
@@ -372,11 +356,11 @@ def export_project(
         # For legacy formats (JSON, SQLite)
         export_manager = ZephyrExportManager(
             config=config,
-                output_format=format.value,
-                output_dir=output_dir,
-                spec_path=spec_path,
-                concurrency=concurrency,
-            )
+            output_format=format.value,
+            output_dir=output_dir,
+            spec_path=spec_path,
+            concurrency=concurrency,
+        )
 
         stats = {}
         if format == OutputFormat.SQL:
@@ -386,11 +370,11 @@ def export_project(
             # Fetch data with the client
             with Progress(
                 TextColumn("[progress.description]{task.description}"),
-                    BarColumn(),
-                    TaskProgressColumn(),
-                    TimeElapsedColumn(),
-                    console=console,
-                ) as progress:
+                BarColumn(),
+                TaskProgressColumn(),
+                TimeElapsedColumn(),
+                console=console,
+            ) as progress:
                 # Create Zephyr client
                 client = ZephyrClient.from_openapi_spec(spec_path, config)
 
@@ -472,9 +456,9 @@ def export_project(
                 )
                 progress.update(
                     tasks["test_executions"],
-                        completed=len(test_executions),
-                        total=len(test_executions),
-                    )
+                    completed=len(test_executions),
+                    total=len(test_executions),
+                )
 
                 # Store in the database
                 progress.update(tasks["project"], description="Saving data to database...")
@@ -483,11 +467,11 @@ def export_project(
             # Use the legacy exporter for JSON and SQLite formats
             with Progress(
                 TextColumn("[progress.description]{task.description}"),
-                    BarColumn(),
-                    TaskProgressColumn(),
-                    TimeElapsedColumn(),
-                    console=console,
-                ) as progress:
+                BarColumn(),
+                TaskProgressColumn(),
+                TimeElapsedColumn(),
+                console=console,
+            ) as progress:
                 stats = export_manager.export_project(project_key, progress=progress)
 
         # Print summary
@@ -512,27 +496,24 @@ def export_project(
 
 
 @app.command("export-all")
-
-
 def export_all(
     spec_path: Path = typer.Argument(..., help="Path to the OpenAPI spec file"),
-        base_url: str = typer.Option(..., help="Zephyr Scale API base URL"),
-        api_token: str = typer.Option(..., help="Zephyr Scale API token"),
-        output_dir: Path = typer.Option(..., help="Output directory for all test data"),
-        format: OutputFormat = typer.Option(OutputFormat.JSON, help="Output format (json or sqlite)"),
-        concurrency: int = typer.Option(2, help="Number of concurrent API requests"),
-        projects: list[str] | None = typer.Option(
-        None, help="Specific projects to export (comma-separated)"
-    ),
+    base_url: str = typer.Option(..., help="Zephyr Scale API base URL"),
+    api_token: str = typer.Option(..., help="Zephyr Scale API token"),
+    output_dir: Path = typer.Option(..., help="Output directory for all test data"),
+    format: OutputFormat = typer.Option(OutputFormat.JSON, help="Output format (json or sqlite)"),
+    concurrency: int = typer.Option(2, help="Number of concurrent API requests"),
+    projects: list[str]
+    | None = typer.Option(None, help="Specific projects to export (comma-separated)"),
 ):
     """Export test data for all accessible projects."""
     try:
         # Create a config with an empty project key, we'll get the actual projects list first
         config = ZephyrConfig(
             base_url=base_url,
-                api_token=api_token,
-                project_key="",
-            )
+            api_token=api_token,
+            project_key="",
+        )
 
         # Create client to fetch projects
         client = ZephyrClient.from_openapi_spec(spec_path, config)
@@ -554,11 +535,11 @@ def export_all(
         # Create export manager
         export_manager = ZephyrExportManager(
             config=config,
-                output_format=format.value,
-                output_dir=output_dir,
-                spec_path=spec_path,
-                concurrency=concurrency,
-            )
+            output_format=format.value,
+            output_dir=output_dir,
+            spec_path=spec_path,
+            concurrency=concurrency,
+        )
 
         # Process each project
         for idx, project_key in enumerate(project_list, 1):
@@ -566,11 +547,11 @@ def export_all(
 
             with Progress(
                 TextColumn("[progress.description]{task.description}"),
-                    BarColumn(),
-                    TaskProgressColumn(),
-                    TimeElapsedColumn(),
-                    console=console,
-                ) as progress:
+                BarColumn(),
+                TaskProgressColumn(),
+                TimeElapsedColumn(),
+                console=console,
+            ) as progress:
                 try:
                     stats = export_manager.export_project(project_key, progress=progress)
 
@@ -602,23 +583,19 @@ app.add_typer(db_app, name="db")
 
 
 @db_app.command("init")
-
-
 def init_database(
     db_type: DatabaseType = typer.Option(
         DatabaseType.SQLITE, help="Database type (sqlite or postgresql)"
     ),
-        db_path: Path | None = typer.Option(
-        None, help="Path to SQLite database file (for SQLite only)"
-    ),
-        host: str | None = typer.Option(None, help="PostgreSQL host (for PostgreSQL only)"),
-        port: int | None = typer.Option(None, help="PostgreSQL port (for PostgreSQL only)"),
-        username: str | None = typer.Option(None, help="PostgreSQL username (for PostgreSQL only)"),
-        password: str | None = typer.Option(None, help="PostgreSQL password (for PostgreSQL only)"),
-        database: str | None = typer.Option(
-        None, help="PostgreSQL database name (for PostgreSQL only)"
-    ),
-        drop_existing: bool = typer.Option(False, help="Drop existing tables before initializing"),
+    db_path: Path
+    | None = typer.Option(None, help="Path to SQLite database file (for SQLite only)"),
+    host: str | None = typer.Option(None, help="PostgreSQL host (for PostgreSQL only)"),
+    port: int | None = typer.Option(None, help="PostgreSQL port (for PostgreSQL only)"),
+    username: str | None = typer.Option(None, help="PostgreSQL username (for PostgreSQL only)"),
+    password: str | None = typer.Option(None, help="PostgreSQL password (for PostgreSQL only)"),
+    database: str
+    | None = typer.Option(None, help="PostgreSQL database name (for PostgreSQL only)"),
+    drop_existing: bool = typer.Option(False, help="Drop existing tables before initializing"),
 ):
     """Initialize the database schema using Alembic migrations."""
     try:
@@ -627,8 +604,8 @@ def init_database(
             # For SQLite, use SQLDatabaseManager with Alembic
             db_config = DatabaseConfig(
                 db_type=db_type.value,
-                    db_path=str(db_path) if db_path else None,
-                )
+                db_path=str(db_path) if db_path else None,
+            )
             db_manager = SQLDatabaseManager(config=db_config)
         elif db_type.value == DatabaseType.POSTGRESQL:
             # For PostgreSQL, use SQLDatabaseManager with Alembic for schema migrations
@@ -646,19 +623,21 @@ def init_database(
                     username = env_user
                     password = env_pass
                     database = env_db
-                    console.print("Using PostgreSQL settings from environment variables", style="blue")
+                    console.print(
+                        "Using PostgreSQL settings from environment variables", style="blue"
+                    )
                 else:
                     console.print("Error: PostgreSQL connection details not provided", style="red")
                     raise typer.Exit(code=1)
 
             db_config = DatabaseConfig(
                 db_type=db_type.value,
-                    host=host,
-                    port=port,
-                    username=username,
-                    password=password,
-                    database=database,
-                )
+                host=host,
+                port=port,
+                username=username,
+                password=password,
+                database=database,
+            )
             db_manager = SQLDatabaseManager(config=db_config)
         else:
             console.print(f"Error: Unsupported database type: {db_type}", style="red")
@@ -685,23 +664,19 @@ def init_database(
 
 
 @db_app.command("stats")
-
-
 def database_stats(
     db_type: DatabaseType = typer.Option(
         DatabaseType.SQLITE, help="Database type (sqlite or postgresql)"
     ),
-        db_path: Path | None = typer.Option(
-        None, help="Path to SQLite database file (for SQLite only)"
-    ),
-        host: str | None = typer.Option(None, help="PostgreSQL host (for PostgreSQL only)"),
-        port: int | None = typer.Option(None, help="PostgreSQL port (for PostgreSQL only)"),
-        username: str | None = typer.Option(None, help="PostgreSQL username (for PostgreSQL only)"),
-        password: str | None = typer.Option(None, help="PostgreSQL password (for PostgreSQL only)"),
-        database: str | None = typer.Option(
-        None, help="PostgreSQL database name (for PostgreSQL only)"
-    ),
-        project_key: str = typer.Option(..., help="Project key to show statistics for"),
+    db_path: Path
+    | None = typer.Option(None, help="Path to SQLite database file (for SQLite only)"),
+    host: str | None = typer.Option(None, help="PostgreSQL host (for PostgreSQL only)"),
+    port: int | None = typer.Option(None, help="PostgreSQL port (for PostgreSQL only)"),
+    username: str | None = typer.Option(None, help="PostgreSQL username (for PostgreSQL only)"),
+    password: str | None = typer.Option(None, help="PostgreSQL password (for PostgreSQL only)"),
+    database: str
+    | None = typer.Option(None, help="PostgreSQL database name (for PostgreSQL only)"),
+    project_key: str = typer.Option(..., help="Project key to show statistics for"),
 ):
     """Show database statistics for a project."""
     try:
@@ -727,26 +702,26 @@ def database_stats(
         # Create database configuration
         db_config = DatabaseConfig(
             db_type=db_type.value,
-                db_path=str(db_path) if db_path else None,
-                host=host,
-                port=port,
-                username=username,
-                password=password,
-                database=database,
-            )
+            db_path=str(db_path) if db_path else None,
+            host=host,
+            port=port,
+            username=username,
+            password=password,
+            database=database,
+        )
 
         # Create database manager using the factory
         db_manager = DatabaseFactory.create_database_manager(
             db_type=DatabaseType.SQLALCHEMY,  # Use SQLAlchemy for migrations
             db_path=str(db_path) if db_path else None,
-                host=host,
-                port=port,
-                username=username,
-                password=password,
-                database=database,
-                pool_size=5,
-                max_overflow=10,
-            )
+            host=host,
+            port=port,
+            username=username,
+            password=password,
+            database=database,
+            pool_size=5,
+            max_overflow=10,
+        )
 
         # Get statistics
         stats = db_manager.get_statistics(project_key)
@@ -768,22 +743,18 @@ def database_stats(
 
 
 @db_app.command("migrate")
-
-
 def run_migrations(
     db_type: DatabaseType = typer.Option(
         DatabaseType.SQLITE, help="Database type (sqlite or postgresql)"
     ),
-        db_path: Path | None = typer.Option(
-        None, help="Path to SQLite database file (for SQLite only)"
-    ),
-        host: str | None = typer.Option(None, help="PostgreSQL host (for PostgreSQL only)"),
-        port: int | None = typer.Option(None, help="PostgreSQL port (for PostgreSQL only)"),
-        username: str | None = typer.Option(None, help="PostgreSQL username (for PostgreSQL only)"),
-        password: str | None = typer.Option(None, help="PostgreSQL password (for PostgreSQL only)"),
-        database: str | None = typer.Option(
-        None, help="PostgreSQL database name (for PostgreSQL only)"
-    ),
+    db_path: Path
+    | None = typer.Option(None, help="Path to SQLite database file (for SQLite only)"),
+    host: str | None = typer.Option(None, help="PostgreSQL host (for PostgreSQL only)"),
+    port: int | None = typer.Option(None, help="PostgreSQL port (for PostgreSQL only)"),
+    username: str | None = typer.Option(None, help="PostgreSQL username (for PostgreSQL only)"),
+    password: str | None = typer.Option(None, help="PostgreSQL password (for PostgreSQL only)"),
+    database: str
+    | None = typer.Option(None, help="PostgreSQL database name (for PostgreSQL only)"),
 ):
     """Run pending database migrations."""
     try:
@@ -809,13 +780,13 @@ def run_migrations(
         # Create database configuration
         db_config = DatabaseConfig(
             db_type=db_type.value,
-                db_path=str(db_path) if db_path else None,
-                host=host,
-                port=port,
-                username=username,
-                password=password,
-                database=database,
-            )
+            db_path=str(db_path) if db_path else None,
+            host=host,
+            port=port,
+            username=username,
+            password=password,
+            database=database,
+        )
 
         # Get Alembic config
         alembic_cfg = Config(str(Path(__file__).parent.parent / "alembic.ini"))
@@ -841,46 +812,41 @@ app.add_typer(workflow_app, name="workflow")
 
 
 @migrate_app.command("run")
-
-
 def run_migration(
     # Zephyr configuration
     zephyr_spec_path: Path = typer.Option(
         ZEPHYR_SPEC_PATH, help="Path to the Zephyr OpenAPI spec file"
     ),
-        zephyr_base_url: str = typer.Option(..., help="Zephyr Scale API base URL"),
-        zephyr_api_token: str = typer.Option(..., help="Zephyr Scale API token"),
-        zephyr_project_key: str = typer.Option(..., help="Zephyr project key to migrate"),
-        # qTest configuration
+    zephyr_base_url: str = typer.Option(..., help="Zephyr Scale API base URL"),
+    zephyr_api_token: str = typer.Option(..., help="Zephyr Scale API token"),
+    zephyr_project_key: str = typer.Option(..., help="Zephyr project key to migrate"),
+    # qTest configuration
     qtest_base_url: str = typer.Option(..., help="qTest API base URL"),
-        qtest_username: str = typer.Option(..., help="qTest username"),
-        qtest_password: str = typer.Option(..., help="qTest password"),
-        qtest_project_id: int = typer.Option(..., help="qTest project ID"),
-        # Database configuration
+    qtest_username: str = typer.Option(..., help="qTest username"),
+    qtest_password: str = typer.Option(..., help="qTest password"),
+    qtest_project_id: int = typer.Option(..., help="qTest project ID"),
+    # Database configuration
     db_type: DatabaseType = typer.Option(
         DatabaseType.SQLITE, help="Database type (sqlite or postgresql)"
     ),
-        db_path: Path | None = typer.Option(
-        None, help="Path to SQLite database file (for SQLite only)"
-    ),
-        host: str | None = typer.Option(None, help="PostgreSQL host (for PostgreSQL only)"),
-        port: int | None = typer.Option(None, help="PostgreSQL port (for PostgreSQL only)"),
-        username: str | None = typer.Option(None, help="PostgreSQL username (for PostgreSQL only)"),
-        password: str | None = typer.Option(None, help="PostgreSQL password (for PostgreSQL only)"),
-        database: str | None = typer.Option(
-        None, help="PostgreSQL database name (for PostgreSQL only)"
-    ),
-        # Migration options
+    db_path: Path
+    | None = typer.Option(None, help="Path to SQLite database file (for SQLite only)"),
+    host: str | None = typer.Option(None, help="PostgreSQL host (for PostgreSQL only)"),
+    port: int | None = typer.Option(None, help="PostgreSQL port (for PostgreSQL only)"),
+    username: str | None = typer.Option(None, help="PostgreSQL username (for PostgreSQL only)"),
+    password: str | None = typer.Option(None, help="PostgreSQL password (for PostgreSQL only)"),
+    database: str
+    | None = typer.Option(None, help="PostgreSQL database name (for PostgreSQL only)"),
+    # Migration options
     phase: MigrationPhase = typer.Option(
         MigrationPhase.ALL, help="Migration phase to run (extract, transform, load, or all)"
     ),
-        batch_size: int = typer.Option(50, help="Number of items to process in a batch"),
-        max_workers: int = typer.Option(
+    batch_size: int = typer.Option(50, help="Number of items to process in a batch"),
+    max_workers: int = typer.Option(
         5, help="Maximum number of concurrent workers for parallel processing"
     ),
-        attachments_dir: Path | None = typer.Option(
-        None, help="Optional directory for storing attachments"
-    ),
+    attachments_dir: Path
+    | None = typer.Option(None, help="Optional directory for storing attachments"),
 ):
     """Run migration from Zephyr Scale to qTest.
 
@@ -895,10 +861,10 @@ def run_migration(
 
         qtest_config = QTestConfig(
             base_url=qtest_base_url,
-                username=qtest_username,
-                password=qtest_password,
-                project_id=qtest_project_id,
-            )
+            username=qtest_username,
+            password=qtest_password,
+            project_id=qtest_project_id,
+        )
 
         # Check for environment variables if not provided directly (PostgreSQL)
         if db_type == DatabaseType.POSTGRESQL and not all([host, username, database]):
@@ -922,26 +888,26 @@ def run_migration(
         # Create database configuration
         db_config = DatabaseConfig(
             db_type=db_type.value,
-                db_path=str(db_path) if db_path else None,
-                host=host,
-                port=port,
-                username=username,
-                password=password,
-                database=database,
-            )
+            db_path=str(db_path) if db_path else None,
+            host=host,
+            port=port,
+            username=username,
+            password=password,
+            database=database,
+        )
 
         # Create database manager using the factory
         db_manager = DatabaseFactory.create_database_manager(
             db_type=DatabaseType.SQLALCHEMY,  # Use SQLAlchemy for migrations
             db_path=str(db_path) if db_path else None,
-                host=host,
-                port=port,
-                username=username,
-                password=password,
-                database=database,
-                pool_size=5,
-                max_overflow=10,
-            )
+            host=host,
+            port=port,
+            username=username,
+            password=password,
+            database=database,
+            pool_size=5,
+            max_overflow=10,
+        )
 
         # Ensure the database is initialized
         console.print("Ensuring database schema is up to date...")
@@ -952,12 +918,12 @@ def run_migration(
         # Create migration manager
         migration = ZephyrToQTestMigration(
             zephyr_config=zephyr_config,
-                qtest_config=qtest_config,
-                database_manager=db_manager,
-                batch_size=batch_size,
-                max_workers=max_workers,
-                attachments_dir=attachments_dir,
-            )
+            qtest_config=qtest_config,
+            database_manager=db_manager,
+            batch_size=batch_size,
+            max_workers=max_workers,
+            attachments_dir=attachments_dir,
+        )
 
         # Determine phases to run
         phases = []
@@ -995,24 +961,20 @@ def run_migration(
 
 
 @migrate_app.command("status")
-
-
 def migration_status(
     # Database configuration
     db_type: DatabaseType = typer.Option(
         DatabaseType.SQLITE, help="Database type (sqlite or postgresql)"
     ),
-        db_path: Path | None = typer.Option(
-        None, help="Path to SQLite database file (for SQLite only)"
-    ),
-        host: str | None = typer.Option(None, help="PostgreSQL host (for PostgreSQL only)"),
-        port: int | None = typer.Option(None, help="PostgreSQL port (for PostgreSQL only)"),
-        username: str | None = typer.Option(None, help="PostgreSQL username (for PostgreSQL only)"),
-        password: str | None = typer.Option(None, help="PostgreSQL password (for PostgreSQL only)"),
-        database: str | None = typer.Option(
-        None, help="PostgreSQL database name (for PostgreSQL only)"
-    ),
-        # Project key
+    db_path: Path
+    | None = typer.Option(None, help="Path to SQLite database file (for SQLite only)"),
+    host: str | None = typer.Option(None, help="PostgreSQL host (for PostgreSQL only)"),
+    port: int | None = typer.Option(None, help="PostgreSQL port (for PostgreSQL only)"),
+    username: str | None = typer.Option(None, help="PostgreSQL username (for PostgreSQL only)"),
+    password: str | None = typer.Option(None, help="PostgreSQL password (for PostgreSQL only)"),
+    database: str
+    | None = typer.Option(None, help="PostgreSQL database name (for PostgreSQL only)"),
+    # Project key
     project_key: str = typer.Option(..., help="Zephyr project key to check status for"),
 ):
     """Check the status of an ongoing migration."""
@@ -1039,26 +1001,26 @@ def migration_status(
         # Create database configuration
         db_config = DatabaseConfig(
             db_type=db_type.value,
-                db_path=str(db_path) if db_path else None,
-                host=host,
-                port=port,
-                username=username,
-                password=password,
-                database=database,
-            )
+            db_path=str(db_path) if db_path else None,
+            host=host,
+            port=port,
+            username=username,
+            password=password,
+            database=database,
+        )
 
         # Create database manager using the factory
         db_manager = DatabaseFactory.create_database_manager(
             db_type=DatabaseType.SQLALCHEMY,  # Use SQLAlchemy for migrations
             db_path=str(db_path) if db_path else None,
-                host=host,
-                port=port,
-                username=username,
-                password=password,
-                database=database,
-                pool_size=5,
-                max_overflow=10,
-            )
+            host=host,
+            port=port,
+            username=username,
+            password=password,
+            database=database,
+            pool_size=5,
+            max_overflow=10,
+        )
 
         # Get migration state
         state = db_manager.get_migration_state(project_key)
@@ -1078,9 +1040,9 @@ def migration_status(
         )
         table.add_row(
             "Transform",
-                state.get("transformation_status", "not_started"),
-                state.get("last_updated", ""),
-            )
+            state.get("transformation_status", "not_started"),
+            state.get("last_updated", ""),
+        )
         table.add_row(
             "Load", state.get("loading_status", "not_started"), state.get("last_updated", "")
         )

@@ -86,10 +86,7 @@ class TestZephyrMockFactory:
 
         # Test project creation with custom attributes
         custom_project = ProjectFactory.create(
-            id="12345",
-            key="CUSTOM",
-            name="Custom Project",
-            description="Custom description"
+            id="12345", key="CUSTOM", name="Custom Project", description="Custom description"
         )
         assert custom_project.id == "12345"
         assert custom_project.key == "CUSTOM"
@@ -119,7 +116,7 @@ class TestZephyrMockFactory:
             name="Custom Folder",
             folder_type="TEST_CASE",
             parent_id="54321",
-            project_key="PROJ"
+            project_key="PROJ",
         )
         assert custom_folder.id == "12345"
         assert custom_folder.name == "Custom Folder"
@@ -164,11 +161,7 @@ class TestZephyrMockFactory:
         assert isinstance(status, Status)
 
         # Test custom status creation
-        custom_status = StatusFactory.create(
-            id="12345",
-            name="Custom Status",
-            type="TEST_CASE"
-        )
+        custom_status = StatusFactory.create(id="12345", name="Custom Status", type="TEST_CASE")
         assert custom_status.id == "12345"
         assert custom_status.name == "Custom Status"
         assert custom_status.type == "TEST_CASE"
@@ -401,7 +394,9 @@ class TestZephyrMockFactory:
 
         # Test execution creation based on test case
         test_case = CaseFactory.create_with_steps(3)
-        execution_with_test_case = ExecutionFactory.create(test_case=test_case, test_case_key=test_case.key)
+        execution_with_test_case = ExecutionFactory.create(
+            test_case=test_case, test_case_key=test_case.key
+        )
         assert execution_with_test_case.test_case_key == test_case.key
         assert len(execution_with_test_case.steps) == 3
 
@@ -425,7 +420,7 @@ class TestZephyrMockFactory:
         custom_config = ZephyrConfigFactory.create(
             base_url="https://custom-zephyrscale.example.com/v2",
             api_token="custom-token-123",
-            project_key="CUSTOM"
+            project_key="CUSTOM",
         )
         assert custom_config.base_url == "https://custom-zephyrscale.example.com/v2"
         assert custom_config.api_token == "custom-token-123"
@@ -445,11 +440,7 @@ class TestZephyrMockFactory:
         # Test creation with custom values
         values = [{"id": "1", "name": "Item 1"}, {"id": "2", "name": "Item 2"}]
         custom_response = PaginatedResponseFactory.create(
-            values=values,
-            start_at=20,
-            max_results=10,
-            total_count=50,
-            is_last=False
+            values=values, start_at=20, max_results=10, total_count=50, is_last=False
         )
         assert custom_response.values == values
         assert custom_response.start_at == 20

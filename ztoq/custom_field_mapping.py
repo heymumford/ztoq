@@ -40,72 +40,72 @@ class CustomFieldMapper:
         # Default field type mappings from Zephyr to qTest
         self.type_mappings = {
             CustomFieldType.TEXT: "STRING",
-                CustomFieldType.PARAGRAPH: "STRING",
-                CustomFieldType.CHECKBOX: "CHECKBOX",
-                CustomFieldType.RADIO: "STRING",
-                CustomFieldType.DROPDOWN: "STRING",
-                CustomFieldType.MULTIPLE_SELECT: "STRING",
-                CustomFieldType.NUMERIC: "NUMBER",
-                CustomFieldType.DATE: "DATE",
-                CustomFieldType.DATETIME: "DATE",
-                CustomFieldType.USER: "STRING",
-                CustomFieldType.URL: "STRING",
-                CustomFieldType.TABLE: "STRING",
-                # Enterprise fields
+            CustomFieldType.PARAGRAPH: "STRING",
+            CustomFieldType.CHECKBOX: "CHECKBOX",
+            CustomFieldType.RADIO: "STRING",
+            CustomFieldType.DROPDOWN: "STRING",
+            CustomFieldType.MULTIPLE_SELECT: "STRING",
+            CustomFieldType.NUMERIC: "NUMBER",
+            CustomFieldType.DATE: "DATE",
+            CustomFieldType.DATETIME: "DATE",
+            CustomFieldType.USER: "STRING",
+            CustomFieldType.URL: "STRING",
+            CustomFieldType.TABLE: "STRING",
+            # Enterprise fields
             CustomFieldType.HIERARCHICAL_SELECT: "STRING",
-                CustomFieldType.USER_GROUP: "STRING",
-                CustomFieldType.LABEL: "STRING",
-                CustomFieldType.SPRINT: "STRING",
-                CustomFieldType.VERSION: "STRING",
-                CustomFieldType.COMPONENT: "STRING",
-            }
+            CustomFieldType.USER_GROUP: "STRING",
+            CustomFieldType.LABEL: "STRING",
+            CustomFieldType.SPRINT: "STRING",
+            CustomFieldType.VERSION: "STRING",
+            CustomFieldType.COMPONENT: "STRING",
+        }
 
         # Special field mappings (Zephyr field name to qTest field name)
         self.field_name_mappings = {
             "Epic Link": "Epic_Link",
-                "Components": "Components",
-                "Labels": "Tags",
-                "Sprint": "Sprint_Release",
-                "Automated": "Automation",
-                "Test Type": "Test_Type",
-                "Severity": "Severity",
-                "Risk Level": "Risk_Level",
-            }
+            "Components": "Components",
+            "Labels": "Tags",
+            "Sprint": "Sprint_Release",
+            "Automated": "Automation",
+            "Test Type": "Test_Type",
+            "Severity": "Severity",
+            "Risk Level": "Risk_Level",
+        }
 
         # Default status mappings from Zephyr to qTest
         self.status_mappings = {
             "PASS": "PASSED",
-                "FAIL": "FAILED",
-                "WIP": "IN_PROGRESS",
-                "BLOCKED": "BLOCKED",
-                "NOT EXECUTED": "NOT_RUN",
-                "UNEXECUTED": "NOT_RUN",
-                "PASS WITH WARNINGS": "PASSED",
-                "CONDITIONAL PASS": "PASSED",
-                "IN PROGRESS": "IN_PROGRESS",
-                "EXECUTING": "IN_PROGRESS",
-                "ABORTED": "BLOCKED",
-                "CANCELED": "NOT_RUN",
-                "PENDING": "NOT_RUN",
-                "PASSED": "PASSED",
-                "FAILED": "FAILED",
-                "NOT_RUN": "NOT_RUN",
-                "IN_PROGRESS": "IN_PROGRESS",
-            }
+            "FAIL": "FAILED",
+            "WIP": "IN_PROGRESS",
+            "BLOCKED": "BLOCKED",
+            "NOT EXECUTED": "NOT_RUN",
+            "UNEXECUTED": "NOT_RUN",
+            "PASS WITH WARNINGS": "PASSED",
+            "CONDITIONAL PASS": "PASSED",
+            "IN PROGRESS": "IN_PROGRESS",
+            "EXECUTING": "IN_PROGRESS",
+            "ABORTED": "BLOCKED",
+            "CANCELED": "NOT_RUN",
+            "PENDING": "NOT_RUN",
+            "PASSED": "PASSED",
+            "FAILED": "FAILED",
+            "NOT_RUN": "NOT_RUN",
+            "IN_PROGRESS": "IN_PROGRESS",
+        }
 
         # Default priority mappings from Zephyr to qTest
         self.priority_mappings = {
             "HIGHEST": "CRITICAL",
-                "HIGH": "HIGH",
-                "MEDIUM": "MEDIUM",
-                "LOW": "LOW",
-                "LOWEST": "TRIVIAL",
-                "BLOCKER": "CRITICAL",
-                "CRITICAL": "CRITICAL",
-                "MAJOR": "HIGH",
-                "MINOR": "LOW",
-                "TRIVIAL": "TRIVIAL",
-            }
+            "HIGH": "HIGH",
+            "MEDIUM": "MEDIUM",
+            "LOW": "LOW",
+            "LOWEST": "TRIVIAL",
+            "BLOCKER": "CRITICAL",
+            "CRITICAL": "CRITICAL",
+            "MAJOR": "HIGH",
+            "MINOR": "LOW",
+            "TRIVIAL": "TRIVIAL",
+        }
 
         # Additional mappings provided by the user
         self.custom_mappings = field_mappings or {}
@@ -151,7 +151,10 @@ class CustomFieldMapper:
         # Check custom mappings
         if self.custom_mappings:
             for field_name, mapping in self.custom_mappings.items():
-                if mapping.get("zephyr_field_type") == zephyr_field_type and "qtest_field_type" in mapping:
+                if (
+                    mapping.get("zephyr_field_type") == zephyr_field_type
+                    and "qtest_field_type" in mapping
+                ):
                     return mapping["qtest_field_type"]
 
         # Default to STRING for unknown types
@@ -219,12 +222,14 @@ class CustomFieldMapper:
             # Enhanced table formatting
             return self._transform_table_field(value)
 
-        elif field_type in (CustomFieldType.HIERARCHICAL_SELECT,
-                                CustomFieldType.USER_GROUP,
-                                CustomFieldType.COMPONENT,
-                                CustomFieldType.VERSION,
-                                CustomFieldType.LABEL,
-                                CustomFieldType.SPRINT):
+        elif field_type in (
+            CustomFieldType.HIERARCHICAL_SELECT,
+            CustomFieldType.USER_GROUP,
+            CustomFieldType.COMPONENT,
+            CustomFieldType.VERSION,
+            CustomFieldType.LABEL,
+            CustomFieldType.SPRINT,
+        ):
             # Handle hierarchical and complex structured fields
             return self._transform_hierarchical_field(value)
 
@@ -331,7 +336,7 @@ class CustomFieldMapper:
                         if len(row) < len(headers):
                             row = row + [""] * (len(headers) - len(row))
                         elif len(row) > len(headers):
-                            row = row[:len(headers)]
+                            row = row[: len(headers)]
 
                         rows.append(" | ".join(str(cell) for cell in row))
                     else:
@@ -437,8 +442,13 @@ class CustomFieldMapper:
         # Use mapping or default to MEDIUM
         return self.priority_mappings.get(priority_key, "MEDIUM")
 
-    def extract_and_map_field(self, entity: Dict[str, Any], field_name: str,
-                                  default_value: Any = None, target_type: str = None) -> Any:
+    def extract_and_map_field(
+        self,
+        entity: Dict[str, Any],
+        field_name: str,
+        default_value: Any = None,
+        target_type: str = None,
+    ) -> Any:
         """
         Extract a field from an entity and apply mapping if needed.
 
@@ -529,7 +539,7 @@ class CustomFieldMapper:
                 "field_id": 0,  # This will be set during creation in qTest
                 "field_name": qtest_field_name,
                 "field_type": qtest_field_type,
-                "field_value": qtest_field_value
+                "field_value": qtest_field_value,
             }
 
             qtest_fields.append(qtest_field)
@@ -550,7 +560,7 @@ class CustomFieldMapper:
             "field_id": 0,
             "field_name": "zephyr_key",
             "field_type": "STRING",
-            "field_value": zephyr_key
+            "field_value": zephyr_key,
         }
 
     def map_testcase_fields(self, zephyr_testcase: Dict[str, Any]) -> List[Dict[str, Any]]:
@@ -572,39 +582,47 @@ class CustomFieldMapper:
         # Map labels if present
         if "labels" in zephyr_testcase and zephyr_testcase["labels"]:
             labels_str = ", ".join(zephyr_testcase["labels"])
-            qtest_fields.append({
-                "field_id": 0,
-                "field_name": "Tags",
-                "field_type": "STRING",
-                "field_value": labels_str
-            })
+            qtest_fields.append(
+                {
+                    "field_id": 0,
+                    "field_name": "Tags",
+                    "field_type": "STRING",
+                    "field_value": labels_str,
+                }
+            )
 
         # Map status if present
         if "status" in zephyr_testcase and zephyr_testcase["status"]:
-            qtest_fields.append({
-                "field_id": 0,
-                "field_name": "status",
-                "field_type": "STRING",
-                "field_value": zephyr_testcase["status"]
-            })
+            qtest_fields.append(
+                {
+                    "field_id": 0,
+                    "field_name": "status",
+                    "field_type": "STRING",
+                    "field_value": zephyr_testcase["status"],
+                }
+            )
 
         # Map estimated time if present
         if "estimatedTime" in zephyr_testcase and zephyr_testcase["estimatedTime"]:
-            qtest_fields.append({
-                "field_id": 0,
-                "field_name": "estimated_time",
-                "field_type": "NUMBER",
-                "field_value": zephyr_testcase["estimatedTime"]
-            })
+            qtest_fields.append(
+                {
+                    "field_id": 0,
+                    "field_name": "estimated_time",
+                    "field_type": "NUMBER",
+                    "field_value": zephyr_testcase["estimatedTime"],
+                }
+            )
 
         # Map component if present
         if "component" in zephyr_testcase and zephyr_testcase["component"]:
-            qtest_fields.append({
-                "field_id": 0,
-                "field_name": "Components",
-                "field_type": "STRING",
-                "field_value": zephyr_testcase["component"]
-            })
+            qtest_fields.append(
+                {
+                    "field_id": 0,
+                    "field_name": "Components",
+                    "field_type": "STRING",
+                    "field_value": zephyr_testcase["component"],
+                }
+            )
 
         # Map custom fields
         if "customFields" in zephyr_testcase and zephyr_testcase["customFields"]:
@@ -631,30 +649,36 @@ class CustomFieldMapper:
 
         # Map environment if present
         if "environment" in zephyr_cycle and zephyr_cycle["environment"]:
-            qtest_fields.append({
-                "field_id": 0,
-                "field_name": "environment",
-                "field_type": "STRING",
-                "field_value": zephyr_cycle["environment"]
-            })
+            qtest_fields.append(
+                {
+                    "field_id": 0,
+                    "field_name": "environment",
+                    "field_type": "STRING",
+                    "field_value": zephyr_cycle["environment"],
+                }
+            )
 
         # Map status if present
         if "status" in zephyr_cycle and zephyr_cycle["status"]:
-            qtest_fields.append({
-                "field_id": 0,
-                "field_name": "status",
-                "field_type": "STRING",
-                "field_value": zephyr_cycle["status"]
-            })
+            qtest_fields.append(
+                {
+                    "field_id": 0,
+                    "field_name": "status",
+                    "field_type": "STRING",
+                    "field_value": zephyr_cycle["status"],
+                }
+            )
 
         # Map owner if present
         if "owner" in zephyr_cycle and zephyr_cycle["owner"]:
-            qtest_fields.append({
-                "field_id": 0,
-                "field_name": "owner",
-                "field_type": "STRING",
-                "field_value": zephyr_cycle["owner"]
-            })
+            qtest_fields.append(
+                {
+                    "field_id": 0,
+                    "field_name": "owner",
+                    "field_type": "STRING",
+                    "field_value": zephyr_cycle["owner"],
+                }
+            )
 
         # Map custom fields
         if "customFields" in zephyr_cycle and zephyr_cycle["customFields"]:
@@ -677,50 +701,62 @@ class CustomFieldMapper:
 
         # Map environment if present
         if "environment" in zephyr_execution and zephyr_execution["environment"]:
-            qtest_fields.append({
-                "field_id": 0,
-                "field_name": "environment",
-                "field_type": "STRING",
-                "field_value": zephyr_execution["environment"]
-            })
+            qtest_fields.append(
+                {
+                    "field_id": 0,
+                    "field_name": "environment",
+                    "field_type": "STRING",
+                    "field_value": zephyr_execution["environment"],
+                }
+            )
 
         # Map actual time if present
         if "actualTime" in zephyr_execution and zephyr_execution["actualTime"]:
-            qtest_fields.append({
-                "field_id": 0,
-                "field_name": "actual_time",
-                "field_type": "NUMBER",
-                "field_value": zephyr_execution["actualTime"]
-            })
+            qtest_fields.append(
+                {
+                    "field_id": 0,
+                    "field_name": "actual_time",
+                    "field_type": "NUMBER",
+                    "field_value": zephyr_execution["actualTime"],
+                }
+            )
 
         # Map executed by if present
         if "executedBy" in zephyr_execution and zephyr_execution["executedBy"]:
-            qtest_fields.append({
-                "field_id": 0,
-                "field_name": "executed_by",
-                "field_type": "STRING",
-                "field_value": zephyr_execution["executedBy"]
-            })
+            qtest_fields.append(
+                {
+                    "field_id": 0,
+                    "field_name": "executed_by",
+                    "field_type": "STRING",
+                    "field_value": zephyr_execution["executedBy"],
+                }
+            )
 
         # Map execution date if present
         if "executedOn" in zephyr_execution and zephyr_execution["executedOn"]:
-            qtest_fields.append({
-                "field_id": 0,
-                "field_name": "execution_date",
-                "field_type": "DATE",
-                "field_value": str(zephyr_execution["executedOn"])
-            })
+            qtest_fields.append(
+                {
+                    "field_id": 0,
+                    "field_name": "execution_date",
+                    "field_type": "DATE",
+                    "field_value": str(zephyr_execution["executedOn"]),
+                }
+            )
 
         # Map defects if present
         if "defects" in zephyr_execution and zephyr_execution["defects"]:
-            defects_str = ", ".join([defect.get("key", "") for defect in zephyr_execution["defects"]])
+            defects_str = ", ".join(
+                [defect.get("key", "") for defect in zephyr_execution["defects"]]
+            )
             if defects_str:
-                qtest_fields.append({
-                    "field_id": 0,
-                    "field_name": "defects",
-                    "field_type": "STRING",
-                    "field_value": defects_str
-                })
+                qtest_fields.append(
+                    {
+                        "field_id": 0,
+                        "field_name": "defects",
+                        "field_type": "STRING",
+                        "field_value": defects_str,
+                    }
+                )
 
         # Map custom fields
         if "customFields" in zephyr_execution and zephyr_execution["customFields"]:

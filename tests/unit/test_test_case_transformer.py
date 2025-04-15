@@ -431,9 +431,14 @@ class TestTestCaseTransformer:
         # Setup - create a problematic attachment that will cause an error
         sample_test_case["attachments"] = [
             # Valid attachment but will be skipped because it has invalid name - should be a warning
-            {"id": "att_1", "filename": None, "content_type": "application/octet-stream", "size": 100},
+            {
+                "id": "att_1",
+                "filename": None,
+                "content_type": "application/octet-stream",
+                "size": 100,
+            },
             # Valid attachment
-            {"id": "att_2", "filename": "valid.txt", "content_type": "text/plain", "size": 100}
+            {"id": "att_2", "filename": "valid.txt", "content_type": "text/plain", "size": 100},
         ]
 
         # Make sure with_attachments is enabled
@@ -447,8 +452,9 @@ class TestTestCaseTransformer:
         assert result.transformed_entity["attachments"] is not None
 
         # Let's verify our code correctly processes the valid attachment
-        valid_attachments = [a for a in result.transformed_entity["attachments"]
-                            if a.get("name") == "valid.txt"]
+        valid_attachments = [
+            a for a in result.transformed_entity["attachments"] if a.get("name") == "valid.txt"
+        ]
         assert len(valid_attachments) > 0
 
     def test_general_error_catching(self, transformer, sample_test_case):
@@ -476,14 +482,19 @@ class TestTestCaseTransformer:
     def test_db_error_during_module_mapping(self, custom_transformer, sample_test_case):
         """Test handling of database errors during module mapping."""
         # Setup - make the DB manager raise an exception
-        custom_transformer.db_manager.get_entity_mapping.side_effect = Exception("Database connection error")
+        custom_transformer.db_manager.get_entity_mapping.side_effect = Exception(
+            "Database connection error"
+        )
 
         # Act
         result = custom_transformer.transform(sample_test_case)
 
         # Assert - in strict mode, we should get an error but still have a valid entity
         assert len(result.errors) > 0
-        assert any("database" in str(err).lower() or "module mapping" in str(err).lower() for err in result.errors)
+        assert any(
+            "database" in str(err).lower() or "module mapping" in str(err).lower()
+            for err in result.errors
+        )
         assert result.transformed_entity["module_id"] is None  # Should default to None
         assert "name" in result.transformed_entity  # Should still have basic fields
 
@@ -510,6 +521,7 @@ class TestTestCaseTransformer:
         """Test the get_default_transformer factory function."""
         # Act
         from ztoq.test_case_transformer import get_default_transformer
+
         transformer = get_default_transformer()
 
         # Assert

@@ -17,10 +17,10 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional, Set, Tuple, Union
 from ztoq.validation import (
     ValidationIssue,
-        ValidationLevel,
-        ValidationPhase,
-        ValidationRule,
-        ValidationScope,
+    ValidationLevel,
+    ValidationPhase,
+    ValidationRule,
+    ValidationScope,
 )
 
 logger = logging.getLogger("ztoq.data_comparison")
@@ -73,17 +73,17 @@ class DataComparisonValidator:
 
                 issue = ValidationIssue(
                     id=f"count_mismatch_{entity_type}_{int(time.time())}",
-                        level=level,
-                        scope=self._get_scope_for_entity(entity_type),
-                        phase=ValidationPhase.POST_MIGRATION,
-                        message=f"Found {diff} missing {entity_type} entities in qTest ({missing_percentage:.2f}%)",
-                        entity_type=entity_type,
-                        details={
+                    level=level,
+                    scope=self._get_scope_for_entity(entity_type),
+                    phase=ValidationPhase.POST_MIGRATION,
+                    message=f"Found {diff} missing {entity_type} entities in qTest ({missing_percentage:.2f}%)",
+                    entity_type=entity_type,
+                    details={
                         "zephyr_count": zephyr_count,
-                            "qtest_count": qtest_count,
-                            "missing": diff,
-                            "missing_percentage": missing_percentage
-                    }
+                        "qtest_count": qtest_count,
+                        "missing": diff,
+                        "missing_percentage": missing_percentage,
+                    },
                 )
                 issues.append(issue)
 
@@ -107,27 +107,24 @@ class DataComparisonValidator:
                 if not self.db.is_entity_migrated(self.project_key, "test_cases", case["id"]):
                     issue = ValidationIssue(
                         id=f"critical_testcase_missing_{case['id']}_{int(time.time())}",
-                            level=ValidationLevel.CRITICAL,
-                            scope=ValidationScope.TEST_CASE,
-                            phase=ValidationPhase.POST_MIGRATION,
-                            message=f"High-priority test case '{case['name']}' was not migrated",
-                            entity_id=case["id"],
-                            entity_type="test_case",
-                            details={
-                            "name": case["name"],
-                                "priority": "High"
-                        }
+                        level=ValidationLevel.CRITICAL,
+                        scope=ValidationScope.TEST_CASE,
+                        phase=ValidationPhase.POST_MIGRATION,
+                        message=f"High-priority test case '{case['name']}' was not migrated",
+                        entity_id=case["id"],
+                        entity_type="test_case",
+                        details={"name": case["name"], "priority": "High"},
                     )
                     issues.append(issue)
         except Exception as e:
             logger.error(f"Error validating critical test cases: {str(e)}")
             issue = ValidationIssue(
                 id=f"critical_testcase_validation_error_{int(time.time())}",
-                    level=ValidationLevel.ERROR,
-                    scope=ValidationScope.SYSTEM,
-                    phase=ValidationPhase.POST_MIGRATION,
-                    message=f"Error validating critical test cases: {str(e)}",
-                    details={"error": str(e)}
+                level=ValidationLevel.ERROR,
+                scope=ValidationScope.SYSTEM,
+                phase=ValidationPhase.POST_MIGRATION,
+                message=f"Error validating critical test cases: {str(e)}",
+                details={"error": str(e)},
             )
             issues.append(issue)
 
@@ -193,29 +190,29 @@ class DataComparisonValidator:
                 if qtest_module_for_testcase != qtest_module_id:
                     issue = ValidationIssue(
                         id=f"testcase_module_mismatch_{test_case['id']}_{int(time.time())}",
-                            level=ValidationLevel.ERROR,
-                            scope=ValidationScope.RELATIONSHIP,
-                            phase=ValidationPhase.POST_MIGRATION,
-                            message=f"Test case '{test_case['name']}' is not in the correct qTest module",
-                            entity_id=test_case["id"],
-                            entity_type="test_case",
-                            details={
+                        level=ValidationLevel.ERROR,
+                        scope=ValidationScope.RELATIONSHIP,
+                        phase=ValidationPhase.POST_MIGRATION,
+                        message=f"Test case '{test_case['name']}' is not in the correct qTest module",
+                        entity_id=test_case["id"],
+                        entity_type="test_case",
+                        details={
                             "test_case_name": test_case["name"],
-                                "zephyr_folder_id": zephyr_folder_id,
-                                "expected_qtest_module": qtest_module_id,
-                                "actual_qtest_module": qtest_module_for_testcase
-                        }
+                            "zephyr_folder_id": zephyr_folder_id,
+                            "expected_qtest_module": qtest_module_id,
+                            "actual_qtest_module": qtest_module_for_testcase,
+                        },
                     )
                     issues.append(issue)
         except Exception as e:
             logger.error(f"Error validating test case folder relationships: {str(e)}")
             issue = ValidationIssue(
                 id=f"testcase_folder_validation_error_{int(time.time())}",
-                    level=ValidationLevel.ERROR,
-                    scope=ValidationScope.RELATIONSHIP,
-                    phase=ValidationPhase.POST_MIGRATION,
-                    message=f"Error validating test case folder relationships: {str(e)}",
-                    details={"error": str(e)}
+                level=ValidationLevel.ERROR,
+                scope=ValidationScope.RELATIONSHIP,
+                phase=ValidationPhase.POST_MIGRATION,
+                message=f"Error validating test case folder relationships: {str(e)}",
+                details={"error": str(e)},
             )
             issues.append(issue)
 
@@ -261,28 +258,28 @@ class DataComparisonValidator:
                 if qtest_testcase_for_run != qtest_testcase_id:
                     issue = ValidationIssue(
                         id=f"execution_testcase_mismatch_{execution['id']}_{int(time.time())}",
-                            level=ValidationLevel.ERROR,
-                            scope=ValidationScope.RELATIONSHIP,
-                            phase=ValidationPhase.POST_MIGRATION,
-                            message="Test execution is not linked to the correct qTest test case",
-                            entity_id=execution["id"],
-                            entity_type="test_execution",
-                            details={
+                        level=ValidationLevel.ERROR,
+                        scope=ValidationScope.RELATIONSHIP,
+                        phase=ValidationPhase.POST_MIGRATION,
+                        message="Test execution is not linked to the correct qTest test case",
+                        entity_id=execution["id"],
+                        entity_type="test_execution",
+                        details={
                             "zephyr_test_case_id": zephyr_testcase_id,
-                                "expected_qtest_testcase": qtest_testcase_id,
-                                "actual_qtest_testcase": qtest_testcase_for_run
-                        }
+                            "expected_qtest_testcase": qtest_testcase_id,
+                            "actual_qtest_testcase": qtest_testcase_for_run,
+                        },
                     )
                     issues.append(issue)
         except Exception as e:
             logger.error(f"Error validating test execution test case relationships: {str(e)}")
             issue = ValidationIssue(
                 id=f"execution_testcase_validation_error_{int(time.time())}",
-                    level=ValidationLevel.ERROR,
-                    scope=ValidationScope.RELATIONSHIP,
-                    phase=ValidationPhase.POST_MIGRATION,
-                    message=f"Error validating test execution test case relationships: {str(e)}",
-                    details={"error": str(e)}
+                level=ValidationLevel.ERROR,
+                scope=ValidationScope.RELATIONSHIP,
+                phase=ValidationPhase.POST_MIGRATION,
+                message=f"Error validating test execution test case relationships: {str(e)}",
+                details={"error": str(e)},
             )
             issues.append(issue)
 
@@ -328,28 +325,28 @@ class DataComparisonValidator:
                 if qtest_cycle_for_run != qtest_cycle_id:
                     issue = ValidationIssue(
                         id=f"execution_cycle_mismatch_{execution['id']}_{int(time.time())}",
-                            level=ValidationLevel.ERROR,
-                            scope=ValidationScope.RELATIONSHIP,
-                            phase=ValidationPhase.POST_MIGRATION,
-                            message="Test execution is not linked to the correct qTest test cycle",
-                            entity_id=execution["id"],
-                            entity_type="test_execution",
-                            details={
+                        level=ValidationLevel.ERROR,
+                        scope=ValidationScope.RELATIONSHIP,
+                        phase=ValidationPhase.POST_MIGRATION,
+                        message="Test execution is not linked to the correct qTest test cycle",
+                        entity_id=execution["id"],
+                        entity_type="test_execution",
+                        details={
                             "zephyr_cycle_id": zephyr_cycle_id,
-                                "expected_qtest_cycle": qtest_cycle_id,
-                                "actual_qtest_cycle": qtest_cycle_for_run
-                        }
+                            "expected_qtest_cycle": qtest_cycle_id,
+                            "actual_qtest_cycle": qtest_cycle_for_run,
+                        },
                     )
                     issues.append(issue)
         except Exception as e:
             logger.error(f"Error validating test execution cycle relationships: {str(e)}")
             issue = ValidationIssue(
                 id=f"execution_cycle_validation_error_{int(time.time())}",
-                    level=ValidationLevel.ERROR,
-                    scope=ValidationScope.RELATIONSHIP,
-                    phase=ValidationPhase.POST_MIGRATION,
-                    message=f"Error validating test execution cycle relationships: {str(e)}",
-                    details={"error": str(e)}
+                level=ValidationLevel.ERROR,
+                scope=ValidationScope.RELATIONSHIP,
+                phase=ValidationPhase.POST_MIGRATION,
+                message=f"Error validating test execution cycle relationships: {str(e)}",
+                details={"error": str(e)},
             )
             issues.append(issue)
 
@@ -393,18 +390,18 @@ class DataComparisonValidator:
                     if qtest_field_name not in qtest_custom_fields:
                         issue = ValidationIssue(
                             id=f"custom_field_missing_{test_case['id']}_{field_name}_{int(time.time())}",
-                                level=ValidationLevel.WARNING,
-                                scope=ValidationScope.CUSTOM_FIELD,
-                                phase=ValidationPhase.POST_MIGRATION,
-                                message=f"Custom field '{field_name}' was not migrated to qTest",
-                                entity_id=test_case["id"],
-                                entity_type="test_case",
-                                field_name=field_name,
-                                details={
+                            level=ValidationLevel.WARNING,
+                            scope=ValidationScope.CUSTOM_FIELD,
+                            phase=ValidationPhase.POST_MIGRATION,
+                            message=f"Custom field '{field_name}' was not migrated to qTest",
+                            entity_id=test_case["id"],
+                            entity_type="test_case",
+                            field_name=field_name,
+                            details={
                                 "zephyr_field_name": field_name,
-                                    "qtest_field_name": qtest_field_name,
-                                    "zephyr_value": field_value
-                            }
+                                "qtest_field_name": qtest_field_name,
+                                "zephyr_value": field_value,
+                            },
                         )
                         issues.append(issue)
                         continue
@@ -417,30 +414,30 @@ class DataComparisonValidator:
                     if normalized_zephyr_value != normalized_qtest_value:
                         issue = ValidationIssue(
                             id=f"custom_field_value_mismatch_{test_case['id']}_{field_name}_{int(time.time())}",
-                                level=ValidationLevel.WARNING,
-                                scope=ValidationScope.CUSTOM_FIELD,
-                                phase=ValidationPhase.POST_MIGRATION,
-                                message=f"Custom field '{field_name}' value does not match qTest value",
-                                entity_id=test_case["id"],
-                                entity_type="test_case",
-                                field_name=field_name,
-                                details={
+                            level=ValidationLevel.WARNING,
+                            scope=ValidationScope.CUSTOM_FIELD,
+                            phase=ValidationPhase.POST_MIGRATION,
+                            message=f"Custom field '{field_name}' value does not match qTest value",
+                            entity_id=test_case["id"],
+                            entity_type="test_case",
+                            field_name=field_name,
+                            details={
                                 "zephyr_field_name": field_name,
-                                    "qtest_field_name": qtest_field_name,
-                                    "zephyr_value": normalized_zephyr_value,
-                                    "qtest_value": normalized_qtest_value
-                            }
+                                "qtest_field_name": qtest_field_name,
+                                "zephyr_value": normalized_zephyr_value,
+                                "qtest_value": normalized_qtest_value,
+                            },
                         )
                         issues.append(issue)
         except Exception as e:
             logger.error(f"Error validating custom field migration: {str(e)}")
             issue = ValidationIssue(
                 id=f"custom_field_validation_error_{int(time.time())}",
-                    level=ValidationLevel.ERROR,
-                    scope=ValidationScope.CUSTOM_FIELD,
-                    phase=ValidationPhase.POST_MIGRATION,
-                    message=f"Error validating custom field migration: {str(e)}",
-                    details={"error": str(e)}
+                level=ValidationLevel.ERROR,
+                scope=ValidationScope.CUSTOM_FIELD,
+                phase=ValidationPhase.POST_MIGRATION,
+                message=f"Error validating custom field migration: {str(e)}",
+                details={"error": str(e)},
             )
             issues.append(issue)
 
@@ -481,28 +478,28 @@ class DataComparisonValidator:
                     missing_count = len(zephyr_attachments) - len(qtest_attachments)
                     issue = ValidationIssue(
                         id=f"missing_attachments_{entity_type}_{entity_id}_{int(time.time())}",
-                            level=ValidationLevel.WARNING,
-                            scope=ValidationScope.ATTACHMENT,
-                            phase=ValidationPhase.POST_MIGRATION,
-                            message=f"{missing_count} attachments were not migrated for {entity_type} {entity_id}",
-                            entity_id=entity_id,
-                            entity_type=entity_type,
-                            details={
+                        level=ValidationLevel.WARNING,
+                        scope=ValidationScope.ATTACHMENT,
+                        phase=ValidationPhase.POST_MIGRATION,
+                        message=f"{missing_count} attachments were not migrated for {entity_type} {entity_id}",
+                        entity_id=entity_id,
+                        entity_type=entity_type,
+                        details={
                             "zephyr_attachment_count": len(zephyr_attachments),
-                                "qtest_attachment_count": len(qtest_attachments),
-                                "missing_count": missing_count
-                        }
+                            "qtest_attachment_count": len(qtest_attachments),
+                            "missing_count": missing_count,
+                        },
                     )
                     issues.append(issue)
         except Exception as e:
             logger.error(f"Error validating attachment migration: {str(e)}")
             issue = ValidationIssue(
                 id=f"attachment_validation_error_{int(time.time())}",
-                    level=ValidationLevel.ERROR,
-                    scope=ValidationScope.ATTACHMENT,
-                    phase=ValidationPhase.POST_MIGRATION,
-                    message=f"Error validating attachment migration: {str(e)}",
-                    details={"error": str(e)}
+                level=ValidationLevel.ERROR,
+                scope=ValidationScope.ATTACHMENT,
+                phase=ValidationPhase.POST_MIGRATION,
+                message=f"Error validating attachment migration: {str(e)}",
+                details={"error": str(e)},
             )
             issues.append(issue)
 
@@ -528,9 +525,7 @@ class DataComparisonValidator:
             counts["test_cycles"] = self.db.count_entities(self.project_key, "test_cycles")
 
             # Count test executions
-            counts["test_executions"] = self.db.count_entities(
-                self.project_key, "test_executions"
-            )
+            counts["test_executions"] = self.db.count_entities(self.project_key, "test_executions")
         except Exception as e:
             logger.error(f"Error getting Zephyr entity counts: {str(e)}")
 
@@ -547,9 +542,7 @@ class DataComparisonValidator:
 
         try:
             # Count modules (folders)
-            counts["modules"] = self.db.count_entity_mappings(
-                self.project_key, "folder_to_module"
-            )
+            counts["modules"] = self.db.count_entity_mappings(self.project_key, "folder_to_module")
 
             # Count test cases
             counts["test_cases"] = self.db.count_entity_mappings(
@@ -582,9 +575,9 @@ class DataComparisonValidator:
         """
         mapping = {
             "folders": "modules",
-                "test_cases": "test_cases",
-                "test_cycles": "test_cycles",
-                "test_executions": "test_runs"
+            "test_cases": "test_cases",
+            "test_cycles": "test_cycles",
+            "test_executions": "test_runs",
         }
         return mapping.get(zephyr_type, zephyr_type)
 
@@ -600,9 +593,9 @@ class DataComparisonValidator:
         """
         mapping = {
             "folders": ValidationScope.FOLDER,
-                "test_cases": ValidationScope.TEST_CASE,
-                "test_cycles": ValidationScope.TEST_CYCLE,
-                "test_executions": ValidationScope.TEST_EXECUTION
+            "test_cases": ValidationScope.TEST_CASE,
+            "test_cycles": ValidationScope.TEST_CYCLE,
+            "test_executions": ValidationScope.TEST_EXECUTION,
         }
         return mapping.get(entity_type, ValidationScope.SYSTEM)
 
@@ -618,9 +611,9 @@ class DataComparisonValidator:
         """
         mapping = {
             "folders": "folder_to_module",
-                "test_cases": "testcase_to_testcase",
-                "test_cycles": "cycle_to_cycle",
-                "test_executions": "execution_to_run"
+            "test_cases": "testcase_to_testcase",
+            "test_cycles": "cycle_to_cycle",
+            "test_executions": "execution_to_run",
         }
         return mapping.get(entity_type, "")
 
@@ -702,11 +695,11 @@ class DataComparisonRule(ValidationRule):
 
     def __init__(
         self,
-            id: str,
-            name: str,
-            description: str,
-            comparison_method: str,
-            level: ValidationLevel = ValidationLevel.ERROR
+        id: str,
+        name: str,
+        description: str,
+        comparison_method: str,
+        level: ValidationLevel = ValidationLevel.ERROR,
     ):
         """
         Initialize the data comparison rule.
@@ -720,11 +713,11 @@ class DataComparisonRule(ValidationRule):
         """
         super().__init__(
             id=id,
-                name=name,
-                description=description,
-                scope=ValidationScope.SYSTEM,
-                phase=ValidationPhase.POST_MIGRATION,
-                level=level
+            name=name,
+            description=description,
+            scope=ValidationScope.SYSTEM,
+            phase=ValidationPhase.POST_MIGRATION,
+            level=level,
         )
         self.comparison_method = comparison_method
 
@@ -770,10 +763,10 @@ def get_data_comparison_rules() -> List[ValidationRule]:
     rules.append(
         DataComparisonRule(
             id="entity_count_comparison",
-                name="Entity Count Comparison",
-                description="Validates that all entities were migrated by comparing counts",
-                comparison_method="validate_entity_counts",
-                level=ValidationLevel.ERROR
+            name="Entity Count Comparison",
+            description="Validates that all entities were migrated by comparing counts",
+            comparison_method="validate_entity_counts",
+            level=ValidationLevel.ERROR,
         )
     )
 
@@ -781,10 +774,10 @@ def get_data_comparison_rules() -> List[ValidationRule]:
     rules.append(
         DataComparisonRule(
             id="critical_entity_validation",
-                name="Critical Entity Validation",
-                description="Validates that all critical entities were migrated correctly",
-                comparison_method="validate_critical_entities",
-                level=ValidationLevel.CRITICAL
+            name="Critical Entity Validation",
+            description="Validates that all critical entities were migrated correctly",
+            comparison_method="validate_critical_entities",
+            level=ValidationLevel.CRITICAL,
         )
     )
 
@@ -792,10 +785,10 @@ def get_data_comparison_rules() -> List[ValidationRule]:
     rules.append(
         DataComparisonRule(
             id="relationship_integrity_validation",
-                name="Relationship Integrity Validation",
-                description="Validates that relationships between entities were preserved",
-                comparison_method="validate_relationship_integrity",
-                level=ValidationLevel.ERROR
+            name="Relationship Integrity Validation",
+            description="Validates that relationships between entities were preserved",
+            comparison_method="validate_relationship_integrity",
+            level=ValidationLevel.ERROR,
         )
     )
 
@@ -803,10 +796,10 @@ def get_data_comparison_rules() -> List[ValidationRule]:
     rules.append(
         DataComparisonRule(
             id="custom_field_migration_validation",
-                name="Custom Field Migration Validation",
-                description="Validates that custom fields were migrated correctly",
-                comparison_method="validate_custom_field_migration",
-                level=ValidationLevel.WARNING
+            name="Custom Field Migration Validation",
+            description="Validates that custom fields were migrated correctly",
+            comparison_method="validate_custom_field_migration",
+            level=ValidationLevel.WARNING,
         )
     )
 
@@ -814,10 +807,10 @@ def get_data_comparison_rules() -> List[ValidationRule]:
     rules.append(
         DataComparisonRule(
             id="attachment_migration_validation",
-                name="Attachment Migration Validation",
-                description="Validates that attachments were migrated correctly",
-                comparison_method="validate_attachment_migration",
-                level=ValidationLevel.WARNING
+            name="Attachment Migration Validation",
+            description="Validates that attachments were migrated correctly",
+            comparison_method="validate_attachment_migration",
+            level=ValidationLevel.WARNING,
         )
     )
 

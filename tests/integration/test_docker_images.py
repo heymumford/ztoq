@@ -23,20 +23,26 @@ class TestDockerImages:
     @pytest.fixture
     def report_dockerfile_path(self):
         """Get the path to the Dockerfile.migration-report."""
-        dockerfile_path = Path(__file__).parent.parent.parent / "config" / "Dockerfile.migration-report"
-        assert dockerfile_path.exists(), f"Dockerfile.migration-report not found at {dockerfile_path}"
+        dockerfile_path = (
+            Path(__file__).parent.parent.parent / "config" / "Dockerfile.migration-report"
+        )
+        assert (
+            dockerfile_path.exists()
+        ), f"Dockerfile.migration-report not found at {dockerfile_path}"
         return dockerfile_path
 
     def test_main_dockerfile_content(self, dockerfile_path):
         """Test that the main Dockerfile contains expected configuration."""
-        with open(dockerfile_path, 'r') as f:
+        with open(dockerfile_path, "r") as f:
             content = f.read()
 
         # Check for Python base image
         assert "FROM python:" in content, "Dockerfile should use Python base image"
 
         # Check for multi-stage build pattern (best practice)
-        assert "AS" in content.upper() or "as" in content.lower(), "Dockerfile should use multi-stage build"
+        assert (
+            "AS" in content.upper() or "as" in content.lower()
+        ), "Dockerfile should use multi-stage build"
 
         # Check that poetry is being used
         assert "poetry" in content.lower(), "Dockerfile should use poetry for dependency management"
@@ -55,7 +61,7 @@ class TestDockerImages:
 
     def test_report_dockerfile_content(self, report_dockerfile_path):
         """Test that the migration-report Dockerfile contains expected configuration."""
-        with open(report_dockerfile_path, 'r') as f:
+        with open(report_dockerfile_path, "r") as f:
             content = f.read()
 
         # Check for Python base image
@@ -69,7 +75,7 @@ class TestDockerImages:
         # Check that the application is installed
         assert "COPY . ." in content, "Dockerfile should copy application code"
 
-    @patch('subprocess.run')
+    @patch("subprocess.run")
     def test_docker_build(self, mock_run):
         """Test that Docker images can be built (mock build process)."""
         # Configure the mock to return a successful result
@@ -79,10 +85,7 @@ class TestDockerImages:
 
         # Test building the main Docker image
         result = subprocess.run(
-            ["docker", "build", "-t", "ztoq:test", "."],
-                capture_output=True,
-                text=True,
-                check=False
+            ["docker", "build", "-t", "ztoq:test", "."], capture_output=True, text=True, check=False
         )
 
         # Check docker build was called
@@ -94,21 +97,24 @@ class TestDockerImages:
         # Test building the report Docker image
         result = subprocess.run(
             ["docker", "build", "-t", "ztoq-report:test", "-f", "Dockerfile.migration-report", "."],
-                capture_output=True,
-                text=True,
-                check=False
+            capture_output=True,
+            text=True,
+            check=False,
         )
 
         # Check docker build was called
         mock_run.assert_called()
 
-    @pytest.mark.parametrize("command", [
-        ["ztoq", "--help"],
+    @pytest.mark.parametrize(
+        "command",
+        [
+            ["ztoq", "--help"],
             ["ztoq", "migrate", "--help"],
             ["ztoq", "migrate", "status", "--help"],
             ["ztoq", "migrate", "run", "--help"],
-        ])
-    @patch('subprocess.run')
+        ],
+    )
+    @patch("subprocess.run")
     def test_docker_run_commands(self, mock_run, command):
         """Test that Docker containers can run commands (mock execution)."""
         # Configure the mock to return a successful result
@@ -119,17 +125,12 @@ class TestDockerImages:
 
         # Run the command in Docker
         docker_command = ["docker", "run", "--rm", "ztoq:latest"] + command
-        result = subprocess.run(
-            docker_command,
-                capture_output=True,
-                text=True,
-                check=False
-        )
+        result = subprocess.run(docker_command, capture_output=True, text=True, check=False)
 
         # Check docker run was called
         mock_run.assert_called()
 
-    @patch('subprocess.run')
+    @patch("subprocess.run")
     def test_compose_up_down(self, mock_run):
         """Test docker-compose up and down commands (mock execution)."""
         # Configure the mock to return a successful result
@@ -140,9 +141,9 @@ class TestDockerImages:
         # Test docker-compose up
         subprocess.run(
             ["docker-compose", "-f", "config/docker-compose.migration.yml", "up", "-d"],
-                capture_output=True,
-                text=True,
-                check=False
+            capture_output=True,
+            text=True,
+            check=False,
         )
 
         # Check docker-compose up was called
@@ -154,9 +155,9 @@ class TestDockerImages:
         # Test docker-compose down
         subprocess.run(
             ["docker-compose", "-f", "config/docker-compose.migration.yml", "down"],
-                capture_output=True,
-                text=True,
-                check=False
+            capture_output=True,
+            text=True,
+            check=False,
         )
 
         # Check docker-compose down was called

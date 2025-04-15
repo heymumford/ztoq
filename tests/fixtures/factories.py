@@ -13,7 +13,7 @@ from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, Type, TypeVar, cast
 
 # Type variable for generic factory methods
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 class BaseFactory:
@@ -37,7 +37,7 @@ class BaseFactory:
             str: Random string
         """
         chars = string.ascii_letters + string.digits
-        random_part = ''.join(random.choice(chars) for _ in range(length))
+        random_part = "".join(random.choice(chars) for _ in range(length))
         return f"{prefix}{random_part}"
 
     @staticmethod
@@ -80,8 +80,7 @@ class BaseFactory:
 
     @staticmethod
     def random_date(
-        start_date: Optional[datetime] = None,
-        end_date: Optional[datetime] = None
+        start_date: Optional[datetime] = None, end_date: Optional[datetime] = None
     ) -> datetime:
         """
         Generate a random date within the specified range.
@@ -116,7 +115,9 @@ class BaseFactory:
         return random.choice(choices)
 
     @staticmethod
-    def random_subset(items: List[Any], min_size: int = 1, max_size: Optional[int] = None) -> List[Any]:
+    def random_subset(
+        items: List[Any], min_size: int = 1, max_size: Optional[int] = None
+    ) -> List[Any]:
         """
         Select a random subset of items from a list.
 

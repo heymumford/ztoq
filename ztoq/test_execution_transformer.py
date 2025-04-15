@@ -357,7 +357,9 @@ class TestExecutionTransformer:
                 # Create qTest attachment
                 qtest_attachment = {
                     "name": attachment.get("filename"),
-                    "content_type": attachment.get("content_type") or attachment.get("contentType") or "application/octet-stream",
+                    "content_type": attachment.get("content_type")
+                    or attachment.get("contentType")
+                    or "application/octet-stream",
                     "size": attachment.get("size", 0),
                     "content": attachment.get("content"),
                 }

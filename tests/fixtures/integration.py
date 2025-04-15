@@ -17,13 +17,7 @@ from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session, sessionmaker
 
 # Import the base fixtures
-from tests.fixtures.base import (
-    base_test_env,
-    mock_env_vars,
-    temp_dir,
-    temp_file,
-    temp_db_path
-)
+from tests.fixtures.base import base_test_env, mock_env_vars, temp_dir, temp_file, temp_db_path
 
 
 @pytest.fixture
@@ -113,9 +107,9 @@ def mock_external_api() -> Generator[Dict[str, MagicMock], None, None]:
     Yields:
         Dict[str, MagicMock]: Dictionary of mocked API clients
     """
-    with patch("ztoq.zephyr_client.ZephyrClient") as mock_zephyr, \
-         patch("ztoq.qtest_client.QTestClient") as mock_qtest:
-
+    with patch("ztoq.zephyr_client.ZephyrClient") as mock_zephyr, patch(
+        "ztoq.qtest_client.QTestClient"
+    ) as mock_qtest:
         # Create instances for the mocks
         zephyr_instance = MagicMock()
         qtest_instance = MagicMock()
@@ -125,10 +119,7 @@ def mock_external_api() -> Generator[Dict[str, MagicMock], None, None]:
         mock_qtest.return_value = qtest_instance
 
         # Return the instances in a dictionary
-        mocks = {
-            "zephyr": zephyr_instance,
-            "qtest": qtest_instance
-        }
+        mocks = {"zephyr": zephyr_instance, "qtest": qtest_instance}
 
         yield mocks
 
@@ -164,7 +155,7 @@ def test_data_dir(temp_dir: Path) -> Generator[Path, None, None]:
         "test_executions.json": """[
             {"id": 1, "test_case_id": 1, "status": "Passed"},
             {"id": 2, "test_case_id": 2, "status": "Failed"}
-        ]"""
+        ]""",
     }
 
     # Create each sample file

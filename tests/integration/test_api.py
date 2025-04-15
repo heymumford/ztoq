@@ -10,9 +10,8 @@ from fastapi.testclient import TestClient
 from ztoq.api.app import create_app
 from ztoq.domain.models import OpenAPISpec
 
+
 @pytest.mark.integration()
-
-
 class TestAPIRoutes:
     @pytest.fixture()
     def client(self):
@@ -25,10 +24,10 @@ class TestAPIRoutes:
         with patch("ztoq.core.services.get_openapi_spec") as mock:
             mock.return_value = OpenAPISpec(
                 title="Test API",
-                    version="1.0.0",
-                    data={"info": {"title": "Test API", "version": "1.0.0"}, "paths": {}},
-                    path="/test/path.yml",
-                )
+                version="1.0.0",
+                data={"info": {"title": "Test API", "version": "1.0.0"}, "paths": {}},
+                path="/test/path.yml",
+            )
             yield mock
 
     def test_root_endpoint(self, client):

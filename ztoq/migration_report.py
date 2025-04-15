@@ -16,7 +16,8 @@ from pathlib import Path
 from typing import Dict, List, Optional, Any, Union, Tuple
 
 import matplotlib
-matplotlib.use('Agg')  # Use non-interactive backend for headless environments
+
+matplotlib.use("Agg")  # Use non-interactive backend for headless environments
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
@@ -56,16 +57,16 @@ class MigrationReportGenerator:
         """
         report = {
             "project_key": self.project_key,
-                "timestamp": datetime.now().isoformat(),
-                "migration_state": self._get_migration_state(),
-                "entity_counts": self._get_entity_counts(),
-                "batch_statistics": self._get_batch_statistics(),
-                "validation_statistics": self._get_validation_statistics(),
-                "validation_issues": self._get_recent_validation_issues(),
-                "failure_details": self._get_failure_details(),
-                "timing_info": self._get_timing_info(),
-                "performance_metrics": self._get_performance_metrics(),
-            }
+            "timestamp": datetime.now().isoformat(),
+            "migration_state": self._get_migration_state(),
+            "entity_counts": self._get_entity_counts(),
+            "batch_statistics": self._get_batch_statistics(),
+            "validation_statistics": self._get_validation_statistics(),
+            "validation_issues": self._get_recent_validation_issues(),
+            "failure_details": self._get_failure_details(),
+            "timing_info": self._get_timing_info(),
+            "performance_metrics": self._get_performance_metrics(),
+        }
 
         return report
 
@@ -76,12 +77,12 @@ class MigrationReportGenerator:
             if state:
                 return {
                     "extraction_status": state.extraction_status,
-                        "transformation_status": state.transformation_status,
-                        "loading_status": state.loading_status,
-                        "error_message": state.error_message,
-                        "created_at": state.created_at.isoformat() if state.created_at else None,
-                        "updated_at": state.last_updated.isoformat() if state.last_updated else None,
-                    }
+                    "transformation_status": state.transformation_status,
+                    "loading_status": state.loading_status,
+                    "error_message": state.error_message,
+                    "created_at": state.created_at.isoformat() if state.created_at else None,
+                    "updated_at": state.last_updated.isoformat() if state.last_updated else None,
+                }
             return None
 
     def _get_entity_counts(self) -> Dict[str, Dict[str, int]]:
@@ -93,20 +94,26 @@ class MigrationReportGenerator:
             mapping_counts = {}
             mapping_types = [
                 "folder_to_module",
-                    "testcase_to_testcase",
-                    "cycle_to_cycle",
-                    "execution_to_run",
-                ]
+                "testcase_to_testcase",
+                "cycle_to_cycle",
+                "execution_to_run",
+            ]
 
             for mapping_type in mapping_types:
-                count = session.execute(text(
-                    """
+                count = (
+                    session.execute(
+                        text(
+                            """
                     SELECT COUNT(*)
                     FROM entity_mappings
                     WHERE project_key = :project_key
                     AND mapping_type = :mapping_type
                     """
-                ), {"project_key": self.project_key, "mapping_type": mapping_type}).scalar() or 0
+                        ),
+                        {"project_key": self.project_key, "mapping_type": mapping_type},
+                    ).scalar()
+                    or 0
+                )
 
                 mapping_counts[mapping_type] = count
 
@@ -116,16 +123,18 @@ class MigrationReportGenerator:
             source_counts = {}
             entity_types = [
                 "folders",
-                    "test_cases",
-                    "test_cycles",
-                    "test_executions",
-                ]
+                "test_cases",
+                "test_cycles",
+                "test_executions",
+            ]
 
             for entity_type in entity_types:
                 # Get batch info for this entity type
-                batches = session.query(EntityBatchState).filter_by(
-                    project_key=self.project_key, entity_type=entity_type
-                ).all()
+                batches = (
+                    session.query(EntityBatchState)
+                    .filter_by(project_key=self.project_key, entity_type=entity_type)
+                    .all()
+                )
 
                 if batches:
                     # Sum up the items_count across all batches
@@ -140,17 +149,21 @@ class MigrationReportGenerator:
             transformed_counts = {}
             transformed_types = [
                 "transformed_test_cases",
-                    "transformed_test_cycles",
-                    "transformed_test_executions",
-                ]
+                "transformed_test_cycles",
+                "transformed_test_executions",
+            ]
 
             for entity_type in transformed_types:
-                batches = session.query(EntityBatchState).filter_by(
-                    project_key=self.project_key, entity_type=entity_type
-                ).all()
+                batches = (
+                    session.query(EntityBatchState)
+                    .filter_by(project_key=self.project_key, entity_type=entity_type)
+                    .all()
+                )
 
                 if batches:
-                    total_processed = sum(batch.processed_count for batch in batches if batch.status == "completed")
+                    total_processed = sum(
+                        batch.processed_count for batch in batches if batch.status == "completed"
+                    )
                     transformed_counts[entity_type] = total_processed
                 else:
                     transformed_counts[entity_type] = 0
@@ -161,17 +174,21 @@ class MigrationReportGenerator:
             loaded_counts = {}
             loaded_types = [
                 "loaded_test_cases",
-                    "loaded_test_cycles",
-                    "loaded_test_executions",
-                ]
+                "loaded_test_cycles",
+                "loaded_test_executions",
+            ]
 
             for entity_type in loaded_types:
-                batches = session.query(EntityBatchState).filter_by(
-                    project_key=self.project_key, entity_type=entity_type
-                ).all()
+                batches = (
+                    session.query(EntityBatchState)
+                    .filter_by(project_key=self.project_key, entity_type=entity_type)
+                    .all()
+                )
 
                 if batches:
-                    total_processed = sum(batch.processed_count for batch in batches if batch.status == "completed")
+                    total_processed = sum(
+                        batch.processed_count for batch in batches if batch.status == "completed"
+                    )
                     loaded_counts[entity_type] = total_processed
                 else:
                     loaded_counts[entity_type] = 0
@@ -187,30 +204,36 @@ class MigrationReportGenerator:
         with self.Session() as session:
             # Get all entity types that have batches
             entity_types = []
-            result = session.execute(text(
-                """
+            result = session.execute(
+                text(
+                    """
                 SELECT DISTINCT entity_type
                 FROM entity_batch_state
                 WHERE project_key = :project_key
                 """
-            ), {"project_key": self.project_key})
+                ),
+                {"project_key": self.project_key},
+            )
 
             for row in result:
                 entity_types.append(row[0])
 
             # Get stats for each entity type
             for entity_type in entity_types:
-                batches = session.query(EntityBatchState).filter_by(
-                    project_key=self.project_key, entity_type=entity_type
-                ).all()
+                batches = (
+                    session.query(EntityBatchState)
+                    .filter_by(project_key=self.project_key, entity_type=entity_type)
+                    .all()
+                )
 
                 if batches:
                     # Calculate statistics
                     total_batches = len(batches)
                     completed_batches = sum(1 for batch in batches if batch.status == "completed")
                     failed_batches = sum(1 for batch in batches if batch.status == "failed")
-                    pending_batches = sum(1 for batch in batches
-                                         if batch.status in ["not_started", "in_progress"])
+                    pending_batches = sum(
+                        1 for batch in batches if batch.status in ["not_started", "in_progress"]
+                    )
 
                     total_items = sum(batch.items_count for batch in batches)
                     processed_items = sum(batch.processed_count for batch in batches)
@@ -222,13 +245,13 @@ class MigrationReportGenerator:
 
                     batch_stats[entity_type] = {
                         "total_batches": total_batches,
-                            "completed_batches": completed_batches,
-                            "failed_batches": failed_batches,
-                            "pending_batches": pending_batches,
-                            "total_items": total_items,
-                            "processed_items": processed_items,
-                            "completion_percentage": completion_percentage,
-                        }
+                        "completed_batches": completed_batches,
+                        "failed_batches": failed_batches,
+                        "pending_batches": pending_batches,
+                        "total_items": total_items,
+                        "processed_items": processed_items,
+                        "completion_percentage": completion_percentage,
+                    }
 
         return batch_stats
 
@@ -238,9 +261,11 @@ class MigrationReportGenerator:
 
         with self.Session() as session:
             # Find all failed batches
-            failed_batches = session.query(EntityBatchState).filter_by(
-                project_key=self.project_key, status="failed"
-            ).all()
+            failed_batches = (
+                session.query(EntityBatchState)
+                .filter_by(project_key=self.project_key, status="failed")
+                .all()
+            )
 
             for batch in failed_batches:
                 entity_type = batch.entity_type
@@ -248,13 +273,17 @@ class MigrationReportGenerator:
                 if entity_type not in failure_details:
                     failure_details[entity_type] = []
 
-                failure_details[entity_type].append({
-                    "batch_num": batch.batch_number,
+                failure_details[entity_type].append(
+                    {
+                        "batch_num": batch.batch_number,
                         "items_count": batch.items_count,
                         "processed_count": batch.processed_count,
                         "error": batch.error_message,
-                        "updated_at": batch.last_updated.isoformat() if batch.last_updated else None,
-                    })
+                        "updated_at": batch.last_updated.isoformat()
+                        if batch.last_updated
+                        else None,
+                    }
+                )
 
         return failure_details
 
@@ -267,28 +296,42 @@ class MigrationReportGenerator:
 
             if state:
                 # Get batch timing information
-                extraction_batches = session.query(EntityBatchState).filter(
-                    EntityBatchState.project_key == self.project_key,
+                extraction_batches = (
+                    session.query(EntityBatchState)
+                    .filter(
+                        EntityBatchState.project_key == self.project_key,
                         EntityBatchState.entity_type.in_(
-                        ["folders", "test_cases", "test_cycles", "test_executions"]
+                            ["folders", "test_cases", "test_cycles", "test_executions"]
+                        ),
                     )
-                ).all()
+                    .all()
+                )
 
-                transformation_batches = session.query(EntityBatchState).filter(
-                    EntityBatchState.project_key == self.project_key,
+                transformation_batches = (
+                    session.query(EntityBatchState)
+                    .filter(
+                        EntityBatchState.project_key == self.project_key,
                         EntityBatchState.entity_type.in_(
-                        ["transformed_test_cases", "transformed_test_cycles",
-                             "transformed_test_executions"]
+                            [
+                                "transformed_test_cases",
+                                "transformed_test_cycles",
+                                "transformed_test_executions",
+                            ]
+                        ),
                     )
-                ).all()
+                    .all()
+                )
 
-                loading_batches = session.query(EntityBatchState).filter(
-                    EntityBatchState.project_key == self.project_key,
+                loading_batches = (
+                    session.query(EntityBatchState)
+                    .filter(
+                        EntityBatchState.project_key == self.project_key,
                         EntityBatchState.entity_type.in_(
-                        ["loaded_test_cases", "loaded_test_cycles",
-                             "loaded_test_executions"]
+                            ["loaded_test_cases", "loaded_test_cycles", "loaded_test_executions"]
+                        ),
                     )
-                ).all()
+                    .all()
+                )
 
                 # Calculate extraction time
                 if extraction_batches:
@@ -300,19 +343,25 @@ class MigrationReportGenerator:
                         extraction_end = max(completed_times)
                         extraction_seconds = (extraction_end - extraction_start).total_seconds()
                         timing_info["extraction_seconds"] = extraction_seconds
-                        timing_info["extraction_formatted"] = self._format_duration(extraction_seconds)
+                        timing_info["extraction_formatted"] = self._format_duration(
+                            extraction_seconds
+                        )
 
                 # Calculate transformation time
                 if transformation_batches:
                     started_times = [b.started_at for b in transformation_batches if b.started_at]
-                    completed_times = [b.completed_at for b in transformation_batches if b.completed_at]
+                    completed_times = [
+                        b.completed_at for b in transformation_batches if b.completed_at
+                    ]
 
                     if started_times and completed_times:
                         transform_start = min(started_times)
                         transform_end = max(completed_times)
                         transform_seconds = (transform_end - transform_start).total_seconds()
                         timing_info["transformation_seconds"] = transform_seconds
-                        timing_info["transformation_formatted"] = self._format_duration(transform_seconds)
+                        timing_info["transformation_formatted"] = self._format_duration(
+                            transform_seconds
+                        )
 
                 # Calculate loading time
                 if loading_batches:
@@ -337,7 +386,9 @@ class MigrationReportGenerator:
                         total_end = max(completed_times)
                         total_seconds = (total_end - total_start).total_seconds()
                         timing_info["total_elapsed_seconds"] = total_seconds
-                        timing_info["total_elapsed_formatted"] = self._format_duration(total_seconds)
+                        timing_info["total_elapsed_formatted"] = self._format_duration(
+                            total_seconds
+                        )
 
         return timing_info
 
@@ -349,29 +400,31 @@ class MigrationReportGenerator:
         """
         validation_stats = {
             "issues_by_level": {},
-                "issues_by_scope": {},
-                "issues_by_phase": {},
-                "critical_issues": 0,
-                "error_issues": 0,
-                "warning_issues": 0,
-                "info_issues": 0,
-                "total_issues": 0,
-                "has_critical_issues": False,
-            }
+            "issues_by_scope": {},
+            "issues_by_phase": {},
+            "critical_issues": 0,
+            "error_issues": 0,
+            "warning_issues": 0,
+            "info_issues": 0,
+            "total_issues": 0,
+            "has_critical_issues": False,
+        }
 
         with self.Session() as session:
             try:
                 # Check if validation_issues table exists
                 table_exists = False
-                result = session.execute(text(
-                    """
+                result = session.execute(
+                    text(
+                        """
                     SELECT name FROM sqlite_master
                     WHERE type='table' AND name='validation_issues'
                     UNION
                     SELECT tablename FROM pg_catalog.pg_tables
                     WHERE schemaname='public' AND tablename='validation_issues'
                     """
-                ))
+                    )
+                )
 
                 for row in result:
                     table_exists = True
@@ -381,25 +434,34 @@ class MigrationReportGenerator:
                     return validation_stats
 
                 # Get total count of issues
-                total_count = session.execute(text(
-                    """
+                total_count = (
+                    session.execute(
+                        text(
+                            """
                     SELECT COUNT(*)
                     FROM validation_issues
                     WHERE project_key = :project_key AND resolved = 0
                     """
-                ), {"project_key": self.project_key}).scalar() or 0
+                        ),
+                        {"project_key": self.project_key},
+                    ).scalar()
+                    or 0
+                )
 
                 validation_stats["total_issues"] = total_count
 
                 # Get counts by level
-                level_counts = session.execute(text(
-                    """
+                level_counts = session.execute(
+                    text(
+                        """
                     SELECT level, COUNT(*) as count
                     FROM validation_issues
                     WHERE project_key = :project_key AND resolved = 0
                     GROUP BY level
                     """
-                ), {"project_key": self.project_key}).fetchall()
+                    ),
+                    {"project_key": self.project_key},
+                ).fetchall()
 
                 for level_count in level_counts:
                     level = level_count.level
@@ -418,33 +480,41 @@ class MigrationReportGenerator:
                         validation_stats["info_issues"] = count
 
                 # Get counts by scope
-                scope_counts = session.execute(text(
-                    """
+                scope_counts = session.execute(
+                    text(
+                        """
                     SELECT scope, COUNT(*) as count
                     FROM validation_issues
                     WHERE project_key = :project_key AND resolved = 0
                     GROUP BY scope
                     """
-                ), {"project_key": self.project_key}).fetchall()
+                    ),
+                    {"project_key": self.project_key},
+                ).fetchall()
 
                 for scope_count in scope_counts:
                     validation_stats["issues_by_scope"][scope_count.scope] = scope_count.count
 
                 # Get counts by phase
-                phase_counts = session.execute(text(
-                    """
+                phase_counts = session.execute(
+                    text(
+                        """
                     SELECT phase, COUNT(*) as count
                     FROM validation_issues
                     WHERE project_key = :project_key AND resolved = 0
                     GROUP BY phase
                     """
-                ), {"project_key": self.project_key}).fetchall()
+                    ),
+                    {"project_key": self.project_key},
+                ).fetchall()
 
                 for phase_count in phase_counts:
                     validation_stats["issues_by_phase"][phase_count.phase] = phase_count.count
 
             except Exception as e:
-                console.print(f"[bold red]Error retrieving validation statistics:[/bold red] {str(e)}")
+                console.print(
+                    f"[bold red]Error retrieving validation statistics:[/bold red] {str(e)}"
+                )
 
         return validation_stats
 
@@ -463,15 +533,17 @@ class MigrationReportGenerator:
             try:
                 # Check if validation_issues table exists
                 table_exists = False
-                result = session.execute(text(
-                    """
+                result = session.execute(
+                    text(
+                        """
                     SELECT name FROM sqlite_master
                     WHERE type='table' AND name='validation_issues'
                     UNION
                     SELECT tablename FROM pg_catalog.pg_tables
                     WHERE schemaname='public' AND tablename='validation_issues'
                     """
-                ))
+                    )
+                )
 
                 for row in result:
                     table_exists = True
@@ -481,8 +553,9 @@ class MigrationReportGenerator:
                     return issues
 
                 # Get recent critical and error issues
-                recent_issues = session.execute(text(
-                    """
+                recent_issues = session.execute(
+                    text(
+                        """
                     SELECT id, rule_id, level, message, entity_id, scope, phase, created_on, context
                     FROM validation_issues
                     WHERE project_key = :project_key
@@ -490,7 +563,9 @@ class MigrationReportGenerator:
                     ORDER BY created_on DESC
                     LIMIT :limit
                     """
-                ), {"project_key": self.project_key, "limit": limit}).fetchall()
+                    ),
+                    {"project_key": self.project_key, "limit": limit},
+                ).fetchall()
 
                 for issue in recent_issues:
                     context = {}
@@ -500,18 +575,21 @@ class MigrationReportGenerator:
                         except:
                             pass
 
-                    issues.append({
-                        "id": issue.id,
+                    issues.append(
+                        {
+                            "id": issue.id,
                             "rule_id": issue.rule_id,
                             "level": issue.level,
                             "message": issue.message,
                             "entity_id": issue.entity_id,
                             "scope": issue.scope,
                             "phase": issue.phase,
-                            "created_on": issue.created_on if isinstance(issue.created_on, str)
-                                   else issue.created_on.isoformat(),
-                            "context": context
-                    })
+                            "created_on": issue.created_on
+                            if isinstance(issue.created_on, str)
+                            else issue.created_on.isoformat(),
+                            "context": context,
+                        }
+                    )
 
             except Exception as e:
                 console.print(f"[bold red]Error retrieving validation issues:[/bold red] {str(e)}")
@@ -531,9 +609,9 @@ class MigrationReportGenerator:
 
             performance_metrics["extraction"] = {
                 "total_entities": total_extracted,
-                    "processing_time_seconds": timing_info["extraction_seconds"],
-                    "entities_per_second": extraction_throughput,
-                    "entities_per_minute": extraction_throughput * 60
+                "processing_time_seconds": timing_info["extraction_seconds"],
+                "entities_per_second": extraction_throughput,
+                "entities_per_minute": extraction_throughput * 60,
             }
 
         if "transformation_seconds" in timing_info and timing_info["transformation_seconds"] > 0:
@@ -542,9 +620,9 @@ class MigrationReportGenerator:
 
             performance_metrics["transformation"] = {
                 "total_entities": total_transformed,
-                    "processing_time_seconds": timing_info["transformation_seconds"],
-                    "entities_per_second": transformation_throughput,
-                    "entities_per_minute": transformation_throughput * 60
+                "processing_time_seconds": timing_info["transformation_seconds"],
+                "entities_per_second": transformation_throughput,
+                "entities_per_minute": transformation_throughput * 60,
             }
 
         if "loading_seconds" in timing_info and timing_info["loading_seconds"] > 0:
@@ -553,9 +631,9 @@ class MigrationReportGenerator:
 
             performance_metrics["loading"] = {
                 "total_entities": total_loaded,
-                    "processing_time_seconds": timing_info["loading_seconds"],
-                    "entities_per_second": loading_throughput,
-                    "entities_per_minute": loading_throughput * 60
+                "processing_time_seconds": timing_info["loading_seconds"],
+                "entities_per_second": loading_throughput,
+                "entities_per_minute": loading_throughput * 60,
             }
 
         # Calculate overall throughput
@@ -565,9 +643,9 @@ class MigrationReportGenerator:
 
             performance_metrics["overall"] = {
                 "total_entities": total_loaded,
-                    "processing_time_seconds": timing_info["total_elapsed_seconds"],
-                    "entities_per_second": overall_throughput,
-                    "entities_per_minute": overall_throughput * 60
+                "processing_time_seconds": timing_info["total_elapsed_seconds"],
+                "entities_per_second": overall_throughput,
+                "entities_per_minute": overall_throughput * 60,
             }
 
         return performance_metrics
@@ -605,19 +683,15 @@ class MigrationReportGenerator:
             state_table.add_column("Last Updated")
 
             state_table.add_row(
-                "Extraction",
-                    self._format_status(state["extraction_status"]),
-                    state["updated_at"]
+                "Extraction", self._format_status(state["extraction_status"]), state["updated_at"]
             )
             state_table.add_row(
                 "Transformation",
-                    self._format_status(state["transformation_status"]),
-                    state["updated_at"]
+                self._format_status(state["transformation_status"]),
+                state["updated_at"],
             )
             state_table.add_row(
-                "Loading",
-                    self._format_status(state["loading_status"]),
-                    state["updated_at"]
+                "Loading", self._format_status(state["loading_status"]), state["updated_at"]
             )
 
             console.print(state_table)
@@ -636,9 +710,9 @@ class MigrationReportGenerator:
 
         entity_types = {
             "folders": "Folders",
-                "test_cases": "Test Cases",
-                "test_cycles": "Test Cycles",
-                "test_executions": "Test Executions"
+            "test_cases": "Test Cases",
+            "test_cycles": "Test Cycles",
+            "test_executions": "Test Executions",
         }
 
         for entity_type, display_name in entity_types.items():
@@ -656,10 +730,10 @@ class MigrationReportGenerator:
 
             counts_table.add_row(
                 display_name,
-                    str(source_count),
-                    str(transformed_count),
-                    str(loaded_count),
-                    success_rate
+                str(source_count),
+                str(transformed_count),
+                str(loaded_count),
+                success_rate,
             )
 
         console.print(counts_table)
@@ -681,11 +755,11 @@ class MigrationReportGenerator:
 
                 batch_table.add_row(
                     display_name,
-                        str(stats["total_batches"]),
-                        str(stats["completed_batches"]),
-                        str(stats["failed_batches"]),
-                        str(stats["pending_batches"]),
-                        completion
+                    str(stats["total_batches"]),
+                    str(stats["completed_batches"]),
+                    str(stats["failed_batches"]),
+                    str(stats["pending_batches"]),
+                    completion,
                 )
 
             console.print(batch_table)
@@ -698,9 +772,13 @@ class MigrationReportGenerator:
             timing_table.add_column("Duration")
 
             timing_table.add_row("Extraction", timing_info.get("extraction_formatted", "N/A"))
-            timing_table.add_row("Transformation", timing_info.get("transformation_formatted", "N/A"))
+            timing_table.add_row(
+                "Transformation", timing_info.get("transformation_formatted", "N/A")
+            )
             timing_table.add_row("Loading", timing_info.get("loading_formatted", "N/A"))
-            timing_table.add_row("Total Migration", timing_info.get("total_elapsed_formatted", "N/A"))
+            timing_table.add_row(
+                "Total Migration", timing_info.get("total_elapsed_formatted", "N/A")
+            )
 
             console.print(timing_table)
 
@@ -718,11 +796,7 @@ class MigrationReportGenerator:
                     entities_per_second = f"{metrics['entities_per_second']:.2f}"
                     entities_per_minute = f"{metrics['entities_per_minute']:.1f}"
 
-                    perf_table.add_row(
-                        phase.title(),
-                            entities_per_second,
-                            entities_per_minute
-                    )
+                    perf_table.add_row(phase.title(), entities_per_second, entities_per_minute)
 
             console.print(perf_table)
 
@@ -745,20 +819,24 @@ class MigrationReportGenerator:
                 count = validation_stats.get(f"{level}_issues", 0)
                 percentage = (count / total_issues) * 100 if total_issues > 0 else 0
 
-                level_color = "red" if level == "critical" else "yellow" if level == "error" else "blue" if level == "warning" else "cyan"
+                level_color = (
+                    "red"
+                    if level == "critical"
+                    else "yellow"
+                    if level == "error"
+                    else "blue"
+                    if level == "warning"
+                    else "cyan"
+                )
 
                 validation_table.add_row(
                     f"[{level_color}]{level.title()}[/{level_color}]",
-                        str(count),
-                        f"{percentage:.1f}%"
+                    str(count),
+                    f"{percentage:.1f}%",
                 )
 
             # Add total row
-            validation_table.add_row(
-                "[bold]Total[/bold]",
-                    f"[bold]{total_issues}[/bold]",
-                    "100.0%"
-            )
+            validation_table.add_row("[bold]Total[/bold]", f"[bold]{total_issues}[/bold]", "100.0%")
 
             console.print(validation_table)
 
@@ -785,10 +863,7 @@ class MigrationReportGenerator:
                     scope_name = scope_data[0].replace("_", " ").title() if scope_data[0] else ""
                     scope_count = str(scope_data[1]) if scope_data[1] else ""
 
-                    detail_table.add_row(
-                        phase_name, phase_count,
-                            scope_name, scope_count
-                    )
+                    detail_table.add_row(phase_name, phase_count, scope_name, scope_count)
 
                 console.print(detail_table)
 
@@ -802,13 +877,21 @@ class MigrationReportGenerator:
 
                 for issue in validation_issues[:5]:  # Show only first 5 issues
                     level = issue["level"]
-                    level_color = "red" if level == "critical" else "yellow" if level == "error" else "blue" if level == "warning" else "cyan"
+                    level_color = (
+                        "red"
+                        if level == "critical"
+                        else "yellow"
+                        if level == "error"
+                        else "blue"
+                        if level == "warning"
+                        else "cyan"
+                    )
 
                     issues_table.add_row(
                         f"[{level_color}]{level.title()}[/{level_color}]",
-                            issue["phase"].replace("_", " ").title(),
-                            issue["scope"].replace("_", " ").title(),
-                            issue["message"][:50] + ("..." if len(issue["message"]) > 50 else "")
+                        issue["phase"].replace("_", " ").title(),
+                        issue["scope"].replace("_", " ").title(),
+                        issue["message"][:50] + ("..." if len(issue["message"]) > 50 else ""),
                     )
 
                 console.print(issues_table)
@@ -823,7 +906,9 @@ class MigrationReportGenerator:
 
             for entity_type, failures in failure_details.items():
                 if failures:
-                    console.print(f"[bold]{entity_type.replace('_', ' ').title()}[/bold]: {len(failures)} failed batches")
+                    console.print(
+                        f"[bold]{entity_type.replace('_', ' ').title()}[/bold]: {len(failures)} failed batches"
+                    )
 
                     for i, failure in enumerate(failures[:3]):  # Show only first 3 failures
                         console.print(f"  Batch {failure['batch_num']}: {failure['error']}")
@@ -839,7 +924,8 @@ class MigrationReportGenerator:
         # Calculate overall success rate
         total_source = sum(entity_counts["source"].values())
         total_loaded = sum(
-            count for entity_type, count in entity_counts["loaded"].items()
+            count
+            for entity_type, count in entity_counts["loaded"].items()
             if entity_type.startswith("loaded_")
         )
 
@@ -849,7 +935,9 @@ class MigrationReportGenerator:
 
         # Show time taken
         if "total_elapsed_formatted" in timing_info:
-            console.print(f"Total Migration Time: [bold]{timing_info['total_elapsed_formatted']}[/bold]")
+            console.print(
+                f"Total Migration Time: [bold]{timing_info['total_elapsed_formatted']}[/bold]"
+            )
 
     def _format_status(self, status: Optional[str]) -> str:
         """Format the status with color."""
@@ -966,9 +1054,9 @@ class MigrationReportGenerator:
 
         entity_types = {
             "folders": "Folders",
-                "test_cases": "Test Cases",
-                "test_cycles": "Test Cycles",
-                "test_executions": "Test Executions"
+            "test_cases": "Test Cases",
+            "test_cycles": "Test Cycles",
+            "test_executions": "Test Executions",
         }
 
         for entity_type, display_name in entity_types.items():
@@ -1112,9 +1200,9 @@ class MigrationReportGenerator:
             # Define colors for each level
             level_colors = {
                 "critical": "#dc3545",  # red
-                "error": "#f0ad4e",     # yellow
-                "warning": "#0275d8",   # blue
-                "info": "#5bc0de"       # cyan
+                "error": "#f0ad4e",  # yellow
+                "warning": "#0275d8",  # blue
+                "info": "#5bc0de",  # cyan
             }
 
             for level in ["critical", "error", "warning", "info"]:
@@ -1263,7 +1351,8 @@ class MigrationReportGenerator:
         # Calculate overall success rate
         total_source = sum(entity_counts["source"].values())
         total_loaded = sum(
-            count for entity_type, count in entity_counts["loaded"].items()
+            count
+            for entity_type, count in entity_counts["loaded"].items()
             if entity_type.startswith("loaded_")
         )
 
@@ -1323,9 +1412,9 @@ class MigrationReportGenerator:
         entity_counts = report["entity_counts"]
         entity_types = {
             "folders": "Folders",
-                "test_cases": "Test Cases",
-                "test_cycles": "Test Cycles",
-                "test_executions": "Test Executions"
+            "test_cases": "Test Cases",
+            "test_cycles": "Test Cycles",
+            "test_executions": "Test Executions",
         }
 
         # Prepare data for progress chart
@@ -1341,12 +1430,14 @@ class MigrationReportGenerator:
             transformed_count = entity_counts["transformed"].get(transformed_type, 0)
             loaded_count = entity_counts["loaded"].get(loaded_type, 0)
 
-            progress_data.append({
-                "Entity Type": display_name,
+            progress_data.append(
+                {
+                    "Entity Type": display_name,
                     "Source": source_count,
                     "Transformed": transformed_count,
-                    "Loaded": loaded_count
-            })
+                    "Loaded": loaded_count,
+                }
+            )
 
         if progress_data:
             progress_chart_path = self._create_progress_chart(progress_data, charts_dir)
@@ -1363,22 +1454,17 @@ class MigrationReportGenerator:
             timing_data = []
 
             if "extraction_seconds" in timing_info:
-                timing_data.append({
-                    "Phase": "Extraction",
-                        "Seconds": timing_info["extraction_seconds"]
-                })
+                timing_data.append(
+                    {"Phase": "Extraction", "Seconds": timing_info["extraction_seconds"]}
+                )
 
             if "transformation_seconds" in timing_info:
-                timing_data.append({
-                    "Phase": "Transformation",
-                        "Seconds": timing_info["transformation_seconds"]
-                })
+                timing_data.append(
+                    {"Phase": "Transformation", "Seconds": timing_info["transformation_seconds"]}
+                )
 
             if "loading_seconds" in timing_info:
-                timing_data.append({
-                    "Phase": "Loading",
-                        "Seconds": timing_info["loading_seconds"]
-                })
+                timing_data.append({"Phase": "Loading", "Seconds": timing_info["loading_seconds"]})
 
             if timing_data:
                 timing_chart_path = self._create_timing_chart(timing_data, charts_dir)
@@ -1397,12 +1483,14 @@ class MigrationReportGenerator:
             for entity_type, stats in batch_stats.items():
                 display_name = entity_type.replace("_", " ").title()
 
-                batch_data.append({
-                    "Process Type": display_name,
+                batch_data.append(
+                    {
+                        "Process Type": display_name,
                         "Completed": stats["completed_batches"],
                         "Failed": stats["failed_batches"],
-                        "Pending": stats["pending_batches"]
-                })
+                        "Pending": stats["pending_batches"],
+                    }
+                )
 
             if batch_data:
                 batch_chart_path = self._create_batch_status_chart(batch_data, charts_dir)
@@ -1422,11 +1510,13 @@ class MigrationReportGenerator:
                 if phase in performance_metrics:
                     metrics = performance_metrics[phase]
 
-                    perf_data.append({
-                        "Phase": phase.title(),
+                    perf_data.append(
+                        {
+                            "Phase": phase.title(),
                             "Entities/Second": metrics["entities_per_second"],
-                            "Entities/Minute": metrics["entities_per_minute"]
-                    })
+                            "Entities/Minute": metrics["entities_per_minute"],
+                        }
+                    )
 
             if perf_data:
                 perf_chart_path = self._create_performance_chart(perf_data, charts_dir)
@@ -1437,7 +1527,7 @@ class MigrationReportGenerator:
                 </div>
                 """
 
-        charts_html += '</div>'
+        charts_html += "</div>"
         return charts_html
 
     def _create_progress_chart(self, data: List[Dict[str, Any]], output_dir: str) -> str:
@@ -1454,8 +1544,12 @@ class MigrationReportGenerator:
 
         # Calculate percentages
         for idx, row in df.iterrows():
-            df.at[idx, "Transformed %"] = (row["Transformed"] / row["Source"]) * 100 if row["Source"] > 0 else 0
-            df.at[idx, "Loaded %"] = (row["Loaded"] / row["Source"]) * 100 if row["Source"] > 0 else 0
+            df.at[idx, "Transformed %"] = (
+                (row["Transformed"] / row["Source"]) * 100 if row["Source"] > 0 else 0
+            )
+            df.at[idx, "Loaded %"] = (
+                (row["Loaded"] / row["Source"]) * 100 if row["Source"] > 0 else 0
+            )
 
         # Create the chart
         fig, ax = plt.subplots(figsize=(10, 6))
@@ -1465,10 +1559,12 @@ class MigrationReportGenerator:
         x = range(len(df))
 
         ax.barh(x, df["Transformed %"], bar_width, label="Transformed", color="skyblue")
-        ax.barh([i + bar_width for i in x], df["Loaded %"], bar_width, label="Loaded", color="orange")
+        ax.barh(
+            [i + bar_width for i in x], df["Loaded %"], bar_width, label="Loaded", color="orange"
+        )
 
         # Customize the chart
-        ax.set_yticks([i + bar_width/2 for i in x])
+        ax.set_yticks([i + bar_width / 2 for i in x])
         ax.set_yticklabels(df["Entity Type"])
         ax.set_xlabel("Completion Percentage")
         ax.set_xlim(0, 100)
@@ -1516,11 +1612,14 @@ class MigrationReportGenerator:
         # Add time labels
         for bar in bars:
             height = bar.get_height()
-            ax.annotate(self._format_duration(height),
-                           xy=(bar.get_x() + bar.get_width() / 2, height),
-                           xytext=(0, 3),  # 3 points vertical offset
-                       textcoords="offset points",
-                           ha='center', va='bottom')
+            ax.annotate(
+                self._format_duration(height),
+                xy=(bar.get_x() + bar.get_width() / 2, height),
+                xytext=(0, 3),  # 3 points vertical offset
+                textcoords="offset points",
+                ha="center",
+                va="bottom",
+            )
 
         plt.tight_layout()
 
@@ -1565,10 +1664,13 @@ class MigrationReportGenerator:
         for i, (comp, fail, pend) in enumerate(zip(completed, failed, pending)):
             total = comp + fail + pend
             if total > 0:
-                ax.annotate(f"{comp} of {total}",
-                               xy=(comp/2, i),
-                               ha='center', va='center',
-                               color='white' if comp > 3 else 'black')
+                ax.annotate(
+                    f"{comp} of {total}",
+                    xy=(comp / 2, i),
+                    ha="center",
+                    va="center",
+                    color="white" if comp > 3 else "black",
+                )
 
         plt.tight_layout()
 
@@ -1614,11 +1716,11 @@ class MigrationReportGenerator:
         # Create the pie chart
         wedges, texts, autotexts = ax.pie(
             filtered_counts,
-                labels=filtered_labels,
-                colors=filtered_colors,
-                autopct='%1.1f%%',
-                startangle=90,
-                wedgeprops={'edgecolor': 'white', 'linewidth': 1}
+            labels=filtered_labels,
+            colors=filtered_colors,
+            autopct="%1.1f%%",
+            startangle=90,
+            wedgeprops={"edgecolor": "white", "linewidth": 1},
         )
 
         # Style the text
@@ -1626,24 +1728,24 @@ class MigrationReportGenerator:
             text.set_fontsize(12)
         for autotext in autotexts:
             autotext.set_fontsize(10)
-            autotext.set_color('white')
+            autotext.set_color("white")
 
         # Equal aspect ratio ensures the pie chart is circular
-        ax.axis('equal')
-        ax.set_title('Validation Issues by Level', fontsize=14)
+        ax.axis("equal")
+        ax.set_title("Validation Issues by Level", fontsize=14)
 
         # Add total count annotation
         total_issues = validation_stats.get("total_issues", 0)
         if total_issues > 0:
             ax.annotate(
                 f"Total: {total_issues} issues",
-                    xy=(0, 0),
-                    xytext=(0, -30),
-                    textcoords="offset points",
-                    ha='center',
-                    va='center',
-                    fontsize=12,
-                    bbox=dict(boxstyle="round,pad=0.3", fc="white", ec="gray", alpha=0.8)
+                xy=(0, 0),
+                xytext=(0, -30),
+                textcoords="offset points",
+                ha="center",
+                va="center",
+                fontsize=12,
+                bbox=dict(boxstyle="round,pad=0.3", fc="white", ec="gray", alpha=0.8),
             )
 
         plt.tight_layout()
@@ -1680,11 +1782,14 @@ class MigrationReportGenerator:
         # Add rate labels
         for bar in bars:
             height = bar.get_height()
-            ax.annotate(f"{height:.1f}",
-                       xy=(bar.get_x() + bar.get_width() / 2, height),
-                       xytext=(0, 3),
-                       textcoords="offset points",
-                       ha='center', va='bottom')
+            ax.annotate(
+                f"{height:.1f}",
+                xy=(bar.get_x() + bar.get_width() / 2, height),
+                xytext=(0, 3),
+                textcoords="offset points",
+                ha="center",
+                va="bottom",
+            )
 
         plt.tight_layout()
 
@@ -1741,9 +1846,9 @@ class MigrationReportGenerator:
 
         entity_types = {
             "folders": "Folders",
-                "test_cases": "Test Cases",
-                "test_cycles": "Test Cycles",
-                "test_executions": "Test Executions"
+            "test_cases": "Test Cases",
+            "test_cycles": "Test Cycles",
+            "test_executions": "Test Executions",
         }
 
         for entity_type, display_name in entity_types.items():
@@ -1759,13 +1864,15 @@ class MigrationReportGenerator:
             else:
                 success_rate = 0.0
 
-            entity_data.append({
-                "Entity Type": display_name,
+            entity_data.append(
+                {
+                    "Entity Type": display_name,
                     "Source Count": source_count,
                     "Transformed Count": transformed_count,
                     "Loaded Count": loaded_count,
                     "Success Rate (%)": success_rate,
-                })
+                }
+            )
 
         # Save entity counts
         pd.DataFrame(entity_data).to_csv(entity_file, index=False)
@@ -1778,8 +1885,9 @@ class MigrationReportGenerator:
         for entity_type, stats in batch_stats.items():
             display_name = entity_type.replace("_", " ").title()
 
-            batch_data.append({
-                "Process Type": display_name,
+            batch_data.append(
+                {
+                    "Process Type": display_name,
                     "Total Batches": stats["total_batches"],
                     "Completed Batches": stats["completed_batches"],
                     "Failed Batches": stats["failed_batches"],
@@ -1787,16 +1895,23 @@ class MigrationReportGenerator:
                     "Total Items": stats["total_items"],
                     "Processed Items": stats["processed_items"],
                     "Completion (%)": stats["completion_percentage"],
-                })
+                }
+            )
 
         # Save batch statistics
         pd.DataFrame(batch_data).to_csv(batch_file, index=False)
         console.print(f"Batch statistics saved to [bold]{batch_file}[/bold]")
 
 
-def parse_db_url(db_type: str, host: Optional[str] = None, port: Optional[int] = None,
-                    name: Optional[str] = None, user: Optional[str] = None,
-                    password: Optional[str] = None, path: Optional[str] = None) -> str:
+def parse_db_url(
+    db_type: str,
+    host: Optional[str] = None,
+    port: Optional[int] = None,
+    name: Optional[str] = None,
+    user: Optional[str] = None,
+    password: Optional[str] = None,
+    path: Optional[str] = None,
+) -> str:
     """Parse database connection parameters into a SQLAlchemy URL.
 
     Args:
@@ -1829,8 +1944,12 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Generate a migration report")
 
     # Database connection parameters
-    parser.add_argument("--db-type", choices=["sqlite", "postgresql"], default="sqlite",
-                           help="Database type (sqlite or postgresql)")
+    parser.add_argument(
+        "--db-type",
+        choices=["sqlite", "postgresql"],
+        default="sqlite",
+        help="Database type (sqlite or postgresql)",
+    )
     parser.add_argument("--db-path", help="Path to SQLite database file")
     parser.add_argument("--db-host", help="PostgreSQL database host")
     parser.add_argument("--db-port", type=int, help="PostgreSQL database port")
@@ -1840,9 +1959,15 @@ def main() -> None:
 
     # Report parameters
     parser.add_argument("--project-key", required=True, help="Zephyr project key")
-    parser.add_argument("--output-format", choices=["console", "html", "json", "csv", "all"],
-                           default="console", help="Output format for the report")
-    parser.add_argument("--output-file", help="Output file path (required for html, json, csv formats)")
+    parser.add_argument(
+        "--output-format",
+        choices=["console", "html", "json", "csv", "all"],
+        default="console",
+        help="Output format for the report",
+    )
+    parser.add_argument(
+        "--output-file", help="Output file path (required for html, json, csv formats)"
+    )
 
     args = parser.parse_args()
 
@@ -1860,12 +1985,12 @@ def main() -> None:
     try:
         db_url = parse_db_url(
             db_type=args.db_type,
-                host=args.db_host,
-                port=args.db_port,
-                name=args.db_name,
-                user=args.db_user,
-                password=args.db_password,
-                path=args.db_path
+            host=args.db_host,
+            port=args.db_port,
+            name=args.db_name,
+            user=args.db_user,
+            password=args.db_password,
+            path=args.db_path,
         )
     except ValueError as e:
         console.print(f"[bold red]Error:[/bold red] {str(e)}")
@@ -1873,7 +1998,9 @@ def main() -> None:
 
     # Check output file is provided for file-based outputs
     if args.output_format in ["html", "json", "csv"] and not args.output_file:
-        console.print("[bold red]Error:[/bold red] --output-file is required for html, json, and csv formats")
+        console.print(
+            "[bold red]Error:[/bold red] --output-file is required for html, json, and csv formats"
+        )
         sys.exit(1)
 
     try:

@@ -12,9 +12,8 @@ from ztoq.migration import EntityBatchTracker, ZephyrToQTestMigration
 from ztoq.models import ZephyrConfig
 from ztoq.qtest_models import QTestConfig, QTestModule, QTestTestCase
 
+
 @pytest.mark.unit()
-
-
 class TestMigrationParallel:
     """Test the parallel processing capabilities of the migration module."""
 
@@ -23,19 +22,19 @@ class TestMigrationParallel:
         """Create a test Zephyr configuration."""
         return ZephyrConfig(
             base_url="https://api.zephyrscale.example.com/v2",
-                api_token="zephyr-token",
-                project_key="DEMO",
-            )
+            api_token="zephyr-token",
+            project_key="DEMO",
+        )
 
     @pytest.fixture()
     def qtest_config(self):
         """Create a test qTest configuration."""
         return QTestConfig(
             base_url="https://example.qtest.com",
-                username="test-user",
-                password="test-password",
-                project_id=12345,
-            )
+            username="test-user",
+            password="test-password",
+            project_id=12345,
+        )
 
     @pytest.fixture()
     def db_mock(self):
@@ -47,40 +46,46 @@ class TestMigrationParallel:
         # Generate a lot of test data for batch processing tests
         test_cases = []
         for i in range(100):
-            test_cases.append({
-                "source_id": f"tc-{i:03d}",
+            test_cases.append(
+                {
+                    "source_id": f"tc-{i:03d}",
                     "test_case": {
-                    "name": f"Test Case {i}",
+                        "name": f"Test Case {i}",
                         "description": f"Description for test case {i}",
                         "module_id": "module-1",
-                        "priority_id": 2
+                        "priority_id": 2,
+                    },
                 }
-            })
+            )
         db.get_transformed_test_cases.return_value = test_cases
 
         # Generate test data for modules by level
         modules_level_0 = []
         for i in range(5):
-            modules_level_0.append({
-                "source_id": f"folder-{i}",
+            modules_level_0.append(
+                {
+                    "source_id": f"folder-{i}",
                     "module": {
-                    "name": f"Module {i}",
+                        "name": f"Module {i}",
                         "description": f"Root module {i}",
-                        "parent_id": None
+                        "parent_id": None,
+                    },
                 }
-            })
+            )
 
         modules_level_1 = []
         for i in range(5):
             for j in range(5):  # 5 children per parent
-                modules_level_1.append({
-                    "source_id": f"folder-{i}-{j}",
+                modules_level_1.append(
+                    {
+                        "source_id": f"folder-{i}-{j}",
                         "module": {
-                        "name": f"Module {i}.{j}",
+                            "name": f"Module {i}.{j}",
                             "description": f"Child module {j} of {i}",
-                            "parent_id": f"qmodule-module-{i}"
+                            "parent_id": f"qmodule-module-{i}",
+                        },
                     }
-                })
+                )
 
         db.get_transformed_modules_by_level.return_value = [modules_level_0, modules_level_1]
 
@@ -101,9 +106,9 @@ class TestMigrationParallel:
                 time.sleep(0.01)  # Small delay to simulate API call
                 return QTestModule(
                     id=f"qmodule-{module.name.lower().replace(' ', '-').replace('.', '-')}",
-                        name=module.name,
-                        description=module.description,
-                        parent_id=module.parent_id
+                    name=module.name,
+                    description=module.description,
+                    parent_id=module.parent_id,
                 )
 
             mock_qtest_client.create_module.side_effect = create_module_with_delay
@@ -113,10 +118,10 @@ class TestMigrationParallel:
                 time.sleep(0.01)  # Small delay to simulate API call
                 return QTestTestCase(
                     id=f"qtc-{test_case.name.lower().replace(' ', '-')}",
-                        name=test_case.name,
-                        description=test_case.description,
-                        module_id=test_case.module_id,
-                        priority_id=test_case.priority_id
+                    name=test_case.name,
+                    description=test_case.description,
+                    module_id=test_case.module_id,
+                    priority_id=test_case.priority_id,
                 )
 
             mock_qtest_client.create_test_case.side_effect = create_test_case_with_delay
@@ -128,11 +133,7 @@ class TestMigrationParallel:
             migrations = {}
             for workers in [1, 5, 10]:
                 migrations[workers] = ZephyrToQTestMigration(
-                    zephyr_config,
-                        qtest_config,
-                        db_mock,
-                        batch_size=20,
-                        max_workers=workers
+                    zephyr_config, qtest_config, db_mock, batch_size=20, max_workers=workers
                 )
                 migrations[workers].zephyr_client_mock = mock_zephyr_client
                 migrations[workers].qtest_client_mock = mock_qtest_client
@@ -176,20 +177,20 @@ class TestMigrationParallel:
 
             # Store results
             results[workers] = {
-                'time': end_time - start_time,
-                    'call_count': mock_qtest.create_module.call_count
+                "time": end_time - start_time,
+                "call_count": mock_qtest.create_module.call_count,
             }
 
         # Verify all worker counts produced the same number of calls
-        assert results[1]['call_count'] == results[5]['call_count'] == results[10]['call_count']
+        assert results[1]["call_count"] == results[5]["call_count"] == results[10]["call_count"]
 
         # Verify that parallel processing was faster
         # Note: This test might be flaky in CI environments
-        assert results[5]['time'] < results[1]['time']
+        assert results[5]["time"] < results[1]["time"]
 
         # Higher worker counts might not always be faster due to overhead
         # but they shouldn't be significantly slower
-        assert results[10]['time'] < results[1]['time'] * 1.5
+        assert results[10]["time"] < results[1]["time"] * 1.5
 
     def test_parallel_test_case_loading(self, migration, db_mock):
         """Test parallel loading of test cases."""
@@ -218,7 +219,9 @@ class TestMigrationParallel:
         # Parallel should be significantly faster
         # With 5 workers, theoretical max speedup is 5x
         # We'll be conservative and check for at least 2x speedup
-        assert duration < sequential_estimate / 2, f"Parallel processing not fast enough: {duration} vs {sequential_estimate/2}"
+        assert (
+            duration < sequential_estimate / 2
+        ), f"Parallel processing not fast enough: {duration} vs {sequential_estimate/2}"
 
     def test_batch_error_handling(self, migration, db_mock):
         """Test error handling during batch processing."""
@@ -229,7 +232,7 @@ class TestMigrationParallel:
         original_side_effect = mock_qtest.create_test_case.side_effect
 
         def fail_every_10th(test_case):
-            if test_case.name.endswith('0'):  # Test cases 0, 10, 20, ...
+            if test_case.name.endswith("0"):  # Test cases 0, 10, 20, ...
                 raise Exception(f"Simulated API error for {test_case.name}")
             return original_side_effect(test_case)
 
@@ -245,7 +248,8 @@ class TestMigrationParallel:
         # Check batch status updates
         # Should have 5 batches with errors (batches 0, 1, 2, 3, 4 all have at least one error)
         batch_failure_calls = [
-            call for call in db_mock.update_entity_batch.call_args_list
+            call
+            for call in db_mock.update_entity_batch.call_args_list
             if call[0][4] == "failed"  # Status parameter
         ]
         assert len(batch_failure_calls) == 5
@@ -289,6 +293,7 @@ class TestMigrationParallel:
 
     def test_parallel_execution_efficiency(self):
         """Test that parallel execution significantly improves performance."""
+
         # Create a test task that has a sleep delay
         def test_task(i, delay=0.05):
             time.sleep(delay)

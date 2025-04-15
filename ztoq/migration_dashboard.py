@@ -63,25 +63,25 @@ class MigrationDashboardData:
             if state:
                 return {
                     "project_key": self.project_key,
-                        "extraction_status": state.extraction_status or "not_started",
-                        "transformation_status": state.transformation_status or "not_started",
-                        "loading_status": state.loading_status or "not_started",
-                        "error_message": state.error_message,
-                        "created_at": state.created_at.isoformat() if state.created_at else None,
-                        "updated_at": state.last_updated.isoformat() if state.last_updated else None,
-                        "current_timestamp": datetime.now().isoformat()
+                    "extraction_status": state.extraction_status or "not_started",
+                    "transformation_status": state.transformation_status or "not_started",
+                    "loading_status": state.loading_status or "not_started",
+                    "error_message": state.error_message,
+                    "created_at": state.created_at.isoformat() if state.created_at else None,
+                    "updated_at": state.last_updated.isoformat() if state.last_updated else None,
+                    "current_timestamp": datetime.now().isoformat(),
                 }
 
             # Return default state if no record exists
             return {
                 "project_key": self.project_key,
-                    "extraction_status": "not_started",
-                    "transformation_status": "not_started",
-                    "loading_status": "not_started",
-                    "error_message": None,
-                    "created_at": None,
-                    "updated_at": None,
-                    "current_timestamp": datetime.now().isoformat()
+                "extraction_status": "not_started",
+                "transformation_status": "not_started",
+                "loading_status": "not_started",
+                "error_message": None,
+                "created_at": None,
+                "updated_at": None,
+                "current_timestamp": datetime.now().isoformat(),
             }
 
     def get_entity_counts(self) -> Dict[str, Dict[str, int]]:
@@ -90,32 +90,33 @@ class MigrationDashboardData:
         Returns:
             Dictionary containing entity counts by type and stage
         """
-        entity_counts = {
-            "source": {},
-                "transformed": {},
-                "loaded": {},
-                "mappings": {}
-        }
+        entity_counts = {"source": {}, "transformed": {}, "loaded": {}, "mappings": {}}
 
         with self.Session() as session:
             # Get counts of mapped entities
             mapping_types = [
                 "folder_to_module",
-                    "testcase_to_testcase",
-                    "cycle_to_cycle",
-                    "execution_to_run",
-                ]
+                "testcase_to_testcase",
+                "cycle_to_cycle",
+                "execution_to_run",
+            ]
 
             for mapping_type in mapping_types:
                 try:
-                    count = session.execute(text(
-                        """
+                    count = (
+                        session.execute(
+                            text(
+                                """
                         SELECT COUNT(*)
                         FROM entity_mappings
                         WHERE project_key = :project_key
                         AND mapping_type = :mapping_type
                         """
-                    ), {"project_key": self.project_key, "mapping_type": mapping_type}).scalar() or 0
+                            ),
+                            {"project_key": self.project_key, "mapping_type": mapping_type},
+                        ).scalar()
+                        or 0
+                    )
 
                     entity_counts["mappings"][mapping_type] = count
                 except Exception:
@@ -125,16 +126,18 @@ class MigrationDashboardData:
             # Get source entity counts from batches
             entity_types = [
                 "folders",
-                    "test_cases",
-                    "test_cycles",
-                    "test_executions",
-                ]
+                "test_cases",
+                "test_cycles",
+                "test_executions",
+            ]
 
             for entity_type in entity_types:
                 # Get batch info for this entity type
-                batches = session.query(EntityBatchState).filter_by(
-                    project_key=self.project_key, entity_type=entity_type
-                ).all()
+                batches = (
+                    session.query(EntityBatchState)
+                    .filter_by(project_key=self.project_key, entity_type=entity_type)
+                    .all()
+                )
 
                 if batches:
                     # Sum up the items_count across all batches
@@ -146,17 +149,21 @@ class MigrationDashboardData:
             # Get transformed entity counts
             transformed_types = [
                 "transformed_test_cases",
-                    "transformed_test_cycles",
-                    "transformed_test_executions",
-                ]
+                "transformed_test_cycles",
+                "transformed_test_executions",
+            ]
 
             for entity_type in transformed_types:
-                batches = session.query(EntityBatchState).filter_by(
-                    project_key=self.project_key, entity_type=entity_type
-                ).all()
+                batches = (
+                    session.query(EntityBatchState)
+                    .filter_by(project_key=self.project_key, entity_type=entity_type)
+                    .all()
+                )
 
                 if batches:
-                    total_processed = sum(batch.processed_count for batch in batches if batch.status == "completed")
+                    total_processed = sum(
+                        batch.processed_count for batch in batches if batch.status == "completed"
+                    )
                     entity_counts["transformed"][entity_type] = total_processed
                 else:
                     entity_counts["transformed"][entity_type] = 0
@@ -164,17 +171,21 @@ class MigrationDashboardData:
             # Get loaded entity counts
             loaded_types = [
                 "loaded_test_cases",
-                    "loaded_test_cycles",
-                    "loaded_test_executions",
-                ]
+                "loaded_test_cycles",
+                "loaded_test_executions",
+            ]
 
             for entity_type in loaded_types:
-                batches = session.query(EntityBatchState).filter_by(
-                    project_key=self.project_key, entity_type=entity_type
-                ).all()
+                batches = (
+                    session.query(EntityBatchState)
+                    .filter_by(project_key=self.project_key, entity_type=entity_type)
+                    .all()
+                )
 
                 if batches:
-                    total_processed = sum(batch.processed_count for batch in batches if batch.status == "completed")
+                    total_processed = sum(
+                        batch.processed_count for batch in batches if batch.status == "completed"
+                    )
                     entity_counts["loaded"][entity_type] = total_processed
                 else:
                     entity_counts["loaded"][entity_type] = 0
@@ -192,30 +203,36 @@ class MigrationDashboardData:
         with self.Session() as session:
             # Get all entity types that have batches
             entity_types = []
-            result = session.execute(text(
-                """
+            result = session.execute(
+                text(
+                    """
                 SELECT DISTINCT entity_type
                 FROM entity_batch_state
                 WHERE project_key = :project_key
                 """
-            ), {"project_key": self.project_key})
+                ),
+                {"project_key": self.project_key},
+            )
 
             for row in result:
                 entity_types.append(row[0])
 
             # Get stats for each entity type
             for entity_type in entity_types:
-                batches = session.query(EntityBatchState).filter_by(
-                    project_key=self.project_key, entity_type=entity_type
-                ).all()
+                batches = (
+                    session.query(EntityBatchState)
+                    .filter_by(project_key=self.project_key, entity_type=entity_type)
+                    .all()
+                )
 
                 if batches:
                     # Calculate statistics
                     total_batches = len(batches)
                     completed_batches = sum(1 for batch in batches if batch.status == "completed")
                     failed_batches = sum(1 for batch in batches if batch.status == "failed")
-                    pending_batches = sum(1 for batch in batches
-                                         if batch.status in ["not_started", "in_progress"])
+                    pending_batches = sum(
+                        1 for batch in batches if batch.status in ["not_started", "in_progress"]
+                    )
 
                     total_items = sum(batch.items_count for batch in batches)
                     processed_items = sum(batch.processed_count for batch in batches)
@@ -236,14 +253,14 @@ class MigrationDashboardData:
 
                     batch_stats[entity_type] = {
                         "total_batches": total_batches,
-                            "completed_batches": completed_batches,
-                            "failed_batches": failed_batches,
-                            "pending_batches": pending_batches,
-                            "total_items": total_items,
-                            "processed_items": processed_items,
-                            "completion_percentage": completion_percentage,
-                            "start_time": start_time,
-                            "latest_time": latest_time
+                        "completed_batches": completed_batches,
+                        "failed_batches": failed_batches,
+                        "pending_batches": pending_batches,
+                        "total_items": total_items,
+                        "processed_items": processed_items,
+                        "completion_percentage": completion_percentage,
+                        "start_time": start_time,
+                        "latest_time": latest_time,
                     }
 
         return batch_stats
@@ -261,43 +278,52 @@ class MigrationDashboardData:
 
         with self.Session() as session:
             # Get recently updated batches
-            recent_batches = session.query(EntityBatchState).filter_by(
-                project_key=self.project_key
-            ).order_by(EntityBatchState.last_updated.desc()).limit(limit).all()
+            recent_batches = (
+                session.query(EntityBatchState)
+                .filter_by(project_key=self.project_key)
+                .order_by(EntityBatchState.last_updated.desc())
+                .limit(limit)
+                .all()
+            )
 
             for batch in recent_batches:
-                activity.append({
-                    "type": "batch",
+                activity.append(
+                    {
+                        "type": "batch",
                         "timestamp": batch.last_updated.isoformat() if batch.last_updated else None,
                         "entity_type": batch.entity_type,
                         "batch_number": batch.batch_number,
                         "status": batch.status,
                         "processed_count": batch.processed_count,
                         "total_count": batch.items_count,
-                        "error_message": batch.error_message
-                })
+                        "error_message": batch.error_message,
+                    }
+                )
 
             # Get recent validation issues
             try:
                 # Check if validation_issues table exists
                 table_exists = False
-                result = session.execute(text(
-                    """
+                result = session.execute(
+                    text(
+                        """
                     SELECT name FROM sqlite_master
                     WHERE type='table' AND name='validation_issues'
                     UNION
                     SELECT tablename FROM pg_catalog.pg_tables
                     WHERE schemaname='public' AND tablename='validation_issues'
                     """
-                ))
+                    )
+                )
 
                 for row in result:
                     table_exists = True
                     break
 
                 if table_exists:
-                    recent_issues = session.execute(text(
-                        """
+                    recent_issues = session.execute(
+                        text(
+                            """
                         SELECT id, rule_id, level, message, entity_id, scope, phase,
                                    created_on, resolved, context
                         FROM validation_issues
@@ -305,7 +331,9 @@ class MigrationDashboardData:
                         ORDER BY created_on DESC
                         LIMIT :limit
                         """
-                    ), {"project_key": self.project_key, "limit": limit}).fetchall()
+                        ),
+                        {"project_key": self.project_key, "limit": limit},
+                    ).fetchall()
 
                     for issue in recent_issues:
                         context = {}
@@ -315,17 +343,21 @@ class MigrationDashboardData:
                             except:
                                 pass
 
-                        activity.append({
-                            "type": "validation",
-                                "timestamp": issue.created_on if isinstance(issue.created_on, str) else issue.created_on.isoformat(),
+                        activity.append(
+                            {
+                                "type": "validation",
+                                "timestamp": issue.created_on
+                                if isinstance(issue.created_on, str)
+                                else issue.created_on.isoformat(),
                                 "level": issue.level,
                                 "scope": issue.scope,
                                 "phase": issue.phase,
                                 "message": issue.message,
                                 "entity_id": issue.entity_id,
                                 "rule_id": issue.rule_id,
-                                "context": context
-                        })
+                                "context": context,
+                            }
+                        )
             except Exception as e:
                 logger.error(f"Error retrieving validation issues: {str(e)}")
 
@@ -343,30 +375,32 @@ class MigrationDashboardData:
         """
         validation_stats = {
             "issues_by_level": {},
-                "issues_by_scope": {},
-                "issues_by_phase": {},
-                "critical_issues": 0,
-                "error_issues": 0,
-                "warning_issues": 0,
-                "info_issues": 0,
-                "total_issues": 0,
-                "has_critical_issues": False,
-                "recent_issues": []
+            "issues_by_scope": {},
+            "issues_by_phase": {},
+            "critical_issues": 0,
+            "error_issues": 0,
+            "warning_issues": 0,
+            "info_issues": 0,
+            "total_issues": 0,
+            "has_critical_issues": False,
+            "recent_issues": [],
         }
 
         with self.Session() as session:
             try:
                 # Check if validation_issues table exists
                 table_exists = False
-                result = session.execute(text(
-                    """
+                result = session.execute(
+                    text(
+                        """
                     SELECT name FROM sqlite_master
                     WHERE type='table' AND name='validation_issues'
                     UNION
                     SELECT tablename FROM pg_catalog.pg_tables
                     WHERE schemaname='public' AND tablename='validation_issues'
                     """
-                ))
+                    )
+                )
 
                 for row in result:
                     table_exists = True
@@ -376,25 +410,34 @@ class MigrationDashboardData:
                     return validation_stats
 
                 # Get total count of issues
-                total_count = session.execute(text(
-                    """
+                total_count = (
+                    session.execute(
+                        text(
+                            """
                     SELECT COUNT(*)
                     FROM validation_issues
                     WHERE project_key = :project_key AND resolved = 0
                     """
-                ), {"project_key": self.project_key}).scalar() or 0
+                        ),
+                        {"project_key": self.project_key},
+                    ).scalar()
+                    or 0
+                )
 
                 validation_stats["total_issues"] = total_count
 
                 # Get counts by level
-                level_counts = session.execute(text(
-                    """
+                level_counts = session.execute(
+                    text(
+                        """
                     SELECT level, COUNT(*) as count
                     FROM validation_issues
                     WHERE project_key = :project_key AND resolved = 0
                     GROUP BY level
                     """
-                ), {"project_key": self.project_key}).fetchall()
+                    ),
+                    {"project_key": self.project_key},
+                ).fetchall()
 
                 for level_count in level_counts:
                     level = level_count.level
@@ -413,34 +456,41 @@ class MigrationDashboardData:
                         validation_stats["info_issues"] = count
 
                 # Get counts by scope
-                scope_counts = session.execute(text(
-                    """
+                scope_counts = session.execute(
+                    text(
+                        """
                     SELECT scope, COUNT(*) as count
                     FROM validation_issues
                     WHERE project_key = :project_key AND resolved = 0
                     GROUP BY scope
                     """
-                ), {"project_key": self.project_key}).fetchall()
+                    ),
+                    {"project_key": self.project_key},
+                ).fetchall()
 
                 for scope_count in scope_counts:
                     validation_stats["issues_by_scope"][scope_count.scope] = scope_count.count
 
                 # Get counts by phase
-                phase_counts = session.execute(text(
-                    """
+                phase_counts = session.execute(
+                    text(
+                        """
                     SELECT phase, COUNT(*) as count
                     FROM validation_issues
                     WHERE project_key = :project_key AND resolved = 0
                     GROUP BY phase
                     """
-                ), {"project_key": self.project_key}).fetchall()
+                    ),
+                    {"project_key": self.project_key},
+                ).fetchall()
 
                 for phase_count in phase_counts:
                     validation_stats["issues_by_phase"][phase_count.phase] = phase_count.count
 
                 # Get most recent critical and error issues
-                recent_issues = session.execute(text(
-                    """
+                recent_issues = session.execute(
+                    text(
+                        """
                     SELECT id, rule_id, level, message, entity_id, scope, phase, created_on
                     FROM validation_issues
                     WHERE project_key = :project_key
@@ -449,20 +499,25 @@ class MigrationDashboardData:
                     ORDER BY created_on DESC
                     LIMIT 5
                     """
-                ), {"project_key": self.project_key}).fetchall()
+                    ),
+                    {"project_key": self.project_key},
+                ).fetchall()
 
                 for issue in recent_issues:
-                    validation_stats["recent_issues"].append({
-                        "id": issue.id,
+                    validation_stats["recent_issues"].append(
+                        {
+                            "id": issue.id,
                             "rule_id": issue.rule_id,
                             "level": issue.level,
                             "message": issue.message,
                             "entity_id": issue.entity_id,
                             "scope": issue.scope,
                             "phase": issue.phase,
-                            "created_on": issue.created_on if isinstance(issue.created_on, str)
-                                    else issue.created_on.isoformat()
-                    })
+                            "created_on": issue.created_on
+                            if isinstance(issue.created_on, str)
+                            else issue.created_on.isoformat(),
+                        }
+                    )
 
             except Exception as e:
                 logger.error(f"Error retrieving validation statistics: {str(e)}")
@@ -504,9 +559,9 @@ class MigrationDashboardData:
         if total_source > 0:
             # Weight: extraction 20%, transformation 30%, loading 50%
             overall_percentage = (
-                0.2 * extraction_percentage +
-                0.3 * transformation_percentage +
-                0.5 * loading_percentage
+                0.2 * extraction_percentage
+                + 0.3 * transformation_percentage
+                + 0.5 * loading_percentage
             )
 
         # Count active and failed batches
@@ -520,85 +575,88 @@ class MigrationDashboardData:
         # Build summary
         return {
             "project_key": self.project_key,
-                "state": state,
-                "progress": {
+            "state": state,
+            "progress": {
                 "extraction": extraction_percentage,
-                    "transformation": transformation_percentage,
-                    "loading": loading_percentage,
-                    "overall": overall_percentage
+                "transformation": transformation_percentage,
+                "loading": loading_percentage,
+                "overall": overall_percentage,
             },
-                "entities": {
+            "entities": {
                 "total_source": total_source,
-                    "total_transformed": total_transformed,
-                    "total_loaded": total_loaded
+                "total_transformed": total_transformed,
+                "total_loaded": total_loaded,
             },
-                "batches": {
-                "active_batches": active_batches,
-                    "failed_batches": failed_batches
-            },
-                "validation": {
+            "batches": {"active_batches": active_batches, "failed_batches": failed_batches},
+            "validation": {
                 "total_issues": validation_stats["total_issues"],
-                    "critical_issues": validation_stats["critical_issues"],
-                    "error_issues": validation_stats["error_issues"],
-                    "warning_issues": validation_stats["warning_issues"],
-                    "info_issues": validation_stats["info_issues"],
-                    "has_critical_issues": validation_stats["has_critical_issues"],
-                    "recent_issues": validation_stats["recent_issues"]
-            }
+                "critical_issues": validation_stats["critical_issues"],
+                "error_issues": validation_stats["error_issues"],
+                "warning_issues": validation_stats["warning_issues"],
+                "info_issues": validation_stats["info_issues"],
+                "has_critical_issues": validation_stats["has_critical_issues"],
+                "recent_issues": validation_stats["recent_issues"],
+            },
         }
 
 
 # Flask routes
-@app.route('/')
+@app.route("/")
 def index():
     """Render the dashboard page."""
-    return render_template('dashboard.html',
-                           project_key=project_key,
-                           refresh_interval=refresh_interval)
+    return render_template(
+        "dashboard.html", project_key=project_key, refresh_interval=refresh_interval
+    )
 
-@app.route('/api/status')
+
+@app.route("/api/status")
 def get_status():
     """API endpoint to get migration status data."""
     data_provider = MigrationDashboardData(db_url, project_key)
     summary = data_provider.get_status_summary()
     return jsonify(summary)
 
-@app.route('/api/entities')
+
+@app.route("/api/entities")
 def get_entities():
     """API endpoint to get entity count data."""
     data_provider = MigrationDashboardData(db_url, project_key)
     entity_counts = data_provider.get_entity_counts()
     return jsonify(entity_counts)
 
-@app.route('/api/batches')
+
+@app.route("/api/batches")
 def get_batches():
     """API endpoint to get batch statistics data."""
     data_provider = MigrationDashboardData(db_url, project_key)
     batch_stats = data_provider.get_batch_statistics()
     return jsonify(batch_stats)
 
-@app.route('/api/activity')
+
+@app.route("/api/activity")
 def get_activity():
     """API endpoint to get recent activity data."""
-    limit = request.args.get('limit', default=10, type=int)
+    limit = request.args.get("limit", default=10, type=int)
     data_provider = MigrationDashboardData(db_url, project_key)
     activity = data_provider.get_recent_activity(limit)
     return jsonify(activity)
 
-@app.route('/api/validation')
+
+@app.route("/api/validation")
 def get_validation():
     """API endpoint to get validation statistics."""
     data_provider = MigrationDashboardData(db_url, project_key)
     validation_stats = data_provider.get_validation_statistics()
     return jsonify(validation_stats)
 
-@app.route('/api/validation/issues')
+
+@app.route("/api/validation/issues")
 def get_validation_issues():
     """API endpoint to get validation issues with filtering."""
-    level = request.args.get('level')
-    scope = request.args.get('scope')
-    phase = request.args.get('phase')
-    limit = request.args.get('limit', default=50, type=int)
+    level = request.args.get("level")
+    scope = request.args.get("scope")
+    phase = request.args.get("phase")
+    limit = request.args.get("limit", default=50, type=int)
 
     with MigrationDashboardData(db_url, project_key).Session() as session:
         try:
@@ -637,42 +695,47 @@ def get_validation_issues():
                     except:
                         pass
 
-                issues.append({
-                    "id": issue.id,
+                issues.append(
+                    {
+                        "id": issue.id,
                         "rule_id": issue.rule_id,
                         "level": issue.level,
                         "message": issue.message,
                         "entity_id": issue.entity_id,
                         "scope": issue.scope,
                         "phase": issue.phase,
-                        "created_on": issue.created_on if isinstance(issue.created_on, str)
-                                else issue.created_on.isoformat(),
-                        "context": context
-                })
+                        "created_on": issue.created_on
+                        if isinstance(issue.created_on, str)
+                        else issue.created_on.isoformat(),
+                        "context": context,
+                    }
+                )
 
             return jsonify(issues)
         except Exception as e:
             return jsonify({"error": str(e)}), 500
 
-@app.route('/api/all')
 
-
+@app.route("/api/all")
 def get_all_data():
     """API endpoint to get all dashboard data in a single request."""
     data_provider = MigrationDashboardData(db_url, project_key)
 
-    return jsonify({
-        "status": data_provider.get_status_summary(),
+    return jsonify(
+        {
+            "status": data_provider.get_status_summary(),
             "entities": data_provider.get_entity_counts(),
             "batches": data_provider.get_batch_statistics(),
             "activity": data_provider.get_recent_activity(),
-            "validation": data_provider.get_validation_statistics()
-    })
+            "validation": data_provider.get_validation_statistics(),
+        }
+    )
+
 
 def create_dashboard_templates():
     """Create HTML templates for the dashboard."""
-    templates_dir = os.path.join(os.path.dirname(__file__), 'templates')
-    static_dir = os.path.join(os.path.dirname(__file__), 'static')
+    templates_dir = os.path.join(os.path.dirname(__file__), "templates")
+    static_dir = os.path.join(os.path.dirname(__file__), "static")
 
     # Create directories if they don't exist
     os.makedirs(templates_dir, exist_ok=True)
@@ -1661,15 +1724,21 @@ def create_dashboard_templates():
 </html>
     """
 
-    with open(os.path.join(templates_dir, 'dashboard.html'), 'w') as f:
+    with open(os.path.join(templates_dir, "dashboard.html"), "w") as f:
         f.write(dashboard_html)
 
     console.print("Dashboard templates created successfully.")
 
 
-def parse_db_url(db_type: str, host: Optional[str] = None, port: Optional[int] = None,
-                    name: Optional[str] = None, user: Optional[str] = None,
-                    password: Optional[str] = None, path: Optional[str] = None) -> str:
+def parse_db_url(
+    db_type: str,
+    host: Optional[str] = None,
+    port: Optional[int] = None,
+    name: Optional[str] = None,
+    user: Optional[str] = None,
+    password: Optional[str] = None,
+    path: Optional[str] = None,
+) -> str:
     """Parse database connection parameters into a SQLAlchemy URL.
 
     Args:
@@ -1702,8 +1771,12 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Start a migration monitoring dashboard")
 
     # Database connection parameters
-    parser.add_argument("--db-type", choices=["sqlite", "postgresql"], default="sqlite",
-                           help="Database type (sqlite or postgresql)")
+    parser.add_argument(
+        "--db-type",
+        choices=["sqlite", "postgresql"],
+        default="sqlite",
+        help="Database type (sqlite or postgresql)",
+    )
     parser.add_argument("--db-path", help="Path to SQLite database file")
     parser.add_argument("--db-host", help="PostgreSQL database host")
     parser.add_argument("--db-port", type=int, help="PostgreSQL database port")
@@ -1714,7 +1787,9 @@ def main() -> None:
     # Dashboard parameters
     parser.add_argument("--project-key", required=True, help="Zephyr project key")
     parser.add_argument("--port", type=int, default=5000, help="Web server port")
-    parser.add_argument("--refresh", type=int, default=10, help="Dashboard refresh interval in seconds")
+    parser.add_argument(
+        "--refresh", type=int, default=10, help="Dashboard refresh interval in seconds"
+    )
     parser.add_argument("--debug", action="store_true", help="Run in debug mode")
 
     args = parser.parse_args()
@@ -1737,12 +1812,12 @@ def main() -> None:
         global db_url, project_key, refresh_interval
         db_url = parse_db_url(
             db_type=args.db_type,
-                host=args.db_host,
-                port=args.db_port,
-                name=args.db_name,
-                user=args.db_user,
-                password=args.db_password,
-                path=args.db_path
+            host=args.db_host,
+            port=args.db_port,
+            name=args.db_name,
+            user=args.db_user,
+            password=args.db_password,
+            path=args.db_path,
         )
         project_key = args.project_key
         refresh_interval = args.refresh
@@ -1754,7 +1829,7 @@ def main() -> None:
     console.print(f"Starting migration dashboard on http://localhost:{args.port}")
     console.print(f"Project: [bold]{project_key}[/bold], Refresh: {refresh_interval} seconds")
 
-    app.run(host='0.0.0.0', port=args.port, debug=args.debug)
+    app.run(host="0.0.0.0", port=args.port, debug=args.debug)
 
 
 if __name__ == "__main__":

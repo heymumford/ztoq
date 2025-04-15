@@ -18,18 +18,7 @@ import threading
 from collections import defaultdict
 from contextlib import contextmanager
 from datetime import datetime, timedelta
-from typing import (
-    Any,
-    Callable,
-    Dict,
-    Generic,
-    Iterable,
-    List,
-    Optional,
-    Tuple,
-    TypeVar,
-    Union
-)
+from typing import Any, Callable, Dict, Generic, Iterable, List, Optional, Tuple, TypeVar, Union
 
 from sqlalchemy import Column, text
 from sqlalchemy.exc import SQLAlchemyError

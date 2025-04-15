@@ -12,15 +12,16 @@ import unittest
 from unittest.mock import MagicMock, patch
 from ztoq.validation import (
     MigrationValidator,
-        ValidationIssue,
-        ValidationLevel,
-        ValidationManager,
-        ValidationPhase,
-        ValidationRule,
-        ValidationScope,
+    ValidationIssue,
+    ValidationLevel,
+    ValidationManager,
+    ValidationPhase,
+    ValidationRule,
+    ValidationScope,
 )
 from ztoq.validation_integration import EnhancedMigration
 from ztoq.validation_rules import get_built_in_rules
+
 
 class MockRule(ValidationRule):
     """Mock validation rule for testing."""
@@ -29,12 +30,12 @@ class MockRule(ValidationRule):
         """Initialize mock rule."""
         super().__init__(
             id=id,
-                name=f"Mock {id}",
-                description="Mock rule for testing",
-                scope=scope,
-                phase=phase,
-                level=level,
-            )
+            name=f"Mock {id}",
+            description="Mock rule for testing",
+            scope=scope,
+            phase=phase,
+            level=level,
+        )
         self.called = False
         self.issue_to_return = None
 
@@ -59,20 +60,20 @@ class TestValidationIntegration(unittest.TestCase):
 
         # Clear built-in rules for testing
         self.validation_manager.registry.rules = {}
-        self.validation_manager.registry.rules_by_scope = {
-            scope: [] for scope in ValidationScope
-        }
-        self.validation_manager.registry.rules_by_phase = {
-            phase: [] for phase in ValidationPhase
-        }
+        self.validation_manager.registry.rules_by_scope = {scope: [] for scope in ValidationScope}
+        self.validation_manager.registry.rules_by_phase = {phase: [] for phase in ValidationPhase}
 
         # Create validator
         self.validator = MigrationValidator(self.validation_manager)
 
         # Create mock migration
         self.mock_migration = MagicMock()
-        self.mock_migration.extract_data.return_value = {"test_cases": [{"id": "123", "name": "Test Case"}]}
-        self.mock_migration.transform_data.return_value = {"test_cases": [{"id": "456", "name": "Test Case in qTest"}]}
+        self.mock_migration.extract_data.return_value = {
+            "test_cases": [{"id": "123", "name": "Test Case"}]
+        }
+        self.mock_migration.transform_data.return_value = {
+            "test_cases": [{"id": "456", "name": "Test Case in qTest"}]
+        }
         self.mock_migration.load_data.return_value = {"success": True}
 
         # Add custom mock rules
@@ -82,9 +83,7 @@ class TestValidationIntegration(unittest.TestCase):
         self.transform_rule = MockRule(
             "test_transform", ValidationPhase.TRANSFORMATION, ValidationScope.TEST_CASE
         )
-        self.load_rule = MockRule(
-            "test_load", ValidationPhase.LOADING, ValidationScope.TEST_CASE
-        )
+        self.load_rule = MockRule("test_load", ValidationPhase.LOADING, ValidationScope.TEST_CASE)
 
         self.validation_manager.registry.register_rule(self.extract_rule)
         self.validation_manager.registry.register_rule(self.transform_rule)
@@ -99,13 +98,19 @@ class TestValidationIntegration(unittest.TestCase):
         self.assertTrue(len(validation_manager.registry.rules) > 0)
 
         # Verify rules are organized by scope and phase
-        self.assertTrue(len(validation_manager.registry.rules_by_scope[ValidationScope.TEST_CASE]) > 0)
-        self.assertTrue(len(validation_manager.registry.rules_by_phase[ValidationPhase.EXTRACTION]) > 0)
+        self.assertTrue(
+            len(validation_manager.registry.rules_by_scope[ValidationScope.TEST_CASE]) > 0
+        )
+        self.assertTrue(
+            len(validation_manager.registry.rules_by_phase[ValidationPhase.EXTRACTION]) > 0
+        )
 
         # Verify we can get rules by scope and phase
         test_case_rules = validation_manager.registry.get_rules_for_scope(ValidationScope.TEST_CASE)
         self.assertTrue(len(test_case_rules) > 0)
-        extraction_rules = validation_manager.registry.get_rules_for_phase(ValidationPhase.EXTRACTION)
+        extraction_rules = validation_manager.registry.get_rules_for_phase(
+            ValidationPhase.EXTRACTION
+        )
         self.assertTrue(len(extraction_rules) > 0)
 
     def test_validation_issue_tracking(self):
@@ -113,13 +118,13 @@ class TestValidationIntegration(unittest.TestCase):
         # Create a validation issue
         issue = ValidationIssue(
             id="test_issue",
-                level=ValidationLevel.ERROR,
-                scope=ValidationScope.TEST_CASE,
-                phase=ValidationPhase.EXTRACTION,
-                message="Test issue",
-                entity_id="123",
-                entity_type="test_case",
-            )
+            level=ValidationLevel.ERROR,
+            scope=ValidationScope.TEST_CASE,
+            phase=ValidationPhase.EXTRACTION,
+            message="Test issue",
+            entity_id="123",
+            entity_type="test_case",
+        )
 
         # Add issue to manager
         self.validation_manager.add_issue(issue)
@@ -153,13 +158,13 @@ class TestValidationIntegration(unittest.TestCase):
         # Configure rule to return an issue
         self.extract_rule.issue_to_return = ValidationIssue(
             id="test_execute_issue",
-                level=ValidationLevel.ERROR,
-                scope=ValidationScope.TEST_CASE,
-                phase=ValidationPhase.EXTRACTION,
-                message="Test validation issue",
-                entity_id="123",
-                entity_type="test_case",
-            )
+            level=ValidationLevel.ERROR,
+            scope=ValidationScope.TEST_CASE,
+            phase=ValidationPhase.EXTRACTION,
+            message="Test validation issue",
+            entity_id="123",
+            entity_type="test_case",
+        )
 
         # Execute validation
         issues = self.validation_manager.execute_validation(
@@ -176,23 +181,23 @@ class TestValidationIntegration(unittest.TestCase):
         # Configure rules to return issues
         self.extract_rule.issue_to_return = ValidationIssue(
             id="extract_issue",
-                level=ValidationLevel.WARNING,
-                scope=ValidationScope.TEST_CASE,
-                phase=ValidationPhase.EXTRACTION,
-                message="Extraction issue",
-                entity_id="123",
-                entity_type="test_case",
-            )
+            level=ValidationLevel.WARNING,
+            scope=ValidationScope.TEST_CASE,
+            phase=ValidationPhase.EXTRACTION,
+            message="Extraction issue",
+            entity_id="123",
+            entity_type="test_case",
+        )
 
         self.transform_rule.issue_to_return = ValidationIssue(
             id="transform_issue",
-                level=ValidationLevel.ERROR,
-                scope=ValidationScope.TEST_CASE,
-                phase=ValidationPhase.TRANSFORMATION,
-                message="Transformation issue",
-                entity_id="456",
-                entity_type="test_case",
-            )
+            level=ValidationLevel.ERROR,
+            scope=ValidationScope.TEST_CASE,
+            phase=ValidationPhase.TRANSFORMATION,
+            message="Transformation issue",
+            entity_id="456",
+            entity_type="test_case",
+        )
 
         # Simulate validation phases
         test_case = {"id": "123", "name": "Test Case"}
@@ -221,25 +226,29 @@ class TestValidationIntegration(unittest.TestCase):
     def test_validation_report_generation(self):
         """Test validation report generation."""
         # Add test issues
-        self.validation_manager.add_issue(ValidationIssue(
-            id="report_issue_1",
+        self.validation_manager.add_issue(
+            ValidationIssue(
+                id="report_issue_1",
                 level=ValidationLevel.ERROR,
                 scope=ValidationScope.TEST_CASE,
                 phase=ValidationPhase.EXTRACTION,
                 message="Test issue 1",
                 entity_id="123",
                 entity_type="test_case",
-            ))
+            )
+        )
 
-        self.validation_manager.add_issue(ValidationIssue(
-            id="report_issue_2",
+        self.validation_manager.add_issue(
+            ValidationIssue(
+                id="report_issue_2",
                 level=ValidationLevel.WARNING,
                 scope=ValidationScope.TEST_CYCLE,
                 phase=ValidationPhase.TRANSFORMATION,
                 message="Test issue 2",
                 entity_id="456",
                 entity_type="test_cycle",
-            ))
+            )
+        )
 
         # Generate report
         report = self.validator.generate_validation_report()

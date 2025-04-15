@@ -20,9 +20,8 @@ from ztoq.qtest_models import QTestPulseTrigger
 from ztoq.qtest_models import QTestPulseAction, QTestPulseActionParameter
 from ztoq.qtest_models import QTestPulseConstant
 
+
 @pytest.mark.unit()
-
-
 class TestQTestClient:
     @pytest.fixture()
     def config(self):
@@ -37,8 +36,9 @@ class TestQTestClient:
     @pytest.fixture()
     def client(self, config):
         """Create a test qTest client with mocked authentication."""
-        with patch("ztoq.qtest_client.requests.post") as mock_post, \
-             patch("ztoq.qtest_client.requests.request") as mock_request:
+        with patch("ztoq.qtest_client.requests.post") as mock_post, patch(
+            "ztoq.qtest_client.requests.request"
+        ) as mock_request:
             # Mock post for authentication
             mock_response = MagicMock()
             mock_response.json.return_value = {"access_token": "mock-token"}
@@ -50,7 +50,7 @@ class TestQTestClient:
                 status_code=200,
                 headers={},
                 json=lambda: {"test": "data"},
-                raise_for_status=lambda: None
+                raise_for_status=lambda: None,
             )
 
             return QTestClient(config)
@@ -73,8 +73,8 @@ class TestQTestClient:
         mock_response.status_code = 200
         mock_response.headers = {
             "X-RateLimit-Remaining": "950",
-                "X-RateLimit-Reset": "1633046400",
-            }
+            "X-RateLimit-Reset": "1633046400",
+        }
         mock_response.content = b"content"
         mock_request.return_value = mock_response
         mock_response.raise_for_status = MagicMock()
@@ -101,16 +101,16 @@ class TestQTestClient:
         # Mock the response with complete project data to satisfy validators
         mock_data = {
             "page": 1,
-                "pageSize": 10,
-                "total": 2,
-                "items": [
+            "pageSize": 10,
+            "total": 2,
+            "items": [
                 {
                     "id": 1,
                     "name": "Project 1",
                     "description": "Test Project 1",
                     "startDate": None,
                     "endDate": None,
-                    "statusName": "Active"
+                    "statusName": "Active",
                 },
                 {
                     "id": 2,
@@ -118,17 +118,17 @@ class TestQTestClient:
                     "description": "Test Project 2",
                     "startDate": None,
                     "endDate": None,
-                    "statusName": "Active"
+                    "statusName": "Active",
                 },
-                ],
-            }
+            ],
+        }
         mock_response.json.return_value = mock_data
         mock_response.status_code = 200
         mock_request.return_value = mock_response
         mock_response.raise_for_status = MagicMock()
 
         # Patch QTestProject to avoid get attribute error
-        with patch('ztoq.qtest_client.QTestProject') as MockQTestProject:
+        with patch("ztoq.qtest_client.QTestProject") as MockQTestProject:
             # Configure mocks for QTestProject instances
             mock_project1 = MagicMock()
             mock_project1.id = 1
@@ -170,22 +170,22 @@ class TestQTestClient:
         mock_data = [
             {
                 "page": 1,
-                    "pageSize": 2,
-                    "total": 3,
-                    "items": [
+                "pageSize": 2,
+                "total": 3,
+                "items": [
                     {"id": 1, "name": "Test Case 1", "steps": []},
-                        {"id": 2, "name": "Test Case 2", "steps": []},
-                    ],
-                },
-                {
+                    {"id": 2, "name": "Test Case 2", "steps": []},
+                ],
+            },
+            {
                 "page": 2,
-                    "pageSize": 2,
-                    "total": 3,
-                    "items": [
+                "pageSize": 2,
+                "total": 3,
+                "items": [
                     {"id": 3, "name": "Test Case 3", "steps": []},
-                    ],
-                },
-            ]
+                ],
+            },
+        ]
 
         # Setup mock to return paginated data
         client._make_request = MagicMock()
@@ -194,7 +194,7 @@ class TestQTestClient:
         )
 
         # Mock the QTestTestCase class
-        with patch('ztoq.qtest_client.QTestTestCase') as MockQTestTestCase:
+        with patch("ztoq.qtest_client.QTestTestCase") as MockQTestTestCase:
             # Create three mock test cases with correct IDs
             mock_tc1 = MagicMock()
             mock_tc1.id = 1
@@ -214,7 +214,7 @@ class TestQTestClient:
             )
 
             # Patch QTestPaginatedResponse
-            with patch('ztoq.qtest_client.QTestPaginatedResponse') as MockQTestPaginatedResponse:
+            with patch("ztoq.qtest_client.QTestPaginatedResponse") as MockQTestPaginatedResponse:
                 # Create mock paginated responses
                 mock_page1 = MagicMock()
                 mock_page1.items = mock_data[0]["items"]
@@ -234,7 +234,9 @@ class TestQTestClient:
                 MockQTestPaginatedResponse.side_effect = [mock_page1, mock_page2]
 
                 # Now setup __next__ to iterate through the test cases without using 'get'
-                with patch('ztoq.qtest_client.QTestPaginatedIterator.__next__', create=True) as mock_next:
+                with patch(
+                    "ztoq.qtest_client.QTestPaginatedIterator.__next__", create=True
+                ) as mock_next:
                     mock_next.side_effect = [mock_tc1, mock_tc2, mock_tc3, StopIteration()]
 
                     # Iterate and verify
@@ -248,7 +250,9 @@ class TestQTestClient:
                     assert test_cases[2].id == 3
 
             # Verify correct number of calls to make_request
-            assert client._make_request.call_count == 0  # Our mocked __next__ doesn't call make_request
+            assert (
+                client._make_request.call_count == 0
+            )  # Our mocked __next__ doesn't call make_request
 
     def test_paginated_iterator_parameters_api(self, client):
         """Test the paginated iterator with Parameters API format."""
@@ -257,29 +261,27 @@ class TestQTestClient:
         mock_data = [
             {
                 "offset": 0,
-                    "limit": 2,
-                    "total": 3,
-                    "data": [
+                "limit": 2,
+                "total": 3,
+                "data": [
                     {"id": 1, "name": "Parameter 1", "projectId": 12345, "status": "Active"},
-                        {"id": 2, "name": "Parameter 2", "projectId": 12345, "status": "Active"},
-                    ],
-                },
-                {
+                    {"id": 2, "name": "Parameter 2", "projectId": 12345, "status": "Active"},
+                ],
+            },
+            {
                 "offset": 2,
-                    "limit": 2,
-                    "total": 3,
-                    "data": [
+                "limit": 2,
+                "total": 3,
+                "data": [
                     {"id": 3, "name": "Parameter 3", "projectId": 12345, "status": "Active"},
-                    ],
-                },
-            ]
+                ],
+            },
+        ]
 
         # Setup mock to return paginated data
         client._make_request = MagicMock()
         client._make_request.side_effect = lambda method, endpoint, params=None, **kwargs: (
-            mock_data[0]
-            if params is not None and params.get("offset") == 0
-            else mock_data[1]
+            mock_data[0] if params is not None and params.get("offset") == 0 else mock_data[1]
         )
 
         # Get iterator
@@ -305,32 +307,32 @@ class TestQTestClient:
         mock_response = MagicMock()
         mock_response.json.return_value = {
             "page": 1,
-                "pageSize": 10,
-                "total": 2,
-                "items": [
+            "pageSize": 10,
+            "total": 2,
+            "items": [
                 {
                     "id": 101,
-                        "name": "Login Test",
-                        "description": "Test login functionality",
-                        "precondition": "User is registered",
-                        "steps": [
+                    "name": "Login Test",
+                    "description": "Test login functionality",
+                    "precondition": "User is registered",
+                    "steps": [
                         {
                             "id": 201,
-                                "description": "Navigate to login page",
-                                "expectedResult": "Login page is displayed",
-                                "order": 1,
-                            }
+                            "description": "Navigate to login page",
+                            "expectedResult": "Login page is displayed",
+                            "order": 1,
+                        }
                     ],
-                    },
-                    {
+                },
+                {
                     "id": 102,
-                        "name": "Registration Test",
-                        "description": "Test user registration",
-                        "precondition": "User is not registered",
-                        "steps": [],
-                    },
-                ],
-            }
+                    "name": "Registration Test",
+                    "description": "Test user registration",
+                    "precondition": "User is not registered",
+                    "steps": [],
+                },
+            ],
+        }
         mock_response.status_code = 200
         mock_request.return_value = mock_response
         mock_response.raise_for_status = MagicMock()
@@ -339,9 +341,9 @@ class TestQTestClient:
         with patch("ztoq.qtest_client.QTestPaginatedIterator.__next__") as mock_next:
             mock_next.side_effect = [
                 QTestTestCase(**mock_response.json.return_value["items"][0]),
-                    QTestTestCase(**mock_response.json.return_value["items"][1]),
-                    StopIteration(),
-                ]
+                QTestTestCase(**mock_response.json.return_value["items"][1]),
+                StopIteration(),
+            ]
 
             # Call the method
             iterator = client.get_test_cases()
@@ -363,18 +365,18 @@ class TestQTestClient:
         mock_response = MagicMock()
         mock_response.json.return_value = {
             "id": 101,
-                "name": "Login Test",
-                "description": "Test login functionality",
-                "precondition": "User is registered",
-                "steps": [
+            "name": "Login Test",
+            "description": "Test login functionality",
+            "precondition": "User is registered",
+            "steps": [
                 {
                     "id": 201,
-                        "description": "Navigate to login page",
-                        "expectedResult": "Login page is displayed",
-                        "order": 1,
-                    }
+                    "description": "Navigate to login page",
+                    "expectedResult": "Login page is displayed",
+                    "order": 1,
+                }
             ],
-            }
+        }
         mock_response.status_code = 200
         mock_request.return_value = mock_response
         mock_response.raise_for_status = MagicMock()
@@ -401,10 +403,10 @@ class TestQTestClient:
         # Create test case to submit
         test_case = QTestTestCase(
             name="New Test Case",
-                description="Description",
-                precondition="Precondition",
-                test_steps=[{"description": "Step 1", "expectedResult": "Result 1", "order": 1}],
-            )
+            description="Description",
+            precondition="Precondition",
+            test_steps=[{"description": "Step 1", "expectedResult": "Result 1", "order": 1}],
+        )
 
         # Setup mock
         mock_response = MagicMock()
@@ -442,12 +444,12 @@ class TestQTestClient:
         mock_response = MagicMock()
         mock_response.json.return_value = {
             "id": 301,
-                "name": "test_attachment.txt",
-                "contentType": "text/plain",
-                "size": 12,
-                "createdDate": "2023-01-01T12:00:00Z",
-                "webUrl": "https://example.com/attachments/301",
-            }
+            "name": "test_attachment.txt",
+            "contentType": "text/plain",
+            "size": 12,
+            "createdDate": "2023-01-01T12:00:00Z",
+            "webUrl": "https://example.com/attachments/301",
+        }
         mock_response.status_code = 200
         mock_request.return_value = mock_response
         mock_response.raise_for_status = MagicMock()
@@ -478,25 +480,25 @@ class TestQTestClient:
         mock_response = MagicMock()
         mock_response.json.return_value = {
             "page": 1,
-                "pageSize": 10,
-                "total": 2,
-                "items": [
+            "pageSize": 10,
+            "total": 2,
+            "items": [
                 {
                     "id": 401,
-                        "name": "Module 1",
-                        "description": "First module",
-                        "parentId": None,
-                        "pid": "MD-1",
-                    },
-                    {
+                    "name": "Module 1",
+                    "description": "First module",
+                    "parentId": None,
+                    "pid": "MD-1",
+                },
+                {
                     "id": 402,
-                        "name": "Module 2",
-                        "description": "Second module",
-                        "parentId": 401,
-                        "pid": "MD-2",
-                    },
-                ],
-            }
+                    "name": "Module 2",
+                    "description": "Second module",
+                    "parentId": 401,
+                    "pid": "MD-2",
+                },
+            ],
+        }
         mock_response.status_code = 200
         mock_request.return_value = mock_response
         mock_response.raise_for_status = MagicMock()
@@ -505,9 +507,9 @@ class TestQTestClient:
         with patch("ztoq.qtest_client.QTestPaginatedIterator.__next__") as mock_next:
             mock_next.side_effect = [
                 QTestModule(**mock_response.json.return_value["items"][0]),
-                    QTestModule(**mock_response.json.return_value["items"][1]),
-                    StopIteration(),
-                ]
+                QTestModule(**mock_response.json.return_value["items"][1]),
+                StopIteration(),
+            ]
 
             # Call the method
             iterator = client.get_modules()
@@ -533,25 +535,25 @@ class TestQTestClient:
         mock_response = MagicMock()
         mock_response.json.return_value = {
             "offset": 0,
-                "limit": 10,
-                "total": 2,
-                "data": [
+            "limit": 10,
+            "total": 2,
+            "data": [
                 {
                     "id": 701,
-                        "name": "Browser",
-                        "description": "Browser type",
-                        "projectId": 12345,
-                        "status": "ACTIVE",
-                    },
-                    {
+                    "name": "Browser",
+                    "description": "Browser type",
+                    "projectId": 12345,
+                    "status": "ACTIVE",
+                },
+                {
                     "id": 702,
-                        "name": "Environment",
-                        "description": "Test environment",
-                        "projectId": 12345,
-                        "status": "ACTIVE",
-                    },
-                ],
-            }
+                    "name": "Environment",
+                    "description": "Test environment",
+                    "projectId": 12345,
+                    "status": "ACTIVE",
+                },
+            ],
+        }
         mock_response.status_code = 200
         mock_request.return_value = mock_response
         mock_response.raise_for_status = MagicMock()
@@ -560,9 +562,9 @@ class TestQTestClient:
         with patch("ztoq.qtest_client.QTestPaginatedIterator.__next__") as mock_next:
             mock_next.side_effect = [
                 QTestParameter(**mock_response.json.return_value["data"][0]),
-                    QTestParameter(**mock_response.json.return_value["data"][1]),
-                    StopIteration(),
-                ]
+                QTestParameter(**mock_response.json.return_value["data"][1]),
+                StopIteration(),
+            ]
 
             # Call the method
             iterator = client.get_parameters()
@@ -586,23 +588,23 @@ class TestQTestClient:
         # Create parameter to submit
         parameter = QTestParameter(
             name="New Parameter",
-                description="Description",
-                values=[{"value": "Value 1"}, {"value": "Value 2"}],
-            )
+            description="Description",
+            values=[{"value": "Value 1"}, {"value": "Value 2"}],
+        )
 
         # Setup mock
         mock_response = MagicMock()
         # Return the parameter with added ID
         response_data = {
             "status": "SUCCESS",
-                "data": {
+            "data": {
                 "id": 801,
-                    "name": "New Parameter",
-                    "description": "Description",
-                    "projectId": 12345,
-                    "status": "ACTIVE",
-                },
-            }
+                "name": "New Parameter",
+                "description": "Description",
+                "projectId": 12345,
+                "status": "ACTIVE",
+            },
+        }
         mock_response.json.return_value = response_data
         mock_response.status_code = 201
         mock_request.return_value = mock_response
@@ -631,8 +633,8 @@ class TestQTestClient:
         # Mock time.time and time.sleep
         with (
             patch("ztoq.qtest_client.time.time") as mock_time,
-                patch("ztoq.qtest_client.time.sleep") as mock_sleep,
-            ):
+            patch("ztoq.qtest_client.time.sleep") as mock_sleep,
+        ):
             # Setup mock_time to simulate passage of time
             mock_time.side_effect = [100, 101]  # First call returns 100, second returns 101
 
@@ -693,33 +695,33 @@ class TestQTestClient:
         # Setup mock responses
         rule_data = {
             "id": 4001,
-                "name": "JIRA Rule",
-                "description": "Create JIRA issue when test fails",
-                "projectId": 12345,
-                "enabled": True,
-                "triggerId": 1001,
-                "actionId": 2001,
-            }
+            "name": "JIRA Rule",
+            "description": "Create JIRA issue when test fails",
+            "projectId": 12345,
+            "enabled": True,
+            "triggerId": 1001,
+            "actionId": 2001,
+        }
 
         new_rule_data = {
             "id": 4002,
-                "name": "New Rule",
-                "description": "New rule description",
-                "projectId": 12345,
-                "enabled": True,
-                "triggerId": 1001,
-                "actionId": 2001,
-            }
+            "name": "New Rule",
+            "description": "New rule description",
+            "projectId": 12345,
+            "enabled": True,
+            "triggerId": 1001,
+            "actionId": 2001,
+        }
 
         updated_rule_data = {
             "id": 4001,
-                "name": "Updated Rule",
-                "description": "Updated description",
-                "projectId": 12345,
-                "enabled": True,
-                "triggerId": 1001,
-                "actionId": 2001,
-            }
+            "name": "Updated Rule",
+            "description": "Updated description",
+            "projectId": 12345,
+            "enabled": True,
+            "triggerId": 1001,
+            "actionId": 2001,
+        }
 
         # Configure mock responses for each method call individually
         # Using a dict to map method + endpoint to responses
@@ -741,7 +743,9 @@ class TestQTestClient:
         responses[("DELETE", "/pulse/rules/4001")] = {}
 
         # For execute_pulse_rule_manually
-        responses[("POST", "/pulse/rules/4001/execute")] = {"data": {"message": "Rule executed successfully"}}
+        responses[("POST", "/pulse/rules/4001/execute")] = {
+            "data": {"message": "Rule executed successfully"}
+        }
 
         # Mock _make_request to return responses based on method and endpoint
         def mock_response(method, endpoint, **kwargs):
@@ -751,12 +755,10 @@ class TestQTestClient:
 
         # Setup iterator mock for get_pulse_rules
         with patch("ztoq.qtest_client.QTestPaginatedIterator.__next__") as mock_next:
-
-
             mock_next.side_effect = [
                 QTestPulseRule(**rule_data),
-                    StopIteration(),
-                ]
+                StopIteration(),
+            ]
 
             # Test get_pulse_rules
             rules_iterator = client.get_pulse_rules()
@@ -774,12 +776,12 @@ class TestQTestClient:
 
         new_rule = QTestPulseRule(
             name="New Rule",
-                description="New rule description",
-                projectId=12345,
-                enabled=True,
-                triggerId=1001,
-                actionId=2001,
-            )
+            description="New rule description",
+            projectId=12345,
+            enabled=True,
+            triggerId=1001,
+            actionId=2001,
+        )
         created_rule = client.create_pulse_rule(new_rule)
         assert created_rule.id == 4002
         assert created_rule.name == "New Rule"
@@ -787,13 +789,13 @@ class TestQTestClient:
         # Test update_pulse_rule
         update_data = QTestPulseRule(
             id=4001,
-                name="Updated Rule",
-                description="Updated description",
-                projectId=12345,
-                enabled=True,
-                triggerId=1001,
-                actionId=2001,
-            )
+            name="Updated Rule",
+            description="Updated description",
+            projectId=12345,
+            enabled=True,
+            triggerId=1001,
+            actionId=2001,
+        )
         updated_rule = client.update_pulse_rule(4001, update_data)
         assert updated_rule.name == "Updated Rule"
 
@@ -814,27 +816,27 @@ class TestQTestClient:
         # Setup mock responses
         trigger_data = {
             "id": 1001,
-                "name": "Test Log Created",
-                "eventType": "TEST_LOG_CREATED",
-                "projectId": 12345,
-                "conditions": [{"field": "status", "operator": "equals", "value": "FAIL"}],
-            }
+            "name": "Test Log Created",
+            "eventType": "TEST_LOG_CREATED",
+            "projectId": 12345,
+            "conditions": [{"field": "status", "operator": "equals", "value": "FAIL"}],
+        }
 
         new_trigger_data = {
             "id": 1002,
-                "name": "New Trigger",
-                "eventType": "TEST_CASE_CREATED",
-                "projectId": 12345,
-                "conditions": [],
-            }
+            "name": "New Trigger",
+            "eventType": "TEST_CASE_CREATED",
+            "projectId": 12345,
+            "conditions": [],
+        }
 
         updated_trigger_data = {
             "id": 1001,
-                "name": "Updated Trigger",
-                "eventType": "TEST_LOG_CREATED",
-                "projectId": 12345,
-                "conditions": [{"field": "status", "operator": "equals", "value": "FAIL"}],
-            }
+            "name": "Updated Trigger",
+            "eventType": "TEST_LOG_CREATED",
+            "projectId": 12345,
+            "conditions": [{"field": "status", "operator": "equals", "value": "FAIL"}],
+        }
 
         # Configure mock responses for each method call individually
         # Using a dict to map method + endpoint to responses
@@ -863,12 +865,10 @@ class TestQTestClient:
 
         # Setup iterator mock for get_pulse_triggers
         with patch("ztoq.qtest_client.QTestPaginatedIterator.__next__") as mock_next:
-
-
             mock_next.side_effect = [
                 QTestPulseTrigger(**trigger_data),
-                    StopIteration(),
-                ]
+                StopIteration(),
+            ]
 
             # Test get_pulse_triggers
             triggers_iterator = client.get_pulse_triggers()
@@ -886,10 +886,10 @@ class TestQTestClient:
 
         new_trigger = QTestPulseTrigger(
             name="New Trigger",
-                eventType="TEST_CASE_CREATED",
-                projectId=12345,
-                conditions=[],
-            )
+            eventType="TEST_CASE_CREATED",
+            projectId=12345,
+            conditions=[],
+        )
         created_trigger = client.create_pulse_trigger(new_trigger)
         assert created_trigger.id == 1002
         assert created_trigger.name == "New Trigger"
@@ -897,11 +897,11 @@ class TestQTestClient:
         # Test update_pulse_trigger
         update_data = QTestPulseTrigger(
             id=1001,
-                name="Updated Trigger",
-                eventType="TEST_LOG_CREATED",
-                projectId=12345,
-                conditions=[{"field": "status", "operator": "equals", "value": "FAIL"}],
-            )
+            name="Updated Trigger",
+            eventType="TEST_LOG_CREATED",
+            projectId=12345,
+            conditions=[{"field": "status", "operator": "equals", "value": "FAIL"}],
+        )
         updated_trigger = client.update_pulse_trigger(1001, update_data)
         assert updated_trigger.name == "Updated Trigger"
 
@@ -918,33 +918,33 @@ class TestQTestClient:
         # Setup mock responses
         action_data = {
             "id": 2001,
-                "name": "Create JIRA Issue",
-                "actionType": "CREATE_DEFECT",
-                "projectId": 12345,
-                "parameters": [
+            "name": "Create JIRA Issue",
+            "actionType": "CREATE_DEFECT",
+            "projectId": 12345,
+            "parameters": [
                 {"name": "issueType", "value": "Bug"},
-                ],
-            }
+            ],
+        }
 
         new_action_data = {
             "id": 2002,
-                "name": "New Action",
-                "actionType": "SEND_MAIL",
-                "projectId": 12345,
-                "parameters": [
+            "name": "New Action",
+            "actionType": "SEND_MAIL",
+            "projectId": 12345,
+            "parameters": [
                 {"name": "recipients", "value": "test@example.com"},
-                ],
-            }
+            ],
+        }
 
         updated_action_data = {
             "id": 2001,
-                "name": "Updated Action",
-                "actionType": "CREATE_DEFECT",
-                "projectId": 12345,
-                "parameters": [
+            "name": "Updated Action",
+            "actionType": "CREATE_DEFECT",
+            "projectId": 12345,
+            "parameters": [
                 {"name": "issueType", "value": "Bug"},
-                ],
-            }
+            ],
+        }
 
         # Configure mock responses for each method call individually
         # Using a dict to map method + endpoint to responses
@@ -973,12 +973,10 @@ class TestQTestClient:
 
         # Setup iterator mock for get_pulse_actions
         with patch("ztoq.qtest_client.QTestPaginatedIterator.__next__") as mock_next:
-
-
             mock_next.side_effect = [
                 QTestPulseAction(**action_data),
-                    StopIteration(),
-                ]
+                StopIteration(),
+            ]
 
             # Test get_pulse_actions
             actions_iterator = client.get_pulse_actions()
@@ -996,12 +994,12 @@ class TestQTestClient:
 
         new_action = QTestPulseAction(
             name="New Action",
-                actionType="SEND_MAIL",
-                projectId=12345,
-                parameters=[
+            actionType="SEND_MAIL",
+            projectId=12345,
+            parameters=[
                 QTestPulseActionParameter(name="recipients", value="test@example.com"),
-                ],
-            )
+            ],
+        )
         created_action = client.create_pulse_action(new_action)
         assert created_action.id == 2002
         assert created_action.name == "New Action"
@@ -1009,13 +1007,13 @@ class TestQTestClient:
         # Test update_pulse_action
         update_data = QTestPulseAction(
             id=2001,
-                name="Updated Action",
-                actionType="CREATE_DEFECT",
-                projectId=12345,
-                parameters=[
+            name="Updated Action",
+            actionType="CREATE_DEFECT",
+            projectId=12345,
+            parameters=[
                 QTestPulseActionParameter(name="issueType", value="Bug"),
-                ],
-            )
+            ],
+        )
         updated_action = client.update_pulse_action(2001, update_data)
         assert updated_action.name == "Updated Action"
 
@@ -1032,27 +1030,27 @@ class TestQTestClient:
         # Setup mock responses
         constant_data = {
             "id": 3001,
-                "name": "QA_EMAIL",
-                "value": "qa@example.com",
-                "description": "Email address for QA team",
-                "projectId": 12345,
-            }
+            "name": "QA_EMAIL",
+            "value": "qa@example.com",
+            "description": "Email address for QA team",
+            "projectId": 12345,
+        }
 
         new_constant_data = {
             "id": 3002,
-                "name": "NEW_CONSTANT",
-                "value": "new value",
-                "description": "New constant description",
-                "projectId": 12345,
-            }
+            "name": "NEW_CONSTANT",
+            "value": "new value",
+            "description": "New constant description",
+            "projectId": 12345,
+        }
 
         updated_constant_data = {
             "id": 3001,
-                "name": "UPDATED_CONSTANT",
-                "value": "updated@example.com",
-                "description": "Email address for QA team",
-                "projectId": 12345,
-            }
+            "name": "UPDATED_CONSTANT",
+            "value": "updated@example.com",
+            "description": "Email address for QA team",
+            "projectId": 12345,
+        }
 
         # Configure mock responses for each method call individually
         # Using a dict to map method + endpoint to responses
@@ -1081,12 +1079,10 @@ class TestQTestClient:
 
         # Setup iterator mock for get_pulse_constants
         with patch("ztoq.qtest_client.QTestPaginatedIterator.__next__") as mock_next:
-
-
             mock_next.side_effect = [
                 QTestPulseConstant(**constant_data),
-                    StopIteration(),
-                ]
+                StopIteration(),
+            ]
 
             # Test get_pulse_constants
             constants_iterator = client.get_pulse_constants()
@@ -1104,10 +1100,10 @@ class TestQTestClient:
 
         new_constant = QTestPulseConstant(
             name="NEW_CONSTANT",
-                value="new value",
-                description="New constant description",
-                projectId=12345,
-            )
+            value="new value",
+            description="New constant description",
+            projectId=12345,
+        )
         created_constant = client.create_pulse_constant(new_constant)
         assert created_constant.id == 3002
         assert created_constant.name == "NEW_CONSTANT"
@@ -1115,11 +1111,11 @@ class TestQTestClient:
         # Test update_pulse_constant
         update_data = QTestPulseConstant(
             id=3001,
-                name="UPDATED_CONSTANT",
-                value="updated@example.com",
-                description="Email address for QA team",
-                projectId=12345,
-            )
+            name="UPDATED_CONSTANT",
+            value="updated@example.com",
+            description="Email address for QA team",
+            projectId=12345,
+        )
         updated_constant = client.update_pulse_constant(3001, update_data)
         assert updated_constant.name == "UPDATED_CONSTANT"
 
@@ -1139,19 +1135,19 @@ class TestQTestClient:
             "data": [
                 {
                     "id": "rule1",
-                        "name": "JIRA Integration Rule",
-                        "description": "Update JIRA when test fails",
-                        "projectId": 12345,
-                        "enabled": True,
-                    },
-                    {
+                    "name": "JIRA Integration Rule",
+                    "description": "Update JIRA when test fails",
+                    "projectId": 12345,
+                    "enabled": True,
+                },
+                {
                     "id": "rule2",
-                        "name": "Email Notification Rule",
-                        "description": "Send email on test completion",
-                        "projectId": 12345,
-                        "enabled": True,
-                    },
-                ]
+                    "name": "Email Notification Rule",
+                    "description": "Send email on test completion",
+                    "projectId": 12345,
+                    "enabled": True,
+                },
+            ]
         }
         mock_response.status_code = 200
         mock_request.return_value = mock_response
@@ -1185,19 +1181,19 @@ class TestQTestClient:
             "data": [
                 {
                     "id": "feature1",
-                        "name": "User Authentication",
-                        "description": "User login and registration",
-                        "projectId": 12345,
-                        "content": "Feature: User Authentication...",
-                    },
-                    {
+                    "name": "User Authentication",
+                    "description": "User login and registration",
+                    "projectId": 12345,
+                    "content": "Feature: User Authentication...",
+                },
+                {
                     "id": "feature2",
-                        "name": "Shopping Cart",
-                        "description": "Shopping cart functionality",
-                        "projectId": 12345,
-                        "content": "Feature: Shopping Cart...",
-                    },
-                ]
+                    "name": "Shopping Cart",
+                    "description": "Shopping cart functionality",
+                    "projectId": 12345,
+                    "content": "Feature: Shopping Cart...",
+                },
+            ]
         }
         mock_response.status_code = 200
         mock_request.return_value = mock_response
@@ -1225,11 +1221,11 @@ class TestQTestClient:
         # Create data with sensitive information
         data = {
             "username": "test-user",
-                "password": "secret-password",
-                "apiToken": "secret-token",
-                "config": {"secretKey": "very-secret", "credentials": {"password": "nested-password"}},
-                "normal": "not-sensitive",
-            }
+            "password": "secret-password",
+            "apiToken": "secret-token",
+            "config": {"secretKey": "very-secret", "credentials": {"password": "nested-password"}},
+            "normal": "not-sensitive",
+        }
 
         # Mask the data
         masked = client._mask_sensitive_data(data)
@@ -1252,9 +1248,15 @@ class TestQTestClient:
 
         # Test different network errors
         network_errors = [
-            (requests.exceptions.ConnectionError("Failed to establish connection"), "failed to establish connection"),
+            (
+                requests.exceptions.ConnectionError("Failed to establish connection"),
+                "failed to establish connection",
+            ),
             (requests.exceptions.Timeout("Request timed out"), "request timed out"),
-            (requests.exceptions.RequestException("General request error"), "general request error"),
+            (
+                requests.exceptions.RequestException("General request error"),
+                "general request error",
+            ),
         ]
 
         for error, error_type in network_errors:
@@ -1377,12 +1379,12 @@ class TestQTestClient:
         import threading
 
         # Thread-safe counter for requests
-        counter = {'value': 0}
+        counter = {"value": 0}
         counter_lock = threading.Lock()
 
         def count_request(*args, **kwargs):
             with counter_lock:
-                counter['value'] += 1
+                counter["value"] += 1
             # Return a successful response
             mock_resp = MagicMock()
             mock_resp.json.return_value = {"result": f"success-{counter['value']}"}
@@ -1395,13 +1397,12 @@ class TestQTestClient:
         # Make concurrent requests
         with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
             futures = [
-                executor.submit(client._make_request, "GET", "/test-endpoint")
-                for _ in range(10)
+                executor.submit(client._make_request, "GET", "/test-endpoint") for _ in range(10)
             ]
             results = [future.result() for future in futures]
 
         # Verify all requests were processed
-        assert counter['value'] == 10
+        assert counter["value"] == 10
         assert len(results) == 10
 
     @patch("ztoq.qtest_client.QTestClient._make_request")

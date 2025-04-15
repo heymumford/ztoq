@@ -15,6 +15,8 @@ from ztoq.custom_field_mapping import CustomFieldMapper, get_default_field_mappe
 from ztoq.models import CustomField, CustomFieldType
 
 import pytest
+
+
 @pytest.mark.unit
 class TestCustomFieldMapper(unittest.TestCase):
     """Test the CustomFieldMapper class."""
@@ -47,46 +49,65 @@ class TestCustomFieldMapper(unittest.TestCase):
         """Test transforming field values from Zephyr to qTest format."""
         # Test list to string for multiple select
         self.assertEqual(
-            self.mapper.transform_field_value("tags", CustomFieldType.MULTIPLE_SELECT, ["tag1", "tag2"]),
-                "tag1, tag2"
+            self.mapper.transform_field_value(
+                "tags", CustomFieldType.MULTIPLE_SELECT, ["tag1", "tag2"]
+            ),
+            "tag1, tag2",
         )
 
         # Test date formatting
         now = datetime.now()
         self.assertEqual(
-            self.mapper.transform_field_value("date", CustomFieldType.DATE, now),
-                now.isoformat()
+            self.mapper.transform_field_value("date", CustomFieldType.DATE, now), now.isoformat()
         )
 
         # Test boolean values
-        self.assertTrue(self.mapper.transform_field_value("automated", CustomFieldType.CHECKBOX, True))
-        self.assertTrue(self.mapper.transform_field_value("automated", CustomFieldType.CHECKBOX, "true"))
-        self.assertFalse(self.mapper.transform_field_value("automated", CustomFieldType.CHECKBOX, "false"))
+        self.assertTrue(
+            self.mapper.transform_field_value("automated", CustomFieldType.CHECKBOX, True)
+        )
+        self.assertTrue(
+            self.mapper.transform_field_value("automated", CustomFieldType.CHECKBOX, "true")
+        )
+        self.assertFalse(
+            self.mapper.transform_field_value("automated", CustomFieldType.CHECKBOX, "false")
+        )
 
         # Test numeric values
         self.assertEqual(self.mapper.transform_field_value("points", CustomFieldType.NUMERIC, 5), 5)
-        self.assertEqual(self.mapper.transform_field_value("points", CustomFieldType.NUMERIC, "5"), 5.0)
-        self.assertEqual(self.mapper.transform_field_value("points", CustomFieldType.NUMERIC, ""), 0)
+        self.assertEqual(
+            self.mapper.transform_field_value("points", CustomFieldType.NUMERIC, "5"), 5.0
+        )
+        self.assertEqual(
+            self.mapper.transform_field_value("points", CustomFieldType.NUMERIC, ""), 0
+        )
 
         # Test default string conversion
-        self.assertEqual(self.mapper.transform_field_value("name", CustomFieldType.TEXT, "Test"), "Test")
+        self.assertEqual(
+            self.mapper.transform_field_value("name", CustomFieldType.TEXT, "Test"), "Test"
+        )
 
         # Test status mapping
         self.assertEqual(self.mapper.transform_field_value("status", "TEXT", "PASS"), "PASSED")
-        self.assertEqual(self.mapper.transform_field_value("execution_status", "TEXT", "FAIL"), "FAILED")
+        self.assertEqual(
+            self.mapper.transform_field_value("execution_status", "TEXT", "FAIL"), "FAILED"
+        )
 
         # Test priority mapping
         self.assertEqual(self.mapper.transform_field_value("priority", "TEXT", "HIGH"), "HIGH")
-        self.assertEqual(self.mapper.transform_field_value("importance", "TEXT", "LOWEST"), "TRIVIAL")
+        self.assertEqual(
+            self.mapper.transform_field_value("importance", "TEXT", "LOWEST"), "TRIVIAL"
+        )
 
     def test_map_custom_fields(self):
         """Test mapping a list of Zephyr custom fields to qTest custom fields."""
         # Create test fields
         zephyr_fields = [
             CustomField(id="1", name="Priority", type=CustomFieldType.DROPDOWN, value="High"),
-                CustomField(id="2", name="Labels", type=CustomFieldType.MULTIPLE_SELECT, value=["tag1", "tag2"]),
-                CustomField(id="3", name="Automated", type=CustomFieldType.CHECKBOX, value=True),
-            ]
+            CustomField(
+                id="2", name="Labels", type=CustomFieldType.MULTIPLE_SELECT, value=["tag1", "tag2"]
+            ),
+            CustomField(id="3", name="Automated", type=CustomFieldType.CHECKBOX, value=True),
+        ]
 
         # Save current priority mapping behavior
         original_transform = self.mapper.transform_field_value
@@ -129,22 +150,24 @@ class TestCustomFieldMapper(unittest.TestCase):
         # Create test case data
         test_case = {
             "id": "123",
-                "key": "TEST-123",
-                "name": "Test Case",
-                "status": "Active",
-                "estimatedTime": 60,
-                "labels": ["regression", "smoke"],
-                "customFields": [
+            "key": "TEST-123",
+            "name": "Test Case",
+            "status": "Active",
+            "estimatedTime": 60,
+            "labels": ["regression", "smoke"],
+            "customFields": [
                 {"name": "Component", "type": CustomFieldType.DROPDOWN, "value": "UI"},
-                    {"name": "Automated", "type": CustomFieldType.CHECKBOX, "value": True}
-            ]
+                {"name": "Automated", "type": CustomFieldType.CHECKBOX, "value": True},
+            ],
         }
 
         # Map fields
         qtest_fields = self.mapper.map_testcase_fields(test_case)
 
         # Verify results
-        self.assertGreaterEqual(len(qtest_fields), 5)  # Key, status, estimated time, labels, and 2 custom fields
+        self.assertGreaterEqual(
+            len(qtest_fields), 5
+        )  # Key, status, estimated time, labels, and 2 custom fields
 
         # Check field mappings
         key_field = next((f for f in qtest_fields if f["field_name"] == "zephyr_key"), None)
@@ -173,21 +196,21 @@ class TestCustomFieldMapper(unittest.TestCase):
         # Create test cycle data
         test_cycle = {
             "id": "456",
-                "key": "CYCLE-456",
-                "name": "Test Cycle",
-                "status": "Active",
-                "environment": "Production",
-                "owner": "jdoe",
-                "customFields": [
-                {"name": "Sprint", "type": CustomFieldType.TEXT, "value": "Sprint 1"}
-            ]
+            "key": "CYCLE-456",
+            "name": "Test Cycle",
+            "status": "Active",
+            "environment": "Production",
+            "owner": "jdoe",
+            "customFields": [{"name": "Sprint", "type": CustomFieldType.TEXT, "value": "Sprint 1"}],
         }
 
         # Map fields
         qtest_fields = self.mapper.map_testcycle_fields(test_cycle)
 
         # Verify results
-        self.assertGreaterEqual(len(qtest_fields), 4)  # Key, status, environment, owner, and 1 custom field
+        self.assertGreaterEqual(
+            len(qtest_fields), 4
+        )  # Key, status, environment, owner, and 1 custom field
 
         # Check field mappings
         key_field = next((f for f in qtest_fields if f["field_name"] == "zephyr_key"), None)
@@ -211,30 +234,32 @@ class TestCustomFieldMapper(unittest.TestCase):
         # Create test execution data
         execution = {
             "id": "789",
-                "testCaseKey": "TEST-123",
-                "status": "PASS",
-                "environment": "Staging",
-                "executedBy": "jdoe",
-                "executedOn": datetime.now(),
-                "actualTime": 45,
-                "defects": [{"key": "BUG-001"}, {"key": "BUG-002"}],
-                "customFields": [
-                {"name": "Release", "type": CustomFieldType.TEXT, "value": "1.0"}
-            ]
+            "testCaseKey": "TEST-123",
+            "status": "PASS",
+            "environment": "Staging",
+            "executedBy": "jdoe",
+            "executedOn": datetime.now(),
+            "actualTime": 45,
+            "defects": [{"key": "BUG-001"}, {"key": "BUG-002"}],
+            "customFields": [{"name": "Release", "type": CustomFieldType.TEXT, "value": "1.0"}],
         }
 
         # Map fields
         qtest_fields = self.mapper.map_testrun_fields(execution)
 
         # Verify results
-        self.assertGreaterEqual(len(qtest_fields), 5)  # Environment, executed by, execution date, actual time, defects, and 1 custom field
+        self.assertGreaterEqual(
+            len(qtest_fields), 5
+        )  # Environment, executed by, execution date, actual time, defects, and 1 custom field
 
         # Check field mappings
         env_field = next((f for f in qtest_fields if f["field_name"] == "environment"), None)
         self.assertIsNotNone(env_field)
         self.assertEqual(env_field["field_value"], "Staging")
 
-        executed_by_field = next((f for f in qtest_fields if f["field_name"] == "executed_by"), None)
+        executed_by_field = next(
+            (f for f in qtest_fields if f["field_name"] == "executed_by"), None
+        )
         self.assertIsNotNone(executed_by_field)
         self.assertEqual(executed_by_field["field_value"], "jdoe")
 
@@ -250,13 +275,12 @@ class TestCustomFieldMapper(unittest.TestCase):
         self.assertIsNotNone(release_field)
         self.assertEqual(release_field["field_value"], "1.0")
 
-
     def test_transform_table_field(self):
         """Test transformation of table-structured fields."""
         # Test dictionary-based table format
         table_data = [
             {"id": 1, "name": "Row 1", "value": 100},
-                {"id": 2, "name": "Row 2", "value": 200}
+            {"id": 2, "name": "Row 2", "value": 200},
         ]
         result = self.mapper._transform_table_field(table_data)
         self.assertTrue(isinstance(result, str))
@@ -267,8 +291,8 @@ class TestCustomFieldMapper(unittest.TestCase):
         # Test list-based table format
         list_table = [
             ["Header 1", "Header 2", "Header 3"],
-                ["value1", "value2", "value3"],
-                ["value4", "value5", "value6"]
+            ["value1", "value2", "value3"],
+            ["value4", "value5", "value6"],
         ]
         result = self.mapper._transform_table_field(list_table)
         self.assertTrue(isinstance(result, str))
@@ -299,8 +323,8 @@ class TestCustomFieldMapper(unittest.TestCase):
         # Test list of dictionaries
         hierarchy_list = [
             {"id": "parent1", "name": "Parent"},
-                {"id": "child1", "name": "Child 1"},
-                {"id": "child2", "name": "Child 2"}
+            {"id": "child1", "name": "Child 1"},
+            {"id": "child2", "name": "Child 2"},
         ]
         result = self.mapper._transform_hierarchical_field(hierarchy_list)
         self.assertTrue("Parent" in result)
@@ -369,11 +393,11 @@ class TestCustomFieldMapper(unittest.TestCase):
         """Test extracting and mapping fields from an entity."""
         entity = {
             "name": "Test Case",
-                "description": "Test description",
-                "status": "PASS",
-                "priority": "HIGH",
-                "points": 5,
-                "automated": True
+            "description": "Test description",
+            "status": "PASS",
+            "priority": "HIGH",
+            "points": 5,
+            "automated": True,
         }
 
         # Test normal extraction
@@ -386,14 +410,20 @@ class TestCustomFieldMapper(unittest.TestCase):
         self.assertEqual(self.mapper.extract_and_map_field(entity, "priority"), "HIGH")
 
         # Test with type conversion
-        self.assertEqual(self.mapper.extract_and_map_field(entity, "points", target_type="NUMBER"), 5)
+        self.assertEqual(
+            self.mapper.extract_and_map_field(entity, "points", target_type="NUMBER"), 5
+        )
 
         # Test with default value for missing field
-        self.assertEqual(self.mapper.extract_and_map_field(entity, "missing_field", "default"), "default")
+        self.assertEqual(
+            self.mapper.extract_and_map_field(entity, "missing_field", "default"), "default"
+        )
 
         # Test with null value
         entity["null_field"] = None
-        self.assertEqual(self.mapper.extract_and_map_field(entity, "null_field", "default"), "default")
+        self.assertEqual(
+            self.mapper.extract_and_map_field(entity, "null_field", "default"), "default"
+        )
 
 
 @pytest.mark.unit

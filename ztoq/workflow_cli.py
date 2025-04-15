@@ -82,7 +82,8 @@ def run_workflow(
     qtest_project_id: int = typer.Option(..., help="qTest project ID"),
     # Workflow options
     phases: List[WorkflowPhase] = typer.Option(
-        [WorkflowPhase.ALL], help="Phases to run (extract, transform, load, validate, rollback, all)"
+        [WorkflowPhase.ALL],
+        help="Phases to run (extract, transform, load, validate, rollback, all)",
     ),
     batch_size: int = typer.Option(50, help="Number of items to process in a batch"),
     max_workers: int = typer.Option(
@@ -90,29 +91,32 @@ def run_workflow(
     ),
     timeout: int = typer.Option(3600, help="Timeout in seconds for each phase"),
     no_validation: bool = typer.Option(False, help="Disable validation"),
-    no_rollback: bool = typer.Option(False, help="Disable rollback capability for failed migrations"),
+    no_rollback: bool = typer.Option(
+        False, help="Disable rollback capability for failed migrations"
+    ),
     use_batch_transformer: bool = typer.Option(
-        True, "--use-batch-transformer/--no-use-batch-transformer",
-        help="Use SQL-based batch transformer for transformation phase"
+        True,
+        "--use-batch-transformer/--no-use-batch-transformer",
+        help="Use SQL-based batch transformer for transformation phase",
     ),
     # Checkpoint options
     auto_checkpoint: bool = typer.Option(
-        True, "--auto-checkpoint/--no-auto-checkpoint",
-        help="Automatically create checkpoints during execution"
+        True,
+        "--auto-checkpoint/--no-auto-checkpoint",
+        help="Automatically create checkpoints during execution",
     ),
     checkpoint_interval: int = typer.Option(
         300, help="Time between automatic checkpoints in seconds (5 minutes default)"
     ),
     resume_from: Optional[str] = typer.Option(
-        None, help="Resume from a specific checkpoint ID or 'latest' to resume from the most recent checkpoint"
+        None,
+        help="Resume from a specific checkpoint ID or 'latest' to resume from the most recent checkpoint",
     ),
     # Output options
     output_dir: Optional[Path] = typer.Option(
         None, help="Directory for output files (reports, logs)"
     ),
-    attachments_dir: Optional[Path] = typer.Option(
-        None, help="Directory for storing attachments"
-    ),
+    attachments_dir: Optional[Path] = typer.Option(None, help="Directory for storing attachments"),
     report_format: OutputFormat = typer.Option(
         OutputFormat.JSON, help="Report output format (json, html, text)"
     ),
@@ -164,15 +168,17 @@ def run_workflow(
         orchestrator = WorkflowOrchestrator(workflow_config)
 
         # Configure checkpointing if available
-        if hasattr(orchestrator, 'initialize_checkpoint_manager'):
+        if hasattr(orchestrator, "initialize_checkpoint_manager"):
             checkpoint_dir = output_dir / "checkpoints" if output_dir else Path("checkpoints")
             orchestrator.initialize_checkpoint_manager(
                 checkpoint_dir=checkpoint_dir,
                 auto_checkpoint=auto_checkpoint,
                 checkpoint_interval=checkpoint_interval,
-                use_database=True
+                use_database=True,
             )
-            logger.info(f"Checkpointing enabled (auto={auto_checkpoint}, interval={checkpoint_interval}s)")
+            logger.info(
+                f"Checkpointing enabled (auto={auto_checkpoint}, interval={checkpoint_interval}s)"
+            )
 
         # Set up progress reporting
         with Progress(
@@ -186,16 +192,19 @@ def run_workflow(
             console.print(f"Starting workflow for project {project_key}...")
 
             # Check if we need to use the checkpoint-aware workflow runner
-            if hasattr(orchestrator, 'run_workflow_with_checkpoints'):
-                results = asyncio.run(orchestrator.run_workflow_with_checkpoints(
-                    phases=[p.value for p in phases],
-                    resume_from=resume_from
-                ))
+            if hasattr(orchestrator, "run_workflow_with_checkpoints"):
+                results = asyncio.run(
+                    orchestrator.run_workflow_with_checkpoints(
+                        phases=[p.value for p in phases], resume_from=resume_from
+                    )
+                )
             else:
-                results = asyncio.run(orchestrator.run_workflow(
-                    phases=[p.value for p in phases],
-                    progress=progress,
-                ))
+                results = asyncio.run(
+                    orchestrator.run_workflow(
+                        phases=[p.value for p in phases],
+                        progress=progress,
+                    )
+                )
 
             # Print summary
             console.print("\n✓ Workflow completed", style="green bold")
@@ -204,22 +213,28 @@ def run_workflow(
             orchestrator.print_workflow_status(console=console)
 
             # Print checkpoint information if available
-            if hasattr(orchestrator, 'list_available_checkpoints'):
+            if hasattr(orchestrator, "list_available_checkpoints"):
                 checkpoints = orchestrator.list_available_checkpoints()
                 if checkpoints:
                     console.print("\nCheckpoints:", style="bold")
                     for type_name, checkpoint_list in checkpoints.items():
                         if checkpoint_list:
                             recent = checkpoint_list[0]  # Most recent first
-                            console.print(f"  Latest {type_name}: {recent.checkpoint_id} ({recent.created_at.strftime('%Y-%m-%d %H:%M:%S')})")
+                            console.print(
+                                f"  Latest {type_name}: {recent.checkpoint_id} ({recent.created_at.strftime('%Y-%m-%d %H:%M:%S')})"
+                            )
 
                     console.print("\nTo resume from the latest checkpoint in case of failure, use:")
-                    console.print(f"  ztoq run --resume-from=latest --project-key={project_key}", style="blue")
+                    console.print(
+                        f"  ztoq run --resume-from=latest --project-key={project_key}", style="blue"
+                    )
 
             # Generate report if output directory is specified
             if output_dir:
                 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                report_filename = f"migration_report_{project_key}_{timestamp}.{report_format.value}"
+                report_filename = (
+                    f"migration_report_{project_key}_{timestamp}.{report_format.value}"
+                )
                 report_path = Path(output_dir) / report_filename
 
                 orchestrator.create_workflow_report(str(report_path))
@@ -266,10 +281,13 @@ def resume_workflow(
         5, help="Maximum number of concurrent workers for parallel processing"
     ),
     no_validation: bool = typer.Option(False, help="Disable validation"),
-    no_rollback: bool = typer.Option(False, help="Disable rollback capability for failed migrations"),
+    no_rollback: bool = typer.Option(
+        False, help="Disable rollback capability for failed migrations"
+    ),
     use_batch_transformer: bool = typer.Option(
-        True, "--use-batch-transformer/--no-use-batch-transformer",
-        help="Use SQL-based batch transformer for transformation phase"
+        True,
+        "--use-batch-transformer/--no-use-batch-transformer",
+        help="Use SQL-based batch transformer for transformation phase",
     ),
     # Checkpoint options
     checkpoint_id: Optional[str] = typer.Option(
@@ -279,8 +297,9 @@ def resume_workflow(
         "workflow", help="Type of checkpoint to resume from when using 'latest'"
     ),
     auto_checkpoint: bool = typer.Option(
-        True, "--auto-checkpoint/--no-auto-checkpoint",
-        help="Automatically create checkpoints during execution"
+        True,
+        "--auto-checkpoint/--no-auto-checkpoint",
+        help="Automatically create checkpoints during execution",
     ),
     checkpoint_interval: int = typer.Option(
         300, help="Time between automatic checkpoints in seconds (5 minutes default)"
@@ -289,9 +308,7 @@ def resume_workflow(
     output_dir: Optional[Path] = typer.Option(
         None, help="Directory for output files (reports, logs)"
     ),
-    attachments_dir: Optional[Path] = typer.Option(
-        None, help="Directory for storing attachments"
-    ),
+    attachments_dir: Optional[Path] = typer.Option(None, help="Directory for storing attachments"),
     report_format: OutputFormat = typer.Option(
         OutputFormat.JSON, help="Report output format (json, html, text)"
     ),
@@ -341,7 +358,7 @@ def resume_workflow(
         orchestrator = WorkflowOrchestrator(workflow_config)
 
         # Determine which resume approach to use
-        use_checkpoints = hasattr(orchestrator, 'resume_from_checkpoint')
+        use_checkpoints = hasattr(orchestrator, "resume_from_checkpoint")
 
         # Set up progress reporting
         with Progress(
@@ -364,9 +381,11 @@ def resume_workflow(
                     checkpoint_dir=checkpoint_dir,
                     auto_checkpoint=auto_checkpoint,
                     checkpoint_interval=checkpoint_interval,
-                    use_database=True
+                    use_database=True,
                 )
-                logger.info(f"Checkpointing enabled (auto={auto_checkpoint}, interval={checkpoint_interval}s)")
+                logger.info(
+                    f"Checkpointing enabled (auto={auto_checkpoint}, interval={checkpoint_interval}s)"
+                )
 
                 # Resume from checkpoint
                 if checkpoint_id == "latest":
@@ -376,9 +395,9 @@ def resume_workflow(
 
                 # Run phases using checkpoint-aware runner
                 phase_values = [p.value for p in phases] if phases else None
-                results = asyncio.run(orchestrator.run_workflow_with_checkpoints(
-                    phases=phase_values
-                ))
+                results = asyncio.run(
+                    orchestrator.run_workflow_with_checkpoints(phases=phase_values)
+                )
             else:
                 # Use the old resume workflow method
                 phase_values = [p.value for p in phases] if phases else None
@@ -394,14 +413,16 @@ def resume_workflow(
         orchestrator.print_workflow_status(console=console)
 
         # Print checkpoint information if available
-        if hasattr(orchestrator, 'list_available_checkpoints'):
+        if hasattr(orchestrator, "list_available_checkpoints"):
             checkpoints = orchestrator.list_available_checkpoints()
             if checkpoints:
                 console.print("\nCheckpoints created during this run:", style="bold")
                 for type_name, checkpoint_list in checkpoints.items():
                     if checkpoint_list:
                         recent = checkpoint_list[0]  # Most recent first
-                        console.print(f"  Latest {type_name}: {recent.checkpoint_id} ({recent.created_at.strftime('%Y-%m-%d %H:%M:%S')})")
+                        console.print(
+                            f"  Latest {type_name}: {recent.checkpoint_id} ({recent.created_at.strftime('%Y-%m-%d %H:%M:%S')})"
+                        )
 
         # Generate report if output directory is specified
         if output_dir:
@@ -926,17 +947,15 @@ def transform_workflow(
     # Transformation options
     batch_size: int = typer.Option(50, help="Number of items to process in a batch"),
     use_batch_transformer: bool = typer.Option(
-        True, "--use-batch-transformer/--no-use-batch-transformer",
-        help="Use SQL-based batch transformer for transformation"
+        True,
+        "--use-batch-transformer/--no-use-batch-transformer",
+        help="Use SQL-based batch transformer for transformation",
     ),
     validate_data: bool = typer.Option(
-        True, "--validate/--no-validate",
-        help="Validate transformed data after transformation"
+        True, "--validate/--no-validate", help="Validate transformed data after transformation"
     ),
     # Output options
-    output_dir: Optional[Path] = typer.Option(
-        None, help="Directory for output files (reports)"
-    ),
+    output_dir: Optional[Path] = typer.Option(None, help="Directory for output files (reports)"),
     report_format: OutputFormat = typer.Option(
         OutputFormat.JSON, help="Report output format (json, html, text)"
     ),
@@ -983,13 +1002,17 @@ def transform_workflow(
 
             # Run transformation phase
             transform_results = asyncio.run(orchestrator._run_transform_phase())
-            progress.update(task_transform, description="Transformation completed", completed=1, total=1)
+            progress.update(
+                task_transform, description="Transformation completed", completed=1, total=1
+            )
 
             # Run validation if enabled
             if validate_data:
                 task_validate = progress.add_task("Validating transformed data...", total=None)
                 validation_results = asyncio.run(orchestrator._run_validation_phase())
-                progress.update(task_validate, description="Validation completed", completed=1, total=1)
+                progress.update(
+                    task_validate, description="Validation completed", completed=1, total=1
+                )
 
         # Print transformation results
         console.print("\n✓ Transformation completed", style="green bold")
@@ -1000,7 +1023,9 @@ def transform_workflow(
         events = status.get("events", [])
 
         # Find batch transformation events
-        batch_events = [e for e in events if "Batch transformation completed" in e.get("message", "")]
+        batch_events = [
+            e for e in events if "Batch transformation completed" in e.get("message", "")
+        ]
         if batch_events:
             # Get the latest batch event
             batch_event = batch_events[-1]
@@ -1011,15 +1036,25 @@ def transform_workflow(
             table.add_column("Value")
 
             table.add_row("Total Test Cases", str(metadata.get("total", 0)))
-            table.add_row("Successfully Transformed", str(metadata.get("successful", 0)), style="green")
-            table.add_row("Failed Transformations", str(metadata.get("failed", 0)), style="red" if metadata.get("failed", 0) > 0 else None)
-            table.add_row("Warnings", str(metadata.get("warnings", 0)), style="yellow" if metadata.get("warnings", 0) > 0 else None)
+            table.add_row(
+                "Successfully Transformed", str(metadata.get("successful", 0)), style="green"
+            )
+            table.add_row(
+                "Failed Transformations",
+                str(metadata.get("failed", 0)),
+                style="red" if metadata.get("failed", 0) > 0 else None,
+            )
+            table.add_row(
+                "Warnings",
+                str(metadata.get("warnings", 0)),
+                style="yellow" if metadata.get("warnings", 0) > 0 else None,
+            )
             table.add_row("Batch Count", str(metadata.get("batches", 0)))
 
             console.print(table)
 
         # Print validation results if validation was run
-        if validate_data and 'validation_results' in locals():
+        if validate_data and "validation_results" in locals():
             console.print("\nValidation Results:", style="bold")
 
             # Create table for validation summary
@@ -1027,9 +1062,21 @@ def transform_workflow(
             table.add_column("Issue Level")
             table.add_column("Count")
 
-            table.add_row("Critical", str(validation_results.get("critical_issues", 0)), style="red" if validation_results.get("critical_issues", 0) > 0 else None)
-            table.add_row("Error", str(validation_results.get("error_issues", 0)), style="yellow" if validation_results.get("error_issues", 0) > 0 else None)
-            table.add_row("Warning", str(validation_results.get("warning_issues", 0)), style="blue" if validation_results.get("warning_issues", 0) > 0 else None)
+            table.add_row(
+                "Critical",
+                str(validation_results.get("critical_issues", 0)),
+                style="red" if validation_results.get("critical_issues", 0) > 0 else None,
+            )
+            table.add_row(
+                "Error",
+                str(validation_results.get("error_issues", 0)),
+                style="yellow" if validation_results.get("error_issues", 0) > 0 else None,
+            )
+            table.add_row(
+                "Warning",
+                str(validation_results.get("warning_issues", 0)),
+                style="blue" if validation_results.get("warning_issues", 0) > 0 else None,
+            )
             table.add_row("Info", str(validation_results.get("info_issues", 0)), style="green")
             table.add_row("Total", str(validation_results.get("total_issues", 0)), style="bold")
 
@@ -1048,7 +1095,15 @@ def transform_workflow(
                     message = issue.get("message", "")
                     entity_id = issue.get("entity_id", "")
 
-                    style = "red" if level == "critical" else "yellow" if level == "error" else "blue" if level == "warning" else "green"
+                    style = (
+                        "red"
+                        if level == "critical"
+                        else "yellow"
+                        if level == "error"
+                        else "blue"
+                        if level == "warning"
+                        else "green"
+                    )
                     issues_table.add_row(level.capitalize(), message, entity_id, style=style)
 
                 console.print(issues_table)
@@ -1056,7 +1111,10 @@ def transform_workflow(
         # Generate report if output directory is specified
         if output_dir:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            report_path = Path(output_dir) / f"transform_report_{project_key}_{timestamp}.{report_format.value}"
+            report_path = (
+                Path(output_dir)
+                / f"transform_report_{project_key}_{timestamp}.{report_format.value}"
+            )
 
             # Create report with transformation and validation results
             orchestrator.create_workflow_report(str(report_path))
@@ -1092,9 +1150,7 @@ def validate_workflow(
     qtest_password: Optional[str] = typer.Option(None, help="qTest password"),
     qtest_project_id: Optional[int] = typer.Option(None, help="qTest project ID"),
     # Output options
-    output_file: Optional[Path] = typer.Option(
-        None, help="Path to save the validation report"
-    ),
+    output_file: Optional[Path] = typer.Option(None, help="Path to save the validation report"),
 ):
     """
     Validate a migration workflow.
@@ -1176,7 +1232,15 @@ def validate_workflow(
                 message = issue.get("message", "")
                 entity_id = issue.get("entity_id", "")
 
-                style = "red" if level == "critical" else "yellow" if level == "error" else "blue" if level == "warning" else "green"
+                style = (
+                    "red"
+                    if level == "critical"
+                    else "yellow"
+                    if level == "error"
+                    else "blue"
+                    if level == "warning"
+                    else "green"
+                )
                 issues_table.add_row(level.capitalize(), message, entity_id, style=style)
 
             console.print(issues_table)
@@ -1224,14 +1288,18 @@ def load_workflow(
     # Entity selection
     load_executions: bool = typer.Option(True, help="Load test executions"),
     # Import configuration
-    concurrent_workers: int = typer.Option(5, help="Number of concurrent workers for parallel processing"),
+    concurrent_workers: int = typer.Option(
+        5, help="Number of concurrent workers for parallel processing"
+    ),
     batch_size: int = typer.Option(50, help="Number of items to process in a batch"),
     max_retries: int = typer.Option(3, help="Maximum number of retries for failed operations"),
     conflict_resolution: str = typer.Option(
         "skip", help="Conflict resolution strategy (skip, update, rename, fail)"
     ),
     strict_mode: bool = typer.Option(False, help="Enable strict validation mode"),
-    recovery_mode: bool = typer.Option(False, help="Enable recovery mode from previous checkpoints"),
+    recovery_mode: bool = typer.Option(
+        False, help="Enable recovery mode from previous checkpoints"
+    ),
     checkpoint_frequency: int = typer.Option(10, help="Create checkpoint every N operations"),
     checkpoint_dir: Optional[Path] = typer.Option(None, help="Directory to store checkpoint files"),
     min_delay: float = typer.Option(0.0, help="Minimum delay between API calls in seconds"),
@@ -1239,9 +1307,7 @@ def load_workflow(
         True, help="Automatically adjust delay based on rate limits"
     ),
     # Output options
-    output_file: Optional[Path] = typer.Option(
-        None, help="Path to save the loading report"
-    ),
+    output_file: Optional[Path] = typer.Option(None, help="Path to save the loading report"),
 ):
     """
     Load transformed data into qTest.
@@ -1306,7 +1372,9 @@ def load_workflow(
             TimeElapsedColumn(),
             console=console,
         ) as progress:
-            console.print(f"Loading data for project {project_key} to qTest project {qtest_project_id}...")
+            console.print(
+                f"Loading data for project {project_key} to qTest project {qtest_project_id}..."
+            )
 
             # Get database manager
             db_manager = orchestrator._get_database_manager()
@@ -1321,8 +1389,15 @@ def load_workflow(
                 transformed_executions = db_manager.get_transformed_test_executions(project_key)
 
                 if not transformed_executions:
-                    console.print("No transformed test executions found in database", style="yellow")
-                    progress.update(task_executions, description="No test executions to load", completed=1, total=1)
+                    console.print(
+                        "No transformed test executions found in database", style="yellow"
+                    )
+                    progress.update(
+                        task_executions,
+                        description="No test executions to load",
+                        completed=1,
+                        total=1,
+                    )
                 else:
                     # Update progress bar with total count
                     execution_count = len(transformed_executions)
@@ -1333,13 +1408,23 @@ def load_workflow(
                     import_method = None  # Placeholder
 
                     # We don't update the progress bar here since the importer uses its own progress bar
-                    progress.update(task_executions, description=f"Loading {execution_count} test executions...", completed=0, total=1)
+                    progress.update(
+                        task_executions,
+                        description=f"Loading {execution_count} test executions...",
+                        completed=0,
+                        total=1,
+                    )
 
                     # Execute the import operation
                     execution_results = import_method(transformed_executions)
 
                     # Update progress to complete
-                    progress.update(task_executions, description=f"Completed loading {execution_count} test executions", completed=1, total=1)
+                    progress.update(
+                        task_executions,
+                        description=f"Completed loading {execution_count} test executions",
+                        completed=1,
+                        total=1,
+                    )
 
                     # Print import summary
                     console.print("\n✓ Test execution import completed", style="green bold")
@@ -1350,14 +1435,26 @@ def load_workflow(
                     result_table.add_column("Count")
 
                     result_table.add_row("Total", str(execution_results.get("total", 0)))
-                    result_table.add_row("Successful", str(execution_results.get("successful", 0)), style="green")
-                    result_table.add_row("Failed", str(execution_results.get("failed", 0)),
-                                        style="red" if execution_results.get("failed", 0) > 0 else None)
-                    result_table.add_row("Skipped", str(execution_results.get("skipped", 0)),
-                                        style="yellow" if execution_results.get("skipped", 0) > 0 else None)
+                    result_table.add_row(
+                        "Successful", str(execution_results.get("successful", 0)), style="green"
+                    )
+                    result_table.add_row(
+                        "Failed",
+                        str(execution_results.get("failed", 0)),
+                        style="red" if execution_results.get("failed", 0) > 0 else None,
+                    )
+                    result_table.add_row(
+                        "Skipped",
+                        str(execution_results.get("skipped", 0)),
+                        style="yellow" if execution_results.get("skipped", 0) > 0 else None,
+                    )
 
                     if recovery_mode:
-                        result_table.add_row("Recovered", str(execution_results.get("stats", {}).get("recovered", 0)), style="blue")
+                        result_table.add_row(
+                            "Recovered",
+                            str(execution_results.get("stats", {}).get("recovered", 0)),
+                            style="blue",
+                        )
 
                     console.print(result_table)
 
@@ -1378,7 +1475,9 @@ def load_workflow(
                     metrics_table.add_row("Test Runs Created", str(stats.get("runs_created", 0)))
                     metrics_table.add_row("Test Runs Updated", str(stats.get("runs_updated", 0)))
                     metrics_table.add_row("Test Logs Created", str(stats.get("logs_created", 0)))
-                    metrics_table.add_row("Batches Processed", str(stats.get("batches_processed", 0)))
+                    metrics_table.add_row(
+                        "Batches Processed", str(stats.get("batches_processed", 0))
+                    )
 
                     console.print(metrics_table)
 
@@ -1387,13 +1486,14 @@ def load_workflow(
                         # Update workflow state in database
                         try:
                             db_manager.update_migration_state(
-                                project_key,
-                                loading_status="completed",
-                                error_message=None
+                                project_key, loading_status="completed", error_message=None
                             )
                             console.print("✓ Updated migration state in database", style="green")
                         except Exception as e:
-                            console.print(f"Warning: Failed to update migration state: {str(e)}", style="yellow")
+                            console.print(
+                                f"Warning: Failed to update migration state: {str(e)}",
+                                style="yellow",
+                            )
 
                     # Save detailed report if output file is specified
                     if output_file:
@@ -1423,7 +1523,7 @@ def load_workflow(
                                 "conflict_resolution": conflict_resolution,
                                 "recovery_mode": recovery_mode,
                                 "adaptive_rate_limit": adaptive_rate_limit,
-                            }
+                            },
                         }
 
                         with open(report_path, "w") as f:

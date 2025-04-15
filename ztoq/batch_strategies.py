@@ -16,15 +16,11 @@ optimization goals.
 import bisect
 import logging
 import math
-import os
 import psutil
-import random
-import sys
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, Generic, List, Optional, Tuple, TypeVar, Union, cast
+from typing import Any, Callable, Dict, Generic, List, Optional, Tuple, TypeVar, cast
 
-T = TypeVar('T')  # Generic type for entities
+T = TypeVar("T")  # Generic type for entities
 
 logger = logging.getLogger("ztoq.batch_strategies")
 
@@ -60,11 +56,7 @@ class SizeBatchStrategy(BatchStrategy[T]):
     which is useful for memory-constrained environments or API limitations.
     """
 
-    def __init__(
-        self,
-        max_batch_size: int,
-        size_estimator: Optional[Callable[[T], int]] = None
-    ):
+    def __init__(self, max_batch_size: int, size_estimator: Optional[Callable[[T], int]] = None):
         """
         Initialize the size-based batch strategy.
 
@@ -78,8 +70,8 @@ class SizeBatchStrategy(BatchStrategy[T]):
 
     def _default_size_estimator(self, entity: T) -> int:
         """Default function to estimate entity size."""
-        if isinstance(entity, dict) and 'size' in entity:
-            return cast(int, entity['size'])
+        if isinstance(entity, dict) and "size" in entity:
+            return cast(int, entity["size"])
         return 1  # Default size if no estimator provided
 
     def create_batches(self, entities: List[T]) -> List[List[T]]:
@@ -136,11 +128,7 @@ class TimeBatchStrategy(BatchStrategy[T]):
     overall throughput.
     """
 
-    def __init__(
-        self,
-        time_estimator: Callable[[T], float],
-        max_batch_time: float
-    ):
+    def __init__(self, time_estimator: Callable[[T], float], max_batch_time: float):
         """
         Initialize the time-based batch strategy.
 
@@ -183,7 +171,10 @@ class TimeBatchStrategy(BatchStrategy[T]):
             if entity_time > self.max_batch_time:
                 # For entities that exceed the max time on their own, we still include them
                 # but warn about them since they'll always exceed the time limit
-                logger.warning(f"Entity processing time {entity_time:.2f}s exceeds max batch time {self.max_batch_time:.2f}s")
+                logger.warning(
+                    f"Entity processing time {entity_time:.2f}s exceeds "
+                    f"max batch time {self.max_batch_time:.2f}s"
+                )
                 if current_batch:  # If we have an existing batch, finalize it first
                     batches.append(current_batch)
                     current_batch = []
@@ -216,7 +207,7 @@ class AdaptiveBatchStrategy(BatchStrategy[T]):
         min_batch_size: int = 1,
         max_batch_size: int = 100,
         target_processing_time: float = 1.0,
-        adaptation_rate: float = 0.1
+        adaptation_rate: float = 0.1,
     ):
         """
         Initialize the adaptive batch strategy.
@@ -292,7 +283,9 @@ class AdaptiveBatchStrategy(BatchStrategy[T]):
         # If processing time is too low, increase batch size
         elif processing_time < self.target_processing_time * 0.8:  # 20% below target
             # Calculate adjustment factor
-            ratio = self.target_processing_time / max(0.001, processing_time)  # Avoid division by zero
+            ratio = self.target_processing_time / max(
+                0.001, processing_time
+            )  # Avoid division by zero
             adjustment = min(1.5, max(1.1, ratio * self.adaptation_rate + 1.0))
             new_size = min(self.max_batch_size, int(batch_size * adjustment))
         # If processing time is close to target, maintain batch size
@@ -306,7 +299,8 @@ class AdaptiveBatchStrategy(BatchStrategy[T]):
         if new_size != batch_size:
             logger.debug(
                 f"Adaptive batch size changed from {batch_size} to {new_size} "
-                f"(processing time: {processing_time:.3f}s, target: {self.target_processing_time:.3f}s)"
+                f"(processing time: {processing_time:.3f}s, "
+                f"target: {self.target_processing_time:.3f}s)"
             )
 
         return new_size
@@ -321,11 +315,7 @@ class EntityTypeBatchStrategy(BatchStrategy[T]):
     processing similar entities together.
     """
 
-    def __init__(
-        self,
-        type_extractor: Callable[[T], Any],
-        max_batch_size: Optional[int] = None
-    ):
+    def __init__(self, type_extractor: Callable[[T], Any], max_batch_size: Optional[int] = None):
         """
         Initialize the entity type batch strategy.
 
@@ -363,7 +353,7 @@ class EntityTypeBatchStrategy(BatchStrategy[T]):
             # If max batch size is specified, split large groups
             if self.max_batch_size and len(group) > self.max_batch_size:
                 for i in range(0, len(group), self.max_batch_size):
-                    batch = group[i:i + self.max_batch_size]
+                    batch = group[i : i + self.max_batch_size]
                     batches.append(batch)
             else:
                 batches.append(group)
@@ -384,7 +374,7 @@ class SimilarityBatchStrategy(BatchStrategy[T]):
         self,
         feature_extractor: Callable[[T], Tuple],
         similarity_threshold: float = 0.8,
-        max_batch_size: Optional[int] = None
+        max_batch_size: Optional[int] = None,
     ):
         """
         Initialize the similarity-based batch strategy.
@@ -429,7 +419,7 @@ class SimilarityBatchStrategy(BatchStrategy[T]):
 
                 # Calculate similarity (Euclidean distance-based)
                 squared_diffs = sum((a - b) ** 2 for a, b in zip(ref_features, features))
-                distance = squared_diffs ** 0.5
+                distance = squared_diffs**0.5
 
                 # Normalize distance to similarity score
                 # For simplicity, we assume features are normalized to [0, 1]
@@ -442,7 +432,10 @@ class SimilarityBatchStrategy(BatchStrategy[T]):
                     similar_indices.append(i)
 
                     # If we've reached max batch size, stop adding similar entities
-                    if self.max_batch_size and len(current_batch) + len(similar_indices) >= self.max_batch_size:
+                    if (
+                        self.max_batch_size
+                        and len(current_batch) + len(similar_indices) >= self.max_batch_size
+                    ):
                         break
 
             # Add similar entities to the batch and remove from remaining
@@ -462,7 +455,7 @@ def configure_optimal_batch_size(
     parallelism: int = 4,
     api_rate_limit: Optional[int] = None,
     min_batch_size: int = 1,
-    max_batch_size: int = 1000
+    max_batch_size: int = 1000,
 ) -> int:
     """
     Configure the optimal batch size based on system constraints.
@@ -524,7 +517,7 @@ def create_batches(
     batch_size: Optional[int] = None,
     size_calculator: Optional[Callable[[List[T]], int]] = None,
     sort_key: Optional[Callable[[T], Any]] = None,
-    reverse: bool = False
+    reverse: bool = False,
 ) -> List[List[T]]:
     """
     Create batches from a list of entities with optional sorting.
@@ -558,7 +551,7 @@ def create_batches(
     # If using fixed batch size
     if batch_size:
         for i in range(0, len(entities_copy), batch_size):
-            batches.append(entities_copy[i:i + batch_size])
+            batches.append(entities_copy[i : i + batch_size])
     # If using dynamic batch size calculator
     elif size_calculator:
         remaining = entities_copy
@@ -577,9 +570,7 @@ def create_batches(
 
 
 def estimate_processing_time(
-    batch_size: int,
-    history: List[Tuple[int, float]],
-    default_estimate: float = 0.1
+    batch_size: int, history: List[Tuple[int, float]], default_estimate: float = 0.1
 ) -> float:
     """
     Estimate processing time for a batch based on historical data.

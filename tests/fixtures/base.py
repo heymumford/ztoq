@@ -40,7 +40,7 @@ def base_test_env() -> Dict[str, str]:
         "QTEST_BASE_URL": "https://qtest.example.com",
         "QTEST_USERNAME": "test_user",
         "QTEST_PASSWORD": "test_password",
-        "QTEST_PROJECT_ID": "12345"
+        "QTEST_PROJECT_ID": "12345",
     }
 
 

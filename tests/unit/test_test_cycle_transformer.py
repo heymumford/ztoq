@@ -343,9 +343,14 @@ class TestTestCycleTransformer:
         # Setup - create a problematic attachment that will cause an error
         sample_test_cycle["attachments"] = [
             # Valid attachment but will be skipped because it has invalid name - should be a warning
-            {"id": "att_1", "filename": None, "content_type": "application/octet-stream", "size": 100},
+            {
+                "id": "att_1",
+                "filename": None,
+                "content_type": "application/octet-stream",
+                "size": 100,
+            },
             # Valid attachment
-            {"id": "att_2", "filename": "valid.txt", "content_type": "text/plain", "size": 100}
+            {"id": "att_2", "filename": "valid.txt", "content_type": "text/plain", "size": 100},
         ]
 
         # Make sure with_attachments is enabled
@@ -359,8 +364,9 @@ class TestTestCycleTransformer:
         assert result.transformed_entity["attachments"] is not None
 
         # Let's verify our code correctly processes the valid attachment
-        valid_attachments = [a for a in result.transformed_entity["attachments"]
-                           if a.get("name") == "valid.txt"]
+        valid_attachments = [
+            a for a in result.transformed_entity["attachments"] if a.get("name") == "valid.txt"
+        ]
         assert len(valid_attachments) > 0
 
     def test_general_error_catching(self, transformer, sample_test_cycle):
@@ -388,7 +394,9 @@ class TestTestCycleTransformer:
     def test_db_error_during_folder_mapping(self, custom_transformer, sample_test_cycle):
         """Test handling of database errors during folder mapping."""
         # Setup - make the DB manager raise an exception
-        custom_transformer.db_manager.get_entity_mapping.side_effect = Exception("Database connection error")
+        custom_transformer.db_manager.get_entity_mapping.side_effect = Exception(
+            "Database connection error"
+        )
 
         # Act
         result = custom_transformer.transform(sample_test_cycle)
@@ -403,6 +411,7 @@ class TestTestCycleTransformer:
         """Test the get_default_transformer factory function."""
         # Act
         from ztoq.test_cycle_transformer import get_default_transformer
+
         transformer = get_default_transformer()
 
         # Assert

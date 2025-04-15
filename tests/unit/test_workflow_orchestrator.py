@@ -9,11 +9,12 @@ from unittest.mock import MagicMock, patch
 from datetime import datetime
 from ztoq.workflow_orchestrator import (
     WorkflowOrchestrator,
-        WorkflowConfig,
-        WorkflowEvent,
-        WorkflowPhase,
-        WorkflowStatus,
+    WorkflowConfig,
+    WorkflowEvent,
+    WorkflowPhase,
+    WorkflowStatus,
 )
+
 
 class TestWorkflowOrchestrator(unittest.TestCase):
     """Test cases for the workflow orchestration system."""
@@ -26,12 +27,12 @@ class TestWorkflowOrchestrator(unittest.TestCase):
         # Create test configuration
         self.config = WorkflowConfig(
             project_key="TEST",
-                db_type="sqlite",
-                db_path=":memory:",
-                batch_size=10,
-                max_workers=2,
-                validation_enabled=True,
-            )
+            db_type="sqlite",
+            db_path=":memory:",
+            batch_size=10,
+            max_workers=2,
+            validation_enabled=True,
+        )
 
         # Patch the get_database_manager function
         self.db_manager_patcher = patch("ztoq.workflow_orchestrator.get_database_manager")
@@ -59,9 +60,9 @@ class TestWorkflowOrchestrator(unittest.TestCase):
         # Test with basic parameters
         event = WorkflowEvent(
             phase="extract",
-                status="in_progress",
-                message="Starting extraction",
-            )
+            status="in_progress",
+            message="Starting extraction",
+        )
 
         self.assertEqual(event.phase, "extract")
         self.assertEqual(event.status, "in_progress")
@@ -72,15 +73,15 @@ class TestWorkflowOrchestrator(unittest.TestCase):
         # Test with all parameters
         event = WorkflowEvent(
             phase="transform",
-                status="completed",
-                message="Transformation completed",
-                entity_type="test_cases",
-                entity_count=100,
-                batch_number=2,
-                total_batches=5,
-                timestamp=datetime(2025, 1, 1, 12, 0, 0),
-                metadata={"key": "value"},
-            )
+            status="completed",
+            message="Transformation completed",
+            entity_type="test_cases",
+            entity_count=100,
+            batch_number=2,
+            total_batches=5,
+            timestamp=datetime(2025, 1, 1, 12, 0, 0),
+            metadata={"key": "value"},
+        )
 
         self.assertEqual(event.phase, "transform")
         self.assertEqual(event.status, "completed")
@@ -109,11 +110,11 @@ class TestWorkflowOrchestrator(unittest.TestCase):
         # Add an event
         event = self.orchestrator._add_event(
             phase="extract",
-                status="in_progress",
-                message="Starting extraction",
-                entity_type="test_cases",
-                entity_count=100,
-            )
+            status="in_progress",
+            message="Starting extraction",
+            entity_type="test_cases",
+            entity_count=100,
+        )
 
         # Check event was added to the events list
         self.assertEqual(len(self.orchestrator.events), 1)
@@ -190,15 +191,15 @@ class TestWorkflowOrchestrator(unittest.TestCase):
         # Create some events with timestamps for duration calculation
         extract_start = WorkflowEvent(
             phase="extract",
-                status="in_progress",
-                message="Starting extract",
-                timestamp=datetime(2025, 1, 1, 12, 0, 0),
-            )
+            status="in_progress",
+            message="Starting extract",
+            timestamp=datetime(2025, 1, 1, 12, 0, 0),
+        )
         extract_end = WorkflowEvent(
             phase="extract",
-                status="completed",
-                message="Extract completed",
-                timestamp=datetime(2025, 1, 1, 12, 5, 0),  # 5 minutes later
+            status="completed",
+            message="Extract completed",
+            timestamp=datetime(2025, 1, 1, 12, 5, 0),  # 5 minutes later
         )
         self.orchestrator.events = [extract_start, extract_end]
 
@@ -236,8 +237,8 @@ class TestWorkflowOrchestrator(unittest.TestCase):
         # Add some events
         self.orchestrator.events = [
             WorkflowEvent(phase="extract", status="completed", message="Extract completed"),
-                WorkflowEvent(phase="transform", status="in_progress", message="Transform started"),
-            ]
+            WorkflowEvent(phase="transform", status="in_progress", message="Transform started"),
+        ]
 
         # Get status
         status = self.orchestrator.get_workflow_status()

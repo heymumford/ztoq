@@ -38,8 +38,6 @@ logger = logging.getLogger(__name__)
 
 
 @pytest.mark.integration()
-
-
 class TestDatabaseParallelOperations:
     """Integration tests for parallel database operations."""
 
@@ -71,10 +69,10 @@ class TestDatabaseParallelOperations:
         """Create a test project in the database."""
         project = ProjectModel(
             id="PARALLEL-1",
-                key="PARALLEL",
-                name="Parallel Test Project",
-                description="A test project for parallel operations",
-            )
+            key="PARALLEL",
+            name="Parallel Test Project",
+            description="A test project for parallel operations",
+        )
         db_manager.save_project(project)
         return project
 
@@ -108,16 +106,16 @@ class TestDatabaseParallelOperations:
             try:
                 test_case = CaseModel(
                     id=f"TC-{index}",
-                        key=f"PARALLEL-TC-{index}",
-                        name=f"Test Case {index}",
-                        status="Draft",
-                        custom_fields=[],
-                        attachments=[],
-                        links=[],
-                        steps=[],
-                        scripts=[],
-                        versions=[],
-                    )
+                    key=f"PARALLEL-TC-{index}",
+                    name=f"Test Case {index}",
+                    status="Draft",
+                    custom_fields=[],
+                    attachments=[],
+                    links=[],
+                    steps=[],
+                    scripts=[],
+                    versions=[],
+                )
                 db_manager.save_test_case(test_case, test_project.key)
                 return True
             except Exception as e:
@@ -141,16 +139,16 @@ class TestDatabaseParallelOperations:
         # Create a test case to update
         test_case = CaseModel(
             id="UPDATE-TC",
-                key="PARALLEL-UPDATE",
-                name="Concurrent Update Test",
-                status="Draft",
-                custom_fields=[],
-                attachments=[],
-                links=[],
-                steps=[],
-                scripts=[],
-                versions=[],
-            )
+            key="PARALLEL-UPDATE",
+            name="Concurrent Update Test",
+            status="Draft",
+            custom_fields=[],
+            attachments=[],
+            links=[],
+            steps=[],
+            scripts=[],
+            versions=[],
+        )
         db_manager.save_test_case(test_case, test_project.key)
 
         # Function to update the test case in each thread
@@ -164,17 +162,17 @@ class TestDatabaseParallelOperations:
                 # Update with new values
                 updated_case = CaseModel(
                     id="UPDATE-TC",
-                        key="PARALLEL-UPDATE",
-                        name=new_name,
-                        status="Active",
-                        description=f"Updated by thread at {time.time()}",
-                        custom_fields=[],
-                        attachments=[],
-                        links=[],
-                        steps=[],
-                        scripts=[],
-                        versions=[],
-                    )
+                    key="PARALLEL-UPDATE",
+                    name=new_name,
+                    status="Active",
+                    description=f"Updated by thread at {time.time()}",
+                    custom_fields=[],
+                    attachments=[],
+                    links=[],
+                    steps=[],
+                    scripts=[],
+                    versions=[],
+                )
                 db_manager.save_test_case(updated_case, test_project.key)
                 return True
             except Exception as e:
@@ -203,16 +201,16 @@ class TestDatabaseParallelOperations:
         for i in range(5):
             test_case = CaseModel(
                 id=f"MIXED-{i}",
-                    key=f"PARALLEL-MIXED-{i}",
-                    name=f"Mixed Test {i}",
-                    status="Draft",
-                    custom_fields=[],
-                    attachments=[],
-                    links=[],
-                    steps=[],
-                    scripts=[],
-                    versions=[],
-                )
+                key=f"PARALLEL-MIXED-{i}",
+                name=f"Mixed Test {i}",
+                status="Draft",
+                custom_fields=[],
+                attachments=[],
+                links=[],
+                steps=[],
+                scripts=[],
+                versions=[],
+            )
             db_manager.save_test_case(test_case, test_project.key)
 
         # Function to read test cases
@@ -227,16 +225,16 @@ class TestDatabaseParallelOperations:
             try:
                 test_case = CaseModel(
                     id=f"MIXED-NEW-{index}",
-                        key=f"PARALLEL-MIXED-NEW-{index}",
-                        name=f"New Mixed Test {index}",
-                        status="Draft",
-                        custom_fields=[],
-                        attachments=[],
-                        links=[],
-                        steps=[],
-                        scripts=[],
-                        versions=[],
-                    )
+                    key=f"PARALLEL-MIXED-NEW-{index}",
+                    name=f"New Mixed Test {index}",
+                    status="Draft",
+                    custom_fields=[],
+                    attachments=[],
+                    links=[],
+                    steps=[],
+                    scripts=[],
+                    versions=[],
+                )
                 db_manager.save_test_case(test_case, test_project.key)
                 return "created"
             except Exception as e:
@@ -254,17 +252,17 @@ class TestDatabaseParallelOperations:
 
                 updated_case = CaseModel(
                     id=case.id,
-                        key=case_key,
-                        name=f"Updated Mixed Test {index}",
-                        status="Active",
-                        description=f"Updated by thread {index} at {time.time()}",
-                        custom_fields=[],
-                        attachments=[],
-                        links=[],
-                        steps=[],
-                        scripts=[],
-                        versions=[],
-                    )
+                    key=case_key,
+                    name=f"Updated Mixed Test {index}",
+                    status="Active",
+                    description=f"Updated by thread {index} at {time.time()}",
+                    custom_fields=[],
+                    attachments=[],
+                    links=[],
+                    steps=[],
+                    scripts=[],
+                    versions=[],
+                )
                 db_manager.save_test_case(updated_case, test_project.key)
                 return "updated"
             except Exception as e:
@@ -355,12 +353,12 @@ class TestDatabaseParallelOperations:
         for i in range(5):
             db_manager.create_entity_batch_state(
                 project_key=test_project.key,
-                    entity_type="test_case",
-                    batch_number=i,
-                    total_batches=5,
-                    items_count=20,
-                    status="not_started",
-                )
+                entity_type="test_case",
+                batch_number=i,
+                total_batches=5,
+                items_count=20,
+                status="not_started",
+            )
 
         # Function to process a batch
         def process_batch(batch_number):
@@ -368,35 +366,35 @@ class TestDatabaseParallelOperations:
                 # Update batch to in_progress
                 db_manager.update_entity_batch_state(
                     project_key=test_project.key,
-                        entity_type="test_case",
-                        batch_number=batch_number,
-                        status="in_progress",
-                    )
+                    entity_type="test_case",
+                    batch_number=batch_number,
+                    status="in_progress",
+                )
 
                 # Create test cases for this batch
                 for j in range(20):
                     case_id = f"BATCH-{batch_number}-{j}"
                     test_case = CaseModel(
                         id=case_id,
-                            key=f"PARALLEL-BATCH-{batch_number}-{j}",
-                            name=f"Batch {batch_number} Test Case {j}",
-                            status="Draft",
-                            custom_fields=[],
-                            attachments=[],
-                            links=[],
-                            steps=[],
-                            scripts=[],
-                            versions=[],
-                        )
+                        key=f"PARALLEL-BATCH-{batch_number}-{j}",
+                        name=f"Batch {batch_number} Test Case {j}",
+                        status="Draft",
+                        custom_fields=[],
+                        attachments=[],
+                        links=[],
+                        steps=[],
+                        scripts=[],
+                        versions=[],
+                    )
                     db_manager.save_test_case(test_case, test_project.key)
 
                     # Update processed count
                     db_manager.update_entity_batch_state(
                         project_key=test_project.key,
-                            entity_type="test_case",
-                            batch_number=batch_number,
-                            processed_count=j + 1,
-                        )
+                        entity_type="test_case",
+                        batch_number=batch_number,
+                        processed_count=j + 1,
+                    )
 
                     # Simulate some work
                     time.sleep(0.01)
@@ -404,10 +402,10 @@ class TestDatabaseParallelOperations:
                 # Update batch to completed
                 db_manager.update_entity_batch_state(
                     project_key=test_project.key,
-                        entity_type="test_case",
-                        batch_number=batch_number,
-                        status="completed",
-                    )
+                    entity_type="test_case",
+                    batch_number=batch_number,
+                    status="completed",
+                )
 
                 return batch_number, True
             except Exception as e:
@@ -416,11 +414,11 @@ class TestDatabaseParallelOperations:
                 # Update batch to failed
                 db_manager.update_entity_batch_state(
                     project_key=test_project.key,
-                        entity_type="test_case",
-                        batch_number=batch_number,
-                        status="failed",
-                        error_message=str(e),
-                    )
+                    entity_type="test_case",
+                    batch_number=batch_number,
+                    status="failed",
+                    error_message=str(e),
+                )
 
                 return batch_number, False
 
@@ -466,11 +464,11 @@ class TestDatabaseParallelOperations:
                     if not case:
                         case = TestCase(
                             id=case_id,
-                                key=f"TX-{case_id}",
-                                name=f"Transaction Test {case_id}",
-                                status="Draft",
-                                project_key=test_project.key,
-                            )
+                            key=f"TX-{case_id}",
+                            name=f"Transaction Test {case_id}",
+                            status="Draft",
+                            project_key=test_project.key,
+                        )
                         session.add(case)
 
                     # Sleep to simulate work and increase chance of concurrent access
@@ -490,16 +488,16 @@ class TestDatabaseParallelOperations:
         case_id = "TX-TEST-1"
         test_case = CaseModel(
             id=case_id,
-                key="PARALLEL-TX-1",
-                name="Transaction Test Case",
-                status="Draft",
-                custom_fields=[],
-                attachments=[],
-                links=[],
-                steps=[],
-                scripts=[],
-                versions=[],
-            )
+            key="PARALLEL-TX-1",
+            name="Transaction Test Case",
+            status="Draft",
+            custom_fields=[],
+            attachments=[],
+            links=[],
+            steps=[],
+            scripts=[],
+            versions=[],
+        )
         db_manager.save_test_case(test_case, test_project.key)
 
         # Execute parallel transactions that update the same test case
@@ -539,16 +537,16 @@ class TestDatabaseParallelOperations:
             try:
                 test_case = CaseModel(
                     id=f"DUP-{index}",
-                        key="PARALLEL-DUPLICATE",  # Same key for all - should cause constraint violation
+                    key="PARALLEL-DUPLICATE",  # Same key for all - should cause constraint violation
                     name=f"Duplicate Test {index}",
-                        status="Draft",
-                        custom_fields=[],
-                        attachments=[],
-                        links=[],
-                        steps=[],
-                        scripts=[],
-                        versions=[],
-                    )
+                    status="Draft",
+                    custom_fields=[],
+                    attachments=[],
+                    links=[],
+                    steps=[],
+                    scripts=[],
+                    versions=[],
+                )
                 db_manager.save_test_case(test_case, test_project.key)
                 return index, True
             except IntegrityError as e:
@@ -581,58 +579,58 @@ class TestDatabaseParallelOperations:
                 # Create a unique folder
                 folder = FolderModel(
                     id=f"HIER-FOLDER-{index}",
-                        name=f"Hierarchy Folder {index}",
-                        folderType="TEST_CASE",
-                    )
+                    name=f"Hierarchy Folder {index}",
+                    folderType="TEST_CASE",
+                )
                 db_manager.save_folder(folder, test_project.key)
 
                 # Create a test case in the folder
                 test_case = CaseModel(
                     id=f"HIER-CASE-{index}",
-                        key=f"PARALLEL-HIER-CASE-{index}",
-                        name=f"Hierarchy Test Case {index}",
-                        status="Draft",
-                        folder=folder.id,
-                        custom_fields=[
+                    key=f"PARALLEL-HIER-CASE-{index}",
+                    name=f"Hierarchy Test Case {index}",
+                    status="Draft",
+                    folder=folder.id,
+                    custom_fields=[
                         CustomFieldModel(
                             id=f"CF-{index}-1", name="Priority", type="dropdown", value="High"
                         ),
-                            CustomFieldModel(
+                        CustomFieldModel(
                             id=f"CF-{index}-2", name="Complexity", type="dropdown", value="Medium"
                         ),
-                        ],
-                        attachments=[],
-                        links=[],
-                        steps=[],
-                        scripts=[],
-                        versions=[],
-                    )
+                    ],
+                    attachments=[],
+                    links=[],
+                    steps=[],
+                    scripts=[],
+                    versions=[],
+                )
                 db_manager.save_test_case(test_case, test_project.key)
 
                 # Create a test cycle
                 test_cycle = CycleInfoModel(
                     id=f"HIER-CYCLE-{index}",
-                        key=f"PARALLEL-HIER-CYCLE-{index}",
-                        name=f"Hierarchy Test Cycle {index}",
-                        status="Active",
-                        folder=folder.id,
-                        custom_fields=[],
-                        attachments=[],
-                        links=[],
-                    )
+                    key=f"PARALLEL-HIER-CYCLE-{index}",
+                    name=f"Hierarchy Test Cycle {index}",
+                    status="Active",
+                    folder=folder.id,
+                    custom_fields=[],
+                    attachments=[],
+                    links=[],
+                )
                 db_manager.save_test_cycle(test_cycle, test_project.key)
 
                 # Create a test execution linking the case and cycle
                 test_execution = ExecutionModel(
                     id=f"HIER-EXEC-{index}",
-                        testCaseKey=test_case.key,
-                        cycleId=test_cycle.id,
-                        status="Passed",
-                        steps=[],
-                        custom_fields=[],
-                        attachments=[],
-                        links=[],
-                    )
+                    testCaseKey=test_case.key,
+                    cycleId=test_cycle.id,
+                    status="Passed",
+                    steps=[],
+                    custom_fields=[],
+                    attachments=[],
+                    links=[],
+                )
                 db_manager.save_test_execution(test_execution, test_project.key)
 
                 return index, True

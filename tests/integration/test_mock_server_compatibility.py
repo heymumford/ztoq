@@ -44,7 +44,7 @@ class TestMockServerCompatibility:
             base_url="https://mock.qtest.com",
             username="test_user",
             password="test_password",
-            project_id=12345
+            project_id=12345,
         )
         client = QTestClient(config)
 
@@ -116,9 +116,7 @@ class TestMockServerCompatibility:
         """Create a Zephyr client configured to use the mock server."""
         # Create a client with mock config
         config = ZephyrConfig(
-            base_url="https://mock.zephyrscale.com/v2",
-            api_token="mock_token",
-            project_key="DEMO"
+            base_url="https://mock.zephyrscale.com/v2", api_token="mock_token", project_key="DEMO"
         )
         client = ZephyrClient(config)
 
@@ -135,8 +133,9 @@ class TestMockServerCompatibility:
             headers = kwargs.get("headers", {})
 
             # Route the request to the appropriate handler
-            response = zephyr_mock_server.handle_request(method, endpoint, params=params,
-                                                        data=data, headers=headers)
+            response = zephyr_mock_server.handle_request(
+                method, endpoint, params=params, data=data, headers=headers
+            )
 
             # Create a mock response
             mock_resp = MagicMock()
@@ -221,9 +220,9 @@ class TestMockServerCompatibility:
         """Test that the QTest mock server filtering works the same as the real API."""
         # Test filtering test cases by module
         all_test_cases = list(qtest_client.get_test_cases(project_id=12345))
-        filtered_test_cases = list(qtest_client.get_test_cases(
-            project_id=12345, params={"parentId": 102}
-        ))
+        filtered_test_cases = list(
+            qtest_client.get_test_cases(project_id=12345, params={"parentId": 102})
+        )
 
         # Verify filtering works correctly
         assert len(filtered_test_cases) <= len(all_test_cases)
@@ -268,19 +267,24 @@ class TestMockServerCompatibility:
         # Verify the error response contains the expected fields
         assert "error" in str(e).lower() or "not found" in str(e).lower()
 
-    @pytest.mark.parametrize("endpoint_path", [
-        "/projects",
-        "/testcases",
-        "/testcycles",
-        "/folders",
-    ])
+    @pytest.mark.parametrize(
+        "endpoint_path",
+        [
+            "/projects",
+            "/testcases",
+            "/testcycles",
+            "/folders",
+        ],
+    )
     def test_zephyr_endpoint_availability(self, zephyr_client, endpoint_path):
         """
         Test that the Zephyr mock server implements the same endpoints as the real API.
         This test verifies that key endpoints are available and respond without errors.
         """
         # Patch the client's request method to test endpoint availability
-        with patch.object(zephyr_client._session, "request", wraps=zephyr_client._session.request) as mock_request:
+        with patch.object(
+            zephyr_client._session, "request", wraps=zephyr_client._session.request
+        ) as mock_request:
             # Call an appropriate client method based on the endpoint
             try:
                 if endpoint_path == "/projects":
@@ -306,19 +310,24 @@ class TestMockServerCompatibility:
             # Verify the request was made with the correct method and endpoint
             mock_request.assert_called()
 
-    @pytest.mark.parametrize("endpoint_path", [
-        "/api/v3/projects",
-        "/api/v3/projects/{project_id}/test-cases",
-        "/api/v3/projects/{project_id}/modules",
-        "/api/v3/projects/{project_id}/test-cycles",
-    ])
+    @pytest.mark.parametrize(
+        "endpoint_path",
+        [
+            "/api/v3/projects",
+            "/api/v3/projects/{project_id}/test-cases",
+            "/api/v3/projects/{project_id}/modules",
+            "/api/v3/projects/{project_id}/test-cycles",
+        ],
+    )
     def test_qtest_endpoint_availability(self, qtest_client, endpoint_path):
         """
         Test that the QTest mock server implements the same endpoints as the real API.
         This test verifies that key endpoints are available and respond without errors.
         """
         # Patch the client's request method to test endpoint availability
-        with patch.object(qtest_client._session, "request", wraps=qtest_client._session.request) as mock_request:
+        with patch.object(
+            qtest_client._session, "request", wraps=qtest_client._session.request
+        ) as mock_request:
             # Call an appropriate client method based on the endpoint
             try:
                 if endpoint_path == "/api/v3/projects":

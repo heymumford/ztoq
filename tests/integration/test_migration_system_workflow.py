@@ -30,16 +30,20 @@ class TestMigrationSystemWorkflow:
         sample_data_dir.mkdir()
 
         # Create a sample test case file
-        (sample_data_dir / "test_case.json").write_text(json.dumps({
-            "id": "TC-123",
-                "name": "Sample Test Case",
-                "status": "Active",
-                "priority": "High",
-                "steps": [
-                {"id": 1, "description": "Step 1", "expected": "Expected 1"},
-                    {"id": 2, "description": "Step 2", "expected": "Expected 2"}
-            ]
-        }))
+        (sample_data_dir / "test_case.json").write_text(
+            json.dumps(
+                {
+                    "id": "TC-123",
+                    "name": "Sample Test Case",
+                    "status": "Active",
+                    "priority": "High",
+                    "steps": [
+                        {"id": 1, "description": "Step 1", "expected": "Expected 1"},
+                        {"id": 2, "description": "Step 2", "expected": "Expected 2"},
+                    ],
+                }
+            )
+        )
 
         # Create a sample attachment
         (test_env["attachments_dir"] / "sample.txt").write_text("Sample attachment content")
@@ -49,7 +53,7 @@ class TestMigrationSystemWorkflow:
         yield test_env
         os.chdir(original_dir)
 
-    @patch('subprocess.run')
+    @patch("subprocess.run")
     def test_setup_phase(self, mock_run, docker_migration_setup):
         """Test the migration setup phase."""
         test_env = docker_migration_setup
@@ -63,29 +67,29 @@ class TestMigrationSystemWorkflow:
         # Run the setup command
         result = subprocess.run(
             ["../run-migration.sh", "setup", "--env-file", ".env"],
-                capture_output=True,
-                text=True,
-                check=False
+            capture_output=True,
+            text=True,
+            check=False,
         )
 
         # Check docker-compose was called with correct command
         expected_calls = [
             # Directory creation checks
             "mkdir -p",
-                # PostgreSQL startup
+            # PostgreSQL startup
             "docker-compose -f docker-compose.migration.yml --env-file",
-                "up -d postgres",
-                # Database initialization
+            "up -d postgres",
+            # Database initialization
             "docker-compose -f docker-compose.migration.yml --env-file",
-                "db init"
+            "db init",
         ]
 
         # Check that the expected calls were made
-        all_calls = ' '.join([str(call) for call in mock_run.call_args_list])
+        all_calls = " ".join([str(call) for call in mock_run.call_args_list])
         for expected in expected_calls:
             assert expected in all_calls, f"Expected call containing '{expected}' not found"
 
-    @patch('subprocess.run')
+    @patch("subprocess.run")
     def test_run_phase(self, mock_run, docker_migration_setup):
         """Test the migration run phase."""
         test_env = docker_migration_setup
@@ -98,29 +102,35 @@ class TestMigrationSystemWorkflow:
 
         # Run the migration
         result = subprocess.run(
-            ["../run-migration.sh", "run",
-                 "--env-file", ".env",
-                 "--batch-size", "25",
-                 "--workers", "3"],
-                capture_output=True,
-                text=True,
-                check=False
+            [
+                "../run-migration.sh",
+                "run",
+                "--env-file",
+                ".env",
+                "--batch-size",
+                "25",
+                "--workers",
+                "3",
+            ],
+            capture_output=True,
+            text=True,
+            check=False,
         )
 
         # Check docker-compose was called with correct command
         expected_calls = [
             "docker-compose -f docker-compose.migration.yml --env-file",
-                "migrate run",
-                "--batch-size 25",
-                "--max-workers 3",
-            ]
+            "migrate run",
+            "--batch-size 25",
+            "--max-workers 3",
+        ]
 
         # Check that the expected calls were made
-        all_calls = ' '.join([str(call) for call in mock_run.call_args_list])
+        all_calls = " ".join([str(call) for call in mock_run.call_args_list])
         for expected in expected_calls:
             assert expected in all_calls, f"Expected call containing '{expected}' not found"
 
-    @patch('subprocess.run')
+    @patch("subprocess.run")
     def test_status_phase(self, mock_run, docker_migration_setup):
         """Test the migration status phase."""
         test_env = docker_migration_setup
@@ -134,23 +144,23 @@ class TestMigrationSystemWorkflow:
         # Check migration status
         result = subprocess.run(
             ["../run-migration.sh", "status", "--env-file", ".env"],
-                capture_output=True,
-                text=True,
-                check=False
+            capture_output=True,
+            text=True,
+            check=False,
         )
 
         # Check docker-compose was called with correct command
         expected_calls = [
             "docker-compose -f docker-compose.migration.yml --env-file",
-                "migration-status"
+            "migration-status",
         ]
 
         # Check that the expected calls were made
-        all_calls = ' '.join([str(call) for call in mock_run.call_args_list])
+        all_calls = " ".join([str(call) for call in mock_run.call_args_list])
         for expected in expected_calls:
             assert expected in all_calls, f"Expected call containing '{expected}' not found"
 
-    @patch('subprocess.run')
+    @patch("subprocess.run")
     def test_report_phase(self, mock_run, docker_migration_setup):
         """Test the migration report phase."""
         test_env = docker_migration_setup
@@ -164,23 +174,23 @@ class TestMigrationSystemWorkflow:
         # Generate migration report
         result = subprocess.run(
             ["../run-migration.sh", "report", "--env-file", ".env"],
-                capture_output=True,
-                text=True,
-                check=False
+            capture_output=True,
+            text=True,
+            check=False,
         )
 
         # Check docker-compose was called with correct command
         expected_calls = [
             "docker-compose -f docker-compose.migration.yml --env-file",
-                "migration-report"
+            "migration-report",
         ]
 
         # Check that the expected calls were made
-        all_calls = ' '.join([str(call) for call in mock_run.call_args_list])
+        all_calls = " ".join([str(call) for call in mock_run.call_args_list])
         for expected in expected_calls:
             assert expected in all_calls, f"Expected call containing '{expected}' not found"
 
-    @patch('subprocess.run')
+    @patch("subprocess.run")
     def test_full_migration_workflow(self, mock_run, docker_migration_setup):
         """Test a full migration workflow from setup to report."""
         test_env = docker_migration_setup
@@ -194,23 +204,18 @@ class TestMigrationSystemWorkflow:
         # Run a complete workflow
         commands = [
             ["../run-migration.sh", "setup", "--env-file", ".env"],
-                ["../run-migration.sh", "run", "--env-file", ".env", "--batch-size", "50"],
-                ["../run-migration.sh", "status", "--env-file", ".env"],
-                ["../run-migration.sh", "report", "--env-file", ".env"],
-                ["../run-migration.sh", "stop", "--env-file", ".env"]
+            ["../run-migration.sh", "run", "--env-file", ".env", "--batch-size", "50"],
+            ["../run-migration.sh", "status", "--env-file", ".env"],
+            ["../run-migration.sh", "report", "--env-file", ".env"],
+            ["../run-migration.sh", "stop", "--env-file", ".env"],
         ]
 
         for cmd in commands:
-            result = subprocess.run(
-                cmd,
-                    capture_output=True,
-                    text=True,
-                    check=False
-            )
+            result = subprocess.run(cmd, capture_output=True, text=True, check=False)
             assert mock_run.called, f"Command {cmd} should have been executed"
             mock_run.reset_mock()
 
-    @patch('subprocess.run')
+    @patch("subprocess.run")
     def test_clean_phase(self, mock_run, docker_migration_setup):
         """Test the migration clean phase."""
         test_env = docker_migration_setup
@@ -224,18 +229,15 @@ class TestMigrationSystemWorkflow:
         # Run the clean command
         result = subprocess.run(
             ["../run-migration.sh", "clean", "--env-file", ".env"],
-                capture_output=True,
-                text=True,
-                check=False
+            capture_output=True,
+            text=True,
+            check=False,
         )
 
         # Check docker-compose was called with correct command
-        expected_calls = [
-            "docker-compose -f docker-compose.migration.yml --env-file",
-                "down"
-        ]
+        expected_calls = ["docker-compose -f docker-compose.migration.yml --env-file", "down"]
 
         # Check that the expected calls were made
-        all_calls = ' '.join([str(call) for call in mock_run.call_args_list])
+        all_calls = " ".join([str(call) for call in mock_run.call_args_list])
         for expected in expected_calls:
             assert expected in all_calls, f"Expected call containing '{expected}' not found"

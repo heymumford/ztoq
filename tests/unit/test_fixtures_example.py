@@ -16,15 +16,13 @@ from tests.fixtures import (
     mock_env_vars,
     temp_dir,
     temp_file,
-
     # Unit test fixtures
     mock_db_connection,
     mock_file_system,
-
     # Factories
     ProjectFactory,
     TestCaseFactory,
-    OpenAPISpecFactory
+    OpenAPISpecFactory,
 )
 
 
@@ -92,9 +90,7 @@ def test_factories_basic():
 
     # Create a project with specific attributes
     custom_project = ProjectFactory.create(
-        id="123",
-        name="Custom Project",
-        description="Custom description"
+        id="123", name="Custom Project", description="Custom description"
     )
 
     assert custom_project.id == "123"
@@ -133,14 +129,10 @@ def test_factories_relationships():
     # - 2 test cases under the project
     project = ProjectFactory.create()
     test_case1 = TestCaseFactory.create(
-        folder=project.id,
-        folder_name="Folder-Project",
-        name="First Test Case"
+        folder=project.id, folder_name="Folder-Project", name="First Test Case"
     )
     test_case2 = TestCaseFactory.create(
-        folder=project.id,
-        folder_name="Folder-Project",
-        name="Second Test Case"
+        folder=project.id, folder_name="Folder-Project", name="Second Test Case"
     )
 
     assert test_case1.folder == project.id
@@ -152,7 +144,9 @@ def test_factories_relationships():
     test_case_with_steps = TestCaseFactory.create_with_steps(step_count=3)
     assert isinstance(test_case_with_steps, TestCase)
     assert len(test_case_with_steps.steps) == 3
-    assert all(step.description.startswith("Step description") for step in test_case_with_steps.steps)
+    assert all(
+        step.description.startswith("Step description") for step in test_case_with_steps.steps
+    )
 
 
 @pytest.mark.unit

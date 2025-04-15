@@ -142,12 +142,14 @@ def schema_tables() -> List[str]:
             attachment_url VARCHAR,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
-        """
+        """,
     ]
 
 
 @pytest.fixture
-def sqlite_test_db(temp_db_path: str, schema_tables: List[str]) -> Generator[sqlite3.Connection, None, None]:
+def sqlite_test_db(
+    temp_db_path: str, schema_tables: List[str]
+) -> Generator[sqlite3.Connection, None, None]:
     """
     Create a SQLite test database with schema.
 
@@ -203,9 +205,7 @@ def sqlalchemy_memory_engine(schema_tables: List[str]) -> Generator[Engine, None
     """
     # Create an in-memory SQLite database engine
     engine = create_engine(
-        "sqlite:///:memory:",
-        connect_args={"check_same_thread": False},
-        poolclass=StaticPool
+        "sqlite:///:memory:", connect_args={"check_same_thread": False}, poolclass=StaticPool
     )
 
     # Create schema tables
@@ -248,7 +248,9 @@ def sqlalchemy_memory_session(sqlalchemy_memory_engine: Engine) -> Generator[Ses
 
 
 @pytest.fixture
-def sqlalchemy_file_engine(temp_db_path: str, schema_tables: List[str]) -> Generator[Engine, None, None]:
+def sqlalchemy_file_engine(
+    temp_db_path: str, schema_tables: List[str]
+) -> Generator[Engine, None, None]:
     """
     Create a SQLAlchemy file database engine with schema.
 
@@ -324,7 +326,10 @@ def populate_test_db() -> callable:
     Returns:
         callable: Function to populate a test database
     """
-    def _populate(session: Session, sample_data: Optional[Dict[str, List[Dict[str, Any]]]] = None) -> None:
+
+    def _populate(
+        session: Session, sample_data: Optional[Dict[str, List[Dict[str, Any]]]] = None
+    ) -> None:
         """
         Populate a test database with sample data.
 
@@ -337,28 +342,75 @@ def populate_test_db() -> callable:
             sample_data = {
                 "Project": [
                     {"project_id": "PROJ-1", "project_key": "PROJ1", "name": "Project One"},
-                    {"project_id": "PROJ-2", "project_key": "PROJ2", "name": "Project Two"}
+                    {"project_id": "PROJ-2", "project_key": "PROJ2", "name": "Project Two"},
                 ],
                 "Folder": [
-                    {"folder_id": 1, "project_id": "PROJ-1", "name": "Root Folder", "type": "TEST_CASE"},
-                    {"folder_id": 2, "project_id": "PROJ-1", "parent_folder_id": 1, "name": "Child Folder", "type": "TEST_CASE"}
+                    {
+                        "folder_id": 1,
+                        "project_id": "PROJ-1",
+                        "name": "Root Folder",
+                        "type": "TEST_CASE",
+                    },
+                    {
+                        "folder_id": 2,
+                        "project_id": "PROJ-1",
+                        "parent_folder_id": 1,
+                        "name": "Child Folder",
+                        "type": "TEST_CASE",
+                    },
                 ],
                 "TestCase": [
-                    {"test_case_id": 1, "project_id": "PROJ-1", "folder_id": 2, "key": "TC-1", "name": "Test Case One"},
-                    {"test_case_id": 2, "project_id": "PROJ-1", "folder_id": 2, "key": "TC-2", "name": "Test Case Two"}
+                    {
+                        "test_case_id": 1,
+                        "project_id": "PROJ-1",
+                        "folder_id": 2,
+                        "key": "TC-1",
+                        "name": "Test Case One",
+                    },
+                    {
+                        "test_case_id": 2,
+                        "project_id": "PROJ-1",
+                        "folder_id": 2,
+                        "key": "TC-2",
+                        "name": "Test Case Two",
+                    },
                 ],
                 "TestStep": [
-                    {"step_id": 1, "test_case_id": 1, "step_order": 1, "description": "Step One", "expected_result": "Expected One"},
-                    {"step_id": 2, "test_case_id": 1, "step_order": 2, "description": "Step Two", "expected_result": "Expected Two"}
+                    {
+                        "step_id": 1,
+                        "test_case_id": 1,
+                        "step_order": 1,
+                        "description": "Step One",
+                        "expected_result": "Expected One",
+                    },
+                    {
+                        "step_id": 2,
+                        "test_case_id": 1,
+                        "step_order": 2,
+                        "description": "Step Two",
+                        "expected_result": "Expected Two",
+                    },
                 ],
                 "TestCycle": [
-                    {"test_cycle_id": 1, "project_id": "PROJ-1", "folder_id": 1, "key": "CY-1", "name": "Cycle One"},
-                    {"test_cycle_id": 2, "project_id": "PROJ-1", "folder_id": 1, "key": "CY-2", "name": "Cycle Two"}
+                    {
+                        "test_cycle_id": 1,
+                        "project_id": "PROJ-1",
+                        "folder_id": 1,
+                        "key": "CY-1",
+                        "name": "Cycle One",
+                    },
+                    {
+                        "test_cycle_id": 2,
+                        "project_id": "PROJ-1",
+                        "folder_id": 1,
+                        "key": "CY-2",
+                        "name": "Cycle Two",
+                    },
                 ],
                 "TestExecution": [
                     {"execution_id": 1, "test_cycle_id": 1, "test_case_id": 1, "status": "Passed"},
-                    {"execution_id": 2, "test_cycle_id": 1, "test_case_id": 2, "status": "Failed"}
-                ]
+                    {"execution_id": 2, "test_cycle_id": 1, "test_case_id": 2, "status": "Failed"},
+                ],
             }
 
         # Insert sample data
@@ -437,7 +489,9 @@ def mock_sqlalchemy_session() -> MagicMock:
 
 
 @pytest.fixture
-def transaction_fixture(sqlalchemy_memory_session: Session) -> Generator[Tuple[Session, callable], None, None]:
+def transaction_fixture(
+    sqlalchemy_memory_session: Session,
+) -> Generator[Tuple[Session, callable], None, None]:
     """
     Create a fixture for testing database transactions.
 
@@ -488,4 +542,3 @@ def concurrent_sessions(sqlalchemy_memory_engine: Engine) -> Generator[List[Sess
     # Clean up
     for session in sessions:
         session.close()
-

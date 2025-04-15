@@ -15,8 +15,13 @@ from typing import Any, Dict, List
 import pytest
 
 from ztoq.work_queue import (
-    WorkerType, WorkStatus, WorkItem, WorkQueue,
-    run_in_thread_pool, run_in_process_pool, run_with_asyncio
+    WorkerType,
+    WorkStatus,
+    WorkItem,
+    WorkQueue,
+    run_in_thread_pool,
+    run_in_process_pool,
+    run_with_asyncio,
 )
 
 # Mark the whole module as unit tests
@@ -142,7 +147,7 @@ async def test_thread_work_queue():
         results = await asyncio.gather(*[queue.get_result(wid) for wid in work_ids])
 
         # Check results
-        assert results == [i*i for i in range(10)]
+        assert results == [i * i for i in range(10)]
 
         # Check stats
         stats = queue.get_stats()
@@ -185,7 +190,7 @@ async def test_asyncio_work_queue():
         results = await queue.get_batch_results(work_ids)
 
         # Check results
-        assert [results[wid] for wid in work_ids] == [i*i for i in range(10)]
+        assert [results[wid] for wid in work_ids] == [i * i for i in range(10)]
 
         # Check completed callback was called
         assert len(completed_items) == 10
@@ -229,7 +234,7 @@ async def test_error_handling():
         for i, wid in enumerate(work_ids):
             if i % 2 == 0:
                 assert isinstance(results[wid], int)
-                assert results[wid] == i*i
+                assert results[wid] == i * i
             else:
                 assert isinstance(results[wid], ValueError)
                 assert str(results[wid]) == f"Cannot process odd number: {i}"
@@ -255,7 +260,8 @@ async def test_retry_mechanism():
     # Custom worker that fails on first attempt for odd numbers
     def flaky_worker(x: int) -> int:
         work_id = next(
-            wid for wid, item in queue.work_items.items()
+            wid
+            for wid, item in queue.work_items.items()
             if item.input_data == x and item.status == WorkStatus.RUNNING
         )
 
@@ -290,7 +296,7 @@ async def test_retry_mechanism():
 
         # Check all succeeded
         for i, wid in enumerate(work_ids):
-            assert results[wid] == i*i
+            assert results[wid] == i * i
 
         # Odd numbers should have been retried once
         for i, wid in enumerate(work_ids):
@@ -407,15 +413,15 @@ async def test_batch_processing():
     # Test thread pool
     numbers = list(range(10))
     results = await run_in_thread_pool(sync_worker, numbers, max_workers=3)
-    assert results == [n*n for n in numbers]
+    assert results == [n * n for n in numbers]
 
     # Test process pool - note this is slower due to process creation
     results = await run_in_process_pool(sync_worker, numbers[:5], max_workers=2)
-    assert results == [n*n for n in numbers[:5]]
+    assert results == [n * n for n in numbers[:5]]
 
     # Test asyncio
     results = await run_with_asyncio(async_worker, numbers, max_workers=5)
-    assert results == [n*n for n in numbers]
+    assert results == [n * n for n in numbers]
 
 
 @pytest.mark.asyncio
@@ -446,13 +452,13 @@ async def test_complex_dependency_graph():
         # 6 depends on 4
         # 7 has no dependencies
         dependency_graph = {
-            1: [],       # No dependencies
-            2: [1],      # Depends on 1
-            3: [1],      # Depends on 1
-            4: [1],      # Depends on 1
-            5: [2, 3],   # Depends on 2 and 3
-            6: [4],      # Depends on 4
-            7: [],       # No dependencies
+            1: [],  # No dependencies
+            2: [1],  # Depends on 1
+            3: [1],  # Depends on 1
+            4: [1],  # Depends on 1
+            5: [2, 3],  # Depends on 2 and 3
+            6: [4],  # Depends on 4
+            7: [],  # No dependencies
         }
 
         # Add with dependencies
@@ -471,7 +477,7 @@ async def test_complex_dependency_graph():
         assert processed_items.index(4) < processed_items.index(6)
 
         # Check results
-        assert all(results[data_to_work_id[i]] == i*i for i in range(1, 8))
+        assert all(results[data_to_work_id[i]] == i * i for i in range(1, 8))
 
     finally:
         # Stop queue
@@ -509,7 +515,7 @@ async def test_cancel_work():
 
         # Check results for non-cancelled items
         for i, wid in enumerate(work_ids[:7]):
-            assert results[wid] == i*i
+            assert results[wid] == i * i
 
         # Verify cancelled items are marked as cancelled
         for wid in work_ids[7:]:
@@ -552,7 +558,7 @@ async def test_work_queue_stress():
 
         # Check results
         assert len(results) == 1000
-        assert all(results[wid] == i*i for i, wid in enumerate(work_ids))
+        assert all(results[wid] == i * i for i, wid in enumerate(work_ids))
 
         # Check performance - should be much faster than sequential
         duration = end_time - start_time

@@ -14,18 +14,18 @@ from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from ztoq.core.db_manager import DatabaseConfig, SQLDatabaseManager
 from ztoq.core.db_models import (
     Attachment,
-        CustomFieldDefinition,
-        CustomFieldValue,
-        EntityType,
-        Environment,
-        Folder,
-        Link,
-        Priority,
-        Project,
-        Status,
-        TestCase,
-        TestCycle,
-        TestExecution,
+    CustomFieldDefinition,
+    CustomFieldValue,
+    EntityType,
+    Environment,
+    Folder,
+    Link,
+    Priority,
+    Project,
+    Status,
+    TestCase,
+    TestCycle,
+    TestExecution,
 )
 from ztoq.data_fetcher import FetchResult
 from ztoq.models import (
@@ -65,9 +65,8 @@ from ztoq.models import (
     Status as StatusModel,
 )
 
+
 @pytest.mark.unit()
-
-
 class TestSQLDatabaseManager:
     @pytest.fixture()
     def db_config(self):
@@ -103,11 +102,11 @@ class TestSQLDatabaseManager:
         """Create a test status model."""
         return StatusModel(
             id="STAT-123",
-                name="Active",
-                description="Active status",
-                color="#00FF00",
-                type="TEST_CASE",
-            )
+            name="Active",
+            description="Active status",
+            color="#00FF00",
+            type="TEST_CASE",
+        )
 
     @pytest.fixture()
     def test_priority(self):
@@ -149,14 +148,14 @@ class TestSQLDatabaseManager:
         # Test PostgreSQL engine creation with mocked connection string
         pg_config = DatabaseConfig(
             db_type="postgresql",
-                host="localhost",
-                port=5432,
-                username="test_user",
-                password="test_password",
-                database="test_db",
-                pool_size=10,
-                max_overflow=20,
-            )
+            host="localhost",
+            port=5432,
+            username="test_user",
+            password="test_password",
+            database="test_db",
+            pool_size=10,
+            max_overflow=20,
+        )
 
         # Mock create_engine to avoid actual connection
         with patch("ztoq.core.db_manager.create_engine") as mock_create_engine:
@@ -197,7 +196,7 @@ class TestSQLDatabaseManager:
                 # Add a project
                 project = Project(id="test", key="TEST", name="Test")
                 session.add(project)
-                    # The commit will fail, triggering rollback
+                # The commit will fail, triggering rollback
 
             # Verify commit was called (and failed)
             mock_commit.assert_called_once()
@@ -216,17 +215,17 @@ class TestSQLDatabaseManager:
         # Check essential tables exist
         essential_tables = [
             "projects",
-                "folders",
-                "test_cases",
-                "test_cycles",
-                "test_steps",
-                "test_executions",
-                "custom_field_definitions",
-                "custom_field_values",
-                "attachments",
-                "migration_state",
-                "entity_batch_state",
-            ]
+            "folders",
+            "test_cases",
+            "test_cycles",
+            "test_steps",
+            "test_executions",
+            "custom_field_definitions",
+            "custom_field_values",
+            "attachments",
+            "migration_state",
+            "entity_batch_state",
+        ]
 
         for table in essential_tables:
             assert table in table_names
@@ -252,10 +251,10 @@ class TestSQLDatabaseManager:
             # Test creating a new object
             project, created = db_manager.get_or_create(
                 session,
-                    Project,
-                    create_kwargs={"id": "PRJ-123", "key": "TEST", "name": "Test Project"},
-                    key="TEST",
-                )
+                Project,
+                create_kwargs={"id": "PRJ-123", "key": "TEST", "name": "Test Project"},
+                key="TEST",
+            )
 
             assert created is True
             assert project.id == "PRJ-123"
@@ -264,10 +263,10 @@ class TestSQLDatabaseManager:
             # Test retrieving an existing object
             same_project, created = db_manager.get_or_create(
                 session,
-                    Project,
-                    create_kwargs={"id": "DIFFERENT", "key": "TEST", "name": "Different Name"},
-                    key="TEST",
-                )
+                Project,
+                create_kwargs={"id": "DIFFERENT", "key": "TEST", "name": "Different Name"},
+                key="TEST",
+            )
 
             assert created is False
             assert same_project.id == "PRJ-123"  # Original ID, not the new one
@@ -291,10 +290,10 @@ class TestSQLDatabaseManager:
                     with patch.object(session, "rollback"):
                         race_project, created = db_manager.get_or_create(
                             session,
-                                Project,
-                                create_kwargs={"id": "PRJ-456", "key": "RACE", "name": "Race Project"},
-                                key="RACE",
-                            )
+                            Project,
+                            create_kwargs={"id": "PRJ-456", "key": "RACE", "name": "Race Project"},
+                            key="RACE",
+                        )
 
                         assert created is False
                         assert race_project == project
@@ -413,21 +412,21 @@ class TestSQLDatabaseManager:
             # Test saving custom fields
             custom_fields = [
                 CustomFieldModel(id="CF-1", name="Test Type", type="text", value="Integration"),
-                    CustomFieldModel(id="CF-2", name="Component", type="dropdown", value="Login"),
-                    CustomFieldModel(id="CF-3", name="Is Automated", type="checkbox", value=True),
-                    CustomFieldModel(id="CF-4", name="Due Date", type="date", value="2025-05-01"),
-                    CustomFieldModel(
+                CustomFieldModel(id="CF-2", name="Component", type="dropdown", value="Login"),
+                CustomFieldModel(id="CF-3", name="Is Automated", type="checkbox", value=True),
+                CustomFieldModel(id="CF-4", name="Due Date", type="date", value="2025-05-01"),
+                CustomFieldModel(
                     id="CF-5", name="Tags", type="multipleSelect", value=["api", "regression"]
                 ),
-                ]
+            ]
 
             db_manager._save_custom_fields(
                 session=session,
-                    custom_fields=custom_fields,
-                    entity_type=EntityType.TEST_CASE,
-                    entity_id="TC-123",
-                    project_key=test_project.key,
-                )
+                custom_fields=custom_fields,
+                entity_type=EntityType.TEST_CASE,
+                entity_id="TC-123",
+                project_key=test_project.key,
+            )
 
             # Verify custom field definitions were created
             field_defs = session.query(CustomFieldDefinition).all()
@@ -454,19 +453,19 @@ class TestSQLDatabaseManager:
         links = [
             LinkModel(
                 id="LINK-1",
-                    name="Requirements",
-                    url="https://example.com/req",
-                    description="Requirements document",
-                    type="web",
-                ),
-                LinkModel(
+                name="Requirements",
+                url="https://example.com/req",
+                description="Requirements document",
+                type="web",
+            ),
+            LinkModel(
                 id="LINK-2",
-                    name="Issue",
-                    url="https://example.com/issue/123",
-                    description="Related issue",
-                    type="issue",
-                ),
-            ]
+                name="Issue",
+                url="https://example.com/issue/123",
+                description="Related issue",
+                type="issue",
+            ),
+        ]
 
         with db_manager.get_session() as session:
             # Save links
@@ -492,10 +491,10 @@ class TestSQLDatabaseManager:
 
             db_manager._save_links(
                 session=session,
-                    links=new_links,
-                    entity_type=EntityType.TEST_CASE,
-                    entity_id="TC-123",
-                )
+                links=new_links,
+                entity_type=EntityType.TEST_CASE,
+                entity_id="TC-123",
+            )
 
             updated_links = (
                 session.query(Link)
@@ -512,12 +511,12 @@ class TestSQLDatabaseManager:
         attachments = [
             AttachmentModel(
                 id="ATT-1",
-                    filename="screenshot.png",
-                    content_type="image/png",
-                    size=1024,
-                    created_on=datetime.now(),
-                    created_by="user1",
-                    content="c2ltdWxhdGVkIGJpbmFyeSBkYXRh",  # base64 encoded "simulated binary data"
+                filename="screenshot.png",
+                content_type="image/png",
+                size=1024,
+                created_on=datetime.now(),
+                created_by="user1",
+                content="c2ltdWxhdGVkIGJpbmFyeSBkYXRh",  # base64 encoded "simulated binary data"
             )
         ]
 
@@ -525,10 +524,10 @@ class TestSQLDatabaseManager:
             # Save attachments
             db_manager._save_attachments(
                 session=session,
-                    attachments=attachments,
-                    entity_type=EntityType.TEST_EXECUTION,
-                    entity_id="EXEC-123",
-                )
+                attachments=attachments,
+                entity_type=EntityType.TEST_EXECUTION,
+                entity_id="EXEC-123",
+            )
 
             # Verify attachments were saved
             saved_attachments = (
@@ -548,20 +547,20 @@ class TestSQLDatabaseManager:
                 AttachmentModel(
                     id="ATT-1",  # Same ID as before
                     filename="updated_screenshot.png",
-                        content_type="image/png",
-                        size=2048,
-                        created_on=datetime.now(),
-                        created_by="user1",
-                        content="dXBkYXRlZCBiaW5hcnkgZGF0YQ==",  # "updated binary data"
+                    content_type="image/png",
+                    size=2048,
+                    created_on=datetime.now(),
+                    created_by="user1",
+                    content="dXBkYXRlZCBiaW5hcnkgZGF0YQ==",  # "updated binary data"
                 )
             ]
 
             db_manager._save_attachments(
                 session=session,
-                    attachments=updated_attachments,
-                    entity_type=EntityType.TEST_EXECUTION,
-                    entity_id="EXEC-123",
-                )
+                attachments=updated_attachments,
+                entity_type=EntityType.TEST_EXECUTION,
+                entity_id="EXEC-123",
+            )
 
             # Verify attachment was updated
             updated_attachment = session.query(Attachment).filter_by(id="ATT-1").first()
@@ -604,40 +603,40 @@ class TestSQLDatabaseManager:
         # Create test case model
         test_case = CaseModel(
             id="TC-123",
-                key="TEST-1",
-                name="Login Test",
-                objective="Verify user login functionality",
-                precondition="User exists in system",
-                description="Test the login functionality",
-                status="Active",
-                priority=test_priority,
-                priority_name="High",
-                folder=test_folder.id,
-                folder_name=test_folder.name,
-                owner="user1",
-                owner_name="Test User",
-                created_on=datetime.now(),
-                created_by="user1",
-                labels=["Regression", "Smoke"],
-                steps=[
+            key="TEST-1",
+            name="Login Test",
+            objective="Verify user login functionality",
+            precondition="User exists in system",
+            description="Test the login functionality",
+            status="Active",
+            priority=test_priority,
+            priority_name="High",
+            folder=test_folder.id,
+            folder_name=test_folder.name,
+            owner="user1",
+            owner_name="Test User",
+            created_on=datetime.now(),
+            created_by="user1",
+            labels=["Regression", "Smoke"],
+            steps=[
                 CaseStepModel(
                     index=0,
-                        description="Navigate to login page",
-                        expected_result="Login page displayed",
-                    ),
-                    CaseStepModel(
+                    description="Navigate to login page",
+                    expected_result="Login page displayed",
+                ),
+                CaseStepModel(
                     index=1,
-                        description="Enter credentials and submit",
-                        expected_result="User logged in successfully",
-                    ),
-                ],
-                custom_fields=[
+                    description="Enter credentials and submit",
+                    expected_result="User logged in successfully",
+                ),
+            ],
+            custom_fields=[
                 CustomFieldModel(id="CF-1", name="Test Type", type="text", value="Integration")
             ],
-                links=[LinkModel(name="Requirements", url="https://example.com/req", type="web")],
-                attachments=[],
-                scripts=[],
-            )
+            links=[LinkModel(name="Requirements", url="https://example.com/req", type="web")],
+            attachments=[],
+            scripts=[],
+        )
 
         # Save test case
         db_manager.save_test_case(test_case, test_project.key)
@@ -708,24 +707,24 @@ class TestSQLDatabaseManager:
         # Create test cycle model
         test_cycle = CycleInfoModel(
             id="CYCLE-123",
-                key="TEST-C1",
-                name="Sprint 1 Testing",
-                description="Test cycle for Sprint 1",
-                status="Active",
-                status_name="Active",
-                folder=test_folder.id,
-                folder_name=test_folder.name,
-                owner="user1",
-                owner_name="Test User",
-                created_on=datetime.now(),
-                created_by="user1",
-                project_key=test_project.key,
-                custom_fields=[
+            key="TEST-C1",
+            name="Sprint 1 Testing",
+            description="Test cycle for Sprint 1",
+            status="Active",
+            status_name="Active",
+            folder=test_folder.id,
+            folder_name=test_folder.name,
+            owner="user1",
+            owner_name="Test User",
+            created_on=datetime.now(),
+            created_by="user1",
+            project_key=test_project.key,
+            custom_fields=[
                 CustomFieldModel(id="CF-1", name="Sprint", type="text", value="Sprint 1")
             ],
-                links=[LinkModel(name="Sprint Board", url="https://example.com/sprint1", type="web")],
-                attachments=[],
-            )
+            links=[LinkModel(name="Sprint Board", url="https://example.com/sprint1", type="web")],
+            attachments=[],
+        )
 
         # Save test cycle
         db_manager.save_test_cycle(test_cycle, test_project.key)
@@ -781,34 +780,34 @@ class TestSQLDatabaseManager:
         # Create test execution model
         test_execution = ExecutionModel(
             id="EXEC-123",
-                testCaseKey="TEST-1",
-                cycleId="CYCLE-123",
-                cycle_name="Sprint 1 Testing",
-                status="PASS",
-                status_name="Passed",
-                environment="ENV-123",
-                environment_name="Production",
-                executed_by="user1",
-                executed_by_name="Test User",
-                executed_on=datetime.now(),
-                created_on=datetime.now(),
-                created_by="user1",
-                comment="Test passed with no issues",
-                steps=[
+            testCaseKey="TEST-1",
+            cycleId="CYCLE-123",
+            cycle_name="Sprint 1 Testing",
+            status="PASS",
+            status_name="Passed",
+            environment="ENV-123",
+            environment_name="Production",
+            executed_by="user1",
+            executed_by_name="Test User",
+            executed_on=datetime.now(),
+            created_on=datetime.now(),
+            created_by="user1",
+            comment="Test passed with no issues",
+            steps=[
                 CaseStepModel(
                     index=0,
-                        description="Navigate to login page",
-                        expected_result="Login page displayed",
-                        actual_result="Login page displayed correctly",
-                        status="PASS",
-                    )
+                    description="Navigate to login page",
+                    expected_result="Login page displayed",
+                    actual_result="Login page displayed correctly",
+                    status="PASS",
+                )
             ],
-                custom_fields=[
+            custom_fields=[
                 CustomFieldModel(id="CF-1", name="Browser", type="text", value="Chrome")
             ],
-                attachments=[],
-                links=[],
-            )
+            attachments=[],
+            links=[],
+        )
 
         # Save test execution
         db_manager.save_test_execution(test_execution, test_project.key)
@@ -844,110 +843,110 @@ class TestSQLDatabaseManager:
         # Create sample data
         folders = [
             FolderModel(id="FOLD-1", name="Test Cases", folderType="TEST_CASE", projectKey="TEST"),
-                FolderModel(
+            FolderModel(
                 id="FOLD-2", name="Test Cycles", folderType="TEST_CYCLE", projectKey="TEST"
             ),
-            ]
+        ]
 
         statuses = [
             StatusModel(id="STAT-1", name="Passed", type="TEST_EXECUTION"),
-                StatusModel(id="STAT-2", name="Failed", type="TEST_EXECUTION"),
-            ]
+            StatusModel(id="STAT-2", name="Failed", type="TEST_EXECUTION"),
+        ]
 
         priorities = [
             PriorityModel(id="PRI-1", name="High", rank=1),
-                PriorityModel(id="PRI-2", name="Medium", rank=2),
-            ]
+            PriorityModel(id="PRI-2", name="Medium", rank=2),
+        ]
 
         environments = [
             EnvironmentModel(id="ENV-1", name="Production"),
-                EnvironmentModel(id="ENV-2", name="Staging"),
-            ]
+            EnvironmentModel(id="ENV-2", name="Staging"),
+        ]
 
         test_cases = [
             CaseModel(id="TC-1", key="TEST-1", name="Test Login", folder="FOLD-1"),
-                CaseModel(id="TC-2", key="TEST-2", name="Test Logout", folder="FOLD-1"),
-            ]
+            CaseModel(id="TC-2", key="TEST-2", name="Test Logout", folder="FOLD-1"),
+        ]
 
         test_cycles = [
             CycleInfoModel(
                 id="CYCLE-1",
-                    key="TEST-C1",
-                    name="Sprint 1 Testing",
-                    project_key="TEST",
-                    folder="FOLD-2",
-                )
+                key="TEST-C1",
+                name="Sprint 1 Testing",
+                project_key="TEST",
+                folder="FOLD-2",
+            )
         ]
 
         test_executions = [
             ExecutionModel(
                 id="EXEC-1",
-                    testCaseKey="TEST-1",
-                    cycleId="CYCLE-1",
-                    status="PASS",
-                    environment="ENV-1",
-                )
+                testCaseKey="TEST-1",
+                cycleId="CYCLE-1",
+                status="PASS",
+                environment="ENV-1",
+            )
         ]
 
         # Create fetch results
         fetch_results = {
             "project": FetchResult(
                 entity_type="project",
-                    project_key="TEST",
-                    items=[test_project],
-                    count=1,
-                    success=True,
-                ),
-                "folders": FetchResult(
+                project_key="TEST",
+                items=[test_project],
+                count=1,
+                success=True,
+            ),
+            "folders": FetchResult(
                 entity_type="folders",
-                    project_key="TEST",
-                    items=folders,
-                    count=len(folders),
-                    success=True,
-                ),
-                "statuses": FetchResult(
+                project_key="TEST",
+                items=folders,
+                count=len(folders),
+                success=True,
+            ),
+            "statuses": FetchResult(
                 entity_type="statuses",
-                    project_key="TEST",
-                    items=statuses,
-                    count=len(statuses),
-                    success=True,
-                ),
-                "priorities": FetchResult(
+                project_key="TEST",
+                items=statuses,
+                count=len(statuses),
+                success=True,
+            ),
+            "priorities": FetchResult(
                 entity_type="priorities",
-                    project_key="TEST",
-                    items=priorities,
-                    count=len(priorities),
-                    success=True,
-                ),
-                "environments": FetchResult(
+                project_key="TEST",
+                items=priorities,
+                count=len(priorities),
+                success=True,
+            ),
+            "environments": FetchResult(
                 entity_type="environments",
-                    project_key="TEST",
-                    items=environments,
-                    count=len(environments),
-                    success=True,
-                ),
-                "test_cases": FetchResult(
+                project_key="TEST",
+                items=environments,
+                count=len(environments),
+                success=True,
+            ),
+            "test_cases": FetchResult(
                 entity_type="test_cases",
-                    project_key="TEST",
-                    items=test_cases,
-                    count=len(test_cases),
-                    success=True,
-                ),
-                "test_cycles": FetchResult(
+                project_key="TEST",
+                items=test_cases,
+                count=len(test_cases),
+                success=True,
+            ),
+            "test_cycles": FetchResult(
                 entity_type="test_cycles",
-                    project_key="TEST",
-                    items=test_cycles,
-                    count=len(test_cycles),
-                    success=True,
-                ),
-                "test_executions": FetchResult(
+                project_key="TEST",
+                items=test_cycles,
+                count=len(test_cycles),
+                success=True,
+            ),
+            "test_executions": FetchResult(
                 entity_type="test_executions",
-                    project_key="TEST",
-                    items=test_executions,
-                    count=len(test_executions),
-                    success=True,
-                ),
-            }
+                project_key="TEST",
+                items=test_executions,
+                count=len(test_executions),
+                success=True,
+            ),
+        }
 
         # Save all project data
         result = db_manager.save_project_data("TEST", fetch_results)
@@ -979,11 +978,11 @@ class TestSQLDatabaseManager:
         fetch_results = {
             "test_cases": FetchResult(
                 entity_type="test_cases",
-                    project_key="TEST",
-                    items=test_cases,
-                    count=len(test_cases),
-                    success=True,
-                )
+                project_key="TEST",
+                items=test_cases,
+                count=len(test_cases),
+                success=True,
+            )
         }
 
         # Save project data
@@ -1009,35 +1008,35 @@ class TestSQLDatabaseManager:
 
         test_cases2 = [
             CaseModel(id="TC-2", key="PROJ2-1", name="Test 1 for Project 2"),
-                CaseModel(id="TC-3", key="PROJ2-2", name="Test 2 for Project 2"),
-            ]
+            CaseModel(id="TC-3", key="PROJ2-2", name="Test 2 for Project 2"),
+        ]
 
         # Create fetch results for each project
         project1_results = {
             "project": FetchResult(
                 entity_type="project", project_key="PROJ1", items=[project1], count=1, success=True
             ),
-                "test_cases": FetchResult(
+            "test_cases": FetchResult(
                 entity_type="test_cases",
-                    project_key="PROJ1",
-                    items=test_cases1,
-                    count=len(test_cases1),
-                    success=True,
-                ),
-            }
+                project_key="PROJ1",
+                items=test_cases1,
+                count=len(test_cases1),
+                success=True,
+            ),
+        }
 
         project2_results = {
             "project": FetchResult(
                 entity_type="project", project_key="PROJ2", items=[project2], count=1, success=True
             ),
-                "test_cases": FetchResult(
+            "test_cases": FetchResult(
                 entity_type="test_cases",
-                    project_key="PROJ2",
-                    items=test_cases2,
-                    count=len(test_cases2),
-                    success=True,
-                ),
-            }
+                project_key="PROJ2",
+                items=test_cases2,
+                count=len(test_cases2),
+                success=True,
+            ),
+        }
 
         all_projects_data = {"PROJ1": project1_results, "PROJ2": project2_results}
 
@@ -1075,10 +1074,10 @@ class TestSQLDatabaseManager:
         # Update migration state
         updated_state = db_manager.update_migration_state(
             project_key="TEST",
-                extraction_status="completed",
-                transformation_status="in_progress",
-                metadata={"extracted_items": 100},
-            )
+            extraction_status="completed",
+            transformation_status="in_progress",
+            metadata={"extracted_items": 100},
+        )
 
         assert updated_state.extraction_status == "completed"
         assert updated_state.transformation_status == "in_progress"
@@ -1099,12 +1098,12 @@ class TestSQLDatabaseManager:
         # Create entity batch state
         batch = db_manager.create_entity_batch_state(
             project_key="TEST",
-                entity_type="test_case",
-                batch_number=1,
-                total_batches=5,
-                items_count=100,
-                status="not_started",
-            )
+            entity_type="test_case",
+            batch_number=1,
+            total_batches=5,
+            items_count=100,
+            status="not_started",
+        )
 
         assert batch is not None
         assert batch.project_key == "TEST"
@@ -1117,11 +1116,11 @@ class TestSQLDatabaseManager:
         # Update batch state
         updated_batch = db_manager.update_entity_batch_state(
             project_key="TEST",
-                entity_type="test_case",
-                batch_number=1,
-                status="in_progress",
-                processed_count=50,
-            )
+            entity_type="test_case",
+            batch_number=1,
+            status="in_progress",
+            processed_count=50,
+        )
 
         assert updated_batch is not None
         assert updated_batch.status == "in_progress"
@@ -1130,11 +1129,11 @@ class TestSQLDatabaseManager:
         # Complete batch
         completed_batch = db_manager.update_entity_batch_state(
             project_key="TEST",
-                entity_type="test_case",
-                batch_number=1,
-                status="completed",
-                processed_count=100,
-            )
+            entity_type="test_case",
+            batch_number=1,
+            status="completed",
+            processed_count=100,
+        )
 
         assert completed_batch is not None
         assert completed_batch.status == "completed"
@@ -1148,12 +1147,12 @@ class TestSQLDatabaseManager:
         # Create another batch that's not complete
         db_manager.create_entity_batch_state(
             project_key="TEST",
-                entity_type="test_cycle",
-                batch_number=1,
-                total_batches=3,
-                items_count=50,
-                status="in_progress",
-            )
+            entity_type="test_cycle",
+            batch_number=1,
+            total_batches=3,
+            items_count=50,
+            status="in_progress",
+        )
 
         # Get incomplete batches (should have one now)
         incomplete = db_manager.get_incomplete_batches("TEST")
@@ -1189,17 +1188,17 @@ class TestSQLDatabaseManager:
 
         test_case = CaseModel(
             id="TC-1",
-                key="TEST-1",
-                name="Test Login",
-                folder="FOLD-1",
-                steps=[
+            key="TEST-1",
+            name="Test Login",
+            folder="FOLD-1",
+            steps=[
                 CaseStepModel(index=0, description="Step 1", expected_result="Result 1"),
-                    CaseStepModel(index=1, description="Step 2", expected_result="Result 2"),
-                ],
-                custom_fields=[
+                CaseStepModel(index=1, description="Step 2", expected_result="Result 2"),
+            ],
+            custom_fields=[
                 CustomFieldModel(id="CF-1", name="Test Type", type="text", value="Integration")
             ],
-            )
+        )
         db_manager.save_test_case(test_case, "TEST")
 
         test_cycle = CycleInfoModel(

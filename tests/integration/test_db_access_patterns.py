@@ -27,10 +27,18 @@ from sqlalchemy.orm import sessionmaker
 
 # Import project modules
 import sys
+
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 
 from ztoq.core.db_manager import DatabaseConfig, SQLDatabaseManager
-from ztoq.core.db_models import EntityBatchState, Folder, Project, TestCase, TestCycle, TestExecution
+from ztoq.core.db_models import (
+    EntityBatchState,
+    Folder,
+    Project,
+    TestCase,
+    TestCycle,
+    TestExecution,
+)
 from ztoq.models import (
     Case as CaseModel,
     CustomField as CustomFieldModel,
@@ -93,7 +101,7 @@ class TestDatabaseAccessPatterns:
                 id=f"folder-{i}",
                 name=f"Folder {i}",
                 folderType="TEST_CASE",
-                projectKey=self.test_project.key
+                projectKey=self.test_project.key,
             )
             self.db_manager.save_folder(folder, self.test_project.key)
             folders.append(folder)
@@ -189,23 +197,23 @@ class TestDatabaseAccessPatterns:
         # Query using indexed column (project_key)
         with self.measure_execution_time("Query with indexed column") as indexed_duration:
             with self.db_manager.get_session() as session:
-                result = session.query(TestCase).filter(
-                    TestCase.project_key == self.test_project.key
-                ).all()
+                result = (
+                    session.query(TestCase)
+                    .filter(TestCase.project_key == self.test_project.key)
+                    .all()
+                )
                 assert len(result) == 50, "Should retrieve all 50 test cases"
 
         # Query using a non-indexed field
         with self.measure_execution_time("Query with non-indexed column") as non_indexed_duration:
             with self.db_manager.get_session() as session:
-                result = session.query(TestCase).filter(
-                    TestCase.status == "Draft"
-                ).all()
+                result = session.query(TestCase).filter(TestCase.status == "Draft").all()
                 assert len(result) == 50, "Should retrieve all 50 test cases"
 
         # Log the difference (Note: This test is more illustrative in PostgreSQL;
         # SQLite's performance differences are less pronounced with small datasets)
         if indexed_duration and non_indexed_duration:
-            ratio = non_indexed_duration/indexed_duration
+            ratio = non_indexed_duration / indexed_duration
             print(f"Performance difference: {ratio:.2f}x slower without index")
         else:
             print("Could not calculate performance difference - timing data unavailable")
@@ -235,7 +243,9 @@ class TestDatabaseAccessPatterns:
 
         # Method 1: Individual inserts with separate sessions
         sample_cases_individual = new_test_cases[:20]  # Take a subset for comparison
-        with self.measure_execution_time("Individual inserts with separate sessions") as individual_duration:
+        with self.measure_execution_time(
+            "Individual inserts with separate sessions"
+        ) as individual_duration:
             for test_case in sample_cases_individual:
                 self.db_manager.save_test_case(test_case, self.test_project.key)
 
@@ -257,7 +267,7 @@ class TestDatabaseAccessPatterns:
 
         # Compare results
         if individual_duration and batch_duration:
-            ratio = individual_duration/batch_duration
+            ratio = individual_duration / batch_duration
             print(f"Performance improvement: {ratio:.2f}x faster with batch insert")
         else:
             print("Could not calculate performance improvement - timing data unavailable")
@@ -265,12 +275,16 @@ class TestDatabaseAccessPatterns:
         # Verify both methods inserted the correct number of records
         with self.db_manager.get_session() as session:
             # Ensure the LIKE patterns match our test case IDs
-            count_individual = session.query(TestCase).filter(
-                TestCase.id.between("TC-BATCH-100", "TC-BATCH-119")
-            ).count()
-            count_batch = session.query(TestCase).filter(
-                TestCase.id.between("TC-BATCH-120", "TC-BATCH-139")
-            ).count()
+            count_individual = (
+                session.query(TestCase)
+                .filter(TestCase.id.between("TC-BATCH-100", "TC-BATCH-119"))
+                .count()
+            )
+            count_batch = (
+                session.query(TestCase)
+                .filter(TestCase.id.between("TC-BATCH-120", "TC-BATCH-139"))
+                .count()
+            )
 
             assert count_individual == 20, "Individual inserts should have created 20 records"
             assert count_batch == 20, "Batch insert should have created 20 records"
@@ -294,7 +308,7 @@ class TestDatabaseAccessPatterns:
                 "items_count": 10,
                 "processed_count": 0,
                 "status": "not_started",
-                "last_updated": datetime.now(timezone.utc)
+                "last_updated": datetime.now(timezone.utc),
             }
             data_to_insert.append(batch_state)
 
@@ -307,7 +321,7 @@ class TestDatabaseAccessPatterns:
                     batch_number=i,
                     total_batches=20,
                     items_count=10,
-                    status="not_started"
+                    status="not_started",
                 )
 
         # Method 2: Bulk insert with SQLAlchemy execute
@@ -320,35 +334,40 @@ class TestDatabaseAccessPatterns:
                 # Prepare data for bulk insert
                 bulk_data = []
                 for i in range(20, 40):  # Insert next 20 records in bulk
-                    bulk_data.append({
-                        "project_key": self.test_project.key,
-                        "entity_type": "test_case_bulk",
-                        "batch_number": i,
-                        "total_batches": 20,
-                        "items_count": 10,
-                        "status": "not_started",
-                        "last_updated": datetime.now(timezone.utc)
-                    })
+                    bulk_data.append(
+                        {
+                            "project_key": self.test_project.key,
+                            "entity_type": "test_case_bulk",
+                            "batch_number": i,
+                            "total_batches": 20,
+                            "items_count": 10,
+                            "status": "not_started",
+                            "last_updated": datetime.now(timezone.utc),
+                        }
+                    )
 
                 # Execute bulk insert using the insert() method
                 from sqlalchemy.sql import insert
+
                 connection.execute(insert(table), bulk_data)
 
         # Compare results
         if individual_duration and bulk_duration:
-            ratio = individual_duration/bulk_duration
+            ratio = individual_duration / bulk_duration
             print(f"Bulk insert performance: {ratio:.2f}x faster than individual inserts")
         else:
             print("Could not calculate performance improvement - timing data unavailable")
 
         # Verify both methods inserted the correct number of records
         with self.db_manager.get_session() as session:
-            count_individual = session.query(EntityBatchState).filter_by(
-                entity_type="test_case_individual"
-            ).count()
-            count_bulk = session.query(EntityBatchState).filter_by(
-                entity_type="test_case_bulk"
-            ).count()
+            count_individual = (
+                session.query(EntityBatchState)
+                .filter_by(entity_type="test_case_individual")
+                .count()
+            )
+            count_bulk = (
+                session.query(EntityBatchState).filter_by(entity_type="test_case_bulk").count()
+            )
 
             assert count_individual == 20, "Individual inserts should have created 20 records"
             assert count_bulk == 20, "Bulk insert should have created 20 records"
@@ -362,9 +381,11 @@ class TestDatabaseAccessPatterns:
         # Method 1: Standard SQLAlchemy ORM query and processing
         with self.measure_execution_time("Standard ORM query and processing") as orm_duration:
             with self.db_manager.get_session() as session:
-                executions = session.query(TestExecution).filter(
-                    TestExecution.project_key == self.test_project.key
-                ).all()
+                executions = (
+                    session.query(TestExecution)
+                    .filter(TestExecution.project_key == self.test_project.key)
+                    .all()
+                )
 
                 # Process the data - count executions by status
                 status_counts = {}
@@ -381,17 +402,17 @@ class TestDatabaseAccessPatterns:
             df = self.db_manager.query_to_dataframe(
                 "SELECT status, COUNT(*) as count FROM test_executions "
                 "WHERE project_key = :project_key GROUP BY status",
-                {"project_key": self.test_project.key}
+                {"project_key": self.test_project.key},
             )
 
             # Convert to dictionary
-            status_counts_pandas = dict(zip(df['status'], df['count']))
+            status_counts_pandas = dict(zip(df["status"], df["count"]))
 
             assert len(status_counts_pandas) > 0, "Should have counted executions by status"
 
         # Compare results
         if orm_duration and pandas_duration:
-            ratio = orm_duration/pandas_duration
+            ratio = orm_duration / pandas_duration
             print(f"Pandas processing performance: {ratio:.2f}x faster than ORM processing")
         else:
             print("Could not calculate performance improvement - timing data unavailable")
@@ -409,22 +430,18 @@ class TestDatabaseAccessPatterns:
         with self.measure_execution_time("Multiple separate queries") as separate_duration:
             with self.db_manager.get_session() as session:
                 for i in range(20):  # Only do 20 to save time
-                    result = session.query(TestCase).filter(
-                        TestCase.id == test_case_ids[i]
-                    ).first()
+                    result = session.query(TestCase).filter(TestCase.id == test_case_ids[i]).first()
                     # Result might be None since we haven't created these records
 
         # Method 2: Using IN clause (similar to a prepared statement)
         with self.measure_execution_time("IN clause query") as in_clause_duration:
             with self.db_manager.get_session() as session:
-                result = session.query(TestCase).filter(
-                    TestCase.id.in_(test_case_ids[:20])
-                ).all()
+                result = session.query(TestCase).filter(TestCase.id.in_(test_case_ids[:20])).all()
                 # This should return an empty list
 
         # Compare results
         if separate_duration and in_clause_duration:
-            ratio = separate_duration/in_clause_duration
+            ratio = separate_duration / in_clause_duration
             print(f"IN clause performance: {ratio:.2f}x faster than separate queries")
         else:
             print("Could not calculate performance improvement - timing data unavailable")

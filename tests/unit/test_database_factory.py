@@ -14,13 +14,15 @@ from ztoq.core.db_manager import SQLDatabaseManager
 from ztoq.optimized_database_manager import OptimizedDatabaseManager
 
 import pytest
+
+
 @pytest.mark.unit
 class TestDatabaseFactory(unittest.TestCase):
     """Test cases for the DatabaseFactory class."""
 
-    @patch('os.path.exists')
-    @patch('os.path.dirname')
-    @patch('os.makedirs')
+    @patch("os.path.exists")
+    @patch("os.path.dirname")
+    @patch("os.makedirs")
     def test_create_sqlite_manager(self, mock_makedirs, mock_dirname, mock_exists):
         """Test creating a SQLite database manager."""
         db_path = "/tmp/test.db"
@@ -28,17 +30,19 @@ class TestDatabaseFactory(unittest.TestCase):
         mock_dirname.return_value = "/tmp"
 
         # Mock the parent directory attribute
-        with patch('pathlib.Path.parent', new_callable=PropertyMock) as mock_parent:
+        with patch("pathlib.Path.parent", new_callable=PropertyMock) as mock_parent:
             mock_parent.return_value = Path("/tmp")
 
-            manager = DatabaseFactory.create_database_manager(db_type=DatabaseType.SQLITE, db_path=db_path)
+            manager = DatabaseFactory.create_database_manager(
+                db_type=DatabaseType.SQLITE, db_path=db_path
+            )
 
             self.assertIsInstance(manager, DatabaseManager)
             # The db_path is converted to a Path object, so check string representation
             self.assertEqual(str(manager.db_path), db_path)
 
-    @patch('ztoq.pg_database_manager.pool.ThreadedConnectionPool')
-    @patch('ztoq.pg_database_manager.create_engine')
+    @patch("ztoq.pg_database_manager.pool.ThreadedConnectionPool")
+    @patch("ztoq.pg_database_manager.create_engine")
     def test_create_postgresql_manager(self, mock_create_engine, mock_connection_pool):
         """Test creating a PostgreSQL database manager."""
         # Mock the connection pool
@@ -51,11 +55,11 @@ class TestDatabaseFactory(unittest.TestCase):
 
         manager = DatabaseFactory.create_database_manager(
             db_type=DatabaseType.POSTGRESQL,
-                host="localhost",
-                port=5432,
-                username="testuser",
-                password="testpass",
-                database="testdb"
+            host="localhost",
+            port=5432,
+            username="testuser",
+            password="testpass",
+            database="testdb",
         )
 
         self.assertIsInstance(manager, PostgreSQLDatabaseManager)
@@ -69,8 +73,7 @@ class TestDatabaseFactory(unittest.TestCase):
         """Test creating a SQLAlchemy database manager."""
         # Test with SQLite configuration
         manager = DatabaseFactory.create_database_manager(
-            db_type=DatabaseType.SQLALCHEMY,
-                db_path="/tmp/test.db"
+            db_type=DatabaseType.SQLALCHEMY, db_path="/tmp/test.db"
         )
 
         self.assertIsInstance(manager, SQLDatabaseManager)
@@ -78,17 +81,17 @@ class TestDatabaseFactory(unittest.TestCase):
         self.assertEqual(manager.config.db_path, "/tmp/test.db")
 
         # Test with PostgreSQL configuration
-        with patch('ztoq.core.db_manager.create_engine') as mock_create_engine:
+        with patch("ztoq.core.db_manager.create_engine") as mock_create_engine:
             mock_engine = MagicMock()
             mock_create_engine.return_value = mock_engine
 
             manager = DatabaseFactory.create_database_manager(
                 db_type=DatabaseType.SQLALCHEMY,
-                    host="localhost",
-                    port=5432,
-                    username="testuser",
-                    password="testpass",
-                    database="testdb"
+                host="localhost",
+                port=5432,
+                username="testuser",
+                password="testpass",
+                database="testdb",
             )
 
             self.assertIsInstance(manager, SQLDatabaseManager)
@@ -99,21 +102,18 @@ class TestDatabaseFactory(unittest.TestCase):
             self.assertEqual(manager.config.password, "testpass")
             self.assertEqual(manager.config.database, "testdb")
 
-    @patch('os.path.exists')
-    @patch('os.makedirs')
+    @patch("os.path.exists")
+    @patch("os.makedirs")
     def test_from_config(self, mock_makedirs, mock_exists):
         """Test creating a database manager from a configuration dictionary."""
         # Test with SQLite configuration
-        config = {
-            "db_type": DatabaseType.SQLITE,
-                "db_path": "/tmp/test.db"
-        }
+        config = {"db_type": DatabaseType.SQLITE, "db_path": "/tmp/test.db"}
 
         # Mock necessary path operations
         mock_exists.return_value = True
 
         # Mock Path.parent
-        with patch('pathlib.Path.parent', new_callable=PropertyMock) as mock_parent:
+        with patch("pathlib.Path.parent", new_callable=PropertyMock) as mock_parent:
             mock_parent.return_value = Path("/tmp")
 
             manager = DatabaseFactory.from_config(config)
@@ -121,8 +121,8 @@ class TestDatabaseFactory(unittest.TestCase):
             self.assertEqual(str(manager.db_path), "/tmp/test.db")
 
         # Test with PostgreSQL configuration
-        with patch('ztoq.pg_database_manager.pool.ThreadedConnectionPool') as mock_connection_pool:
-            with patch('ztoq.pg_database_manager.create_engine') as mock_create_engine:
+        with patch("ztoq.pg_database_manager.pool.ThreadedConnectionPool") as mock_connection_pool:
+            with patch("ztoq.pg_database_manager.create_engine") as mock_create_engine:
                 mock_pool = MagicMock()
                 mock_connection_pool.return_value = mock_pool
 
@@ -131,13 +131,13 @@ class TestDatabaseFactory(unittest.TestCase):
 
                 config = {
                     "db_type": DatabaseType.POSTGRESQL,
-                        "host": "localhost",
-                        "port": 5432,
-                        "username": "testuser",
-                        "password": "testpass",
-                        "database": "testdb",
-                        "min_connections": 10,
-                        "max_connections": 30
+                    "host": "localhost",
+                    "port": 5432,
+                    "username": "testuser",
+                    "password": "testpass",
+                    "database": "testdb",
+                    "min_connections": 10,
+                    "max_connections": 30,
                 }
 
                 manager = DatabaseFactory.from_config(config)
@@ -151,12 +151,15 @@ class TestDatabaseFactory(unittest.TestCase):
     def test_get_database_manager(self):
         """Test the get_database_manager helper function."""
         # Test with environment variables
-        with patch.dict('os.environ', {
-            "ZTOQ_DB_TYPE": DatabaseType.SQLITE,
-            "ZTOQ_DB_PATH": "/tmp/env_test.db"
-        }, clear=True):
+        with patch.dict(
+            "os.environ",
+            {"ZTOQ_DB_TYPE": DatabaseType.SQLITE, "ZTOQ_DB_PATH": "/tmp/env_test.db"},
+            clear=True,
+        ):
             # Mock DatabaseFactory.create_database_manager to avoid filesystem issues
-            with patch('ztoq.database_factory.DatabaseFactory.create_database_manager') as mock_factory:
+            with patch(
+                "ztoq.database_factory.DatabaseFactory.create_database_manager"
+            ) as mock_factory:
                 # Create mock instances for our return values
                 mock_sqlite_manager = MagicMock(spec=DatabaseManager)
                 mock_sqlite_manager.db_path = "/tmp/env_test.db"
@@ -171,36 +174,44 @@ class TestDatabaseFactory(unittest.TestCase):
                 # Verify create_database_manager was called with correct params
                 mock_factory.assert_called_once()
                 call_kwargs = mock_factory.call_args[1]
-                self.assertEqual(call_kwargs['db_type'], DatabaseType.SQLITE)
-                self.assertEqual(call_kwargs['optimize'], False)
+                self.assertEqual(call_kwargs["db_type"], DatabaseType.SQLITE)
+                self.assertEqual(call_kwargs["optimize"], False)
 
         # Test with direct parameters (overriding environment)
-        with patch('ztoq.database_factory.DatabaseFactory.create_database_manager') as mock_factory:
+        with patch("ztoq.database_factory.DatabaseFactory.create_database_manager") as mock_factory:
             # Create mock for direct parameters test
             mock_direct_sqlite_manager = MagicMock(spec=DatabaseManager)
             mock_direct_sqlite_manager.db_path = "/tmp/direct_test.db"
             mock_factory.return_value = mock_direct_sqlite_manager
 
             # Call with direct parameters
-            manager = get_database_manager(db_type=DatabaseType.SQLITE, db_path="/tmp/direct_test.db")
+            manager = get_database_manager(
+                db_type=DatabaseType.SQLITE, db_path="/tmp/direct_test.db"
+            )
 
             # Verify results
             self.assertEqual(manager, mock_direct_sqlite_manager)
             mock_factory.assert_called_once()
             call_kwargs = mock_factory.call_args[1]
-            self.assertEqual(call_kwargs['db_type'], DatabaseType.SQLITE)
-            self.assertEqual(call_kwargs['db_path'], "/tmp/direct_test.db")
+            self.assertEqual(call_kwargs["db_type"], DatabaseType.SQLITE)
+            self.assertEqual(call_kwargs["db_path"], "/tmp/direct_test.db")
 
         # Test PostgreSQL with environment variables
-        with patch.dict('os.environ', {
-            "ZTOQ_DB_TYPE": DatabaseType.POSTGRESQL,
-            "ZTOQ_PG_HOST": "pg-host",
-            "ZTOQ_PG_PORT": "5433",
-            "ZTOQ_PG_USER": "pg-user",
-            "ZTOQ_PG_PASSWORD": "pg-pass",
-            "ZTOQ_PG_DATABASE": "pg-db"
-        }, clear=True):
-            with patch('ztoq.database_factory.DatabaseFactory.create_database_manager') as mock_factory:
+        with patch.dict(
+            "os.environ",
+            {
+                "ZTOQ_DB_TYPE": DatabaseType.POSTGRESQL,
+                "ZTOQ_PG_HOST": "pg-host",
+                "ZTOQ_PG_PORT": "5433",
+                "ZTOQ_PG_USER": "pg-user",
+                "ZTOQ_PG_PASSWORD": "pg-pass",
+                "ZTOQ_PG_DATABASE": "pg-db",
+            },
+            clear=True,
+        ):
+            with patch(
+                "ztoq.database_factory.DatabaseFactory.create_database_manager"
+            ) as mock_factory:
                 # Create mock for PostgreSQL test
                 mock_pg_manager = MagicMock(spec=PostgreSQLDatabaseManager)
                 mock_pg_manager.connection_params = {
@@ -208,7 +219,7 @@ class TestDatabaseFactory(unittest.TestCase):
                     "port": 5433,
                     "user": "pg-user",
                     "password": "pg-pass",
-                    "database": "pg-db"
+                    "database": "pg-db",
                 }
                 mock_factory.return_value = mock_pg_manager
 
@@ -228,12 +239,13 @@ class TestDatabaseFactory(unittest.TestCase):
         mock_optimized_instance = MagicMock(spec=OptimizedDatabaseManager)
 
         # Case 1: Test OPTIMIZED database type
-        with patch.object(DatabaseFactory, 'create_database_manager', return_value=mock_optimized_instance) as mock_create:
+        with patch.object(
+            DatabaseFactory, "create_database_manager", return_value=mock_optimized_instance
+        ) as mock_create:
             # Call the function (this isn't actually used since we're patching the method itself)
             # But we need to make a call to verify the patching works
             result = DatabaseFactory.create_database_manager(
-                db_type=DatabaseType.OPTIMIZED,
-                db_path="/tmp/test_db.db"
+                db_type=DatabaseType.OPTIMIZED, db_path="/tmp/test_db.db"
             )
 
             # Verify results
@@ -241,12 +253,12 @@ class TestDatabaseFactory(unittest.TestCase):
             mock_create.assert_called_once()
 
         # Case 2: Test with optimize=True flag
-        with patch.object(DatabaseFactory, 'create_database_manager', return_value=mock_optimized_instance) as mock_create:
+        with patch.object(
+            DatabaseFactory, "create_database_manager", return_value=mock_optimized_instance
+        ) as mock_create:
             # Call the function with optimize=True
             result = DatabaseFactory.create_database_manager(
-                db_type=DatabaseType.SQLITE,
-                db_path="/tmp/test_db.db",
-                optimize=True
+                db_type=DatabaseType.SQLITE, db_path="/tmp/test_db.db", optimize=True
             )
 
             # Verify results
@@ -259,16 +271,17 @@ class TestDatabaseFactory(unittest.TestCase):
         # with the ZTOQ_OPTIMIZE_DB environment variable set to "true"
 
         # First, mock the create_database_manager function to isolate the test
-        with patch.object(DatabaseFactory, 'create_database_manager') as mock_create:
+        with patch.object(DatabaseFactory, "create_database_manager") as mock_create:
             # Create a mock instance for the optimized database manager
             mock_optimized_manager = MagicMock(spec=OptimizedDatabaseManager)
             mock_create.return_value = mock_optimized_manager
 
             # Set up environment variables for testing
-            env_patch = patch.dict('os.environ', {
-                'ZTOQ_DB_TYPE': DatabaseType.SQLITE,
-                'ZTOQ_OPTIMIZE_DB': 'true'
-            }, clear=True)
+            env_patch = patch.dict(
+                "os.environ",
+                {"ZTOQ_DB_TYPE": DatabaseType.SQLITE, "ZTOQ_OPTIMIZE_DB": "true"},
+                clear=True,
+            )
 
             # Apply the patch and call the function
             with env_patch:
@@ -282,5 +295,5 @@ class TestDatabaseFactory(unittest.TestCase):
                 mock_create.assert_called_once()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

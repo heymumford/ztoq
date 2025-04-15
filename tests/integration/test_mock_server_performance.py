@@ -53,11 +53,7 @@ class TestMockServerPerformance:
         return end_time - start_time
 
     def run_concurrent_requests(
-        self,
-        func,
-        args_list: List[Tuple],
-        concurrency: int = 10,
-        timeout: int = 30
+        self, func, args_list: List[Tuple], concurrency: int = 10, timeout: int = 30
     ) -> List[float]:
         """
         Run concurrent requests and measure performance.
@@ -107,7 +103,7 @@ class TestMockServerPerformance:
                 "p95": 0.0,
                 "p99": 0.0,
                 "std_dev": 0.0,
-                "total_requests": 0
+                "total_requests": 0,
             }
 
         sorted_times = sorted(execution_times)
@@ -121,7 +117,7 @@ class TestMockServerPerformance:
             "p95": sorted_times[int(len(sorted_times) * 0.95)],
             "p99": sorted_times[int(len(sorted_times) * 0.99)],
             "std_dev": statistics.stdev(execution_times) if len(execution_times) > 1 else 0.0,
-            "total_requests": len(execution_times)
+            "total_requests": len(execution_times),
         }
 
     def test_qtest_server_single_request_performance(self, qtest_mock_server):
@@ -155,17 +151,21 @@ class TestMockServerPerformance:
         max_test_case_retrieval_time = 0.05
 
         # Assert performance meets requirements
-        assert project_listing_time < max_project_listing_time, \
-            f"Project listing took {project_listing_time:.4f}s, expected < {max_project_listing_time}s"
+        assert (
+            project_listing_time < max_project_listing_time
+        ), f"Project listing took {project_listing_time:.4f}s, expected < {max_project_listing_time}s"
 
-        assert test_case_listing_time < max_test_case_listing_time, \
-            f"Test case listing took {test_case_listing_time:.4f}s, expected < {max_test_case_listing_time}s"
+        assert (
+            test_case_listing_time < max_test_case_listing_time
+        ), f"Test case listing took {test_case_listing_time:.4f}s, expected < {max_test_case_listing_time}s"
 
-        assert test_cycle_listing_time < max_test_cycle_listing_time, \
-            f"Test cycle listing took {test_cycle_listing_time:.4f}s, expected < {max_test_cycle_listing_time}s"
+        assert (
+            test_cycle_listing_time < max_test_cycle_listing_time
+        ), f"Test cycle listing took {test_cycle_listing_time:.4f}s, expected < {max_test_cycle_listing_time}s"
 
-        assert test_case_retrieval_time < max_test_case_retrieval_time, \
-            f"Test case retrieval took {test_case_retrieval_time:.4f}s, expected < {max_test_case_retrieval_time}s"
+        assert (
+            test_case_retrieval_time < max_test_case_retrieval_time
+        ), f"Test case retrieval took {test_case_retrieval_time:.4f}s, expected < {max_test_case_retrieval_time}s"
 
     def test_zephyr_server_single_request_performance(self, zephyr_mock_server):
         """Test Zephyr mock server performance for single requests."""
@@ -177,12 +177,20 @@ class TestMockServerPerformance:
 
         # Test test case listing performance
         test_case_listing_time = self.measure_execution_time(
-            zephyr_mock_server._handle_test_cases, "GET", "/testcases", {"projectKey": project_id}, {}
+            zephyr_mock_server._handle_test_cases,
+            "GET",
+            "/testcases",
+            {"projectKey": project_id},
+            {},
         )
 
         # Test test cycle listing performance
         test_cycle_listing_time = self.measure_execution_time(
-            zephyr_mock_server._handle_test_cycles, "GET", "/testcycles", {"projectKey": project_id}, {}
+            zephyr_mock_server._handle_test_cycles,
+            "GET",
+            "/testcycles",
+            {"projectKey": project_id},
+            {},
         )
 
         # Test single test case retrieval performance
@@ -198,17 +206,21 @@ class TestMockServerPerformance:
         max_test_case_retrieval_time = 0.05
 
         # Assert performance meets requirements
-        assert project_retrieval_time < max_project_retrieval_time, \
-            f"Project retrieval took {project_retrieval_time:.4f}s, expected < {max_project_retrieval_time}s"
+        assert (
+            project_retrieval_time < max_project_retrieval_time
+        ), f"Project retrieval took {project_retrieval_time:.4f}s, expected < {max_project_retrieval_time}s"
 
-        assert test_case_listing_time < max_test_case_listing_time, \
-            f"Test case listing took {test_case_listing_time:.4f}s, expected < {max_test_case_listing_time}s"
+        assert (
+            test_case_listing_time < max_test_case_listing_time
+        ), f"Test case listing took {test_case_listing_time:.4f}s, expected < {max_test_case_listing_time}s"
 
-        assert test_cycle_listing_time < max_test_cycle_listing_time, \
-            f"Test cycle listing took {test_cycle_listing_time:.4f}s, expected < {max_test_cycle_listing_time}s"
+        assert (
+            test_cycle_listing_time < max_test_cycle_listing_time
+        ), f"Test cycle listing took {test_cycle_listing_time:.4f}s, expected < {max_test_cycle_listing_time}s"
 
-        assert test_case_retrieval_time < max_test_case_retrieval_time, \
-            f"Test case retrieval took {test_case_retrieval_time:.4f}s, expected < {max_test_case_retrieval_time}s"
+        assert (
+            test_case_retrieval_time < max_test_case_retrieval_time
+        ), f"Test case retrieval took {test_case_retrieval_time:.4f}s, expected < {max_test_case_retrieval_time}s"
 
     def test_qtest_server_concurrent_request_performance(self, qtest_mock_server):
         """Test qTest mock server performance under concurrent load."""
@@ -223,15 +235,11 @@ class TestMockServerPerformance:
 
         # Run concurrent requests and measure performance
         project_times = self.run_concurrent_requests(
-            qtest_mock_server._handle_get_projects,
-            project_requests,
-            concurrency=10
+            qtest_mock_server._handle_get_projects, project_requests, concurrency=10
         )
 
         test_case_times = self.run_concurrent_requests(
-            qtest_mock_server._handle_get_test_cases,
-            test_case_requests,
-            concurrency=10
+            qtest_mock_server._handle_get_test_cases, test_case_requests, concurrency=10
         )
 
         # Analyze performance metrics
@@ -243,15 +251,19 @@ class TestMockServerPerformance:
         max_p95_time = 0.4
 
         # Assert performance meets requirements
-        assert project_metrics["mean"] < max_mean_time, \
-            f"Mean project listing time {project_metrics['mean']:.4f}s exceeds benchmark {max_mean_time}s"
-        assert project_metrics["p95"] < max_p95_time, \
-            f"95th percentile project listing time {project_metrics['p95']:.4f}s exceeds benchmark {max_p95_time}s"
+        assert (
+            project_metrics["mean"] < max_mean_time
+        ), f"Mean project listing time {project_metrics['mean']:.4f}s exceeds benchmark {max_mean_time}s"
+        assert (
+            project_metrics["p95"] < max_p95_time
+        ), f"95th percentile project listing time {project_metrics['p95']:.4f}s exceeds benchmark {max_p95_time}s"
 
-        assert test_case_metrics["mean"] < max_mean_time, \
-            f"Mean test case listing time {test_case_metrics['mean']:.4f}s exceeds benchmark {max_mean_time}s"
-        assert test_case_metrics["p95"] < max_p95_time, \
-            f"95th percentile test case listing time {test_case_metrics['p95']:.4f}s exceeds benchmark {max_p95_time}s"
+        assert (
+            test_case_metrics["mean"] < max_mean_time
+        ), f"Mean test case listing time {test_case_metrics['mean']:.4f}s exceeds benchmark {max_mean_time}s"
+        assert (
+            test_case_metrics["p95"] < max_p95_time
+        ), f"95th percentile test case listing time {test_case_metrics['p95']:.4f}s exceeds benchmark {max_p95_time}s"
 
         # Print performance metrics for reference
         print(f"qTest Project Listing Metrics: {project_metrics}")
@@ -272,15 +284,11 @@ class TestMockServerPerformance:
         test_cycle_args_list = [("GET", "/testcycles", req, {}) for req in project_requests]
 
         test_case_times = self.run_concurrent_requests(
-            zephyr_mock_server._handle_test_cases,
-            test_case_args_list,
-            concurrency=10
+            zephyr_mock_server._handle_test_cases, test_case_args_list, concurrency=10
         )
 
         test_cycle_times = self.run_concurrent_requests(
-            zephyr_mock_server._handle_test_cycles,
-            test_cycle_args_list,
-            concurrency=10
+            zephyr_mock_server._handle_test_cycles, test_cycle_args_list, concurrency=10
         )
 
         # Analyze performance metrics
@@ -292,15 +300,19 @@ class TestMockServerPerformance:
         max_p95_time = 0.4
 
         # Assert performance meets requirements
-        assert test_case_metrics["mean"] < max_mean_time, \
-            f"Mean test case listing time {test_case_metrics['mean']:.4f}s exceeds benchmark {max_mean_time}s"
-        assert test_case_metrics["p95"] < max_p95_time, \
-            f"95th percentile test case listing time {test_case_metrics['p95']:.4f}s exceeds benchmark {max_p95_time}s"
+        assert (
+            test_case_metrics["mean"] < max_mean_time
+        ), f"Mean test case listing time {test_case_metrics['mean']:.4f}s exceeds benchmark {max_mean_time}s"
+        assert (
+            test_case_metrics["p95"] < max_p95_time
+        ), f"95th percentile test case listing time {test_case_metrics['p95']:.4f}s exceeds benchmark {max_p95_time}s"
 
-        assert test_cycle_metrics["mean"] < max_mean_time, \
-            f"Mean test cycle listing time {test_cycle_metrics['mean']:.4f}s exceeds benchmark {max_mean_time}s"
-        assert test_cycle_metrics["p95"] < max_p95_time, \
-            f"95th percentile test cycle listing time {test_cycle_metrics['p95']:.4f}s exceeds benchmark {max_p95_time}s"
+        assert (
+            test_cycle_metrics["mean"] < max_mean_time
+        ), f"Mean test cycle listing time {test_cycle_metrics['mean']:.4f}s exceeds benchmark {max_mean_time}s"
+        assert (
+            test_cycle_metrics["p95"] < max_p95_time
+        ), f"95th percentile test cycle listing time {test_cycle_metrics['p95']:.4f}s exceeds benchmark {max_p95_time}s"
 
         # Print performance metrics for reference
         print(f"Zephyr Test Case Listing Metrics: {test_case_metrics}")

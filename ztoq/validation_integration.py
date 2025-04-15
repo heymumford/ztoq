@@ -16,14 +16,14 @@ from functools import wraps
 from typing import Any, Callable, Dict, List, Type, TypeVar
 from ztoq.validation import (
     MigrationRetryHandler,
-        MigrationValidator,
-        RetryPolicy,
-        ValidationIssue,
-        ValidationLevel,
-        ValidationManager,
-        ValidationPhase,
-        ValidationRule,
-        ValidationScope,
+    MigrationValidator,
+    RetryPolicy,
+    ValidationIssue,
+    ValidationLevel,
+    ValidationManager,
+    ValidationPhase,
+    ValidationRule,
+    ValidationScope,
 )
 from ztoq.validation_rules import get_built_in_rules
 
@@ -74,9 +74,9 @@ class MigrationValidationDecorators:
                 # Apply retry policy for extraction operations
                 @self.retry_handler.with_retry(
                     retry_on_exceptions=[ConnectionError, TimeoutError, IOError],
-                        phase="extraction",
-                        scope=scope,
-                    )
+                    phase="extraction",
+                    scope=scope,
+                )
                 def _execute_with_retry():
                     return func(*args, **kwargs)
 
@@ -98,13 +98,13 @@ class MigrationValidationDecorators:
                     self.validation_manager.add_issue(
                         ValidationIssue(
                             rule_id="extraction_error",
-                                level=ValidationLevel.ERROR,
-                                message=f"Extraction failed: {str(e)}",
-                                entity_id=entity_id if entity_id else "unknown",
-                                scope=scope,
-                                phase=ValidationPhase.EXTRACTION,
-                                context={"error": str(e), "exception_type": type(e).__name__},
-                            )
+                            level=ValidationLevel.ERROR,
+                            message=f"Extraction failed: {str(e)}",
+                            entity_id=entity_id if entity_id else "unknown",
+                            scope=scope,
+                            phase=ValidationPhase.EXTRACTION,
+                            context={"error": str(e), "exception_type": type(e).__name__},
+                        )
                     )
                     raise
 
@@ -147,9 +147,9 @@ class MigrationValidationDecorators:
                     # Run post-transformation validation
                     validation_context = {
                         "source_entity": source_entity,
-                            "target_entity": result,
-                            "entity_id": entity_id,
-                        }
+                        "target_entity": result,
+                        "entity_id": entity_id,
+                    }
                     self.validation_manager.run_validation(
                         ValidationPhase.TRANSFORMATION, scope, validation_context
                     )
@@ -159,13 +159,13 @@ class MigrationValidationDecorators:
                     self.validation_manager.add_issue(
                         ValidationIssue(
                             rule_id="transformation_error",
-                                level=ValidationLevel.ERROR,
-                                message=f"Transformation failed: {str(e)}",
-                                entity_id=entity_id,
-                                scope=scope,
-                                phase=ValidationPhase.TRANSFORMATION,
-                                context={"error": str(e), "exception_type": type(e).__name__},
-                            )
+                            level=ValidationLevel.ERROR,
+                            message=f"Transformation failed: {str(e)}",
+                            entity_id=entity_id,
+                            scope=scope,
+                            phase=ValidationPhase.TRANSFORMATION,
+                            context={"error": str(e), "exception_type": type(e).__name__},
+                        )
                     )
                     raise
 
@@ -202,9 +202,9 @@ class MigrationValidationDecorators:
                 # Apply retry policy for loading operations (API calls)
                 @self.retry_handler.with_retry(
                     retry_on_exceptions=[ConnectionError, TimeoutError, IOError],
-                        phase="loading",
-                        scope=scope,
-                    )
+                    phase="loading",
+                    scope=scope,
+                )
                 def _execute_with_retry():
                     return func(*args, **kwargs)
 
@@ -215,9 +215,9 @@ class MigrationValidationDecorators:
                     # Run post-loading validation
                     validation_context = {
                         "entity": entity,
-                            "api_result": result,
-                            "entity_id": entity_id,
-                        }
+                        "api_result": result,
+                        "entity_id": entity_id,
+                    }
                     self.validation_manager.run_validation(
                         ValidationPhase.LOADING, scope, validation_context
                     )
@@ -227,13 +227,13 @@ class MigrationValidationDecorators:
                     self.validation_manager.add_issue(
                         ValidationIssue(
                             rule_id="loading_error",
-                                level=ValidationLevel.ERROR,
-                                message=f"Loading failed: {str(e)}",
-                                entity_id=entity_id,
-                                scope=scope,
-                                phase=ValidationPhase.LOADING,
-                                context={"error": str(e), "exception_type": type(e).__name__},
-                            )
+                            level=ValidationLevel.ERROR,
+                            message=f"Loading failed: {str(e)}",
+                            entity_id=entity_id,
+                            scope=scope,
+                            phase=ValidationPhase.LOADING,
+                            context={"error": str(e), "exception_type": type(e).__name__},
+                        )
                     )
                     raise
 
@@ -265,17 +265,13 @@ class EnhancedMigration:
 
         # Initialize validation components
         self.validation_manager = ValidationManager(database, project_key)
-        self.retry_handler = MigrationRetryHandler(
-            RetryPolicy(max_retries=3, backoff_factor=2.0)
-        )
+        self.retry_handler = MigrationRetryHandler(RetryPolicy(max_retries=3, backoff_factor=2.0))
 
         # Initialize validator
         self.validator = MigrationValidator(self.validation_manager)
 
         # Initialize decorators
-        self.decorators = MigrationValidationDecorators(
-            self.validation_manager, self.retry_handler
-        )
+        self.decorators = MigrationValidationDecorators(self.validation_manager, self.retry_handler)
 
         # Register built-in rules
         for rule in get_built_in_rules():

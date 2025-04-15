@@ -128,7 +128,9 @@ class PriorityFactory(MockFactory):
         priority_data = {
             "id": kwargs.get("id", cls.random_id()),
             "name": kwargs.get("name", random.choice(["High", "Medium", "Low"])),
-            "description": kwargs.get("description", f"Description for {kwargs.get('name', 'Priority')}"),
+            "description": kwargs.get(
+                "description", f"Description for {kwargs.get('name', 'Priority')}"
+            ),
             "color": kwargs.get("color", random.choice(["#ff0000", "#00ff00", "#0000ff"])),
             "rank": kwargs.get("rank", random.randint(1, 5)),
         }
@@ -149,9 +151,13 @@ class StatusFactory(MockFactory):
         status_data = {
             "id": kwargs.get("id", cls.random_id()),
             "name": kwargs.get("name", random.choice(["Active", "Draft", "Deprecated"])),
-            "description": kwargs.get("description", f"Description for {kwargs.get('name', 'Status')}"),
+            "description": kwargs.get(
+                "description", f"Description for {kwargs.get('name', 'Status')}"
+            ),
             "color": kwargs.get("color", random.choice(["#ffff00", "#00ffff", "#ff00ff"])),
-            "type": kwargs.get("type", random.choice(["TEST_CASE", "TEST_CYCLE", "TEST_EXECUTION"])),
+            "type": kwargs.get(
+                "type", random.choice(["TEST_CASE", "TEST_CYCLE", "TEST_EXECUTION"])
+            ),
         }
         return Status(**status_data)
 
@@ -170,7 +176,9 @@ class EnvironmentFactory(MockFactory):
         environment_data = {
             "id": kwargs.get("id", cls.random_id()),
             "name": kwargs.get("name", cls.random_string("Environment-")),
-            "description": kwargs.get("description", f"Description for {kwargs.get('name', 'Environment')}"),
+            "description": kwargs.get(
+                "description", f"Description for {kwargs.get('name', 'Environment')}"
+            ),
         }
         return Environment(**environment_data)
 
@@ -236,7 +244,9 @@ class LinkFactory(MockFactory):
             "id": kwargs.get("id", cls.random_id()),
             "name": kwargs.get("name", cls.random_string("Link-")),
             "url": kwargs.get("url", f"https://example.com/{cls.random_string()}"),
-            "description": kwargs.get("description", f"Description for {kwargs.get('name', 'Link')}"),
+            "description": kwargs.get(
+                "description", f"Description for {kwargs.get('name', 'Link')}"
+            ),
             "type": kwargs.get("type", random.choice(["issue", "web", "testCycle"])),
         }
         return Link(**link_data)
@@ -253,9 +263,12 @@ class AttachmentFactory(MockFactory):
     @classmethod
     def create(cls, **kwargs) -> Attachment:
         """Create a single Zephyr Attachment."""
-        content_type = kwargs.get("content_type", random.choice([
-            "image/png", "image/jpeg", "application/pdf", "text/plain", "application/json"
-        ]))
+        content_type = kwargs.get(
+            "content_type",
+            random.choice(
+                ["image/png", "image/jpeg", "application/pdf", "text/plain", "application/json"]
+            ),
+        )
 
         extension = content_type.split("/")[-1]
         if extension == "jpeg":
@@ -287,8 +300,12 @@ class CaseStepFactory(MockFactory):
         step_data = {
             "id": kwargs.get("id", cls.random_id()),
             "index": kwargs.get("index", random.randint(1, 10)),
-            "description": kwargs.get("description", f"Step {kwargs.get('index', 1)}: {cls.random_string()}"),
-            "expected_result": kwargs.get("expected_result", f"Expected result for step {kwargs.get('index', 1)}"),
+            "description": kwargs.get(
+                "description", f"Step {kwargs.get('index', 1)}: {cls.random_string()}"
+            ),
+            "expected_result": kwargs.get(
+                "expected_result", f"Expected result for step {kwargs.get('index', 1)}"
+            ),
             "data": kwargs.get("data"),
             "actual_result": kwargs.get("actual_result"),
             "status": kwargs.get("status"),
@@ -299,7 +316,7 @@ class CaseStepFactory(MockFactory):
     @classmethod
     def create_batch(cls, count: int = 3, **kwargs) -> List[CaseStep]:
         """Create multiple Zephyr CaseSteps with sequential indexes."""
-        return [cls.create(index=i+1, **kwargs) for i in range(count)]
+        return [cls.create(index=i + 1, **kwargs) for i in range(count)]
 
 
 class CaseFactory(MockFactory):
@@ -345,8 +362,12 @@ class CaseFactory(MockFactory):
             "updated_on": kwargs.get("updated_on", cls.random_date()),
             "updated_by": kwargs.get("updated_by", cls.random_id()),
             "version": kwargs.get("version", "1.0"),
-            "estimated_time": kwargs.get("estimated_time", random.randint(15, 240) * 60),  # 15-240 minutes in seconds
-            "labels": kwargs.get("labels", [cls.random_string("Label-") for _ in range(random.randint(0, 3))]),
+            "estimated_time": kwargs.get(
+                "estimated_time", random.randint(15, 240) * 60
+            ),  # 15-240 minutes in seconds
+            "labels": kwargs.get(
+                "labels", [cls.random_string("Label-") for _ in range(random.randint(0, 3))]
+            ),
             "steps": steps,
             "custom_fields": kwargs.get("custom_fields", []),
             "links": kwargs.get("links", []),
@@ -482,7 +503,7 @@ class ExecutionFactory(MockFactory):
                         expected_result=case_step.expected_result,
                         data=case_step.data,
                         status=random.choice(["Passed", "Failed", "Blocked", "Not Run"]),
-                        actual_result=f"Actual result for step {case_step.index}"
+                        actual_result=f"Actual result for step {case_step.index}",
                     )
                     steps.append(execution_step)
             else:
@@ -495,7 +516,9 @@ class ExecutionFactory(MockFactory):
             "test_case_key": test_case_key,
             "cycle_id": kwargs.get("cycle_id", cls.random_id()),
             "cycle_name": kwargs.get("cycle_name", cls.random_string("Cycle-")),
-            "status": kwargs.get("status", random.choice(["Passed", "Failed", "Blocked", "Not Run"])),
+            "status": kwargs.get(
+                "status", random.choice(["Passed", "Failed", "Blocked", "Not Run"])
+            ),
             "status_name": kwargs.get("status_name"),
             "environment": kwargs.get("environment", cls.random_id()),
             "environment_name": kwargs.get("environment_name", cls.random_string("Environment-")),
@@ -506,7 +529,9 @@ class ExecutionFactory(MockFactory):
             "created_by": kwargs.get("created_by", cls.random_id()),
             "updated_on": kwargs.get("updated_on", cls.random_date()),
             "updated_by": kwargs.get("updated_by", cls.random_id()),
-            "actual_time": kwargs.get("actual_time", random.randint(300, 7200)),  # 5-120 minutes in seconds
+            "actual_time": kwargs.get(
+                "actual_time", random.randint(300, 7200)
+            ),  # 5-120 minutes in seconds
             "comment": kwargs.get("comment", f"Execution comments for {test_case_key}"),
             "steps": steps,
             "custom_fields": kwargs.get("custom_fields", []),
@@ -544,7 +569,9 @@ class PaginatedResponseFactory(MockFactory):
         # Create items if not provided
         if "values" not in kwargs:
             item_count = kwargs.get("item_count", random.randint(1, 10))
-            values = [{"id": cls.random_id(), "name": cls.random_string()} for _ in range(item_count)]
+            values = [
+                {"id": cls.random_id(), "name": cls.random_string()} for _ in range(item_count)
+            ]
         else:
             values = kwargs["values"]
             item_count = len(values)
@@ -561,6 +588,6 @@ class PaginatedResponseFactory(MockFactory):
             "start_at": start_at,
             "max_results": max_results,
             "total_count": total_count,
-            "is_last": is_last
+            "is_last": is_last,
         }
         return PaginatedResponse(**response_data)

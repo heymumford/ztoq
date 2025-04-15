@@ -12,54 +12,49 @@ from unittest.mock import MagicMock, patch
 import pytest
 from ztoq.data_fetcher import (
     FetchResult,
-        create_authenticated_client,
-        fetch_all_project_data,
-        fetch_all_projects_data,
-        fetch_all_test_cases,
-        fetch_all_test_cycles,
-        fetch_all_test_executions,
-        fetch_environments,
-        fetch_folders,
-        fetch_priorities,
-        fetch_projects,
-        fetch_statuses,
+    create_authenticated_client,
+    fetch_all_project_data,
+    fetch_all_projects_data,
+    fetch_all_test_cases,
+    fetch_all_test_cycles,
+    fetch_all_test_executions,
+    fetch_environments,
+    fetch_folders,
+    fetch_priorities,
+    fetch_projects,
+    fetch_statuses,
 )
 from ztoq.models import (
     Case,
-        CycleInfo,
-        Environment,
-        Execution,
-        Folder,
-        Priority,
-        Project,
-        Status,
-        ZephyrConfig,
+    CycleInfo,
+    Environment,
+    Execution,
+    Folder,
+    Priority,
+    Project,
+    Status,
+    ZephyrConfig,
 )
 from ztoq.zephyr_client import ZephyrClient
 
+
 @pytest.fixture()
-
-
 def config():
     """Create a test Zephyr configuration."""
     return ZephyrConfig(
         base_url="https://api.zephyrscale.example.com/v2",
-            api_token="test-token",
-            project_key="TEST",
-        )
+        api_token="test-token",
+        project_key="TEST",
+    )
 
 
 @pytest.fixture()
-
-
 def mock_client():
     """Create a mock Zephyr client."""
     return MagicMock(spec=ZephyrClient)
 
 
 @pytest.mark.unit()
-
-
 class TestDataFetcher:
     """Test data fetcher functions."""
 
@@ -79,8 +74,8 @@ class TestDataFetcher:
         # Create mock projects
         projects = [
             Project(id="1", key="PROJ1", name="Project 1"),
-                Project(id="2", key="PROJ2", name="Project 2"),
-            ]
+            Project(id="2", key="PROJ2", name="Project 2"),
+        ]
         mock_client.get_projects.return_value = projects
 
         result = fetch_projects(mock_client)
@@ -102,8 +97,8 @@ class TestDataFetcher:
         # Create mock test cases
         test_cases = [
             Case(id="tc1", key="TEST-1", name="Test Case 1"),
-                Case(id="tc2", key="TEST-2", name="Test Case 2"),
-            ]
+            Case(id="tc2", key="TEST-2", name="Test Case 2"),
+        ]
         mock_client.get_test_cases.return_value = test_cases
 
         result = fetch_all_test_cases(mock_client, "TEST")
@@ -231,15 +226,15 @@ class TestDataFetcher:
     @patch("ztoq.data_fetcher.fetch_environments")
     def test_fetch_all_project_data(
         self,
-            mock_fetch_environments,
-            mock_fetch_priorities,
-            mock_fetch_statuses,
-            mock_fetch_folders,
-            mock_fetch_executions,
-            mock_fetch_cycles,
-            mock_fetch_cases,
-            mock_client,
-        ):
+        mock_fetch_environments,
+        mock_fetch_priorities,
+        mock_fetch_statuses,
+        mock_fetch_folders,
+        mock_fetch_executions,
+        mock_fetch_cycles,
+        mock_fetch_cases,
+        mock_client,
+    ):
         """Test fetching all project data."""
         # Create mock results
         mock_fetch_cases.return_value = FetchResult(
@@ -292,8 +287,8 @@ class TestDataFetcher:
         # Create mock projects
         mock_projects = [
             Project(id="1", key="PROJ1", name="Project 1"),
-                Project(id="2", key="PROJ2", name="Project 2"),
-            ]
+            Project(id="2", key="PROJ2", name="Project 2"),
+        ]
         mock_fetch_projects.return_value = mock_projects
 
         # Create mock project data results

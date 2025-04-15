@@ -10,46 +10,45 @@ import pytest
 from pydantic import ValidationError
 from ztoq.qtest_models import (
     QTestAttachment,
-        QTestConfig,
-        QTestCustomField,
-        QTestDataset,
-        QTestDatasetRow,
-        QTestLink,
-        QTestModule,
-        QTestPaginatedResponse,
-        QTestParameter,
-        QTestParameterValue,
-        QTestProject,
-        QTestPulseAction,
-        QTestPulseActionParameter,
-        QTestPulseActionType,
-        QTestPulseCondition,
-        QTestPulseConstant,
-        QTestPulseEventType,
-        QTestPulseRule,
-        QTestPulseTrigger,
-        QTestRelease,
-        QTestStep,
-        QTestTestCase,
-        QTestTestCycle,
-        QTestTestExecution,
-        QTestTestLog,
-        QTestTestRun,
+    QTestConfig,
+    QTestCustomField,
+    QTestDataset,
+    QTestDatasetRow,
+    QTestLink,
+    QTestModule,
+    QTestPaginatedResponse,
+    QTestParameter,
+    QTestParameterValue,
+    QTestProject,
+    QTestPulseAction,
+    QTestPulseActionParameter,
+    QTestPulseActionType,
+    QTestPulseCondition,
+    QTestPulseConstant,
+    QTestPulseEventType,
+    QTestPulseRule,
+    QTestPulseTrigger,
+    QTestRelease,
+    QTestStep,
+    QTestTestCase,
+    QTestTestCycle,
+    QTestTestExecution,
+    QTestTestLog,
+    QTestTestRun,
 )
 
+
 @pytest.mark.unit()
-
-
 class TestQTestModels:
     def test_qtest_config(self):
         """Test QTestConfig model."""
         # Valid config
         config = QTestConfig(
             base_url="https://example.qtest.com",
-                username="test_user",
-                password="test_password",
-                project_id=12345,
-            )
+            username="test_user",
+            password="test_password",
+            project_id=12345,
+        )
         assert config.base_url == "https://example.qtest.com"
         assert config.username == "test_user"
         assert config.password == "test_password"
@@ -93,11 +92,11 @@ class TestQTestModels:
         # Create with all fields
         link = QTestLink(
             id=1,
-                name="Test Link",
-                url="https://example.com",
-                icon_url="https://example.com/icon.png",
-                target="_blank",
-            )
+            name="Test Link",
+            url="https://example.com",
+            icon_url="https://example.com/icon.png",
+            target="_blank",
+        )
         assert link.id == 1
         assert link.name == "Test Link"
         assert link.url == "https://example.com"
@@ -107,11 +106,11 @@ class TestQTestModels:
         # Test alias mapping (populate_by_name = True)
         link_from_alias = QTestLink(
             id=1,
-                name="Test Link",
-                url="https://example.com",
-                iconUrl="https://example.com/icon.png",
-                target="_blank",
-            )
+            name="Test Link",
+            url="https://example.com",
+            iconUrl="https://example.com/icon.png",
+            target="_blank",
+        )
         assert link_from_alias.icon_url == "https://example.com/icon.png"
 
     def test_qtest_custom_field(self):
@@ -141,11 +140,11 @@ class TestQTestModels:
         now = datetime.now()
         attachment = QTestAttachment(
             id=1,
-                name="test.pdf",
-                content_type="application/pdf",
-                created_date=now,
-                web_url="https://example.com/attachments/1",
-            )
+            name="test.pdf",
+            content_type="application/pdf",
+            created_date=now,
+            web_url="https://example.com/attachments/1",
+        )
         assert attachment.id == 1
         assert attachment.name == "test.pdf"
         assert attachment.content_type == "application/pdf"
@@ -169,12 +168,12 @@ class TestQTestModels:
         end_date = datetime.now()
         project = QTestProject(
             id=1,
-                name="Test Project",
-                description="A test project",
-                start_date=start_date,
-                end_date=end_date,
-                status_name="Active",
-            )
+            name="Test Project",
+            description="A test project",
+            start_date=start_date,
+            end_date=end_date,
+            status_name="Active",
+        )
         assert project.id == 1
         assert project.name == "Test Project"
         assert project.description == "A test project"
@@ -213,11 +212,11 @@ class TestQTestModels:
         # Create with all fields
         step = QTestStep(
             id=1,
-                description="Navigate to login page",
-                expected_result="Login page is displayed",
-                order=1,
-                attachments=[QTestAttachment(id=1, name="screenshot.png", content_type="image/png")],
-            )
+            description="Navigate to login page",
+            expected_result="Login page is displayed",
+            order=1,
+            attachments=[QTestAttachment(id=1, name="screenshot.png", content_type="image/png")],
+        )
         assert step.id == 1
         assert step.description == "Navigate to login page"
         assert step.expected_result == "Login page is displayed"
@@ -239,31 +238,31 @@ class TestQTestModels:
         now = datetime.now()
         test_case = QTestTestCase(
             id=1,
-                pid="TC-1",
-                name="Login Test",
-                description="Test the login functionality",
-                precondition="User is registered",
-                test_steps=[
+            pid="TC-1",
+            name="Login Test",
+            description="Test the login functionality",
+            precondition="User is registered",
+            test_steps=[
                 QTestStep(
                     description="Navigate to login page",
-                        expected_result="Login page is displayed",
-                        order=1,
-                    ),
-                    QTestStep(
+                    expected_result="Login page is displayed",
+                    order=1,
+                ),
+                QTestStep(
                     description="Enter valid credentials",
-                        expected_result="Credentials accepted",
-                        order=2,
-                    ),
-                ],
-                properties=[QTestCustomField(id=1, name="Priority", type="STRING", value="High")],
-                parent_id=None,
-                module_id=100,
-                priority_id=1,
-                creator_id=1001,
-                attachments=[QTestAttachment(id=1, name="screenshot.png", content_type="image/png")],
-                create_date=now,
-                last_modified_date=now,
-            )
+                    expected_result="Credentials accepted",
+                    order=2,
+                ),
+            ],
+            properties=[QTestCustomField(id=1, name="Priority", type="STRING", value="High")],
+            parent_id=None,
+            module_id=100,
+            priority_id=1,
+            creator_id=1001,
+            attachments=[QTestAttachment(id=1, name="screenshot.png", content_type="image/png")],
+            create_date=now,
+            last_modified_date=now,
+        )
         assert test_case.id == 1
         assert test_case.pid == "TC-1"
         assert test_case.name == "Login Test"
@@ -297,15 +296,15 @@ class TestQTestModels:
         end_date = datetime.now()
         test_cycle = QTestTestCycle(
             id=1,
-                name="Sprint 1 Test Cycle",
-                description="Tests for Sprint 1",
-                parent_id=None,
-                pid="CY-1",
-                release_id=101,
-                properties=[QTestCustomField(id=1, name="Status", type="STRING", value="Active")],
-                start_date=start_date,
-                end_date=end_date,
-            )
+            name="Sprint 1 Test Cycle",
+            description="Tests for Sprint 1",
+            parent_id=None,
+            pid="CY-1",
+            release_id=101,
+            properties=[QTestCustomField(id=1, name="Status", type="STRING", value="Active")],
+            start_date=start_date,
+            end_date=end_date,
+        )
         assert test_cycle.id == 1
         assert test_cycle.name == "Sprint 1 Test Cycle"
         assert test_cycle.description == "Tests for Sprint 1"
@@ -334,12 +333,12 @@ class TestQTestModels:
         end_date = datetime.now()
         release = QTestRelease(
             id=1,
-                name="Release 1.0",
-                description="First major release",
-                pid="RL-1",
-                start_date=start_date,
-                end_date=end_date,
-            )
+            name="Release 1.0",
+            description="First major release",
+            pid="RL-1",
+            start_date=start_date,
+            end_date=end_date,
+        )
         assert release.id == 1
         assert release.name == "Release 1.0"
         assert release.description == "First major release"
@@ -361,17 +360,17 @@ class TestQTestModels:
         # Create with all fields
         test_run = QTestTestRun(
             id=1,
-                name="Login Test Run",
-                description="Login test execution",
-                pid="TR-1",
-                test_case_version_id=1,
-                test_case_id=101,
-                test_cycle_id=201,
-                status="Not Run",
-                properties=[
+            name="Login Test Run",
+            description="Login test execution",
+            pid="TR-1",
+            test_case_version_id=1,
+            test_case_id=101,
+            test_cycle_id=201,
+            status="Not Run",
+            properties=[
                 QTestCustomField(id=1, name="Environment", type="STRING", value="Production")
             ],
-            )
+        )
         assert test_run.id == 1
         assert test_run.name == "Login Test Run"
         assert test_run.description == "Login test execution"
@@ -383,10 +382,7 @@ class TestQTestModels:
         assert test_run.properties[0].field_name == "Environment"
 
         # Create with minimum fields - note we need to provide required fields
-        min_test_run = QTestTestRun(
-            id=2,  # With ID to bypass creation validation
-            test_case_id=102
-        )
+        min_test_run = QTestTestRun(id=2, test_case_id=102)  # With ID to bypass creation validation
         assert min_test_run.id == 2
         assert min_test_run.name is None
         assert min_test_run.description is None
@@ -400,13 +396,13 @@ class TestQTestModels:
         execution_date = datetime.now()
         test_log = QTestTestLog(
             id=1,
-                status="Passed",  # Updated to use valid status
-                execution_date=execution_date,
-                note="Test passed successfully",
-                test_run_id=123,  # Added required field
-                attachments=[QTestAttachment(id=1, name="result.log", content_type="text/plain")],
-                properties=[QTestCustomField(id=1, name="Execution Time", type="NUMBER", value=5.2)],
-            )
+            status="Passed",  # Updated to use valid status
+            execution_date=execution_date,
+            note="Test passed successfully",
+            test_run_id=123,  # Added required field
+            attachments=[QTestAttachment(id=1, name="result.log", content_type="text/plain")],
+            properties=[QTestCustomField(id=1, name="Execution Time", type="NUMBER", value=5.2)],
+        )
         assert test_log.id == 1
         assert test_log.status == "Passed"
         assert test_log.execution_date == execution_date
@@ -420,7 +416,7 @@ class TestQTestModels:
         # Create with minimum fields
         min_test_log = QTestTestLog(
             id=2,  # With ID to bypass creation validation
-            status="Failed"  # Updated to use valid status
+            status="Failed",  # Updated to use valid status
         )
         assert min_test_log.id == 2
         assert min_test_log.status == "Failed"
@@ -435,17 +431,21 @@ class TestQTestModels:
         execution_date = datetime.now()
         test_execution = QTestTestExecution(
             id=1,
-                test_run_id=101,
-                status="Passed",  # Updated to match valid status
-                execution_date=execution_date,
-                executed_by=1001,
-                note="Test passed successfully",
-                attachments=[QTestAttachment(id=1, name="result.log", content_type="text/plain")],
-                test_step_logs=[
-                {"stepId": 201, "status": "Passed", "actualResult": "Login page displayed correctly"},
-                    {"stepId": 202, "status": "Passed", "actualResult": "Logged in successfully"},
-                ],
-            )
+            test_run_id=101,
+            status="Passed",  # Updated to match valid status
+            execution_date=execution_date,
+            executed_by=1001,
+            note="Test passed successfully",
+            attachments=[QTestAttachment(id=1, name="result.log", content_type="text/plain")],
+            test_step_logs=[
+                {
+                    "stepId": 201,
+                    "status": "Passed",
+                    "actualResult": "Login page displayed correctly",
+                },
+                {"stepId": 202, "status": "Passed", "actualResult": "Logged in successfully"},
+            ],
+        )
         assert test_execution.id == 1
         assert test_execution.test_run_id == 101
         assert test_execution.status == "Passed"
@@ -468,15 +468,15 @@ class TestQTestModels:
 
         parameter = QTestParameter(
             id=1,
-                name="Browser",
-                description="Browser type",
-                project_id=12345,
-                status="Active",  # Updated to match valid status
-                values=[
+            name="Browser",
+            description="Browser type",
+            project_id=12345,
+            status="Active",  # Updated to match valid status
+            values=[
                 QTestParameterValue(id=101, value="Chrome", parameter_id=1),
-                    QTestParameterValue(id=102, value="Firefox", parameter_id=1),
-                ],
-            )
+                QTestParameterValue(id=102, value="Firefox", parameter_id=1),
+            ],
+        )
         assert parameter.id == 1
         assert parameter.name == "Browser"
         assert parameter.description == "Browser type"
@@ -524,14 +524,12 @@ class TestQTestModels:
 
         trigger = QTestPulseTrigger(
             id=1,
-                name="Test Trigger",
-                event_type=QTestPulseEventType.TEST_CASE_CREATED,
-                project_id=12345,
-                conditions=[
-                QTestPulseCondition(field="status", operator="equals", value="FAIL")
-            ],
-                created_by={"id": 100, "name": "Admin"},
-                created_date=now
+            name="Test Trigger",
+            event_type=QTestPulseEventType.TEST_CASE_CREATED,
+            project_id=12345,
+            conditions=[QTestPulseCondition(field="status", operator="equals", value="FAIL")],
+            created_by={"id": 100, "name": "Admin"},
+            created_date=now,
         )
 
         assert trigger.id == 1
@@ -548,10 +546,10 @@ class TestQTestModels:
         # Create with minimum fields
         min_trigger = QTestPulseTrigger(
             name="Minimal Trigger",
-                event_type="TEST_CASE_CREATED",
-                project_id=12345,
-                created_by={"id": 100, "name": "Admin"},
-                created_date=now
+            event_type="TEST_CASE_CREATED",
+            project_id=12345,
+            created_by={"id": 100, "name": "Admin"},
+            created_date=now,
         )
         assert min_trigger.id is None
         assert min_trigger.name == "Minimal Trigger"
@@ -564,15 +562,15 @@ class TestQTestModels:
         now = datetime.now().isoformat()
         action = QTestPulseAction(
             id=1,
-                name="Send Email",
-                action_type=QTestPulseActionType.SEND_MAIL,
-                project_id=12345,
-                parameters=[
+            name="Send Email",
+            action_type=QTestPulseActionType.SEND_MAIL,
+            project_id=12345,
+            parameters=[
                 QTestPulseActionParameter(name="recipients", value="test@example.com"),
-                    QTestPulseActionParameter(name="subject", value="Test Failed")
+                QTestPulseActionParameter(name="subject", value="Test Failed"),
             ],
-                created_by={"id": 100, "name": "Admin"},
-                created_date=now
+            created_by={"id": 100, "name": "Admin"},
+            created_date=now,
         )
 
         assert action.id == 1
@@ -589,10 +587,10 @@ class TestQTestModels:
         # Create with minimum fields
         min_action = QTestPulseAction(
             name="Minimal Action",
-                action_type="CREATE_DEFECT",
-                project_id=12345,
-                created_by={"id": 100, "name": "Admin"},
-                created_date=now
+            action_type="CREATE_DEFECT",
+            project_id=12345,
+            created_by={"id": 100, "name": "Admin"},
+            created_date=now,
         )
         assert min_action.id is None
         assert min_action.name == "Minimal Action"
@@ -605,12 +603,12 @@ class TestQTestModels:
         now = datetime.now().isoformat()
         constant = QTestPulseConstant(
             id=1,
-                name="EMAIL_RECIPIENT",
-                value="test@example.com",
-                description="Default email recipient",
-                project_id=12345,
-                created_by={"id": 100, "name": "Admin"},
-                created_date=now
+            name="EMAIL_RECIPIENT",
+            value="test@example.com",
+            description="Default email recipient",
+            project_id=12345,
+            created_by={"id": 100, "name": "Admin"},
+            created_date=now,
         )
 
         assert constant.id == 1
@@ -626,10 +624,10 @@ class TestQTestModels:
         # Create with minimum fields
         min_constant = QTestPulseConstant(
             name="API_KEY",
-                value="abc123",
-                project_id=12345,
-                created_by={"id": 100, "name": "Admin"},
-                created_date=now
+            value="abc123",
+            project_id=12345,
+            created_by={"id": 100, "name": "Admin"},
+            created_date=now,
         )
         assert min_constant.id is None
         assert min_constant.name == "API_KEY"
@@ -642,14 +640,14 @@ class TestQTestModels:
         now = datetime.now().isoformat()
         rule = QTestPulseRule(
             id=1,
-                name="Test Failure Notification",
-                description="Send email when test fails",
-                project_id=12345,
-                enabled=True,
-                trigger_id=101,
-                action_id=201,
-                created_by={"id": 100, "name": "Admin"},
-                created_date=now
+            name="Test Failure Notification",
+            description="Send email when test fails",
+            project_id=12345,
+            enabled=True,
+            trigger_id=101,
+            action_id=201,
+            created_by={"id": 100, "name": "Admin"},
+            created_date=now,
         )
 
         assert rule.id == 1
@@ -667,11 +665,11 @@ class TestQTestModels:
         # Create with minimum fields
         min_rule = QTestPulseRule(
             name="Minimal Rule",
-                project_id=12345,
-                trigger_id=101,
-                action_id=201,
-                created_by={"id": 100, "name": "Admin"},
-                created_date=now
+            project_id=12345,
+            trigger_id=101,
+            action_id=201,
+            created_by={"id": 100, "name": "Admin"},
+            created_date=now,
         )
         assert min_rule.id is None
         assert min_rule.name == "Minimal Rule"
@@ -684,24 +682,24 @@ class TestQTestModels:
 
         dataset = QTestDataset(
             id=1,
-                name="Login Test Data",
-                description="Test data for login scenarios",
-                project_id=12345,
-                status="Active",  # Updated to match valid status
-                parameter_names=["username", "password", "expected"],  # Added parameter names
-                rows=[
+            name="Login Test Data",
+            description="Test data for login scenarios",
+            project_id=12345,
+            status="Active",  # Updated to match valid status
+            parameter_names=["username", "password", "expected"],  # Added parameter names
+            rows=[
                 QTestDatasetRow(
                     id=201,
-                        dataset_id=1,
-                        values={"username": "user1", "password": "pass1", "expected": "success"},
-                    ),
-                    QTestDatasetRow(
+                    dataset_id=1,
+                    values={"username": "user1", "password": "pass1", "expected": "success"},
+                ),
+                QTestDatasetRow(
                     id=202,
-                        dataset_id=1,
-                        values={"username": "user2", "password": "wrong", "expected": "failure"},
-                    ),
-                ],
-            )
+                    dataset_id=1,
+                    values={"username": "user2", "password": "wrong", "expected": "failure"},
+                ),
+            ],
+        )
         assert dataset.id == 1
         assert dataset.name == "Login Test Data"
         assert dataset.description == "Test data for login scenarios"

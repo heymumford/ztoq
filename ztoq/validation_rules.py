@@ -25,19 +25,20 @@ from ztoq.validation import (
 )
 from ztoq.custom_field_mapping import get_default_field_mapper
 
+
 class RequiredFieldRule(ValidationRule):
     """Rule that validates required fields are present and non-empty."""
 
     def __init__(
         self,
-            id: str,
-            name: str,
-            description: str,
-            scope: ValidationScope,
-            phase: ValidationPhase,
-            required_fields: List[str],
-            level: ValidationLevel = ValidationLevel.ERROR,
-        ):
+        id: str,
+        name: str,
+        description: str,
+        scope: ValidationScope,
+        phase: ValidationPhase,
+        required_fields: List[str],
+        level: ValidationLevel = ValidationLevel.ERROR,
+    ):
         """
         Initialize the required field rule.
 
@@ -76,14 +77,14 @@ class RequiredFieldRule(ValidationRule):
                 if field not in entity or entity[field] is None or entity[field] == "":
                     issue = ValidationIssue(
                         id=f"required_field_{field}_{entity_id}_{int(time.time())}",
-                            level=self.level,
-                            scope=self.scope,
-                            phase=self.phase,
-                            message=f"Required field '{field}' is missing or empty",
-                            entity_id=str(entity_id),
-                            entity_type=entity_type,
-                            field_name=field,
-                        )
+                        level=self.level,
+                        scope=self.scope,
+                        phase=self.phase,
+                        message=f"Required field '{field}' is missing or empty",
+                        entity_id=str(entity_id),
+                        entity_type=entity_type,
+                        field_name=field,
+                    )
                     issues.append(issue)
         else:
             # For object-like entities
@@ -91,17 +92,21 @@ class RequiredFieldRule(ValidationRule):
             entity_type = context.get("entity_type", self.scope.value)
 
             for field in self.required_fields:
-                if not hasattr(entity, field) or getattr(entity, field) is None or getattr(entity, field) == "":
+                if (
+                    not hasattr(entity, field)
+                    or getattr(entity, field) is None
+                    or getattr(entity, field) == ""
+                ):
                     issue = ValidationIssue(
                         id=f"required_field_{field}_{entity_id}_{int(time.time())}",
-                            level=self.level,
-                            scope=self.scope,
-                            phase=self.phase,
-                            message=f"Required field '{field}' is missing or empty",
-                            entity_id=str(entity_id),
-                            entity_type=entity_type,
-                            field_name=field,
-                        )
+                        level=self.level,
+                        scope=self.scope,
+                        phase=self.phase,
+                        message=f"Required field '{field}' is missing or empty",
+                        entity_id=str(entity_id),
+                        entity_type=entity_type,
+                        field_name=field,
+                    )
                     issues.append(issue)
 
         return issues
@@ -112,14 +117,14 @@ class StringLengthRule(ValidationRule):
 
     def __init__(
         self,
-            id: str,
-            name: str,
-            description: str,
-            scope: ValidationScope,
-            phase: ValidationPhase,
-            field_limits: Dict[str, Dict[str, int]],
-            level: ValidationLevel = ValidationLevel.ERROR,
-        ):
+        id: str,
+        name: str,
+        description: str,
+        scope: ValidationScope,
+        phase: ValidationPhase,
+        field_limits: Dict[str, Dict[str, int]],
+        level: ValidationLevel = ValidationLevel.ERROR,
+    ):
         """
         Initialize the string length rule.
 
@@ -163,34 +168,40 @@ class StringLengthRule(ValidationRule):
                     if "min" in limits and field_len < limits["min"]:
                         issue = ValidationIssue(
                             id=f"min_length_{field}_{entity_id}_{int(time.time())}",
-                                level=self.level,
-                                scope=self.scope,
-                                phase=self.phase,
-                                message=f"Field '{field}' length ({field_len}) is less than minimum ({limits['min']})",
-                                entity_id=str(entity_id),
-                                entity_type=entity_type,
-                                field_name=field,
-                                details={"value": field_value, "length": field_len, "min": limits["min"]},
-                            )
+                            level=self.level,
+                            scope=self.scope,
+                            phase=self.phase,
+                            message=f"Field '{field}' length ({field_len}) is less than minimum ({limits['min']})",
+                            entity_id=str(entity_id),
+                            entity_type=entity_type,
+                            field_name=field,
+                            details={
+                                "value": field_value,
+                                "length": field_len,
+                                "min": limits["min"],
+                            },
+                        )
                         issues.append(issue)
 
                     # Check maximum length
                     if "max" in limits and field_len > limits["max"]:
                         issue = ValidationIssue(
                             id=f"max_length_{field}_{entity_id}_{int(time.time())}",
-                                level=self.level,
-                                scope=self.scope,
-                                phase=self.phase,
-                                message=f"Field '{field}' length ({field_len}) exceeds maximum ({limits['max']})",
-                                entity_id=str(entity_id),
-                                entity_type=entity_type,
-                                field_name=field,
-                                details={
-                                "value": field_value[:50] + "..." if field_len > 50 else field_value,
-                                    "length": field_len,
-                                    "max": limits["max"],
-                                },
-                            )
+                            level=self.level,
+                            scope=self.scope,
+                            phase=self.phase,
+                            message=f"Field '{field}' length ({field_len}) exceeds maximum ({limits['max']})",
+                            entity_id=str(entity_id),
+                            entity_type=entity_type,
+                            field_name=field,
+                            details={
+                                "value": field_value[:50] + "..."
+                                if field_len > 50
+                                else field_value,
+                                "length": field_len,
+                                "max": limits["max"],
+                            },
+                        )
                         issues.append(issue)
         else:
             # For object-like entities
@@ -198,7 +209,11 @@ class StringLengthRule(ValidationRule):
             entity_type = context.get("entity_type", self.scope.value)
 
             for field, limits in self.field_limits.items():
-                if hasattr(entity, field) and getattr(entity, field) is not None and isinstance(getattr(entity, field), str):
+                if (
+                    hasattr(entity, field)
+                    and getattr(entity, field) is not None
+                    and isinstance(getattr(entity, field), str)
+                ):
                     field_value = getattr(entity, field)
                     field_len = len(field_value)
 
@@ -206,34 +221,40 @@ class StringLengthRule(ValidationRule):
                     if "min" in limits and field_len < limits["min"]:
                         issue = ValidationIssue(
                             id=f"min_length_{field}_{entity_id}_{int(time.time())}",
-                                level=self.level,
-                                scope=self.scope,
-                                phase=self.phase,
-                                message=f"Field '{field}' length ({field_len}) is less than minimum ({limits['min']})",
-                                entity_id=str(entity_id),
-                                entity_type=entity_type,
-                                field_name=field,
-                                details={"value": field_value, "length": field_len, "min": limits["min"]},
-                            )
+                            level=self.level,
+                            scope=self.scope,
+                            phase=self.phase,
+                            message=f"Field '{field}' length ({field_len}) is less than minimum ({limits['min']})",
+                            entity_id=str(entity_id),
+                            entity_type=entity_type,
+                            field_name=field,
+                            details={
+                                "value": field_value,
+                                "length": field_len,
+                                "min": limits["min"],
+                            },
+                        )
                         issues.append(issue)
 
                     # Check maximum length
                     if "max" in limits and field_len > limits["max"]:
                         issue = ValidationIssue(
                             id=f"max_length_{field}_{entity_id}_{int(time.time())}",
-                                level=self.level,
-                                scope=self.scope,
-                                phase=self.phase,
-                                message=f"Field '{field}' length ({field_len}) exceeds maximum ({limits['max']})",
-                                entity_id=str(entity_id),
-                                entity_type=entity_type,
-                                field_name=field,
-                                details={
-                                "value": field_value[:50] + "..." if field_len > 50 else field_value,
-                                    "length": field_len,
-                                    "max": limits["max"],
-                                },
-                            )
+                            level=self.level,
+                            scope=self.scope,
+                            phase=self.phase,
+                            message=f"Field '{field}' length ({field_len}) exceeds maximum ({limits['max']})",
+                            entity_id=str(entity_id),
+                            entity_type=entity_type,
+                            field_name=field,
+                            details={
+                                "value": field_value[:50] + "..."
+                                if field_len > 50
+                                else field_value,
+                                "length": field_len,
+                                "max": limits["max"],
+                            },
+                        )
                         issues.append(issue)
 
         return issues
@@ -244,14 +265,14 @@ class PatternMatchRule(ValidationRule):
 
     def __init__(
         self,
-            id: str,
-            name: str,
-            description: str,
-            scope: ValidationScope,
-            phase: ValidationPhase,
-            field_patterns: Dict[str, str],
-            level: ValidationLevel = ValidationLevel.ERROR,
-        ):
+        id: str,
+        name: str,
+        description: str,
+        scope: ValidationScope,
+        phase: ValidationPhase,
+        field_patterns: Dict[str, str],
+        level: ValidationLevel = ValidationLevel.ERROR,
+    ):
         """
         Initialize the pattern match rule.
 
@@ -265,7 +286,9 @@ class PatternMatchRule(ValidationRule):
             level: Validation level for issues found by this rule
         """
         super().__init__(id, name, description, scope, phase, level)
-        self.field_patterns = {field: re.compile(pattern) for field, pattern in field_patterns.items()}
+        self.field_patterns = {
+            field: re.compile(pattern) for field, pattern in field_patterns.items()
+        }
 
     def validate(self, entity: Any, context: Dict[str, Any]) -> List[ValidationIssue]:
         """
@@ -293,18 +316,20 @@ class PatternMatchRule(ValidationRule):
                     if not pattern.match(field_value):
                         issue = ValidationIssue(
                             id=f"pattern_mismatch_{field}_{entity_id}_{int(time.time())}",
-                                level=self.level,
-                                scope=self.scope,
-                                phase=self.phase,
-                                message=f"Field '{field}' value does not match required pattern",
-                                entity_id=str(entity_id),
-                                entity_type=entity_type,
-                                field_name=field,
-                                details={
-                                "value": field_value[:50] + "..." if len(field_value) > 50 else field_value,
-                                    "pattern": pattern.pattern,
-                                },
-                            )
+                            level=self.level,
+                            scope=self.scope,
+                            phase=self.phase,
+                            message=f"Field '{field}' value does not match required pattern",
+                            entity_id=str(entity_id),
+                            entity_type=entity_type,
+                            field_name=field,
+                            details={
+                                "value": field_value[:50] + "..."
+                                if len(field_value) > 50
+                                else field_value,
+                                "pattern": pattern.pattern,
+                            },
+                        )
                         issues.append(issue)
         else:
             # For object-like entities
@@ -312,24 +337,30 @@ class PatternMatchRule(ValidationRule):
             entity_type = context.get("entity_type", self.scope.value)
 
             for field, pattern in self.field_patterns.items():
-                if hasattr(entity, field) and getattr(entity, field) is not None and isinstance(getattr(entity, field), str):
+                if (
+                    hasattr(entity, field)
+                    and getattr(entity, field) is not None
+                    and isinstance(getattr(entity, field), str)
+                ):
                     field_value = getattr(entity, field)
 
                     if not pattern.match(field_value):
                         issue = ValidationIssue(
                             id=f"pattern_mismatch_{field}_{entity_id}_{int(time.time())}",
-                                level=self.level,
-                                scope=self.scope,
-                                phase=self.phase,
-                                message=f"Field '{field}' value does not match required pattern",
-                                entity_id=str(entity_id),
-                                entity_type=entity_type,
-                                field_name=field,
-                                details={
-                                "value": field_value[:50] + "..." if len(field_value) > 50 else field_value,
-                                    "pattern": pattern.pattern,
-                                },
-                            )
+                            level=self.level,
+                            scope=self.scope,
+                            phase=self.phase,
+                            message=f"Field '{field}' value does not match required pattern",
+                            entity_id=str(entity_id),
+                            entity_type=entity_type,
+                            field_name=field,
+                            details={
+                                "value": field_value[:50] + "..."
+                                if len(field_value) > 50
+                                else field_value,
+                                "pattern": pattern.pattern,
+                            },
+                        )
                         issues.append(issue)
 
         return issues
@@ -340,15 +371,15 @@ class RelationshipRule(ValidationRule):
 
     def __init__(
         self,
-            id: str,
-            name: str,
-            description: str,
-            scope: ValidationScope,
-            phase: ValidationPhase,
-            relation_field: str,
-            related_entity_type: str,
-            level: ValidationLevel = ValidationLevel.ERROR,
-        ):
+        id: str,
+        name: str,
+        description: str,
+        scope: ValidationScope,
+        phase: ValidationPhase,
+        relation_field: str,
+        related_entity_type: str,
+        level: ValidationLevel = ValidationLevel.ERROR,
+    ):
         """
         Initialize the relationship rule.
 
@@ -397,43 +428,46 @@ class RelationshipRule(ValidationRule):
                 if not database.entity_exists(self.related_entity_type, related_id):
                     issue = ValidationIssue(
                         id=f"invalid_relation_{self.relation_field}_{entity_id}_{int(time.time())}",
-                            level=self.level,
-                            scope=self.scope,
-                            phase=self.phase,
-                            message=f"Field '{self.relation_field}' references non-existent {self.related_entity_type}",
-                            entity_id=str(entity_id),
-                            entity_type=entity_type,
-                            field_name=self.relation_field,
-                            details={
+                        level=self.level,
+                        scope=self.scope,
+                        phase=self.phase,
+                        message=f"Field '{self.relation_field}' references non-existent {self.related_entity_type}",
+                        entity_id=str(entity_id),
+                        entity_type=entity_type,
+                        field_name=self.relation_field,
+                        details={
                             "related_entity_type": self.related_entity_type,
-                                "related_id": str(related_id),
-                            },
-                        )
+                            "related_id": str(related_id),
+                        },
+                    )
                     issues.append(issue)
         else:
             # For object-like entities
             entity_id = getattr(entity, "id", None) or str(id(entity))
             entity_type = context.get("entity_type", self.scope.value)
 
-            if hasattr(entity, self.relation_field) and getattr(entity, self.relation_field) is not None:
+            if (
+                hasattr(entity, self.relation_field)
+                and getattr(entity, self.relation_field) is not None
+            ):
                 related_id = getattr(entity, self.relation_field)
 
                 # Check if the related entity exists
                 if not database.entity_exists(self.related_entity_type, related_id):
                     issue = ValidationIssue(
                         id=f"invalid_relation_{self.relation_field}_{entity_id}_{int(time.time())}",
-                            level=self.level,
-                            scope=self.scope,
-                            phase=self.phase,
-                            message=f"Field '{self.relation_field}' references non-existent {self.related_entity_type}",
-                            entity_id=str(entity_id),
-                            entity_type=entity_type,
-                            field_name=self.relation_field,
-                            details={
+                        level=self.level,
+                        scope=self.scope,
+                        phase=self.phase,
+                        message=f"Field '{self.relation_field}' references non-existent {self.related_entity_type}",
+                        entity_id=str(entity_id),
+                        entity_type=entity_type,
+                        field_name=self.relation_field,
+                        details={
                             "related_entity_type": self.related_entity_type,
-                                "related_id": str(related_id),
-                            },
-                        )
+                            "related_id": str(related_id),
+                        },
+                    )
                     issues.append(issue)
 
         return issues
@@ -444,14 +478,14 @@ class UniqueValueRule(ValidationRule):
 
     def __init__(
         self,
-            id: str,
-            name: str,
-            description: str,
-            scope: ValidationScope,
-            phase: ValidationPhase,
-            unique_fields: List[str],
-            level: ValidationLevel = ValidationLevel.ERROR,
-        ):
+        id: str,
+        name: str,
+        description: str,
+        scope: ValidationScope,
+        phase: ValidationPhase,
+        unique_fields: List[str],
+        level: ValidationLevel = ValidationLevel.ERROR,
+    ):
         """
         Initialize the unique value rule.
 
@@ -503,19 +537,19 @@ class UniqueValueRule(ValidationRule):
                     if duplicates:
                         issue = ValidationIssue(
                             id=f"duplicate_value_{field}_{entity_id}_{int(time.time())}",
-                                level=self.level,
-                                scope=self.scope,
-                                phase=self.phase,
-                                message=f"Field '{field}' value is not unique",
-                                entity_id=str(entity_id),
-                                entity_type=entity_type,
-                                field_name=field,
-                                details={
+                            level=self.level,
+                            scope=self.scope,
+                            phase=self.phase,
+                            message=f"Field '{field}' value is not unique",
+                            entity_id=str(entity_id),
+                            entity_type=entity_type,
+                            field_name=field,
+                            details={
                                 "value": field_value,
-                                    "duplicate_ids": [str(dup) for dup in duplicates[:5]],
-                                    "duplicate_count": len(duplicates),
-                                },
-                            )
+                                "duplicate_ids": [str(dup) for dup in duplicates[:5]],
+                                "duplicate_count": len(duplicates),
+                            },
+                        )
                         issues.append(issue)
         else:
             # For object-like entities
@@ -534,19 +568,19 @@ class UniqueValueRule(ValidationRule):
                     if duplicates:
                         issue = ValidationIssue(
                             id=f"duplicate_value_{field}_{entity_id}_{int(time.time())}",
-                                level=self.level,
-                                scope=self.scope,
-                                phase=self.phase,
-                                message=f"Field '{field}' value is not unique",
-                                entity_id=str(entity_id),
-                                entity_type=entity_type,
-                                field_name=field,
-                                details={
+                            level=self.level,
+                            scope=self.scope,
+                            phase=self.phase,
+                            message=f"Field '{field}' value is not unique",
+                            entity_id=str(entity_id),
+                            entity_type=entity_type,
+                            field_name=field,
+                            details={
                                 "value": field_value,
-                                    "duplicate_ids": [str(dup) for dup in duplicates[:5]],
-                                    "duplicate_count": len(duplicates),
-                                },
-                            )
+                                "duplicate_ids": [str(dup) for dup in duplicates[:5]],
+                                "duplicate_count": len(duplicates),
+                            },
+                        )
                         issues.append(issue)
 
         return issues
@@ -557,14 +591,14 @@ class CustomFieldRule(ValidationRule):
 
     def __init__(
         self,
-            id: str,
-            name: str,
-            description: str,
-            scope: ValidationScope,
-            phase: ValidationPhase,
-            field_constraints: Dict[str, Dict[str, Any]],
-            level: ValidationLevel = ValidationLevel.WARNING,
-        ):
+        id: str,
+        name: str,
+        description: str,
+        scope: ValidationScope,
+        phase: ValidationPhase,
+        field_constraints: Dict[str, Dict[str, Any]],
+        level: ValidationLevel = ValidationLevel.WARNING,
+    ):
         """
         Initialize the custom field rule.
 
@@ -603,7 +637,9 @@ class CustomFieldRule(ValidationRule):
             custom_fields = entity.get("customFields", {})
         else:
             entity_id = getattr(entity, "id", None) or str(id(entity))
-            custom_fields = getattr(entity, "custom_fields", None) or getattr(entity, "customFields", {})
+            custom_fields = getattr(entity, "custom_fields", None) or getattr(
+                entity, "customFields", {}
+            )
 
         if not custom_fields or not isinstance(custom_fields, dict):
             return issues
@@ -620,75 +656,78 @@ class CustomFieldRule(ValidationRule):
                     if expected_type == "string" and not isinstance(field_value, str):
                         issue = ValidationIssue(
                             id=f"custom_field_type_{field_name}_{entity_id}_{int(time.time())}",
-                                level=self.level,
-                                scope=ValidationScope.CUSTOM_FIELD,
-                                phase=self.phase,
-                                message=f"Custom field '{field_name}' should be a string",
-                                entity_id=str(entity_id),
-                                entity_type=entity_type,
-                                field_name=field_name,
-                                details={"value": field_value, "expected_type": expected_type},
-                            )
+                            level=self.level,
+                            scope=ValidationScope.CUSTOM_FIELD,
+                            phase=self.phase,
+                            message=f"Custom field '{field_name}' should be a string",
+                            entity_id=str(entity_id),
+                            entity_type=entity_type,
+                            field_name=field_name,
+                            details={"value": field_value, "expected_type": expected_type},
+                        )
                         issues.append(issue)
 
                     elif expected_type == "number" and not isinstance(field_value, (int, float)):
                         issue = ValidationIssue(
                             id=f"custom_field_type_{field_name}_{entity_id}_{int(time.time())}",
-                                level=self.level,
-                                scope=ValidationScope.CUSTOM_FIELD,
-                                phase=self.phase,
-                                message=f"Custom field '{field_name}' should be a number",
-                                entity_id=str(entity_id),
-                                entity_type=entity_type,
-                                field_name=field_name,
-                                details={"value": field_value, "expected_type": expected_type},
-                            )
+                            level=self.level,
+                            scope=ValidationScope.CUSTOM_FIELD,
+                            phase=self.phase,
+                            message=f"Custom field '{field_name}' should be a number",
+                            entity_id=str(entity_id),
+                            entity_type=entity_type,
+                            field_name=field_name,
+                            details={"value": field_value, "expected_type": expected_type},
+                        )
                         issues.append(issue)
 
                     elif expected_type == "boolean" and not isinstance(field_value, bool):
                         issue = ValidationIssue(
                             id=f"custom_field_type_{field_name}_{entity_id}_{int(time.time())}",
-                                level=self.level,
-                                scope=ValidationScope.CUSTOM_FIELD,
-                                phase=self.phase,
-                                message=f"Custom field '{field_name}' should be a boolean",
-                                entity_id=str(entity_id),
-                                entity_type=entity_type,
-                                field_name=field_name,
-                                details={"value": field_value, "expected_type": expected_type},
-                            )
+                            level=self.level,
+                            scope=ValidationScope.CUSTOM_FIELD,
+                            phase=self.phase,
+                            message=f"Custom field '{field_name}' should be a boolean",
+                            entity_id=str(entity_id),
+                            entity_type=entity_type,
+                            field_name=field_name,
+                            details={"value": field_value, "expected_type": expected_type},
+                        )
                         issues.append(issue)
 
                     elif expected_type == "date" and not isinstance(field_value, str):
                         issue = ValidationIssue(
                             id=f"custom_field_type_{field_name}_{entity_id}_{int(time.time())}",
-                                level=self.level,
-                                scope=ValidationScope.CUSTOM_FIELD,
-                                phase=self.phase,
-                                message=f"Custom field '{field_name}' should be a date string",
-                                entity_id=str(entity_id),
-                                entity_type=entity_type,
-                                field_name=field_name,
-                                details={"value": field_value, "expected_type": expected_type},
-                            )
-                        issues.append(issue)
-
-                # Validate allowed values
-                if "allowed_values" in constraints and field_value not in constraints["allowed_values"]:
-                    issue = ValidationIssue(
-                        id=f"custom_field_value_{field_name}_{entity_id}_{int(time.time())}",
                             level=self.level,
                             scope=ValidationScope.CUSTOM_FIELD,
                             phase=self.phase,
-                            message=f"Custom field '{field_name}' has invalid value",
+                            message=f"Custom field '{field_name}' should be a date string",
                             entity_id=str(entity_id),
                             entity_type=entity_type,
                             field_name=field_name,
-                            details={
-                            "value": field_value,
-                                "allowed_values": constraints["allowed_values"],
-                            },
+                            details={"value": field_value, "expected_type": expected_type},
                         )
+                        issues.append(issue)
+
+                # Validate allowed values
+                if (
+                    "allowed_values" in constraints
+                    and field_value not in constraints["allowed_values"]
+                ):
+                    issue = ValidationIssue(
+                        id=f"custom_field_value_{field_name}_{entity_id}_{int(time.time())}",
+                        level=self.level,
+                        scope=ValidationScope.CUSTOM_FIELD,
+                        phase=self.phase,
+                        message=f"Custom field '{field_name}' has invalid value",
+                        entity_id=str(entity_id),
+                        entity_type=entity_type,
+                        field_name=field_name,
+                        details={
+                            "value": field_value,
+                            "allowed_values": constraints["allowed_values"],
+                        },
+                    )
                     issues.append(issue)
 
         return issues
@@ -699,14 +738,14 @@ class AttachmentRule(ValidationRule):
 
     def __init__(
         self,
-            id: str,
-            name: str,
-            description: str,
-            phase: ValidationPhase,
-            max_size: Optional[int] = None,
-            allowed_extensions: Optional[List[str]] = None,
-            level: ValidationLevel = ValidationLevel.WARNING,
-        ):
+        id: str,
+        name: str,
+        description: str,
+        phase: ValidationPhase,
+        max_size: Optional[int] = None,
+        allowed_extensions: Optional[List[str]] = None,
+        level: ValidationLevel = ValidationLevel.WARNING,
+    ):
         """
         Initialize the attachment rule.
 
@@ -752,9 +791,7 @@ class AttachmentRule(ValidationRule):
         else:
             attachment_id = getattr(entity, "id", None) or str(id(entity))
             attachment_name = getattr(entity, "name", None) or getattr(entity, "filename", None)
-            attachment_size = getattr(entity, "size", None) or len(
-                getattr(entity, "content", b"")
-            )
+            attachment_size = getattr(entity, "size", None) or len(getattr(entity, "content", b""))
             related_id = getattr(entity, "related_id", None)
             related_type = getattr(entity, "related_type", None)
 
@@ -762,46 +799,43 @@ class AttachmentRule(ValidationRule):
         if self.max_size is not None and attachment_size > self.max_size:
             issue = ValidationIssue(
                 id=f"attachment_size_{attachment_id}_{int(time.time())}",
-                    level=self.level,
-                    scope=self.scope,
-                    phase=self.phase,
-                    message=f"Attachment exceeds maximum size of {self.max_size} bytes",
-                    entity_id=str(attachment_id),
-                    entity_type="Attachment",
-                    details={
+                level=self.level,
+                scope=self.scope,
+                phase=self.phase,
+                message=f"Attachment exceeds maximum size of {self.max_size} bytes",
+                entity_id=str(attachment_id),
+                entity_type="Attachment",
+                details={
                     "name": attachment_name,
-                        "size": attachment_size,
-                        "max_size": self.max_size,
-                        "related_id": related_id,
-                        "related_type": related_type,
-                    },
-                )
+                    "size": attachment_size,
+                    "max_size": self.max_size,
+                    "related_id": related_id,
+                    "related_type": related_type,
+                },
+            )
             issues.append(issue)
 
         # Validate file extension
-        if (
-            self.allowed_extensions is not None
-            and attachment_name is not None
-        ):
+        if self.allowed_extensions is not None and attachment_name is not None:
             extension = attachment_name.split(".")[-1].lower() if "." in attachment_name else ""
 
             if extension not in self.allowed_extensions:
                 issue = ValidationIssue(
                     id=f"attachment_extension_{attachment_id}_{int(time.time())}",
-                        level=self.level,
-                        scope=self.scope,
-                        phase=self.phase,
-                        message=f"Attachment has disallowed file extension: {extension}",
-                        entity_id=str(attachment_id),
-                        entity_type="Attachment",
-                        details={
+                    level=self.level,
+                    scope=self.scope,
+                    phase=self.phase,
+                    message=f"Attachment has disallowed file extension: {extension}",
+                    entity_id=str(attachment_id),
+                    entity_type="Attachment",
+                    details={
                         "name": attachment_name,
-                            "extension": extension,
-                            "allowed_extensions": self.allowed_extensions,
-                            "related_id": related_id,
-                            "related_type": related_type,
-                        },
-                    )
+                        "extension": extension,
+                        "allowed_extensions": self.allowed_extensions,
+                        "related_id": related_id,
+                        "related_type": related_type,
+                    },
+                )
                 issues.append(issue)
 
         return issues
@@ -812,14 +846,14 @@ class JsonSchemaRule(ValidationRule):
 
     def __init__(
         self,
-            id: str,
-            name: str,
-            description: str,
-            scope: ValidationScope,
-            phase: ValidationPhase,
-            schema: Dict[str, Any],
-            level: ValidationLevel = ValidationLevel.ERROR,
-        ):
+        id: str,
+        name: str,
+        description: str,
+        scope: ValidationScope,
+        phase: ValidationPhase,
+        schema: Dict[str, Any],
+        level: ValidationLevel = ValidationLevel.ERROR,
+    ):
         """
         Initialize the JSON schema rule.
 
@@ -858,11 +892,11 @@ class JsonSchemaRule(ValidationRule):
             # Cannot validate without jsonschema library
             issue = ValidationIssue(
                 id=f"json_schema_missing_library_{int(time.time())}",
-                    level=ValidationLevel.ERROR,
-                    scope=ValidationScope.SYSTEM,
-                    phase=self.phase,
-                    message="Cannot validate JSON schema: jsonschema library not available",
-                )
+                level=ValidationLevel.ERROR,
+                scope=ValidationScope.SYSTEM,
+                phase=self.phase,
+                message="Cannot validate JSON schema: jsonschema library not available",
+            )
             issues.append(issue)
             return issues
 
@@ -887,26 +921,26 @@ class JsonSchemaRule(ValidationRule):
                         # Cannot validate non-dict entity
                         issue = ValidationIssue(
                             id=f"json_schema_not_dict_{entity_id}_{int(time.time())}",
-                                level=self.level,
-                                scope=self.scope,
-                                phase=self.phase,
-                                message="Cannot validate JSON schema: entity is not a dictionary",
-                                entity_id=str(entity_id),
-                                entity_type=entity_type,
-                            )
+                            level=self.level,
+                            scope=self.scope,
+                            phase=self.phase,
+                            message="Cannot validate JSON schema: entity is not a dictionary",
+                            entity_id=str(entity_id),
+                            entity_type=entity_type,
+                        )
                         issues.append(issue)
                         return issues
                 except Exception as e:
                     # Error converting to dict
                     issue = ValidationIssue(
                         id=f"json_schema_conversion_error_{entity_id}_{int(time.time())}",
-                            level=self.level,
-                            scope=self.scope,
-                            phase=self.phase,
-                            message=f"Error converting entity to dictionary: {str(e)}",
-                            entity_id=str(entity_id),
-                            entity_type=entity_type,
-                        )
+                        level=self.level,
+                        scope=self.scope,
+                        phase=self.phase,
+                        message=f"Error converting entity to dictionary: {str(e)}",
+                        entity_id=str(entity_id),
+                        entity_type=entity_type,
+                    )
                     issues.append(issue)
                     return issues
 
@@ -917,19 +951,19 @@ class JsonSchemaRule(ValidationRule):
             # Create validation issue with details
             issue = ValidationIssue(
                 id=f"json_schema_validation_{entity_id}_{int(time.time())}",
-                    level=self.level,
-                    scope=self.scope,
-                    phase=self.phase,
-                    message=f"JSON schema validation failed: {e.message}",
-                    entity_id=str(entity_id),
-                    entity_type=entity_type,
-                    details={
+                level=self.level,
+                scope=self.scope,
+                phase=self.phase,
+                message=f"JSON schema validation failed: {e.message}",
+                entity_id=str(entity_id),
+                entity_type=entity_type,
+                details={
                     "schema_path": list(e.schema_path),
-                        "absolute_path": list(e.absolute_path),
-                        "validator": e.validator,
-                        "validator_value": e.validator_value,
-                    },
-                )
+                    "absolute_path": list(e.absolute_path),
+                    "validator": e.validator,
+                    "validator_value": e.validator_value,
+                },
+            )
             issues.append(issue)
 
         return issues
@@ -940,12 +974,12 @@ class TestStepValidationRule(ValidationRule):
 
     def __init__(
         self,
-            id: str,
-            name: str,
-            description: str,
-            phase: ValidationPhase,
-            level: ValidationLevel = ValidationLevel.WARNING,
-        ):
+        id: str,
+        name: str,
+        description: str,
+        phase: ValidationPhase,
+        level: ValidationLevel = ValidationLevel.WARNING,
+    ):
         """
         Initialize the test step validation rule.
 
@@ -989,14 +1023,14 @@ class TestStepValidationRule(ValidationRule):
         if not steps:
             issue = ValidationIssue(
                 id=f"test_case_no_steps_{test_case_id}_{int(time.time())}",
-                    level=self.level,
-                    scope=self.scope,
-                    phase=self.phase,
-                    message="Test case has no steps",
-                    entity_id=str(test_case_id),
-                    entity_type="test_case",
-                    details={"test_case_name": test_case_name},
-                )
+                level=self.level,
+                scope=self.scope,
+                phase=self.phase,
+                message="Test case has no steps",
+                entity_id=str(test_case_id),
+                entity_type="test_case",
+                details={"test_case_name": test_case_name},
+            )
             issues.append(issue)
             return issues
 
@@ -1016,32 +1050,34 @@ class TestStepValidationRule(ValidationRule):
             if not description or description.strip() == "":
                 issue = ValidationIssue(
                     id=f"test_step_empty_description_{test_case_id}_{step_index}_{int(time.time())}",
-                        level=self.level,
-                        scope=self.scope,
-                        phase=self.phase,
-                        message=f"Test step {step_index + 1} has empty description",
-                        entity_id=str(test_case_id),
-                        entity_type="test_case",
-                        field_name=f"steps[{step_index}].description",
-                        details={"test_case_name": test_case_name, "step_index": step_index},
-                    )
+                    level=self.level,
+                    scope=self.scope,
+                    phase=self.phase,
+                    message=f"Test step {step_index + 1} has empty description",
+                    entity_id=str(test_case_id),
+                    entity_type="test_case",
+                    field_name=f"steps[{step_index}].description",
+                    details={"test_case_name": test_case_name, "step_index": step_index},
+                )
                 issues.append(issue)
 
             # Check for empty expected result if required
             if self.phase != ValidationPhase.PRE_MIGRATION:  # Skip for initial validation
-                expected_result = step_data.get("expected_result", "") or getattr(step, "expected_result", "")
+                expected_result = step_data.get("expected_result", "") or getattr(
+                    step, "expected_result", ""
+                )
                 if not expected_result or expected_result.strip() == "":
                     issue = ValidationIssue(
                         id=f"test_step_empty_expected_result_{test_case_id}_{step_index}_{int(time.time())}",
-                            level=ValidationLevel.INFO,  # Lower severity for expected results
+                        level=ValidationLevel.INFO,  # Lower severity for expected results
                         scope=self.scope,
-                            phase=self.phase,
-                            message=f"Test step {step_index + 1} has empty expected result",
-                            entity_id=str(test_case_id),
-                            entity_type="test_case",
-                            field_name=f"steps[{step_index}].expected_result",
-                            details={"test_case_name": test_case_name, "step_index": step_index},
-                        )
+                        phase=self.phase,
+                        message=f"Test step {step_index + 1} has empty expected result",
+                        entity_id=str(test_case_id),
+                        entity_type="test_case",
+                        field_name=f"steps[{step_index}].expected_result",
+                        details={"test_case_name": test_case_name, "step_index": step_index},
+                    )
                     issues.append(issue)
 
         return issues
@@ -1052,13 +1088,13 @@ class DataIntegrityRule(ValidationRule):
 
     def __init__(
         self,
-            id: str,
-            name: str,
-            description: str,
-            scope: ValidationScope,
-            fields_to_compare: List[Tuple[str, str]],
-            level: ValidationLevel = ValidationLevel.ERROR,
-        ):
+        id: str,
+        name: str,
+        description: str,
+        scope: ValidationScope,
+        fields_to_compare: List[Tuple[str, str]],
+        level: ValidationLevel = ValidationLevel.ERROR,
+    ):
         """
         Initialize the data integrity rule.
 
@@ -1095,7 +1131,9 @@ class DataIntegrityRule(ValidationRule):
 
         # Extract entity information
         if isinstance(source_entity, dict):
-            source_id = source_entity.get("id") or source_entity.get("key") or str(id(source_entity))
+            source_id = (
+                source_entity.get("id") or source_entity.get("key") or str(id(source_entity))
+            )
         else:
             source_id = getattr(source_entity, "id", None) or str(id(source_entity))
 
@@ -1114,20 +1152,20 @@ class DataIntegrityRule(ValidationRule):
             if self._normalize_value(source_value) != self._normalize_value(target_value):
                 issue = ValidationIssue(
                     id=f"data_integrity_{source_field}_{source_id}_{int(time.time())}",
-                        level=self.level,
-                        scope=self.scope,
-                        phase=ValidationPhase.TRANSFORMATION,
-                        message=f"Data integrity issue: source field '{source_field}' value does not match target field '{target_field}' value",
-                        entity_id=str(source_id),
-                        entity_type=entity_type,
-                        field_name=source_field,
-                        details={
+                    level=self.level,
+                    scope=self.scope,
+                    phase=ValidationPhase.TRANSFORMATION,
+                    message=f"Data integrity issue: source field '{source_field}' value does not match target field '{target_field}' value",
+                    entity_id=str(source_id),
+                    entity_type=entity_type,
+                    field_name=source_field,
+                    details={
                         "source_field": source_field,
-                            "target_field": target_field,
-                            "source_value": source_value,
-                            "target_value": target_value,
-                        },
-                    )
+                        "target_field": target_field,
+                        "source_value": source_value,
+                        "target_value": target_value,
+                    },
+                )
                 issues.append(issue)
 
         return issues
@@ -1157,12 +1195,12 @@ class TestStatusMappingRule(ValidationRule):
 
     def __init__(
         self,
-            id: str,
-            name: str,
-            description: str,
-            status_mappings: Dict[str, str],
-            level: ValidationLevel = ValidationLevel.WARNING,
-        ):
+        id: str,
+        name: str,
+        description: str,
+        status_mappings: Dict[str, str],
+        level: ValidationLevel = ValidationLevel.WARNING,
+    ):
         """
         Initialize the test status mapping rule.
 
@@ -1173,7 +1211,14 @@ class TestStatusMappingRule(ValidationRule):
             status_mappings: Dict mapping Zephyr statuses to qTest statuses
             level: Validation level for issues found by this rule
         """
-        super().__init__(id, name, description, ValidationScope.TEST_EXECUTION, ValidationPhase.TRANSFORMATION, level)
+        super().__init__(
+            id,
+            name,
+            description,
+            ValidationScope.TEST_EXECUTION,
+            ValidationPhase.TRANSFORMATION,
+            level,
+        )
         self.status_mappings = status_mappings
 
     def validate(self, entity: Any, context: Dict[str, Any]) -> List[ValidationIssue]:
@@ -1198,7 +1243,9 @@ class TestStatusMappingRule(ValidationRule):
 
         # Extract entity information
         if isinstance(source_entity, dict):
-            source_id = source_entity.get("id") or source_entity.get("key") or str(id(source_entity))
+            source_id = (
+                source_entity.get("id") or source_entity.get("key") or str(id(source_entity))
+            )
             source_status = source_entity.get("status")
         else:
             source_id = getattr(source_entity, "id", None) or str(id(source_entity))
@@ -1219,19 +1266,19 @@ class TestStatusMappingRule(ValidationRule):
         if expected_target_status and expected_target_status != target_status:
             issue = ValidationIssue(
                 id=f"status_mapping_{source_id}_{int(time.time())}",
-                    level=self.level,
-                    scope=self.scope,
-                    phase=ValidationPhase.TRANSFORMATION,
-                    message=f"Test status mapping issue: Zephyr status '{source_status}' should map to qTest status '{expected_target_status}', but got '{target_status}'",
-                    entity_id=str(source_id),
-                    entity_type="test_execution",
-                    field_name="status",
-                    details={
+                level=self.level,
+                scope=self.scope,
+                phase=ValidationPhase.TRANSFORMATION,
+                message=f"Test status mapping issue: Zephyr status '{source_status}' should map to qTest status '{expected_target_status}', but got '{target_status}'",
+                entity_id=str(source_id),
+                entity_type="test_execution",
+                field_name="status",
+                details={
                     "zephyr_status": source_status,
-                        "qtest_status": target_status,
-                        "expected_qtest_status": expected_target_status,
-                    },
-                )
+                    "qtest_status": target_status,
+                    "expected_qtest_status": expected_target_status,
+                },
+            )
             issues.append(issue)
 
         return issues
@@ -1242,14 +1289,14 @@ class ReferentialIntegrityRule(ValidationRule):
 
     def __init__(
         self,
-            id: str,
-            name: str,
-            description: str,
-            scope: ValidationScope,
-            reference_field: str,
-            mapping_type: str,
-            level: ValidationLevel = ValidationLevel.ERROR,
-        ):
+        id: str,
+        name: str,
+        description: str,
+        scope: ValidationScope,
+        reference_field: str,
+        mapping_type: str,
+        level: ValidationLevel = ValidationLevel.ERROR,
+    ):
         """
         Initialize the referential integrity rule.
 
@@ -1300,26 +1347,24 @@ class ReferentialIntegrityRule(ValidationRule):
             return issues
 
         # Check if the reference exists in the mapping
-        mapped_id = database.get_mapped_entity_id(
-            project_key, self.mapping_type, reference_id
-        )
+        mapped_id = database.get_mapped_entity_id(project_key, self.mapping_type, reference_id)
 
         if not mapped_id:
             issue = ValidationIssue(
                 id=f"referential_integrity_{self.reference_field}_{entity_id}_{int(time.time())}",
-                    level=self.level,
-                    scope=self.scope,
-                    phase=ValidationPhase.TRANSFORMATION,
-                    message=f"Referential integrity issue: referenced entity '{reference_id}' in field '{self.reference_field}' has no mapping",
-                    entity_id=str(entity_id),
-                    entity_type=entity_type,
-                    field_name=self.reference_field,
-                    details={
+                level=self.level,
+                scope=self.scope,
+                phase=ValidationPhase.TRANSFORMATION,
+                message=f"Referential integrity issue: referenced entity '{reference_id}' in field '{self.reference_field}' has no mapping",
+                entity_id=str(entity_id),
+                entity_type=entity_type,
+                field_name=self.reference_field,
+                details={
                     "reference_field": self.reference_field,
-                        "reference_id": reference_id,
-                        "mapping_type": self.mapping_type,
-                    },
-                )
+                    "reference_id": reference_id,
+                    "mapping_type": self.mapping_type,
+                },
+            )
             issues.append(issue)
 
         return issues
@@ -1334,12 +1379,12 @@ def get_test_status_mappings() -> Dict[str, str]:
     """
     return {
         "PASS": "PASSED",
-            "FAIL": "FAILED",
-            "WIP": "IN_PROGRESS",
-            "BLOCKED": "BLOCKED",
-            "NOT_EXECUTED": "NOT_RUN",
-            "UNEXECUTED": "NOT_RUN",
-        }
+        "FAIL": "FAILED",
+        "WIP": "IN_PROGRESS",
+        "BLOCKED": "BLOCKED",
+        "NOT_EXECUTED": "NOT_RUN",
+        "UNEXECUTED": "NOT_RUN",
+    }
 
 
 class CustomFieldTransformationRule(ValidationRule):
@@ -1347,13 +1392,13 @@ class CustomFieldTransformationRule(ValidationRule):
 
     def __init__(
         self,
-            id: str,
-            name: str,
-            description: str,
-            scope: ValidationScope,
-            phase: ValidationPhase,
-            level: ValidationLevel = ValidationLevel.WARNING,
-        ):
+        id: str,
+        name: str,
+        description: str,
+        scope: ValidationScope,
+        phase: ValidationPhase,
+        level: ValidationLevel = ValidationLevel.WARNING,
+    ):
         """
         Initialize the custom field transformation rule.
 
@@ -1393,7 +1438,9 @@ class CustomFieldTransformationRule(ValidationRule):
             custom_fields = entity.get("customFields", {})
         else:
             entity_id = getattr(entity, "id", None) or str(id(entity))
-            custom_fields = getattr(entity, "custom_fields", None) or getattr(entity, "customFields", {})
+            custom_fields = getattr(entity, "custom_fields", None) or getattr(
+                entity, "customFields", {}
+            )
 
         if not custom_fields:
             return issues
@@ -1424,18 +1471,20 @@ class CustomFieldTransformationRule(ValidationRule):
                 if field_value and transformed_value == "":
                     issue = ValidationIssue(
                         id=f"custom_field_transformation_{field_name}_{entity_id}_{int(time.time())}",
-                            level=self.level,
-                            scope=ValidationScope.CUSTOM_FIELD,
-                            phase=self.phase,
-                            message=f"Custom field '{field_name}' transformation resulted in empty value",
-                            entity_id=str(entity_id),
-                            entity_type=entity_type,
-                            field_name=field_name,
-                            details={
-                            "original_value": str(field_value)[:100] + "..." if len(str(field_value)) > 100 else str(field_value),
-                                "field_type": field_type,
-                            },
-                        )
+                        level=self.level,
+                        scope=ValidationScope.CUSTOM_FIELD,
+                        phase=self.phase,
+                        message=f"Custom field '{field_name}' transformation resulted in empty value",
+                        entity_id=str(entity_id),
+                        entity_type=entity_type,
+                        field_name=field_name,
+                        details={
+                            "original_value": str(field_value)[:100] + "..."
+                            if len(str(field_value)) > 100
+                            else str(field_value),
+                            "field_type": field_type,
+                        },
+                    )
                     issues.append(issue)
 
                 # Additional checks could be added here for specific field types
@@ -1443,37 +1492,39 @@ class CustomFieldTransformationRule(ValidationRule):
                 if field_type == "NUMERIC" and not isinstance(transformed_value, (int, float)):
                     issue = ValidationIssue(
                         id=f"custom_field_numeric_{field_name}_{entity_id}_{int(time.time())}",
-                            level=self.level,
-                            scope=ValidationScope.CUSTOM_FIELD,
-                            phase=self.phase,
-                            message=f"Custom field '{field_name}' not properly transformed to numeric value",
-                            entity_id=str(entity_id),
-                            entity_type=entity_type,
-                            field_name=field_name,
-                            details={
-                            "original_value": str(field_value)[:100] + "..." if len(str(field_value)) > 100 else str(field_value),
-                                "transformed_value": transformed_value,
-                                "field_type": field_type,
-                            },
-                        )
+                        level=self.level,
+                        scope=ValidationScope.CUSTOM_FIELD,
+                        phase=self.phase,
+                        message=f"Custom field '{field_name}' not properly transformed to numeric value",
+                        entity_id=str(entity_id),
+                        entity_type=entity_type,
+                        field_name=field_name,
+                        details={
+                            "original_value": str(field_value)[:100] + "..."
+                            if len(str(field_value)) > 100
+                            else str(field_value),
+                            "transformed_value": transformed_value,
+                            "field_type": field_type,
+                        },
+                    )
                     issues.append(issue)
 
             except Exception as e:
                 # Capture transformation errors
                 issue = ValidationIssue(
                     id=f"custom_field_error_{field_name}_{entity_id}_{int(time.time())}",
-                        level=ValidationLevel.ERROR,
-                        scope=ValidationScope.CUSTOM_FIELD,
-                        phase=self.phase,
-                        message=f"Error transforming custom field '{field_name}': {str(e)}",
-                        entity_id=str(entity_id),
-                        entity_type=entity_type,
-                        field_name=field_name,
-                        details={
+                    level=ValidationLevel.ERROR,
+                    scope=ValidationScope.CUSTOM_FIELD,
+                    phase=self.phase,
+                    message=f"Error transforming custom field '{field_name}': {str(e)}",
+                    entity_id=str(entity_id),
+                    entity_type=entity_type,
+                    field_name=field_name,
+                    details={
                         "error": str(e),
-                            "field_type": field_type,
-                        },
-                    )
+                        "field_type": field_type,
+                    },
+                )
                 issues.append(issue)
 
         return issues
@@ -1492,244 +1543,263 @@ def get_built_in_rules() -> List[ValidationRule]:
     rules.append(
         RequiredFieldRule(
             id="project_required_fields",
-                name="Project Required Fields",
-                description="Validates that required project fields are present",
-                scope=ValidationScope.PROJECT,
-                phase=ValidationPhase.EXTRACTION,
-                required_fields=["key", "name"],
-                level=ValidationLevel.ERROR,
-            )
+            name="Project Required Fields",
+            description="Validates that required project fields are present",
+            scope=ValidationScope.PROJECT,
+            phase=ValidationPhase.EXTRACTION,
+            required_fields=["key", "name"],
+            level=ValidationLevel.ERROR,
+        )
     )
 
     # Test case validation rules
     rules.append(
         RequiredFieldRule(
             id="test_case_required_fields",
-                name="Test Case Required Fields",
-                description="Validates that required test case fields are present",
-                scope=ValidationScope.TEST_CASE,
-                phase=ValidationPhase.EXTRACTION,
-                required_fields=["key", "name"],
-                level=ValidationLevel.ERROR,
-            )
+            name="Test Case Required Fields",
+            description="Validates that required test case fields are present",
+            scope=ValidationScope.TEST_CASE,
+            phase=ValidationPhase.EXTRACTION,
+            required_fields=["key", "name"],
+            level=ValidationLevel.ERROR,
+        )
     )
 
     rules.append(
         StringLengthRule(
             id="test_case_name_length",
-                name="Test Case Name Length",
-                description="Validates test case name length",
-                scope=ValidationScope.TEST_CASE,
-                phase=ValidationPhase.TRANSFORMATION,
-                field_limits={"name": {"min": 1, "max": 255}},
-                level=ValidationLevel.WARNING,
-            )
+            name="Test Case Name Length",
+            description="Validates test case name length",
+            scope=ValidationScope.TEST_CASE,
+            phase=ValidationPhase.TRANSFORMATION,
+            field_limits={"name": {"min": 1, "max": 255}},
+            level=ValidationLevel.WARNING,
+        )
     )
 
     rules.append(
         PatternMatchRule(
             id="test_case_key_pattern",
-                name="Test Case Key Pattern",
-                description="Validates test case key follows the expected pattern",
-                scope=ValidationScope.TEST_CASE,
-                phase=ValidationPhase.EXTRACTION,
-                field_patterns={"key": r"^[A-Z]+-\d+$"},
-                level=ValidationLevel.WARNING,
-            )
+            name="Test Case Key Pattern",
+            description="Validates test case key follows the expected pattern",
+            scope=ValidationScope.TEST_CASE,
+            phase=ValidationPhase.EXTRACTION,
+            field_patterns={"key": r"^[A-Z]+-\d+$"},
+            level=ValidationLevel.WARNING,
+        )
     )
 
     rules.append(
         TestStepValidationRule(
             id="test_case_steps_validation",
-                name="Test Case Steps Validation",
-                description="Validates test case steps are properly defined",
-                phase=ValidationPhase.EXTRACTION,
-                level=ValidationLevel.WARNING,
-            )
+            name="Test Case Steps Validation",
+            description="Validates test case steps are properly defined",
+            phase=ValidationPhase.EXTRACTION,
+            level=ValidationLevel.WARNING,
+        )
     )
 
     # Test cycle validation rules
     rules.append(
         RequiredFieldRule(
             id="test_cycle_required_fields",
-                name="Test Cycle Required Fields",
-                description="Validates that required test cycle fields are present",
-                scope=ValidationScope.TEST_CYCLE,
-                phase=ValidationPhase.EXTRACTION,
-                required_fields=["key", "name"],
-                level=ValidationLevel.ERROR,
-            )
+            name="Test Cycle Required Fields",
+            description="Validates that required test cycle fields are present",
+            scope=ValidationScope.TEST_CYCLE,
+            phase=ValidationPhase.EXTRACTION,
+            required_fields=["key", "name"],
+            level=ValidationLevel.ERROR,
+        )
     )
 
     # Test execution validation rules
     rules.append(
         RequiredFieldRule(
             id="test_execution_required_fields",
-                name="Test Execution Required Fields",
-                description="Validates that required test execution fields are present",
-                scope=ValidationScope.TEST_EXECUTION,
-                phase=ValidationPhase.EXTRACTION,
-                required_fields=["id", "testCaseId"],
-                level=ValidationLevel.ERROR,
-            )
+            name="Test Execution Required Fields",
+            description="Validates that required test execution fields are present",
+            scope=ValidationScope.TEST_EXECUTION,
+            phase=ValidationPhase.EXTRACTION,
+            required_fields=["id", "testCaseId"],
+            level=ValidationLevel.ERROR,
+        )
     )
 
     rules.append(
         TestStatusMappingRule(
             id="test_status_mapping",
-                name="Test Status Mapping",
-                description="Validates test statuses are mapped correctly",
-                status_mappings=get_test_status_mappings(),
-                level=ValidationLevel.WARNING,
-            )
+            name="Test Status Mapping",
+            description="Validates test statuses are mapped correctly",
+            status_mappings=get_test_status_mappings(),
+            level=ValidationLevel.WARNING,
+        )
     )
 
     # Attachment validation rules
     rules.append(
         AttachmentRule(
             id="attachment_size_limit",
-                name="Attachment Size Limit",
-                description="Validates that attachments are within size limits",
-                phase=ValidationPhase.EXTRACTION,
-                max_size=10 * 1024 * 1024,  # 10MB
+            name="Attachment Size Limit",
+            description="Validates that attachments are within size limits",
+            phase=ValidationPhase.EXTRACTION,
+            max_size=10 * 1024 * 1024,  # 10MB
             level=ValidationLevel.WARNING,
-            )
+        )
     )
 
     rules.append(
         AttachmentRule(
             id="attachment_extension",
-                name="Attachment File Extension",
-                description="Validates that attachments have allowed file extensions",
-                phase=ValidationPhase.EXTRACTION,
-                allowed_extensions=[
-                "pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx", "txt", "csv",
-                    "jpg", "jpeg", "png", "gif", "bmp", "svg", "zip", "json", "xml",
-                ],
-                level=ValidationLevel.WARNING,
-            )
+            name="Attachment File Extension",
+            description="Validates that attachments have allowed file extensions",
+            phase=ValidationPhase.EXTRACTION,
+            allowed_extensions=[
+                "pdf",
+                "doc",
+                "docx",
+                "xls",
+                "xlsx",
+                "ppt",
+                "pptx",
+                "txt",
+                "csv",
+                "jpg",
+                "jpeg",
+                "png",
+                "gif",
+                "bmp",
+                "svg",
+                "zip",
+                "json",
+                "xml",
+            ],
+            level=ValidationLevel.WARNING,
+        )
     )
 
     # Custom field validation rules
     rules.append(
         CustomFieldRule(
             id="custom_field_type",
-                name="Custom Field Type",
-                description="Validates that custom fields have correct types",
-                scope=ValidationScope.CUSTOM_FIELD,
-                phase=ValidationPhase.TRANSFORMATION,
-                field_constraints={
-                "priority": {"type": "string", "allowed_values": ["Low", "Medium", "High", "Critical"]},
-                    "component": {"type": "string"},
-                    "version": {"type": "string"},
-                    "sprint": {"type": "string"},
-                    "story_points": {"type": "number"},
-                    "automated": {"type": "boolean"},
+            name="Custom Field Type",
+            description="Validates that custom fields have correct types",
+            scope=ValidationScope.CUSTOM_FIELD,
+            phase=ValidationPhase.TRANSFORMATION,
+            field_constraints={
+                "priority": {
+                    "type": "string",
+                    "allowed_values": ["Low", "Medium", "High", "Critical"],
                 },
-                level=ValidationLevel.WARNING,
-            )
+                "component": {"type": "string"},
+                "version": {"type": "string"},
+                "sprint": {"type": "string"},
+                "story_points": {"type": "number"},
+                "automated": {"type": "boolean"},
+            },
+            level=ValidationLevel.WARNING,
+        )
     )
 
     # Add custom field transformation validation
     rules.append(
         CustomFieldTransformationRule(
             id="custom_field_transformation",
-                name="Custom Field Transformation",
-                description="Validates custom field transformations work correctly",
-                scope=ValidationScope.TEST_CASE,
-                phase=ValidationPhase.TRANSFORMATION,
-                level=ValidationLevel.WARNING,
-            )
+            name="Custom Field Transformation",
+            description="Validates custom field transformations work correctly",
+            scope=ValidationScope.TEST_CASE,
+            phase=ValidationPhase.TRANSFORMATION,
+            level=ValidationLevel.WARNING,
+        )
     )
 
     rules.append(
         CustomFieldTransformationRule(
             id="custom_field_transformation_cycle",
-                name="Test Cycle Custom Field Transformation",
-                description="Validates test cycle custom field transformations work correctly",
-                scope=ValidationScope.TEST_CYCLE,
-                phase=ValidationPhase.TRANSFORMATION,
-                level=ValidationLevel.WARNING,
-            )
+            name="Test Cycle Custom Field Transformation",
+            description="Validates test cycle custom field transformations work correctly",
+            scope=ValidationScope.TEST_CYCLE,
+            phase=ValidationPhase.TRANSFORMATION,
+            level=ValidationLevel.WARNING,
+        )
     )
 
     rules.append(
         CustomFieldTransformationRule(
             id="custom_field_transformation_execution",
-                name="Test Execution Custom Field Transformation",
-                description="Validates test execution custom field transformations work correctly",
-                scope=ValidationScope.TEST_EXECUTION,
-                phase=ValidationPhase.TRANSFORMATION,
-                level=ValidationLevel.WARNING,
-            )
+            name="Test Execution Custom Field Transformation",
+            description="Validates test execution custom field transformations work correctly",
+            scope=ValidationScope.TEST_EXECUTION,
+            phase=ValidationPhase.TRANSFORMATION,
+            level=ValidationLevel.WARNING,
+        )
     )
 
     # Referential integrity rules
     rules.append(
         ReferentialIntegrityRule(
             id="testcase_folder_reference",
-                name="Test Case Folder Reference",
-                description="Validates test case folder references can be mapped",
-                scope=ValidationScope.TEST_CASE,
-                reference_field="folderId",
-                mapping_type="folder_to_module",
-                level=ValidationLevel.ERROR,
-            )
+            name="Test Case Folder Reference",
+            description="Validates test case folder references can be mapped",
+            scope=ValidationScope.TEST_CASE,
+            reference_field="folderId",
+            mapping_type="folder_to_module",
+            level=ValidationLevel.ERROR,
+        )
     )
 
     rules.append(
         ReferentialIntegrityRule(
             id="execution_testcase_reference",
-                name="Test Execution Test Case Reference",
-                description="Validates test execution test case references can be mapped",
-                scope=ValidationScope.TEST_EXECUTION,
-                reference_field="testCaseId",
-                mapping_type="testcase_to_testcase",
-                level=ValidationLevel.ERROR,
-            )
+            name="Test Execution Test Case Reference",
+            description="Validates test execution test case references can be mapped",
+            scope=ValidationScope.TEST_EXECUTION,
+            reference_field="testCaseId",
+            mapping_type="testcase_to_testcase",
+            level=ValidationLevel.ERROR,
+        )
     )
 
     rules.append(
         ReferentialIntegrityRule(
             id="execution_cycle_reference",
-                name="Test Execution Cycle Reference",
-                description="Validates test execution cycle references can be mapped",
-                scope=ValidationScope.TEST_EXECUTION,
-                reference_field="cycleId",
-                mapping_type="cycle_to_cycle",
-                level=ValidationLevel.ERROR,
-            )
+            name="Test Execution Cycle Reference",
+            description="Validates test execution cycle references can be mapped",
+            scope=ValidationScope.TEST_EXECUTION,
+            reference_field="cycleId",
+            mapping_type="cycle_to_cycle",
+            level=ValidationLevel.ERROR,
+        )
     )
 
     # Data integrity rules
     rules.append(
         DataIntegrityRule(
             id="testcase_data_integrity",
-                name="Test Case Data Integrity",
-                description="Validates test case data is preserved during transformation",
-                scope=ValidationScope.TEST_CASE,
-                fields_to_compare=[
+            name="Test Case Data Integrity",
+            description="Validates test case data is preserved during transformation",
+            scope=ValidationScope.TEST_CASE,
+            fields_to_compare=[
                 ("name", "name"),
-                    ("description", "description"),
-                    ("priority", "priority"),
-                    ("status", "status"),
-                ],
-                level=ValidationLevel.ERROR,
-            )
+                ("description", "description"),
+                ("priority", "priority"),
+                ("status", "status"),
+            ],
+            level=ValidationLevel.ERROR,
+        )
     )
 
     rules.append(
         DataIntegrityRule(
             id="testcycle_data_integrity",
-                name="Test Cycle Data Integrity",
-                description="Validates test cycle data is preserved during transformation",
-                scope=ValidationScope.TEST_CYCLE,
-                fields_to_compare=[
+            name="Test Cycle Data Integrity",
+            description="Validates test cycle data is preserved during transformation",
+            scope=ValidationScope.TEST_CYCLE,
+            fields_to_compare=[
                 ("name", "name"),
-                    ("description", "description"),
-                ],
-                level=ValidationLevel.ERROR,
-            )
+                ("description", "description"),
+            ],
+            level=ValidationLevel.ERROR,
+        )
     )
 
     # Add data comparison rules

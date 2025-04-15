@@ -26,8 +26,8 @@ from typing import Any, Callable, Dict, Generic, List, Optional, Set, Tuple, Typ
 logger = logging.getLogger("ztoq.work_queue")
 
 # Type variables for generic functions
-T = TypeVar('T')  # Input type
-R = TypeVar('R')  # Result type
+T = TypeVar("T")  # Input type
+R = TypeVar("R")  # Result type
 
 
 class WorkerType(str, Enum):
@@ -123,10 +123,7 @@ class WorkItem(Generic[T, R]):
         Returns:
             True if the work item can be retried, False otherwise
         """
-        return (
-            self.status == WorkStatus.FAILED and
-            self.attempt < self.max_attempts
-        )
+        return self.status == WorkStatus.FAILED and self.attempt < self.max_attempts
 
     @property
     def processing_time(self) -> Optional[float]:
@@ -656,21 +653,25 @@ class WorkQueue(Generic[T, R]):
         Returns:
             Dictionary with queue statistics
         """
-        completed_items = [item for item in self.work_items.values()
-                          if item.status == WorkStatus.COMPLETED]
-        failed_items = [item for item in self.work_items.values()
-                       if item.status == WorkStatus.FAILED]
+        completed_items = [
+            item for item in self.work_items.values() if item.status == WorkStatus.COMPLETED
+        ]
+        failed_items = [
+            item for item in self.work_items.values() if item.status == WorkStatus.FAILED
+        ]
 
         # Calculate average processing times
-        processing_times = [item.processing_time for item in completed_items
-                           if item.processing_time is not None]
+        processing_times = [
+            item.processing_time for item in completed_items if item.processing_time is not None
+        ]
         avg_processing_time = (
             sum(processing_times) / len(processing_times) if processing_times else 0
         )
 
         # Calculate average waiting times
-        waiting_times = [item.waiting_time for item in completed_items
-                        if item.waiting_time is not None]
+        waiting_times = [
+            item.waiting_time for item in completed_items if item.waiting_time is not None
+        ]
         avg_waiting_time = sum(waiting_times) / len(waiting_times) if waiting_times else 0
 
         return {
@@ -678,8 +679,7 @@ class WorkQueue(Generic[T, R]):
             "max_workers": self.max_workers,
             "is_running": self.is_running,
             "queue_size": (
-                self.queue.qsize() if self.worker_type == WorkerType.ASYNCIO
-                else len(self.queue)
+                self.queue.qsize() if self.worker_type == WorkerType.ASYNCIO else len(self.queue)
             ),
             "pending_count": len(self.pending_work_ids),
             "running_count": len(self.running_work_ids),
@@ -690,7 +690,8 @@ class WorkQueue(Generic[T, R]):
             "avg_waiting_time": avg_waiting_time,
             "success_rate": (
                 len(completed_items) / (len(completed_items) + len(failed_items))
-                if completed_items or failed_items else 0
+                if completed_items or failed_items
+                else 0
             ),
         }
 
@@ -736,8 +737,8 @@ class WorkQueue(Generic[T, R]):
                     if work_item.dependencies:
                         # Check if all dependencies are completed
                         deps_completed = all(
-                            self.work_items.get(dep_id) is not None and
-                            self.work_items[dep_id].status == WorkStatus.COMPLETED
+                            self.work_items.get(dep_id) is not None
+                            and self.work_items[dep_id].status == WorkStatus.COMPLETED
                             for dep_id in work_item.dependencies
                         )
 
@@ -836,9 +837,7 @@ class WorkQueue(Generic[T, R]):
                 # Complete finished futures
                 done_futures = [fut for fut in futures.values() if fut.done()]
                 for future in done_futures:
-                    work_id = next(
-                        wid for wid, fut in futures.items() if fut is future
-                    )
+                    work_id = next(wid for wid, fut in futures.items() if fut is future)
                     self._handle_completed_future(work_id, future)
                     del futures[work_id]
 
@@ -871,8 +870,8 @@ class WorkQueue(Generic[T, R]):
                 if work_item.dependencies:
                     # Check if all dependencies are completed
                     deps_completed = all(
-                        self.work_items.get(dep_id) is not None and
-                        self.work_items[dep_id].status == WorkStatus.COMPLETED
+                        self.work_items.get(dep_id) is not None
+                        and self.work_items[dep_id].status == WorkStatus.COMPLETED
                         for dep_id in work_item.dependencies
                     )
 
@@ -983,6 +982,7 @@ class WorkQueue(Generic[T, R]):
 
 
 # Convenience functions
+
 
 async def run_in_thread_pool(
     func: Callable[[T], R],

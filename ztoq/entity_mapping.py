@@ -47,6 +47,7 @@ logger = logging.getLogger("ztoq.entity_mapping")
 
 class EntityType(str, Enum):
     """Enum defining entity types that can be mapped."""
+
     PROJECT = "project"
     FOLDER = "folder"
     TEST_CASE = "test_case"
@@ -59,6 +60,7 @@ class EntityType(str, Enum):
 
 class ValidationAction(str, Enum):
     """Enum defining actions to take when validation fails."""
+
     ERROR = "error"  # Raise an error and halt
     WARNING = "warning"  # Log a warning but continue
     TRANSFORM = "transform"  # Try to transform data to valid format
@@ -73,6 +75,7 @@ class FieldMapping(BaseModel):
     This model specifies how a field should be transformed, validated,
     and what to do when validation fails.
     """
+
     source_field: str
     target_field: str
     required: bool = False
@@ -103,7 +106,10 @@ class FieldMapping(BaseModel):
                 error_message = f"Required field '{self.source_field}' is missing"
 
                 # Apply default value if validation action is DEFAULT
-                if self.validation_action == ValidationAction.DEFAULT and self.default_value is not None:
+                if (
+                    self.validation_action == ValidationAction.DEFAULT
+                    and self.default_value is not None
+                ):
                     transformed_value = self.default_value
                     is_valid = True
                     error_message = None
@@ -170,6 +176,7 @@ class EntityMapping(BaseModel):
     This model specifies how an entire entity should be mapped, including
     field-level mappings, custom field handling, and relationship preservation.
     """
+
     source_type: EntityType
     target_type: str  # The target qTest entity type
     field_mappings: List[FieldMapping]
@@ -199,10 +206,16 @@ class EntityMapping(BaseModel):
         # Apply field mappings
         for mapping in self.field_mappings:
             source_value = source_entity.get(mapping.source_field)
-            is_valid, transformed_value, error_message = mapping.validate_and_transform(source_value)
+            is_valid, transformed_value, error_message = mapping.validate_and_transform(
+                source_value
+            )
 
             # If field is not valid and action is ERROR, raise exception immediately
-            if not is_valid and error_message and mapping.validation_action == ValidationAction.ERROR:
+            if (
+                not is_valid
+                and error_message
+                and mapping.validation_action == ValidationAction.ERROR
+            ):
                 raise ValueError(error_message)
 
             # Add field to target entity if valid or if we're using a default value
@@ -226,7 +239,9 @@ class EntityMapping(BaseModel):
                 target_entity["properties"] = field_mapper.map_testrun_fields(source_entity)
             else:
                 # Generic custom field mapping
-                target_entity["properties"] = field_mapper.map_custom_fields(source_entity.get("customFields", []))
+                target_entity["properties"] = field_mapper.map_custom_fields(
+                    source_entity.get("customFields", [])
+                )
 
         return target_entity
 
@@ -396,8 +411,16 @@ class MappingRegistry:
                     source_field="priority",
                     target_field="priority_id",
                     transform_function=lambda p: {
-                        "highest": 1, "high": 2, "medium": 3, "low": 4, "lowest": 5,
-                        "critical": 1, "blocker": 1, "major": 2, "minor": 4, "trivial": 5
+                        "highest": 1,
+                        "high": 2,
+                        "medium": 3,
+                        "low": 4,
+                        "lowest": 5,
+                        "critical": 1,
+                        "blocker": 1,
+                        "major": 2,
+                        "minor": 4,
+                        "trivial": 5,
                     }.get(str(p).lower() if p else "", 3),
                     description="Test case priority (mapped to qTest priority ID)",
                 ),
@@ -488,17 +511,26 @@ class MappingRegistry:
 
     def _create_test_execution_mapping(self) -> EntityMapping:
         """Create mapping for TestExecution entity."""
+
         def _map_status(status: str) -> str:
             """Map Zephyr execution status to qTest status."""
             if not status:
                 return "NOT_RUN"
 
             status_map = {
-                "pass": "PASSED", "fail": "FAILED", "wip": "IN_PROGRESS",
-                "blocked": "BLOCKED", "unexecuted": "NOT_RUN",
-                "not_executed": "NOT_RUN", "passed": "PASSED", "failed": "FAILED",
-                "in_progress": "IN_PROGRESS", "executing": "IN_PROGRESS",
-                "aborted": "BLOCKED", "canceled": "NOT_RUN", "pending": "NOT_RUN"
+                "pass": "PASSED",
+                "fail": "FAILED",
+                "wip": "IN_PROGRESS",
+                "blocked": "BLOCKED",
+                "unexecuted": "NOT_RUN",
+                "not_executed": "NOT_RUN",
+                "passed": "PASSED",
+                "failed": "FAILED",
+                "in_progress": "IN_PROGRESS",
+                "executing": "IN_PROGRESS",
+                "aborted": "BLOCKED",
+                "canceled": "NOT_RUN",
+                "pending": "NOT_RUN",
             }
             return status_map.get(str(status).lower(), "NOT_RUN")
 
@@ -562,10 +594,17 @@ class MappingRegistry:
                     source_field="status",
                     target_field="status",
                     transform_function=lambda s: {
-                        "pass": "PASSED", "fail": "FAILED", "wip": "IN_PROGRESS",
-                        "blocked": "BLOCKED", "unexecuted": "NOT_RUN",
-                        "not_executed": "NOT_RUN", "passed": "PASSED", "failed": "FAILED"
-                    }.get(str(s).lower(), "NOT_RUN") if s else "NOT_RUN",
+                        "pass": "PASSED",
+                        "fail": "FAILED",
+                        "wip": "IN_PROGRESS",
+                        "blocked": "BLOCKED",
+                        "unexecuted": "NOT_RUN",
+                        "not_executed": "NOT_RUN",
+                        "passed": "PASSED",
+                        "failed": "FAILED",
+                    }.get(str(s).lower(), "NOT_RUN")
+                    if s
+                    else "NOT_RUN",
                     description="Step result status",
                 ),
                 FieldMapping(

@@ -14,8 +14,8 @@ from ztoq.qtest_models import QTestConfig
 from ztoq.validation import ValidationLevel, ValidationScope, ValidationPhase
 from ztoq.validation_integration import (
     EnhancedMigration,
-        MigrationValidationDecorators,
-        get_enhanced_migration,
+    MigrationValidationDecorators,
+    get_enhanced_migration,
 )
 
 
@@ -35,15 +35,15 @@ class TestValidationIntegration(unittest.TestCase):
         # Create test configs
         self.zephyr_config = ZephyrConfig(
             api_url="https://zephyr-api.example.com",
-                api_key="test-api-key",
-                project_key="TEST",
-            )
+            api_key="test-api-key",
+            project_key="TEST",
+        )
 
         self.qtest_config = QTestConfig(
             api_url="https://qtest-api.example.com",
-                api_key="test-api-key",
-                project_id="12345",
-            )
+            api_key="test-api-key",
+            project_id="12345",
+        )
 
     def tearDown(self):
         """Clean up after tests."""
@@ -70,10 +70,10 @@ class TestValidationIntegration(unittest.TestCase):
         # Use the factory function to create a migration
         migration = create_migration(
             zephyr_config=self.zephyr_config,
-                qtest_config=self.qtest_config,
-                database_manager=self.db_manager,
-                enable_validation=True,
-            )
+            qtest_config=self.qtest_config,
+            database_manager=self.db_manager,
+            enable_validation=True,
+        )
 
         # Assert that it's an enhanced migration
         self.assertIsInstance(migration, EnhancedMigration)
@@ -88,10 +88,10 @@ class TestValidationIntegration(unittest.TestCase):
         # Use the factory function to create a migration with validation disabled
         migration = create_migration(
             zephyr_config=self.zephyr_config,
-                qtest_config=self.qtest_config,
-                database_manager=self.db_manager,
-                enable_validation=False,
-            )
+            qtest_config=self.qtest_config,
+            database_manager=self.db_manager,
+            enable_validation=False,
+        )
 
         # Assert that it's not an enhanced migration
         self.assertNotIsInstance(migration, EnhancedMigration)

@@ -12,13 +12,13 @@ from pathlib import Path
 from typing import Any, TypeVar
 from ztoq.models import (
     Environment,
-        Folder,
-        Priority,
-        Status,
-        TestCase,
-        TestCycleInfo,
-        TestExecution,
-        TestPlan,
+    Folder,
+    Priority,
+    Status,
+    TestCase,
+    TestCycleInfo,
+    TestExecution,
+    TestPlan,
 )
 
 logger = logging.getLogger(__name__)
@@ -290,11 +290,11 @@ class SQLiteStorage:
 
     def save_project(
         self,
-            project_key: str,
-            project_name: str,
-            project_id: str,
-            description: str | None = None,
-        ):
+        project_key: str,
+        project_name: str,
+        project_id: str,
+        description: str | None = None,
+    ):
         """Save project information.
 
         Args:
@@ -309,8 +309,8 @@ class SQLiteStorage:
             )
         self.cursor.execute(
             "INSERT OR REPLACE INTO projects (id, key, name, description) VALUES (?, ?, ?, ?)",
-                (project_id, project_key, project_name, description),
-            )
+            (project_id, project_key, project_name, description),
+        )
 
     def save_folders(self, folders: list[Folder], project_key: str):
         """Save folders for a project.
@@ -330,8 +330,8 @@ class SQLiteStorage:
                 (id, name, folder_type, parent_id, project_key)
                 VALUES (?, ?, ?, ?, ?)
                 """,
-                    (folder.id, folder.name, folder.folder_type, folder.parent_id, project_key),
-                )
+                (folder.id, folder.name, folder.folder_type, folder.parent_id, project_key),
+            )
 
     def save_statuses(self, statuses: list[Status], project_key: str):
         """Save statuses for a project.
@@ -351,15 +351,15 @@ class SQLiteStorage:
                 (id, name, description, color, type, project_key)
                 VALUES (?, ?, ?, ?, ?, ?)
                 """,
-                    (
+                (
                     status.id,
-                        status.name,
-                        status.description,
-                        status.color,
-                        status.type,
-                        project_key,
-                    ),
-                )
+                    status.name,
+                    status.description,
+                    status.color,
+                    status.type,
+                    project_key,
+                ),
+            )
 
     def save_priorities(self, priorities: list[Priority], project_key: str):
         """Save priorities for a project.
@@ -379,15 +379,15 @@ class SQLiteStorage:
                 (id, name, description, color, rank, project_key)
                 VALUES (?, ?, ?, ?, ?, ?)
                 """,
-                    (
+                (
                     priority.id,
-                        priority.name,
-                        priority.description,
-                        priority.color,
-                        priority.rank,
-                        project_key,
-                    ),
-                )
+                    priority.name,
+                    priority.description,
+                    priority.color,
+                    priority.rank,
+                    project_key,
+                ),
+            )
 
     def save_environments(self, environments: list[Environment], project_key: str):
         """Save environments for a project.
@@ -407,8 +407,8 @@ class SQLiteStorage:
                 (id, name, description, project_key)
                 VALUES (?, ?, ?, ?)
                 """,
-                    (env.id, env.name, env.description, project_key),
-                )
+                (env.id, env.name, env.description, project_key),
+            )
 
     def save_test_case(self, test_case: TestCase, project_key: str):
         """Save a test case.
@@ -479,37 +479,37 @@ class SQLiteStorage:
                         ?, ?, ?, ?, ?, ?, ?
             )
             """,
-                (
+            (
                 test_case.id,
-                    test_case.key,
-                    test_case.name,
-                    test_case.objective,
-                    test_case.precondition,
-                    test_case.description,
-                    test_case.status,
-                    priority_id,
-                    test_case.priority_name,
-                    test_case.folder,
-                    test_case.folder_name,
-                    test_case.owner,
-                    test_case.owner_name,
-                    test_case.component,
-                    test_case.component_name,
-                    self._serialize_value(test_case.created_on),
-                    test_case.created_by,
-                    self._serialize_value(test_case.updated_on),
-                    test_case.updated_by,
-                    test_case.version,
-                    test_case.estimated_time,
-                    labels_json,
-                    steps_json,
-                    custom_fields_json,
-                    links_json,
-                    scripts_json,
-                    versions_json,
-                    project_key,
-                ),
-            )
+                test_case.key,
+                test_case.name,
+                test_case.objective,
+                test_case.precondition,
+                test_case.description,
+                test_case.status,
+                priority_id,
+                test_case.priority_name,
+                test_case.folder,
+                test_case.folder_name,
+                test_case.owner,
+                test_case.owner_name,
+                test_case.component,
+                test_case.component_name,
+                self._serialize_value(test_case.created_on),
+                test_case.created_by,
+                self._serialize_value(test_case.updated_on),
+                test_case.updated_by,
+                test_case.version,
+                test_case.estimated_time,
+                labels_json,
+                steps_json,
+                custom_fields_json,
+                links_json,
+                scripts_json,
+                versions_json,
+                project_key,
+            ),
+        )
 
     def save_test_cycle(self, test_cycle: TestCycleInfo):
         """Save a test cycle.
@@ -535,26 +535,26 @@ class SQLiteStorage:
                 ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
             )
             """,
-                (
+            (
                 test_cycle.id,
-                    test_cycle.key,
-                    test_cycle.name,
-                    test_cycle.description,
-                    test_cycle.status,
-                    test_cycle.status_name,
-                    test_cycle.folder,
-                    test_cycle.folder_name,
-                    test_cycle.project_key,
-                    test_cycle.owner,
-                    test_cycle.owner_name,
-                    self._serialize_value(test_cycle.created_on),
-                    test_cycle.created_by,
-                    self._serialize_value(test_cycle.updated_on),
-                    test_cycle.updated_by,
-                    custom_fields_json,
-                    links_json,
-                ),
-            )
+                test_cycle.key,
+                test_cycle.name,
+                test_cycle.description,
+                test_cycle.status,
+                test_cycle.status_name,
+                test_cycle.folder,
+                test_cycle.folder_name,
+                test_cycle.project_key,
+                test_cycle.owner,
+                test_cycle.owner_name,
+                self._serialize_value(test_cycle.created_on),
+                test_cycle.created_by,
+                self._serialize_value(test_cycle.updated_on),
+                test_cycle.updated_by,
+                custom_fields_json,
+                links_json,
+            ),
+        )
 
     def save_test_plan(self, test_plan: TestPlan):
         """Save a test plan.
@@ -580,26 +580,26 @@ class SQLiteStorage:
                 ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
             )
             """,
-                (
+            (
                 test_plan.id,
-                    test_plan.key,
-                    test_plan.name,
-                    test_plan.description,
-                    test_plan.status,
-                    test_plan.status_name,
-                    test_plan.folder,
-                    test_plan.folder_name,
-                    test_plan.project_key,
-                    test_plan.owner,
-                    test_plan.owner_name,
-                    self._serialize_value(test_plan.created_on),
-                    test_plan.created_by,
-                    self._serialize_value(test_plan.updated_on),
-                    test_plan.updated_by,
-                    custom_fields_json,
-                    links_json,
-                ),
-            )
+                test_plan.key,
+                test_plan.name,
+                test_plan.description,
+                test_plan.status,
+                test_plan.status_name,
+                test_plan.folder,
+                test_plan.folder_name,
+                test_plan.project_key,
+                test_plan.owner,
+                test_plan.owner_name,
+                self._serialize_value(test_plan.created_on),
+                test_plan.created_by,
+                self._serialize_value(test_plan.updated_on),
+                test_plan.updated_by,
+                custom_fields_json,
+                links_json,
+            ),
+        )
 
     def save_test_execution(self, test_execution: TestExecution, project_key: str):
         """Save a test execution.
@@ -630,30 +630,30 @@ class SQLiteStorage:
                 ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
             )
             """,
-                (
+            (
                 test_execution.id,
-                    test_execution.test_case_key,
-                    test_execution.cycle_id,
-                    test_execution.cycle_name,
-                    test_execution.status,
-                    test_execution.status_name,
-                    test_execution.environment,
-                    test_execution.environment_name,
-                    test_execution.executed_by,
-                    test_execution.executed_by_name,
-                    self._serialize_value(test_execution.executed_on),
-                    self._serialize_value(test_execution.created_on),
-                    test_execution.created_by,
-                    self._serialize_value(test_execution.updated_on),
-                    test_execution.updated_by,
-                    test_execution.actual_time,
-                    test_execution.comment,
-                    steps_json,
-                    custom_fields_json,
-                    links_json,
-                    project_key,
-                ),
-            )
+                test_execution.test_case_key,
+                test_execution.cycle_id,
+                test_execution.cycle_name,
+                test_execution.status,
+                test_execution.status_name,
+                test_execution.environment,
+                test_execution.environment_name,
+                test_execution.executed_by,
+                test_execution.executed_by_name,
+                self._serialize_value(test_execution.executed_on),
+                self._serialize_value(test_execution.created_on),
+                test_execution.created_by,
+                self._serialize_value(test_execution.updated_on),
+                test_execution.updated_by,
+                test_execution.actual_time,
+                test_execution.comment,
+                steps_json,
+                custom_fields_json,
+                links_json,
+                project_key,
+            ),
+        )
 
     def initialize_database(self):
         """Initialize the database by creating all required tables."""
@@ -701,11 +701,11 @@ class JSONStorage:
 
     def save_project(
         self,
-            project_key: str,
-            project_name: str,
-            project_id: str,
-            description: str | None = None,
-        ):
+        project_key: str,
+        project_name: str,
+        project_id: str,
+        description: str | None = None,
+    ):
         """Save project information.
 
         Args:
@@ -716,10 +716,10 @@ class JSONStorage:
         """
         project_data = {
             "id": project_id,
-                "key": project_key,
-                "name": project_name,
-                "description": description,
-            }
+            "key": project_key,
+            "name": project_name,
+            "description": description,
+        }
 
         with open(self.output_dir / "project.json", "w") as f:
             json.dump(project_data, f, indent=2)

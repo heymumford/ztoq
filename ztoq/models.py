@@ -13,6 +13,7 @@ from pydantic import BaseModel, Field, field_validator
 import os
 from typing import ClassVar
 
+
 class ZephyrConfig(BaseModel):
     """
     Configuration for Zephyr Scale API.
@@ -44,7 +45,7 @@ class ZephyrConfig(BaseModel):
         return cls(
             base_url=base_url,
             api_token=os.environ.get(cls.ENV_TOKEN_NAME, ""),
-            project_key=project_key
+            project_key=project_key,
         )
 
 
@@ -103,9 +104,7 @@ class CustomField(BaseModel):
         # Validate based on field type
         if field_type == CustomFieldType.CHECKBOX and not isinstance(v, bool):
             raise ValueError(f"Field type {field_type} requires a boolean value")
-        elif field_type == CustomFieldType.NUMERIC and not (
-            isinstance(v, int | float)
-        ):
+        elif field_type == CustomFieldType.NUMERIC and not (isinstance(v, int | float)):
             raise ValueError(f"Field type {field_type} requires a numeric value")
         elif field_type == CustomFieldType.TABLE and not isinstance(v, list):
             raise ValueError(f"Field type {field_type} requires a list of table rows")
@@ -134,12 +133,12 @@ class Attachment(BaseModel):
         encoded = base64.b64encode(binary_data).decode("utf-8")
         return cls(
             filename=filename,
-                contentType=content_type,
-                size=len(binary_data),
-                content=encoded,
-                createdOn=datetime.now(),
-                createdBy="system",
-            )
+            contentType=content_type,
+            size=len(binary_data),
+            content=encoded,
+            createdOn=datetime.now(),
+            createdBy="system",
+        )
 
 
 class CaseStep(BaseModel):

@@ -92,7 +92,7 @@ def zephyr_client_config() -> ZephyrConfig:
     return ZephyrConfig(
         base_url="https://api.zephyrscale.example.com/v2",
         api_token="mock-token",
-        project_key="DEMO"
+        project_key="DEMO",
     )
 
 
@@ -108,7 +108,7 @@ def qtest_client_config() -> QTestConfig:
         base_url="https://api.qtest.example.com",
         username="test-user",
         password="test-password",
-        project_id=1
+        project_id=1,
     )
 
 
@@ -130,13 +130,7 @@ def mock_zephyr_client(mock_zephyr_api, zephyr_client_config) -> ZephyrClient:
     """
     # Add standard authentication response
     mock_zephyr_api.add_response(
-        "GET",
-        "/projects",
-        {
-            "values": [
-                {"id": "1001", "key": "DEMO", "name": "Demo Project"}
-            ]
-        }
+        "GET", "/projects", {"values": [{"id": "1001", "key": "DEMO", "name": "Demo Project"}]}
     )
 
     return ZephyrClient(zephyr_client_config)
@@ -162,11 +156,7 @@ def mock_qtest_client(mock_qtest_api, qtest_client_config) -> QTestClient:
     mock_qtest_api.add_response(
         "POST",
         "/oauth/token",
-        {
-            "access_token": "mock-qtest-token",
-            "token_type": "bearer",
-            "expires_in": 3600
-        }
+        {"access_token": "mock-qtest-token", "token_type": "bearer", "expires_in": 3600},
     )
 
     # Add standard project response
@@ -177,17 +167,17 @@ def mock_qtest_client(mock_qtest_api, qtest_client_config) -> QTestClient:
             "total": 1,
             "page": 1,
             "pageSize": 100,
-            "items": [
-                {"id": 1, "name": "qTest Demo Project"}
-            ]
-        }
+            "items": [{"id": 1, "name": "qTest Demo Project"}],
+        },
     )
 
     return QTestClient(qtest_client_config)
 
 
 @pytest.fixture
-def mock_both_clients(mock_both_apis, zephyr_client_config, qtest_client_config) -> Tuple[ZephyrClient, QTestClient]:
+def mock_both_clients(
+    mock_both_apis, zephyr_client_config, qtest_client_config
+) -> Tuple[ZephyrClient, QTestClient]:
     """
     Fixture that provides both clients with mocked APIs.
 
@@ -206,24 +196,14 @@ def mock_both_clients(mock_both_apis, zephyr_client_config, qtest_client_config)
 
     # Add standard Zephyr responses
     zephyr_harness.add_response(
-        "GET",
-        "/projects",
-        {
-            "values": [
-                {"id": "1001", "key": "DEMO", "name": "Demo Project"}
-            ]
-        }
+        "GET", "/projects", {"values": [{"id": "1001", "key": "DEMO", "name": "Demo Project"}]}
     )
 
     # Add standard qTest responses
     qtest_harness.add_response(
         "POST",
         "/oauth/token",
-        {
-            "access_token": "mock-qtest-token",
-            "token_type": "bearer",
-            "expires_in": 3600
-        }
+        {"access_token": "mock-qtest-token", "token_type": "bearer", "expires_in": 3600},
     )
 
     qtest_harness.add_response(
@@ -233,10 +213,8 @@ def mock_both_clients(mock_both_apis, zephyr_client_config, qtest_client_config)
             "total": 1,
             "page": 1,
             "pageSize": 100,
-            "items": [
-                {"id": 1, "name": "qTest Demo Project"}
-            ]
-        }
+            "items": [{"id": 1, "name": "qTest Demo Project"}],
+        },
     )
 
     return ZephyrClient(zephyr_client_config), QTestClient(qtest_client_config)

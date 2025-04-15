@@ -20,19 +20,17 @@ from tests.fixtures import (
     # Core fixtures
     mock_env_vars,
     temp_dir,
-
     # System test fixtures
     skip_if_no_docker,
     docker_compose_env,
     cli_runner,
     run_cli_command,
-
     # Factories for generating test data
     ProjectFactory,
     TestCaseFactory,
     TestExecutionFactory,
     QTestProjectFactory,
-    QTestTestCaseFactory
+    QTestTestCaseFactory,
 )
 
 
@@ -44,7 +42,8 @@ def test_cli_environment(cli_runner):
 
     # Create a test script in the input directory
     script_path = cli_runner["input_dir"] / "test_script.py"
-    script_path.write_text("""
+    script_path.write_text(
+        """
 import os
 import sys
 
@@ -62,7 +61,8 @@ def main():
 
 if __name__ == "__main__":
     sys.exit(main())
-    """)
+    """
+    )
 
     # Make the script executable
     script_path.chmod(0o755)
@@ -126,7 +126,7 @@ def test_file_operations_integration(temp_dir):
     test_files = {
         "data/file1.txt": "Content of file 1",
         "data/file2.txt": "Content of file 2",
-        "data/file3.txt": "Content of file 3"
+        "data/file3.txt": "Content of file 3",
     }
 
     for file_path, content in test_files.items():
@@ -135,7 +135,8 @@ def test_file_operations_integration(temp_dir):
 
     # Create a script that processes the files
     process_script = temp_dir / "process_files.py"
-    process_script.write_text("""
+    process_script.write_text(
+        """
 import os
 import sys
 from pathlib import Path
@@ -176,15 +177,17 @@ if __name__ == "__main__":
     count = process_files(data_dir, reports_dir)
     print(f"Processed {count} files")
     sys.exit(0)
-    """)
+    """
+    )
 
     # Run the script using subprocess
     import subprocess
+
     process = subprocess.run(
         ["python", str(process_script), str(data_dir), str(reports_dir)],
         capture_output=True,
         text=True,
-        check=False
+        check=False,
     )
 
     # Verify the script executed successfully
@@ -229,17 +232,13 @@ def test_factories_with_json_files(temp_dir):
     qtest_test_cases = []
     for project in qtest_projects:
         # Create 2 test cases per project
-        qtest_test_cases.extend(
-            QTestTestCaseFactory.create_batch(2, project_id=project.id)
-        )
+        qtest_test_cases.extend(QTestTestCaseFactory.create_batch(2, project_id=project.id))
 
     # Create test executions
     zephyr_executions = []
     for test_case in zephyr_test_cases:
         # Create an execution for each test case
-        zephyr_executions.append(
-            TestExecutionFactory.create(test_case_key=test_case.key)
-        )
+        zephyr_executions.append(TestExecutionFactory.create(test_case_key=test_case.key))
 
     # Save test data to JSON files
     with open(data_dir / "zephyr_projects.json", "w") as f:
@@ -283,6 +282,6 @@ def test_factories_with_json_files(temp_dir):
         assert len(loaded_executions) == 6  # 1 execution for each test case
 
         # Verify all executions have a test case key
-        test_case_keys = [tc['key'] for tc in loaded_test_cases]
+        test_case_keys = [tc["key"] for tc in loaded_test_cases]
         for execution in loaded_executions:
-            assert execution['test_case_key'] in test_case_keys
+            assert execution["test_case_key"] in test_case_keys

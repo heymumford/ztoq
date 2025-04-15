@@ -10,9 +10,8 @@ import pytest
 from ztoq.models import Case, TestCase  # Using compatibility alias
 from ztoq.storage import JSONStorage, SQLiteStorage
 
+
 @pytest.mark.unit()
-
-
 class TestSQLiteStorage:
     @pytest.fixture()
     def db_path(self, tmp_path):
@@ -48,15 +47,15 @@ class TestSQLiteStorage:
 
         expected_tables = [
             "projects",
-                "folders",
-                "statuses",
-                "priorities",
-                "environments",
-                "test_cases",
-                "test_cycles",
-                "test_plans",
-                "test_executions",
-            ]
+            "folders",
+            "statuses",
+            "priorities",
+            "environments",
+            "test_cases",
+            "test_cycles",
+            "test_plans",
+            "test_executions",
+        ]
 
         for table in expected_tables:
             assert table in table_names
@@ -82,12 +81,12 @@ class TestSQLiteStorage:
         # Create a test case
         test_case = Case(
             id="tc1",
-                key="TEST-TC-1",
-                name="Test Case 1",
-                status="Draft",
-                labels=["regression", "smoke"],
-                created_on=datetime.now(),
-            )
+            key="TEST-TC-1",
+            name="Test Case 1",
+            status="Draft",
+            labels=["regression", "smoke"],
+            created_on=datetime.now(),
+        )
 
         # Save it
         storage.save_test_case(test_case, "TEST")
@@ -127,8 +126,6 @@ class TestSQLiteStorage:
 
 
 @pytest.mark.unit()
-
-
 class TestJSONStorage:
     @pytest.fixture()
     def output_dir(self, tmp_path):
@@ -171,17 +168,17 @@ class TestJSONStorage:
         test_cases = [
             TestCase(
                 id="tc1",
-                    key="TEST-TC-1",
-                    name="Test Case 1",
-                    status="Draft",
-                ),
-                TestCase(
+                key="TEST-TC-1",
+                name="Test Case 1",
+                status="Draft",
+            ),
+            TestCase(
                 id="tc2",
-                    key="TEST-TC-2",
-                    name="Test Case 2",
-                    status="Ready",
-                ),
-            ]
+                key="TEST-TC-2",
+                name="Test Case 2",
+                status="Ready",
+            ),
+        ]
 
         storage.save_test_cases(test_cases, "TEST")
 
@@ -202,19 +199,19 @@ class TestJSONStorage:
         # Save initial test case
         test_case1 = TestCase(
             id="tc1",
-                key="TEST-TC-1",
-                name="Test Case 1",
-                status="Draft",
-            )
+            key="TEST-TC-1",
+            name="Test Case 1",
+            status="Draft",
+        )
         storage.save_test_case(test_case1, "TEST")
 
         # Save another test case
         test_case2 = TestCase(
             id="tc2",
-                key="TEST-TC-2",
-                name="Test Case 2",
-                status="Ready",
-            )
+            key="TEST-TC-2",
+            name="Test Case 2",
+            status="Ready",
+        )
         storage.save_test_case(test_case2, "TEST")
 
         # Check the file has both test cases
@@ -231,10 +228,10 @@ class TestJSONStorage:
         # Test updating an existing test case
         updated_case = TestCase(
             id="tc1",
-                key="TEST-TC-1",
-                name="Updated Test Case",
-                status="Ready",
-            )
+            key="TEST-TC-1",
+            name="Updated Test Case",
+            status="Ready",
+        )
         storage.save_test_case(updated_case, "TEST")
 
         with open(test_cases_file) as f:
@@ -250,10 +247,10 @@ class TestJSONStorage:
         # Pydantic model
         test_case = TestCase(
             id="tc1",
-                key="TEST-TC-1",
-                name="Test Case 1",
-                status="Draft",
-            )
+            key="TEST-TC-1",
+            name="Test Case 1",
+            status="Draft",
+        )
         serialized = storage._serialize_object(test_case)
         assert isinstance(serialized, dict)
         assert serialized["id"] == "tc1"

@@ -480,15 +480,15 @@ class SQLDatabaseManager:
             # Get or create the custom field definition
             field_def, _ = self.get_or_create(
                 session,
-                    CustomFieldDefinition,
-                    create_kwargs={
-                        "id": cf.id,
-                        "name": cf.name,
-                        "type": cf.type,
-                        "project_key": project_key,
-                    },
-                    id=cf.id,
-                )
+                CustomFieldDefinition,
+                create_kwargs={
+                    "id": cf.id,
+                    "name": cf.name,
+                    "type": cf.type,
+                    "project_key": project_key,
+                },
+                id=cf.id,
+            )
 
             # Determine value type based on field type
             value_text = None
@@ -608,8 +608,6 @@ class SQLDatabaseManager:
             # Convert base64 content to binary if present
             content = None
             if attachment.content:
-
-
                 try:
                     content = base64.b64decode(attachment.content)
                 except Exception as e:
@@ -659,10 +657,10 @@ class SQLDatabaseManager:
         for label_name in labels:
             label, _ = self.get_or_create(
                 session,
-                    Label,
-                    create_kwargs={"id": str(uuid.uuid4()), "name": label_name},
-                    name=label_name,
-                )
+                Label,
+                create_kwargs={"id": str(uuid.uuid4()), "name": label_name},
+                name=label_name,
+            )
             result.append(label)
         return result
 
@@ -764,27 +762,27 @@ class SQLDatabaseManager:
                 for version in test_case_model.versions:
                     version_obj, _ = self.get_or_create(
                         session,
-                            CaseVersion,
-                            create_kwargs={
-                                "id": version.id,
-                                "name": version.name,
-                                "description": version.description,
-                                "status": version.status,
-                                "created_at": version.created_at,
-                                "created_by": version.created_by,
-                            },
-                            id=version.id,
-                        )
+                        CaseVersion,
+                        create_kwargs={
+                            "id": version.id,
+                            "name": version.name,
+                            "description": version.description,
+                            "status": version.status,
+                            "created_at": version.created_at,
+                            "created_by": version.created_by,
+                        },
+                        id=version.id,
+                    )
                     test_case.versions.append(version_obj)
 
                 # Add custom fields
                 self._save_custom_fields(
                     session,
-                        test_case_model.custom_fields,
-                        EntityType.TEST_CASE,
-                        test_case.id,
-                        project_key,
-                    )
+                    test_case_model.custom_fields,
+                    EntityType.TEST_CASE,
+                    test_case.id,
+                    project_key,
+                )
 
                 # Add links
                 self._save_links(session, test_case_model.links, EntityType.TEST_CASE, test_case.id)
@@ -843,11 +841,11 @@ class SQLDatabaseManager:
                 # Add custom fields
                 self._save_custom_fields(
                     session,
-                        test_cycle_model.custom_fields,
-                        EntityType.TEST_CYCLE,
-                        test_cycle.id,
-                        project_key,
-                    )
+                    test_cycle_model.custom_fields,
+                    EntityType.TEST_CYCLE,
+                    test_cycle.id,
+                    project_key,
+                )
 
                 # Add links
                 self._save_links(
@@ -943,27 +941,27 @@ class SQLDatabaseManager:
                 # Add custom fields
                 self._save_custom_fields(
                     session,
-                        test_execution_model.custom_fields,
-                        EntityType.TEST_EXECUTION,
-                        test_execution.id,
-                        project_key,
-                    )
+                    test_execution_model.custom_fields,
+                    EntityType.TEST_EXECUTION,
+                    test_execution.id,
+                    project_key,
+                )
 
                 # Add links
                 self._save_links(
                     session,
-                        test_execution_model.links,
-                        EntityType.TEST_EXECUTION,
-                        test_execution.id,
-                    )
+                    test_execution_model.links,
+                    EntityType.TEST_EXECUTION,
+                    test_execution.id,
+                )
 
                 # Add attachments
                 self._save_attachments(
                     session,
-                        test_execution_model.attachments,
-                        EntityType.TEST_EXECUTION,
-                        test_execution.id,
-                    )
+                    test_execution_model.attachments,
+                    EntityType.TEST_EXECUTION,
+                    test_execution.id,
+                )
 
             except SQLAlchemyError as e:
                 logger.error(f"Error saving test execution {test_execution.id}: {e}")
@@ -999,15 +997,15 @@ class SQLDatabaseManager:
             with self.get_session() as session:
                 project, created = self.get_or_create(
                     session,
-                        Project,
-                        create_kwargs={
+                    Project,
+                    create_kwargs={
                         "id": f"placeholder_{project_key}",
-                            "key": project_key,
-                            "name": f"Project {project_key}",
-                            "description": f"Placeholder project for {project_key}",
-                        },
-                        key=project_key,
-                    )
+                        "key": project_key,
+                        "name": f"Project {project_key}",
+                        "description": f"Placeholder project for {project_key}",
+                    },
+                    key=project_key,
+                )
                 if created:
                     counts["project"] = 1
                 else:
@@ -1112,13 +1110,13 @@ class SQLDatabaseManager:
 
     def update_migration_state(
         self,
-            project_key: str,
-            extraction_status: str | None = None,
-            transformation_status: str | None = None,
-            loading_status: str | None = None,
-            error_message: str | None = None,
-            metadata: dict[str, Any] | None = None,
-        ) -> MigrationState:
+        project_key: str,
+        extraction_status: str | None = None,
+        transformation_status: str | None = None,
+        loading_status: str | None = None,
+        error_message: str | None = None,
+        metadata: dict[str, Any] | None = None,
+    ) -> MigrationState:
         """
         Update the migration state for a project.
 
@@ -1166,13 +1164,13 @@ class SQLDatabaseManager:
 
     def create_entity_batch_state(
         self,
-            project_key: str,
-            entity_type: str,
-            batch_number: int,
-            total_batches: int | None = None,
-            items_count: int | None = None,
-            status: str = "not_started",
-        ) -> EntityBatchState:
+        project_key: str,
+        entity_type: str,
+        batch_number: int,
+        total_batches: int | None = None,
+        items_count: int | None = None,
+        status: str = "not_started",
+    ) -> EntityBatchState:
         """
         Create a new entity batch state record.
 
@@ -1224,13 +1222,13 @@ class SQLDatabaseManager:
 
     def update_entity_batch_state(
         self,
-            project_key: str,
-            entity_type: str,
-            batch_number: int,
-            status: str | None = None,
-            processed_count: int | None = None,
-            error_message: str | None = None,
-        ) -> EntityBatchState | None:
+        project_key: str,
+        entity_type: str,
+        batch_number: int,
+        status: str | None = None,
+        processed_count: int | None = None,
+        error_message: str | None = None,
+    ) -> EntityBatchState | None:
         """
         Update an entity batch state record.
 
@@ -1287,8 +1285,8 @@ class SQLDatabaseManager:
         with self.get_session() as session:
             query = session.query(EntityBatchState).filter(
                 EntityBatchState.project_key == project_key,
-                    EntityBatchState.status.in_(["not_started", "in_progress", "failed"]),
-                )
+                EntityBatchState.status.in_(["not_started", "in_progress", "failed"]),
+            )
 
             if entity_type:
                 query = query.filter(EntityBatchState.entity_type == entity_type)
@@ -1394,9 +1392,7 @@ class SQLDatabaseManager:
             columns = result.keys()
             return [dict(zip(columns, row)) for row in result.fetchall()]
 
-    def query_to_dataframe(
-        self, query: str, params: dict[str, Any] | None = None
-    ) -> pd.DataFrame:
+    def query_to_dataframe(self, query: str, params: dict[str, Any] | None = None) -> pd.DataFrame:
         """
         Execute a SQL query and return results as a pandas DataFrame.
 

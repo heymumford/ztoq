@@ -14,7 +14,7 @@ import json
 import logging
 import os
 import time
-import base64
+
 import uuid
 import datetime
 from pathlib import Path
@@ -25,28 +25,28 @@ import requests
 # Temporarily removed: from ztoq.qtest_retry import with_retry, QTestRetryPolicy, QTestCircuitBreaker
 from ztoq.qtest_models import (
     QTestAttachment,
-        QTestConfig,
-        QTestCustomField,
-        QTestDataset,
-        QTestLink,
-        QTestModule,
-        QTestPaginatedResponse,
-        QTestParameter,
-        QTestProject,
-        QTestPulseAction,
-        QTestPulseConstant,
-        QTestPulseRule,
-        QTestPulseTrigger,
-        QTestStep,
-        QTestTestCase,
-        QTestTestCycle,
-        QTestTestRun,
+    QTestConfig,
+    QTestCustomField,
+    QTestDataset,
+    QTestLink,
+    QTestModule,
+    QTestPaginatedResponse,
+    QTestParameter,
+    QTestProject,
+    QTestPulseAction,
+    QTestPulseConstant,
+    QTestPulseRule,
+    QTestPulseTrigger,
+    QTestStep,
+    QTestTestCase,
+    QTestTestCycle,
+    QTestTestRun,
 )
 
 T = TypeVar("T")
 
 # Context variable to track correlation ID throughout async/threaded code
-correlation_id: ContextVar[str] = ContextVar('correlation_id', default='')
+correlation_id: ContextVar[str] = ContextVar("correlation_id", default="")
 
 # Configure module logger
 logger = logging.getLogger("ztoq.qtest_client")
@@ -55,7 +55,6 @@ logger = logging.getLogger("ztoq.qtest_client")
 DEFAULT_PAGE_SIZE = 100
 MAX_PAGE_SIZE = 1000
 
-
 class CorrelationIDFilter(logging.Filter):
     """
     Logging filter that adds correlation ID to log records.
@@ -63,11 +62,11 @@ class CorrelationIDFilter(logging.Filter):
     This filter enriches log records with the current correlation ID from the context,
     enabling request tracing across asynchronous and threaded operations.
     """
+
     def filter(self, record):
         # Add correlation_id to the log record
-        record.correlation_id = correlation_id.get() or '-'
+        record.correlation_id = correlation_id.get() or "-"
         return True
-
 
 def configure_logging(level=None):
     """Configure logging for the qTest client.
@@ -105,7 +104,6 @@ def configure_logging(level=None):
     # Log the configuration
     logger.debug(f"Logging configured with level: {level}")
 
-
 def generate_correlation_id() -> str:
     """
     Generate a unique correlation ID for request tracing.
@@ -116,7 +114,6 @@ def generate_correlation_id() -> str:
     timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
     unique_id = str(uuid.uuid4())[:8]  # Use first 8 chars of UUID for brevity
     return f"{timestamp}-{unique_id}"
-
 
 def set_correlation_id(corr_id: Optional[str] = None) -> str:
     """
@@ -132,7 +129,6 @@ def set_correlation_id(corr_id: Optional[str] = None) -> str:
     correlation_id.set(corr_id)
     return corr_id
 
-
 def get_correlation_id() -> str:
     """
     Get the current correlation ID.
@@ -142,22 +138,20 @@ def get_correlation_id() -> str:
     """
     return correlation_id.get()
 
-
 # Initialize logging with default settings
 configure_logging()
-
 
 class QTestPaginatedIterator(Generic[T]):
     """Iterator for paginated API responses."""
 
     def __init__(
         self,
-            client: "QTestClient",
-            endpoint: str,
-            model_class: type[T],
-            params: dict[str, Any] | None = None,
-            page_size: int = 50,
-        ):
+        client: "QTestClient",
+        endpoint: str,
+        model_class: type[T],
+        params: dict[str, Any] | None = None,
+        page_size: int = 50,
+    ):
         """Initialize the paginated iterator.
 
         Args:
@@ -256,28 +250,28 @@ class QTestPaginatedIterator(Generic[T]):
                 page=0,
                 page_size=len(response),
                 total=len(response),
-                is_last=True  # Assume this is the only page when the response is a list
+                is_last=True,  # Assume this is the only page when the response is a list
             )
         # Handle different pagination formats depending on API type
         elif self.client.api_type == "manager" and isinstance(response, dict):
             self.current_page = QTestPaginatedResponse(
                 items=response.get("items", []),
-                    page=response.get("page", 0),
-                    page_size=response.get("pageSize", 0),
-                    total=response.get("total", 0),
-                    is_last=response.get("page", 0) * response.get("pageSize", 0)
+                page=response.get("page", 0),
+                page_size=response.get("pageSize", 0),
+                total=response.get("total", 0),
+                is_last=response.get("page", 0) * response.get("pageSize", 0)
                 + len(response.get("items", []))
                 >= response.get("total", 0),
-                )
+            )
         else:
             self.current_page = QTestPaginatedResponse(
                 items=response.get("data", []),
-                    offset=response.get("offset", 0),
-                    limit=response.get("limit", 0),
-                    total=response.get("total", 0),
-                    is_last=response.get("offset", 0) + len(response.get("data", []))
+                offset=response.get("offset", 0),
+                limit=response.get("limit", 0),
+                total=response.get("total", 0),
+                is_last=response.get("offset", 0) + len(response.get("data", []))
                 >= response.get("total", 0),
-                )
+            )
 
         self.item_index = 0
 
@@ -285,7 +279,6 @@ class QTestPaginatedIterator(Generic[T]):
             f"Received page {page_number + 1} with {len(self.current_page.items)} items, "
             f"total: {self.current_page.total}, isLast: {self.current_page.is_last}"
         )
-
 
 class QTestClient:
     """Client for interacting with the qTest APIs."""
@@ -295,7 +288,7 @@ class QTestClient:
         config: QTestConfig,
         api_type: str = "manager",
         log_level=None,
-        correlation_id: Optional[str] = None
+        correlation_id: Optional[str] = None,
     ):
         """Initialize the qTest client with configuration.
 
@@ -325,8 +318,8 @@ class QTestClient:
         # API base endpoints vary by type
         self.api_endpoints = {
             "manager": "api/v3",
-                "parameters": "api/v1",
-                "pulse": "",  # Pulse uses root path
+            "parameters": "api/v1",
+            "pulse": "",  # Pulse uses root path
             "scenario": "",  # Scenario uses root path
         }
 
@@ -345,7 +338,7 @@ class QTestClient:
     def _authenticate(self):
         """Authenticate with qTest API and obtain an access token."""
         # If bearer token is already provided in config, use it directly
-        if hasattr(self.config, 'bearer_token') and self.config.bearer_token:
+        if hasattr(self.config, "bearer_token") and self.config.bearer_token:
             token = self.config.bearer_token.strip()
 
             # Handle case where token already includes "bearer" prefix
@@ -376,11 +369,11 @@ class QTestClient:
         # Common headers for token request
         auth_headers = {
             "Content-Type": "application/x-www-form-urlencoded",
-            "Cache-Control": "no-cache"
+            "Cache-Control": "no-cache",
         }
 
         # Add basic auth header with client name (any string)
-        client_name_encoded = base64.b64encode(b"ztoq-client:").decode('utf-8')
+        client_name_encoded = base64.b64encode(b"ztoq-client:").decode("utf-8")
         auth_headers["Authorization"] = f"Basic {client_name_encoded}"
 
         # Prepare form data for token request
@@ -400,14 +393,10 @@ class QTestClient:
         try:
             if self.api_type == "parameters":
                 # Parameters API uses JSON
-                response = requests.post(
-                    url=url, headers=auth_headers, json=auth_data
-                )
+                response = requests.post(url=url, headers=auth_headers, json=auth_data)
             else:
                 # Manager API uses form data
-                response = requests.post(
-                    url=url, headers=auth_headers, data=auth_data
-                )
+                response = requests.post(url=url, headers=auth_headers, data=auth_data)
 
             response.raise_for_status()
             data = response.json()
@@ -422,37 +411,39 @@ class QTestClient:
             self.headers["Authorization"] = f"Bearer {self.auth_token}"
 
             logger.info(f"Successfully authenticated with {self.api_type} API")
-            logger.debug(f"Token type: {token_type}, expires in: {data.get('expires_in', 'unknown')} seconds")
+            logger.debug(
+                f"Token type: {token_type}, expires in: {data.get('expires_in', 'unknown')} seconds"
+            )
 
         except requests.exceptions.RequestException as e:
             logger.error(f"Authentication failed: {e}")
-            if hasattr(e, 'response') and e.response is not None:
+            if hasattr(e, "response") and e.response is not None:
                 logger.error(f"Response status: {e.response.status_code}")
                 logger.error(f"Response body: {e.response.text}")
             raise
 
     # Temporarily removed: @QTestCircuitBreaker(failure_threshold=5, reset_timeout=60)
     # Temporarily removed: retry mechanism
-# Previous config:
-# max_retries=3,
-# retry_delay=0.5,
-# backoff_factor=2.0,
-# jitter=True,
-# retry_on_codes={401, 429, 500, 502, 503, 504}
+    # Previous config:
+    # max_retries=3,
+    # retry_delay=0.5,
+    # backoff_factor=2.0,
+    # jitter=True,
+    # retry_on_codes={401, 429, 500, 502, 503, 504}
     def _make_request(
         self,
-            method: str,
-            endpoint: str,
-            params: dict[str, Any] | None = None,
-            json_data: dict[str, Any] | None = None,
-            files: dict[str, Any] | None = None,
-            headers: dict[str, str] | None = None,
-            verify: bool = True,
-            timeout: tuple | None = None,
-            _retry_count: int = 0,
-            _max_retries: int = 3,
-            _request_id: Optional[str] = None,
-        ) -> dict[str, Any]:
+        method: str,
+        endpoint: str,
+        params: dict[str, Any] | None = None,
+        json_data: dict[str, Any] | None = None,
+        files: dict[str, Any] | None = None,
+        headers: dict[str, str] | None = None,
+        verify: bool = True,
+        timeout: tuple | None = None,
+        _retry_count: int = 0,
+        _max_retries: int = 3,
+        _request_id: Optional[str] = None,
+    ) -> dict[str, Any]:
         """Make a request to the qTest API.
 
         Args:
@@ -515,8 +506,8 @@ class QTestClient:
         # Log request details (careful not to log sensitive data)
         safe_headers = {k: v for k, v in request_headers.items() if k.lower() != "authorization"}
         logger.info(
-            f"API Request #{request_number}: {method} {endpoint} " +
-            f"(retry {_retry_count}/{_max_retries})"
+            f"API Request #{request_number}: {method} {endpoint} "
+            + f"(retry {_retry_count}/{_max_retries})"
         )
         logger.debug(f"Full URL: {url}")
         logger.debug(f"Parameters: {params}")
@@ -534,14 +525,14 @@ class QTestClient:
             # Make the request
             response = requests.request(
                 method=method,
-                    url=url,
-                    headers=request_headers,
-                    params=params,
-                    json=json_data,
-                    files=files,
-                    verify=verify,
-                    timeout=timeout,
-                )
+                url=url,
+                headers=request_headers,
+                params=params,
+                json=json_data,
+                files=files,
+                verify=verify,
+                timeout=timeout,
+            )
 
             # Calculate request duration
             duration = time.time() - start_time
@@ -564,8 +555,8 @@ class QTestClient:
 
             # Log response metadata
             logger.info(
-                f"Response #{request_number} received in {duration:.2f}s - " +
-                f"Status: {response.status_code} - {method} {endpoint}"
+                f"Response #{request_number} received in {duration:.2f}s - "
+                + f"Status: {response.status_code} - {method} {endpoint}"
             )
 
             # Log headers at trace level
@@ -576,7 +567,9 @@ class QTestClient:
             # This is outside the retry decorator to handle token refresh specially
             if response.status_code == 401:
                 if _retry_count < _max_retries:
-                    logger.info(f"Authentication failed (attempt {_retry_count + 1}/{_max_retries}). Re-authenticating...")
+                    logger.info(
+                        f"Authentication failed (attempt {_retry_count + 1}/{_max_retries}). Re-authenticating..."
+                    )
 
                     # Increment retry counter
                     _retry_count += 1
@@ -594,8 +587,17 @@ class QTestClient:
                     # Retry the request with new token and incremented retry counter
                     # Note: This will bypass the retry decorator since we're handling this case specially
                     return self._make_request(
-                        method, endpoint, params, json_data, files, headers, verify, timeout,
-                        _retry_count=_retry_count, _max_retries=_max_retries, _request_id=request_id
+                        method,
+                        endpoint,
+                        params,
+                        json_data,
+                        files,
+                        headers,
+                        verify,
+                        timeout,
+                        _retry_count=_retry_count,
+                        _max_retries=_max_retries,
+                        _request_id=request_id,
                     )
                 else:
                     # Max auth retries reached - this is terminal
@@ -638,8 +640,8 @@ class QTestClient:
             # Enhanced HTTP error logging
             self.error_count += 1
             logger.error(
-                f"HTTP Error #{request_number}: {e} - " +
-                f"{method} {endpoint} - Duration: {time.time() - start_time:.2f}s"
+                f"HTTP Error #{request_number}: {e} - "
+                + f"{method} {endpoint} - Duration: {time.time() - start_time:.2f}s"
             )
             if hasattr(e, "response") and e.response is not None:
                 try:
@@ -652,32 +654,32 @@ class QTestClient:
         except requests.exceptions.ConnectionError:
             self.error_count += 1
             logger.error(
-                f"Connection Error #{request_number}: Could not connect to {url} - " +
-                f"{method} {endpoint} - Duration: {time.time() - start_time:.2f}s"
+                f"Connection Error #{request_number}: Could not connect to {url} - "
+                + f"{method} {endpoint} - Duration: {time.time() - start_time:.2f}s"
             )
             raise
 
         except requests.exceptions.Timeout:
             self.error_count += 1
             logger.error(
-                f"Timeout Error #{request_number}: Request to {url} timed out - " +
-                f"{method} {endpoint} - Duration: {time.time() - start_time:.2f}s"
+                f"Timeout Error #{request_number}: Request to {url} timed out - "
+                + f"{method} {endpoint} - Duration: {time.time() - start_time:.2f}s"
             )
             raise
 
         except requests.exceptions.RequestException as e:
             self.error_count += 1
             logger.error(
-                f"Request Error #{request_number}: {e} - " +
-                f"{method} {endpoint} - Duration: {time.time() - start_time:.2f}s"
+                f"Request Error #{request_number}: {e} - "
+                + f"{method} {endpoint} - Duration: {time.time() - start_time:.2f}s"
             )
             raise
 
         except ValueError as e:
             self.error_count += 1
             logger.error(
-                f"JSON Parsing Error #{request_number}: {e} - " +
-                f"{method} {endpoint} - Duration: {time.time() - start_time:.2f}s"
+                f"JSON Parsing Error #{request_number}: {e} - "
+                + f"{method} {endpoint} - Duration: {time.time() - start_time:.2f}s"
             )
             raise
 
@@ -734,9 +736,7 @@ class QTestClient:
 
         return self._make_request("GET", endpoint)
 
-    def get_test_cases(
-        self, module_id: int | None = None
-    ) -> QTestPaginatedIterator[QTestTestCase]:
+    def get_test_cases(self, module_id: int | None = None) -> QTestPaginatedIterator[QTestTestCase]:
         """Get all test cases for a project or module.
 
         Args:
@@ -828,9 +828,18 @@ class QTestClient:
             ValueError: If object_type is invalid
         """
         # Validate object type
-        valid_object_types = ["test-cases", "test-runs", "test-logs", "requirements", "defects", "test-steps"]
+        valid_object_types = [
+            "test-cases",
+            "test-runs",
+            "test-logs",
+            "requirements",
+            "defects",
+            "test-steps",
+        ]
         if object_type not in valid_object_types:
-            raise ValueError(f"Invalid object type: {object_type}. Must be one of: {', '.join(valid_object_types)}")
+            raise ValueError(
+                f"Invalid object type: {object_type}. Must be one of: {', '.join(valid_object_types)}"
+            )
 
         endpoint = f"/projects/{self.config.project_id}/{object_type}/{object_id}/attachments"
 
@@ -929,9 +938,13 @@ class QTestClient:
             raise
 
     def upload_multiple_attachments(
-        self, object_type: str, object_id: int, file_paths: list[str | Path],
-        verify: bool = True, timeout: tuple[float, float] = None,
-        continue_on_error: bool = True
+        self,
+        object_type: str,
+        object_id: int,
+        file_paths: list[str | Path],
+        verify: bool = True,
+        timeout: tuple[float, float] = None,
+        continue_on_error: bool = True,
     ) -> list[QTestAttachment]:
         """Upload multiple files as attachments to an object in qTest.
 
@@ -951,9 +964,18 @@ class QTestClient:
             use the upload_attachments_parallel method.
         """
         # Validate object type
-        valid_object_types = ["test-cases", "test-runs", "test-logs", "requirements", "defects", "test-steps"]
+        valid_object_types = [
+            "test-cases",
+            "test-runs",
+            "test-logs",
+            "requirements",
+            "defects",
+            "test-steps",
+        ]
         if object_type not in valid_object_types:
-            raise ValueError(f"Invalid object type: {object_type}. Must be one of: {', '.join(valid_object_types)}")
+            raise ValueError(
+                f"Invalid object type: {object_type}. Must be one of: {', '.join(valid_object_types)}"
+            )
 
         if not file_paths:
             return []
@@ -968,7 +990,7 @@ class QTestClient:
                     object_id=object_id,
                     file_path=file_path,
                     verify=verify,
-                    timeout=timeout
+                    timeout=timeout,
                 )
                 attachments.append(attachment)
             except Exception as e:
@@ -980,8 +1002,13 @@ class QTestClient:
         return attachments
 
     def upload_attachments_parallel(
-        self, object_type: str, object_id: int, file_paths: list[str | Path],
-        max_workers: int = 5, verify: bool = True, timeout: tuple[float, float] = None
+        self,
+        object_type: str,
+        object_id: int,
+        file_paths: list[str | Path],
+        max_workers: int = 5,
+        verify: bool = True,
+        timeout: tuple[float, float] = None,
     ) -> list[QTestAttachment]:
         """Upload multiple files as attachments to an object in qTest using parallel processing.
 
@@ -1006,14 +1033,25 @@ class QTestClient:
         import concurrent.futures
 
         # Validate object type
-        valid_object_types = ["test-cases", "test-runs", "test-logs", "requirements", "defects", "test-steps"]
+        valid_object_types = [
+            "test-cases",
+            "test-runs",
+            "test-logs",
+            "requirements",
+            "defects",
+            "test-steps",
+        ]
         if object_type not in valid_object_types:
-            raise ValueError(f"Invalid object type: {object_type}. Must be one of: {', '.join(valid_object_types)}")
+            raise ValueError(
+                f"Invalid object type: {object_type}. Must be one of: {', '.join(valid_object_types)}"
+            )
 
         if not file_paths:
             return []
 
-        logger.info(f"Parallel uploading {len(file_paths)} files to {object_type}/{object_id} with {max_workers} workers")
+        logger.info(
+            f"Parallel uploading {len(file_paths)} files to {object_type}/{object_id} with {max_workers} workers"
+        )
 
         # Define the worker function that will be executed in parallel
         def upload_worker(file_path):
@@ -1024,7 +1062,7 @@ class QTestClient:
                     file_path=file_path,
                     verify=verify,
                     timeout=timeout,
-                    report_progress=False  # Disable progress reporting in parallel mode to avoid log clutter
+                    report_progress=False,  # Disable progress reporting in parallel mode to avoid log clutter
                 )
             except Exception as e:
                 logger.error(f"Failed to upload {file_path}: {str(e)}")
@@ -1033,7 +1071,9 @@ class QTestClient:
         # Execute uploads in parallel
         successful_attachments = []
         with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
-            future_to_file = {executor.submit(upload_worker, file_path): file_path for file_path in file_paths}
+            future_to_file = {
+                executor.submit(upload_worker, file_path): file_path for file_path in file_paths
+            }
 
             completed = 0
             for future in concurrent.futures.as_completed(future_to_file):
@@ -1042,16 +1082,22 @@ class QTestClient:
 
                 # Log progress every 10% or for every file if there are few files
                 if len(file_paths) <= 10 or completed % max(1, len(file_paths) // 10) == 0:
-                    logger.info(f"Progress: {completed}/{len(file_paths)} files processed ({completed/len(file_paths)*100:.1f}%)")
+                    logger.info(
+                        f"Progress: {completed}/{len(file_paths)} files processed ({completed/len(file_paths)*100:.1f}%)"
+                    )
 
                 try:
                     attachment = future.result()
                     if attachment:
                         successful_attachments.append(attachment)
                 except Exception as e:
-                    logger.error(f"Exception occurred during parallel upload of {file_path}: {str(e)}")
+                    logger.error(
+                        f"Exception occurred during parallel upload of {file_path}: {str(e)}"
+                    )
 
-        logger.info(f"Parallel upload complete. Successfully uploaded {len(successful_attachments)} of {len(file_paths)} files")
+        logger.info(
+            f"Parallel upload complete. Successfully uploaded {len(successful_attachments)} of {len(file_paths)} files"
+        )
         return successful_attachments
 
     def bulk_create_test_cases(self, test_cases: list[QTestTestCase]) -> list[QTestTestCase]:
@@ -1225,7 +1271,9 @@ class QTestClient:
         self._make_request("DELETE", endpoint)
         return True
 
-    def get_test_runs_for_cycle(self, test_cycle_id: int, params: dict[str, Any] | None = None) -> QTestPaginatedIterator:
+    def get_test_runs_for_cycle(
+        self, test_cycle_id: int, params: dict[str, Any] | None = None
+    ) -> QTestPaginatedIterator:
         """Get all test runs for a specific test cycle.
 
         Args:
@@ -1242,10 +1290,7 @@ class QTestClient:
         # Use the QTestTestRun model imported at the top of the file
 
         return QTestPaginatedIterator[QTestTestRun](
-            client=self,
-            endpoint=endpoint,
-            model_class=QTestTestRun,
-            params=query_params
+            client=self, endpoint=endpoint, model_class=QTestTestRun, params=query_params
         )
 
     def get_child_test_cycles(self, parent_id: int) -> QTestPaginatedIterator[QTestTestCycle]:
@@ -1261,13 +1306,12 @@ class QTestClient:
         params = {"parentId": parent_id}
 
         return QTestPaginatedIterator[QTestTestCycle](
-            client=self,
-            endpoint=endpoint,
-            model_class=QTestTestCycle,
-            params=params
+            client=self, endpoint=endpoint, model_class=QTestTestCycle, params=params
         )
 
-    def add_test_cases_to_cycle(self, test_cycle_id: int, test_case_ids: list[int]) -> dict[str, Any]:
+    def add_test_cases_to_cycle(
+        self, test_cycle_id: int, test_case_ids: list[int]
+    ) -> dict[str, Any]:
         """Add test cases to a test cycle, creating test runs.
 
         Args:
@@ -1315,7 +1359,9 @@ class QTestClient:
                 else:
                     params[key] = value
 
-            response = self._make_request("GET", f"/projects/{self.config.project_id}/test-cycles", params=params)
+            response = self._make_request(
+                "GET", f"/projects/{self.config.project_id}/test-cycles", params=params
+            )
 
             # Handle paginated response
             if isinstance(response, dict) and "items" in response:
@@ -1389,10 +1435,15 @@ class QTestClient:
         return QTestModule(**response)
 
     def upload_attachment(
-        self, object_type: str, object_id: int, file_path: str | Path,
-        custom_filename: str = None, content_type: str = None,
-        verify: bool = True, timeout: tuple[float, float] = None,
-        report_progress: bool = True
+        self,
+        object_type: str,
+        object_id: int,
+        file_path: str | Path,
+        custom_filename: str = None,
+        content_type: str = None,
+        verify: bool = True,
+        timeout: tuple[float, float] = None,
+        report_progress: bool = True,
     ) -> QTestAttachment:
         """Upload a file attachment to an object in qTest.
 
@@ -1415,9 +1466,18 @@ class QTestClient:
             RequestException: For connection errors, timeouts, etc.
         """
         # Validate object type
-        valid_object_types = ["test-cases", "test-runs", "test-logs", "requirements", "defects", "test-steps"]
+        valid_object_types = [
+            "test-cases",
+            "test-runs",
+            "test-logs",
+            "requirements",
+            "defects",
+            "test-steps",
+        ]
         if object_type not in valid_object_types:
-            raise ValueError(f"Invalid object type: {object_type}. Must be one of: {', '.join(valid_object_types)}")
+            raise ValueError(
+                f"Invalid object type: {object_type}. Must be one of: {', '.join(valid_object_types)}"
+            )
 
         # Convert string path to Path object
         if isinstance(file_path, str):
@@ -1434,6 +1494,7 @@ class QTestClient:
         # Detect content type if not provided
         if content_type is None:
             import mimetypes
+
             content_type = mimetypes.guess_type(file_path)[0] or "application/octet-stream"
             logger.debug(f"Auto-detected content type: {content_type}")
 
@@ -1454,8 +1515,10 @@ class QTestClient:
 
         try:
             # Log upload start
-            if report_progress and file_size > 1024*1024:  # Only for files > 1MB
-                logger.info(f"Uploading file {filename} ({file_size} bytes) to {object_type}/{object_id}")
+            if report_progress and file_size > 1024 * 1024:  # Only for files > 1MB
+                logger.info(
+                    f"Uploading file {filename} ({file_size} bytes) to {object_type}/{object_id}"
+                )
 
             # Make the request with optional timeout and SSL verification
             response = self._make_request(
@@ -1464,14 +1527,14 @@ class QTestClient:
                 headers=headers,
                 files=files,
                 verify=verify,
-                timeout=timeout
+                timeout=timeout,
             )
 
             # Create attachment object with checksum
             attachment = QTestAttachment(**response)
 
             # Log successful upload
-            if report_progress and file_size > 1024*1024:
+            if report_progress and file_size > 1024 * 1024:
                 logger.info(f"Upload completed successfully. Attachment ID: {attachment.id}")
 
             return attachment
@@ -1481,9 +1544,14 @@ class QTestClient:
             raise
 
     def upload_binary_attachment(
-        self, object_type: str, object_id: int, binary_data: bytes,
-        filename: str, content_type: str = "application/octet-stream",
-        verify: bool = True, timeout: tuple[float, float] = None
+        self,
+        object_type: str,
+        object_id: int,
+        binary_data: bytes,
+        filename: str,
+        content_type: str = "application/octet-stream",
+        verify: bool = True,
+        timeout: tuple[float, float] = None,
     ) -> QTestAttachment:
         """Upload binary data as an attachment to an object in qTest.
 
@@ -1506,9 +1574,18 @@ class QTestClient:
             RequestException: For connection errors, timeouts, etc.
         """
         # Validate object type
-        valid_object_types = ["test-cases", "test-runs", "test-logs", "requirements", "defects", "test-steps"]
+        valid_object_types = [
+            "test-cases",
+            "test-runs",
+            "test-logs",
+            "requirements",
+            "defects",
+            "test-steps",
+        ]
         if object_type not in valid_object_types:
-            raise ValueError(f"Invalid object type: {object_type}. Must be one of: {', '.join(valid_object_types)}")
+            raise ValueError(
+                f"Invalid object type: {object_type}. Must be one of: {', '.join(valid_object_types)}"
+            )
 
         # Validate binary data
         if not binary_data:
@@ -1535,8 +1612,10 @@ class QTestClient:
 
         try:
             # Log upload start for large content
-            if file_size > 1024*1024:
-                logger.info(f"Uploading binary data as {filename} ({file_size} bytes) to {object_type}/{object_id}")
+            if file_size > 1024 * 1024:
+                logger.info(
+                    f"Uploading binary data as {filename} ({file_size} bytes) to {object_type}/{object_id}"
+                )
 
             # Make the request with optional timeout and SSL verification
             response = self._make_request(
@@ -1545,14 +1624,14 @@ class QTestClient:
                 headers=headers,
                 files=files,
                 verify=verify,
-                timeout=timeout
+                timeout=timeout,
             )
 
             # Create attachment object
             attachment = QTestAttachment(**response)
 
             # Log successful upload for large content
-            if file_size > 1024*1024:
+            if file_size > 1024 * 1024:
                 logger.info(f"Binary upload completed successfully. Attachment ID: {attachment.id}")
 
             return attachment
@@ -1679,7 +1758,7 @@ class QTestClient:
             "latency_ms": 0,
             "rate_limit_remaining": self.rate_limit_remaining,
             "rate_limit_reset": self.rate_limit_reset,
-            "error": None
+            "error": None,
         }
 
         try:
@@ -1888,7 +1967,9 @@ class QTestClient:
         data = response.get("data", response)
         return QTestPulseTrigger(**data)
 
-    def update_pulse_trigger(self, trigger_id: int, trigger: QTestPulseTrigger) -> QTestPulseTrigger:
+    def update_pulse_trigger(
+        self, trigger_id: int, trigger: QTestPulseTrigger
+    ) -> QTestPulseTrigger:
         """Update a Pulse trigger.
 
         Args:
@@ -2020,9 +2101,14 @@ class QTestClient:
             client=self, endpoint=endpoint, model_class=QTestPulseConstant, params=params
         )
 
-    def download_attachment(self, attachment_id: int, file_path: str | Path,
-                           verify: bool = True, timeout: tuple[float, float] | None = None,
-                           chunk_size: int = 8192) -> bool:
+    def download_attachment(
+        self,
+        attachment_id: int,
+        file_path: str | Path,
+        verify: bool = True,
+        timeout: tuple[float, float] | None = None,
+        chunk_size: int = 8192,
+    ) -> bool:
         """
         Download an attachment by ID and save it to the specified file path.
 
@@ -2060,11 +2146,7 @@ class QTestClient:
             # Make binary request with streaming
             # Use requests directly for streaming support, but apply all our auth/headers
             response = requests.get(
-                url=url,
-                headers=self.headers,
-                stream=True,
-                verify=verify,
-                timeout=timeout
+                url=url, headers=self.headers, stream=True, verify=verify, timeout=timeout
             )
 
             # Check for auth failures and retry if needed
@@ -2075,19 +2157,15 @@ class QTestClient:
 
                 # Retry with new token
                 response = requests.get(
-                    url=url,
-                    headers=self.headers,
-                    stream=True,
-                    verify=verify,
-                    timeout=timeout
+                    url=url, headers=self.headers, stream=True, verify=verify, timeout=timeout
                 )
 
             # Handle errors with detailed logging
             response.raise_for_status()
 
             # Get file info from headers
-            content_type = response.headers.get('Content-Type', 'application/octet-stream')
-            content_length = int(response.headers.get('Content-Length', '0'))
+            content_type = response.headers.get("Content-Type", "application/octet-stream")
+            content_length = int(response.headers.get("Content-Length", "0"))
 
             logger.debug(f"Attachment content type: {content_type}, size: {content_length} bytes")
 
@@ -2096,17 +2174,19 @@ class QTestClient:
             last_log_percent = 0
 
             # Save file
-            with open(file_path, 'wb') as f:
+            with open(file_path, "wb") as f:
                 for chunk in response.iter_content(chunk_size=chunk_size):
                     if chunk:  # Filter out keep-alive chunks
                         f.write(chunk)
                         bytes_downloaded += len(chunk)
 
                         # Log progress for large files (>1MB) at 10% intervals
-                        if content_length > 1024*1024:
+                        if content_length > 1024 * 1024:
                             percent_complete = int((bytes_downloaded / content_length) * 100)
                             if percent_complete >= last_log_percent + 10:
-                                logger.info(f"Download progress: {percent_complete}% ({bytes_downloaded}/{content_length} bytes)")
+                                logger.info(
+                                    f"Download progress: {percent_complete}% ({bytes_downloaded}/{content_length} bytes)"
+                                )
                                 last_log_percent = percent_complete
 
             logger.info(f"Attachment downloaded successfully to {file_path}")
@@ -2177,7 +2257,9 @@ class QTestClient:
         data = response.get("data", response)
         return QTestPulseConstant(**data)
 
-    def update_pulse_constant(self, constant_id: int, constant: QTestPulseConstant) -> QTestPulseConstant:
+    def update_pulse_constant(
+        self, constant_id: int, constant: QTestPulseConstant
+    ) -> QTestPulseConstant:
         """Update a Pulse constant.
 
         Args:
@@ -2223,6 +2305,7 @@ class QTestClient:
         endpoint = f"/pulse/rules/{rule_id}/execute"
         self._make_request("POST", endpoint)
         return True
+
     def get_rules(self) -> list[dict[str, Any]]:
         """Get all rules for a project.
 
@@ -2348,8 +2431,8 @@ class QTestClient:
             "circuit_breakers": {
                 "total": len(circuit_status),
                 "open": len(open_circuits),
-                "open_circuits": open_circuits
-            }
+                "open_circuits": open_circuits,
+            },
         }
 
     def with_correlation_id(self, correlation_id: str):

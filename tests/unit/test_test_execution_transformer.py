@@ -118,7 +118,7 @@ class TestTestExecutionTransformer:
         # Check test run data
         test_run = result.transformed_entity.get("test_run")
         assert test_run is not None
-        assert test_run["status"] == "PASSED" # Mapped from PASS
+        assert test_run["status"] == "PASSED"  # Mapped from PASS
         assert test_run["test_case_id"] is not None
 
         # Check test log data
@@ -173,12 +173,12 @@ class TestTestExecutionTransformer:
             assert len(test_run["properties"]) >= 2
 
             # Remove environment field that gets added automatically
-            properties_without_env = [p for p in test_run["properties"] if p["field_name"] != "environment"]
+            properties_without_env = [
+                p for p in test_run["properties"] if p["field_name"] != "environment"
+            ]
 
             # Check if custom fields were added
-            custom_fields = {
-                field["field_name"]: field for field in test_run["properties"]
-            }
+            custom_fields = {field["field_name"]: field for field in test_run["properties"]}
             assert "browser" in custom_fields
             assert custom_fields["browser"]["field_value"] == "Chrome"
             assert "build" in custom_fields
@@ -230,8 +230,9 @@ class TestTestExecutionTransformer:
             assert test_run is not None
 
             # Extract only the custom fields we added
-            custom_fields_in_result = [f for f in test_run["properties"]
-                                     if f["field_name"] in ("custom1", "custom2")]
+            custom_fields_in_result = [
+                f for f in test_run["properties"] if f["field_name"] in ("custom1", "custom2")
+            ]
             assert len(custom_fields_in_result) == 2
         finally:
             # Restore original mapper
@@ -274,7 +275,7 @@ class TestTestExecutionTransformer:
             ("CANCELED", "NOT_RUN"),
             ("PENDING", "NOT_RUN"),
             (None, "NOT_RUN"),  # Test None value
-            (123, "NOT_RUN"),   # Test numeric value
+            (123, "NOT_RUN"),  # Test numeric value
             ("unknown_status", "NOT_RUN"),  # Default to NOT_RUN for unknown
         ]
 
@@ -341,7 +342,9 @@ class TestTestExecutionTransformer:
         assert result.success is False
         assert len(result.errors) > 0
         assert any("required" in str(err).lower() for err in result.errors)
-        assert any("testcasekey" in str(err).lower() for err in result.errors) or any("test case key" in str(err).lower() for err in result.errors)
+        assert any("testcasekey" in str(err).lower() for err in result.errors) or any(
+            "test case key" in str(err).lower() for err in result.errors
+        )
 
     def test_non_strict_mode_handles_missing_fields(self, transformer):
         """Test that non-strict mode handles missing fields with warnings."""
@@ -365,18 +368,22 @@ class TestTestExecutionTransformer:
     def test_db_integration_for_id_mapping(self, custom_transformer, sample_test_execution):
         """Test integration with database for test case and cycle ID mapping."""
         # Setup
-        custom_transformer.db_manager.get_entity_mapping.side_effect = lambda project_key, mapping_type, source_id: {
-            "source_id": source_id,
-            "target_id": 1000,  # Fixed ID for testing
-            "mapping_type": mapping_type,
-        }
+        custom_transformer.db_manager.get_entity_mapping.side_effect = (
+            lambda project_key, mapping_type, source_id: {
+                "source_id": source_id,
+                "target_id": 1000,  # Fixed ID for testing
+                "mapping_type": mapping_type,
+            }
+        )
 
         # Act
         result = custom_transformer.transform(sample_test_execution)
 
         # Assert
         assert result.success is True
-        assert custom_transformer.db_manager.get_entity_mapping.call_count >= 2  # Should be called for test case and cycle
+        assert (
+            custom_transformer.db_manager.get_entity_mapping.call_count >= 2
+        )  # Should be called for test case and cycle
         test_run = result.transformed_entity.get("test_run")
         assert test_run["test_case_id"] is not None
         assert test_run["test_cycle_id"] is not None
@@ -526,7 +533,9 @@ class TestTestExecutionTransformer:
     def test_db_error_during_id_mapping(self, custom_transformer, sample_test_execution):
         """Test handling of database errors during ID mapping."""
         # Setup - make the DB manager raise an exception
-        custom_transformer.db_manager.get_entity_mapping.side_effect = Exception("Database connection error")
+        custom_transformer.db_manager.get_entity_mapping.side_effect = Exception(
+            "Database connection error"
+        )
 
         # Act
         result = custom_transformer.transform(sample_test_execution)
@@ -542,6 +551,7 @@ class TestTestExecutionTransformer:
         """Test the get_default_transformer factory function."""
         # Act
         from ztoq.test_execution_transformer import get_default_transformer
+
         transformer = get_default_transformer()
 
         # Assert

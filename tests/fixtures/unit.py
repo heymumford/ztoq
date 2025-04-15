@@ -18,7 +18,7 @@ from tests.fixtures.base import (
     temp_file,
     temp_db_path,
     mock_response,
-    mock_requests_session
+    mock_requests_session,
 )
 
 
@@ -77,12 +77,13 @@ def mock_file_system() -> Generator[Dict[str, MagicMock], None, None]:
     Yields:
         Dict[str, MagicMock]: Dictionary of mocked file system functions
     """
-    with patch("pathlib.Path.exists") as mock_exists, \
-         patch("pathlib.Path.is_file") as mock_is_file, \
-         patch("pathlib.Path.is_dir") as mock_is_dir, \
-         patch("pathlib.Path.open") as mock_open, \
-         patch("builtins.open") as mock_builtin_open:
-
+    with patch("pathlib.Path.exists") as mock_exists, patch(
+        "pathlib.Path.is_file"
+    ) as mock_is_file, patch("pathlib.Path.is_dir") as mock_is_dir, patch(
+        "pathlib.Path.open"
+    ) as mock_open, patch(
+        "builtins.open"
+    ) as mock_builtin_open:
         # Set default returns
         mock_exists.return_value = True
         mock_is_file.return_value = True
@@ -94,7 +95,7 @@ def mock_file_system() -> Generator[Dict[str, MagicMock], None, None]:
             "is_file": mock_is_file,
             "is_dir": mock_is_dir,
             "path_open": mock_open,
-            "builtin_open": mock_builtin_open
+            "builtin_open": mock_builtin_open,
         }
 
         yield mocks

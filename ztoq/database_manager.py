@@ -33,7 +33,6 @@ from ztoq.models import (
 
 logger = logging.getLogger(__name__)
 
-
 class DatabaseManager:
     """
     Manages SQL database operations for Zephyr test data.
@@ -439,8 +438,8 @@ class DatabaseManager:
                 INSERT OR REPLACE INTO projects (id, key, name, description)
                 VALUES (?, ?, ?, ?)
                 """,
-                    (project.id, project.key, project.name, project.description),
-                )
+                (project.id, project.key, project.name, project.description),
+            )
             conn.commit()
 
     def save_folder(self, folder: Folder, project_key: str) -> None:
@@ -458,8 +457,8 @@ class DatabaseManager:
                 INSERT OR REPLACE INTO folders (id, name, folder_type, parent_id, project_key)
                 VALUES (?, ?, ?, ?, ?)
                 """,
-                    (folder.id, folder.name, folder.folder_type, folder.parent_id, project_key),
-                )
+                (folder.id, folder.name, folder.folder_type, folder.parent_id, project_key),
+            )
             conn.commit()
 
     def save_status(self, status: Status, project_key: str) -> None:
@@ -477,15 +476,15 @@ class DatabaseManager:
                 INSERT OR REPLACE INTO statuses (id, name, description, color, type, project_key)
                 VALUES (?, ?, ?, ?, ?, ?)
                 """,
-                    (
+                (
                     status.id,
-                        status.name,
-                        status.description,
-                        status.color,
-                        status.type,
-                        project_key,
-                    ),
-                )
+                    status.name,
+                    status.description,
+                    status.color,
+                    status.type,
+                    project_key,
+                ),
+            )
             conn.commit()
 
     def save_priority(self, priority: Priority, project_key: str) -> None:
@@ -503,15 +502,15 @@ class DatabaseManager:
                 INSERT OR REPLACE INTO priorities (id, name, description, color, rank, project_key)
                 VALUES (?, ?, ?, ?, ?, ?)
                 """,
-                    (
+                (
                     priority.id,
-                        priority.name,
-                        priority.description,
-                        priority.color,
-                        priority.rank,
-                        project_key,
-                    ),
-                )
+                    priority.name,
+                    priority.description,
+                    priority.color,
+                    priority.rank,
+                    project_key,
+                ),
+            )
             conn.commit()
 
     def save_environment(self, environment: Environment, project_key: str) -> None:
@@ -529,8 +528,8 @@ class DatabaseManager:
                 INSERT OR REPLACE INTO environments (id, name, description, project_key)
                 VALUES (?, ?, ?, ?)
                 """,
-                    (environment.id, environment.name, environment.description, project_key),
-                )
+                (environment.id, environment.name, environment.description, project_key),
+            )
             conn.commit()
 
     def save_test_case(self, test_case: Case, project_key: str) -> None:
@@ -619,38 +618,38 @@ class DatabaseManager:
                     ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
                 )
                 """,
-                    (
+                (
                     test_case.id,
-                        test_case.key,
-                        test_case.name,
-                        test_case.objective,
-                        test_case.precondition,
-                        test_case.description,
-                        test_case.status,
-                        priority_id,
-                        test_case.priority_name,
-                        test_case.folder,
-                        test_case.folder_name,
-                        test_case.owner,
-                        test_case.owner_name,
-                        test_case.component,
-                        test_case.component_name,
-                        self._serialize_value(test_case.created_on),
-                        test_case.created_by,
-                        self._serialize_value(test_case.updated_on),
-                        test_case.updated_by,
-                        test_case.version,
-                        test_case.estimated_time,
-                        labels_json,
-                        steps_json,
-                        custom_fields_json,
-                        links_json,
-                        scripts_json,
-                        versions_json,
-                        attachments_json,
-                        project_key,
-                    ),
-                )
+                    test_case.key,
+                    test_case.name,
+                    test_case.objective,
+                    test_case.precondition,
+                    test_case.description,
+                    test_case.status,
+                    priority_id,
+                    test_case.priority_name,
+                    test_case.folder,
+                    test_case.folder_name,
+                    test_case.owner,
+                    test_case.owner_name,
+                    test_case.component,
+                    test_case.component_name,
+                    self._serialize_value(test_case.created_on),
+                    test_case.created_by,
+                    self._serialize_value(test_case.updated_on),
+                    test_case.updated_by,
+                    test_case.version,
+                    test_case.estimated_time,
+                    labels_json,
+                    steps_json,
+                    custom_fields_json,
+                    links_json,
+                    scripts_json,
+                    versions_json,
+                    attachments_json,
+                    project_key,
+                ),
+            )
             conn.commit()
 
     def save_test_cycle(self, test_cycle: CycleInfo, project_key: str) -> None:
@@ -697,27 +696,27 @@ class DatabaseManager:
                     ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
                 )
                 """,
-                    (
+                (
                     test_cycle.id,
-                        test_cycle.key,
-                        test_cycle.name,
-                        test_cycle.description,
-                        test_cycle.status,
-                        test_cycle.status_name,
-                        test_cycle.folder,
-                        test_cycle.folder_name,
-                        test_cycle.owner,
-                        test_cycle.owner_name,
-                        self._serialize_value(test_cycle.created_on),
-                        test_cycle.created_by,
-                        self._serialize_value(test_cycle.updated_on),
-                        test_cycle.updated_by,
-                        custom_fields_json,
-                        links_json,
-                        attachments_json,
-                        project_key,
-                    ),
-                )
+                    test_cycle.key,
+                    test_cycle.name,
+                    test_cycle.description,
+                    test_cycle.status,
+                    test_cycle.status_name,
+                    test_cycle.folder,
+                    test_cycle.folder_name,
+                    test_cycle.owner,
+                    test_cycle.owner_name,
+                    self._serialize_value(test_cycle.created_on),
+                    test_cycle.created_by,
+                    self._serialize_value(test_cycle.updated_on),
+                    test_cycle.updated_by,
+                    custom_fields_json,
+                    links_json,
+                    attachments_json,
+                    project_key,
+                ),
+            )
             conn.commit()
 
     def save_test_execution(self, test_execution: Execution, project_key: str) -> None:
@@ -774,31 +773,31 @@ class DatabaseManager:
                     ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
                 )
                 """,
-                    (
+                (
                     test_execution.id,
-                        test_execution.test_case_key,
-                        test_execution.cycle_id,
-                        test_execution.cycle_name,
-                        test_execution.status,
-                        test_execution.status_name,
-                        test_execution.environment,
-                        test_execution.environment_name,
-                        test_execution.executed_by,
-                        test_execution.executed_by_name,
-                        self._serialize_value(test_execution.executed_on),
-                        self._serialize_value(test_execution.created_on),
-                        test_execution.created_by,
-                        self._serialize_value(test_execution.updated_on),
-                        test_execution.updated_by,
-                        test_execution.actual_time,
-                        test_execution.comment,
-                        steps_json,
-                        custom_fields_json,
-                        links_json,
-                        attachments_json,
-                        project_key,
-                    ),
-                )
+                    test_execution.test_case_key,
+                    test_execution.cycle_id,
+                    test_execution.cycle_name,
+                    test_execution.status,
+                    test_execution.status_name,
+                    test_execution.environment,
+                    test_execution.environment_name,
+                    test_execution.executed_by,
+                    test_execution.executed_by_name,
+                    self._serialize_value(test_execution.executed_on),
+                    self._serialize_value(test_execution.created_on),
+                    test_execution.created_by,
+                    self._serialize_value(test_execution.updated_on),
+                    test_execution.updated_by,
+                    test_execution.actual_time,
+                    test_execution.comment,
+                    steps_json,
+                    custom_fields_json,
+                    links_json,
+                    attachments_json,
+                    project_key,
+                ),
+            )
             conn.commit()
 
     def save_project_data(
@@ -835,13 +834,13 @@ class DatabaseManager:
                     INSERT OR IGNORE INTO projects (id, key, name, description)
                     VALUES (?, ?, ?, ?)
                     """,
-                        (
+                    (
                         f"placeholder_{project_key}",
-                            project_key,
-                            f"Project {project_key}",
-                            f"Placeholder project for {project_key}",
-                        ),
-                    )
+                        project_key,
+                        f"Project {project_key}",
+                        f"Placeholder project for {project_key}",
+                    ),
+                )
                 conn.commit()
                 counts["project"] = 1
 
@@ -946,17 +945,17 @@ class DatabaseManager:
                 (id, name, description, scope, phase, level, enabled, created_on)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                 """,
-                    (
+                (
                     rule.id,
-                        rule.name,
-                        rule.description,
-                        rule.scope.value,
-                        rule.phase.value,
-                        rule.level.value,
-                        1,  # enabled by default
+                    rule.name,
+                    rule.description,
+                    rule.scope.value,
+                    rule.phase.value,
+                    rule.level.value,
+                    1,  # enabled by default
                     datetime.now().isoformat(),
-                    ),
-                )
+                ),
+            )
             conn.commit()
 
     def save_validation_issue(self, issue, project_key):
@@ -978,19 +977,19 @@ class DatabaseManager:
                     project_key, created_on, resolved)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
-                    (
+                (
                     issue.rule_id,
-                        issue.level.value,
-                        issue.message,
-                        issue.entity_id,
-                        issue.scope.value,
-                        issue.phase.value,
-                        context_json,
-                        project_key,
-                        datetime.now().isoformat(),
-                        0,  # not resolved
+                    issue.level.value,
+                    issue.message,
+                    issue.entity_id,
+                    issue.scope.value,
+                    issue.phase.value,
+                    context_json,
+                    project_key,
+                    datetime.now().isoformat(),
+                    0,  # not resolved
                 ),
-                )
+            )
             conn.commit()
             return cursor.lastrowid
 
@@ -1010,12 +1009,12 @@ class DatabaseManager:
                 SET resolved = 1, resolved_on = ?, resolution_note = ?
                 WHERE id = ?
                 """,
-                    (
+                (
                     datetime.now().isoformat(),
-                        resolution_note,
-                        issue_id,
-                    ),
-                )
+                    resolution_note,
+                    issue_id,
+                ),
+            )
             conn.commit()
 
     def save_validation_report(self, project_key, report):
@@ -1038,14 +1037,14 @@ class DatabaseManager:
                 (project_key, report_date, issue_counts, summary, details)
                 VALUES (?, ?, ?, ?, ?)
                 """,
-                    (
+                (
                     project_key,
-                        datetime.now().isoformat(),
-                        issue_counts_json,
-                        report.get("summary", "Validation report"),
-                        details_json,
-                    ),
-                )
+                    datetime.now().isoformat(),
+                    issue_counts_json,
+                    report.get("summary", "Validation report"),
+                    details_json,
+                ),
+            )
             conn.commit()
             return cursor.lastrowid
 
@@ -1116,8 +1115,8 @@ class DatabaseManager:
                 ORDER BY report_date DESC
                 LIMIT ?
                 """,
-                    (project_key, limit),
-                )
+                (project_key, limit),
+            )
 
             rows = cursor.fetchall()
 

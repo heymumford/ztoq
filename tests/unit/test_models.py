@@ -10,27 +10,26 @@ import pytest
 from pydantic import ValidationError
 from ztoq.models import (
     Attachment,
-        Case,
-        CaseStep,
-        CustomField,
-        Link,
-        PaginatedResponse,
-        Priority,
-        ZephyrConfig,
+    Case,
+    CaseStep,
+    CustomField,
+    Link,
+    PaginatedResponse,
+    Priority,
+    ZephyrConfig,
 )
 
+
 @pytest.mark.unit()
-
-
 class TestModels:
     def test_zephyr_config_validation(self):
         """Test ZephyrConfig validation."""
         # Valid config
         config = ZephyrConfig(
             base_url="https://api.zephyrscale.example.com/v2",
-                api_token="test-token",
-                project_key="TEST",
-            )
+            api_token="test-token",
+            project_key="TEST",
+        )
         assert config.base_url == "https://api.zephyrscale.example.com/v2"
         assert config.api_token == "test-token"
         assert config.project_key == "TEST"
@@ -44,11 +43,11 @@ class TestModels:
         # With all fields
         link = Link(
             id="123",
-                name="JIRA-123",
-                url="https://jira.example.com/browse/JIRA-123",
-                description="JIRA ticket",
-                type="issue",
-            )
+            name="JIRA-123",
+            url="https://jira.example.com/browse/JIRA-123",
+            description="JIRA ticket",
+            type="issue",
+        )
         assert link.id == "123"
         assert link.name == "JIRA-123"
         assert link.url == "https://jira.example.com/browse/JIRA-123"
@@ -68,24 +67,24 @@ class TestModels:
         # Create attachment
         attachment = Attachment(
             id="att1",
-                filename="screenshot.png",
-                contentType="image/png",
-                size=1024,
-                createdOn="2023-01-01T12:00:00",
-                createdBy="user123",
-            )
+            filename="screenshot.png",
+            contentType="image/png",
+            size=1024,
+            createdOn="2023-01-01T12:00:00",
+            createdBy="user123",
+        )
 
         # With all fields including attachments
         step = CaseStep(
             id="123",
-                index=1,
-                description="Do something",
-                expectedResult="See something",
-                data="Test data",
-                actualResult="Saw something",
-                status="Pass",
-                attachments=[attachment],
-            )
+            index=1,
+            description="Do something",
+            expectedResult="See something",
+            data="Test data",
+            actualResult="Saw something",
+            status="Pass",
+            attachments=[attachment],
+        )
         assert step.id == "123"
         assert step.index == 1
         assert step.description == "Do something"
@@ -116,47 +115,47 @@ class TestModels:
         steps = [
             CaseStep(
                 index=1,
-                    description="Step 1",
-                    expectedResult="Result 1",
-                    attachments=[step_attachment],
-                )
+                description="Step 1",
+                expectedResult="Result 1",
+                attachments=[step_attachment],
+            )
         ]
 
         # Create different types of custom fields
         custom_fields = [
             CustomField(id="cf1", name="Text Field", type="text", value="Text value"),
-                CustomField(id="cf2", name="Checkbox", type="checkbox", value=True),
-                CustomField(id="cf3", name="Dropdown", type="dropdown", value="Option 1"),
-                CustomField(
+            CustomField(id="cf2", name="Checkbox", type="checkbox", value=True),
+            CustomField(id="cf3", name="Dropdown", type="dropdown", value="Option 1"),
+            CustomField(
                 id="cf4",
-                    name="Multiple Select",
-                    type="multipleSelect",
-                    value=["Option 1", "Option 2"],
-                ),
-                CustomField(id="cf5", name="Numeric", type="numeric", value=123),
-            ]
+                name="Multiple Select",
+                type="multipleSelect",
+                value=["Option 1", "Option 2"],
+            ),
+            CustomField(id="cf5", name="Numeric", type="numeric", value=123),
+        ]
 
         # Create case attachment
         case_attachment = Attachment(
             id="att2",
-                filename="requirements.pdf",
-                contentType="application/pdf",
-                size=2048,
-                createdOn=datetime.now(),
-            )
+            filename="requirements.pdf",
+            contentType="application/pdf",
+            size=2048,
+            createdOn=datetime.now(),
+        )
 
         test_case = Case(
             id="tc1",
-                key="TEST-TC-1",
-                name="Case 1",
-                status="Draft",
-                priority=priority,
-                steps=steps,
-                custom_fields=custom_fields,
-                labels=["regression", "smoke"],
-                created_on=datetime.now(),
-                attachments=[case_attachment],
-            )
+            key="TEST-TC-1",
+            name="Case 1",
+            status="Draft",
+            priority=priority,
+            steps=steps,
+            custom_fields=custom_fields,
+            labels=["regression", "smoke"],
+            created_on=datetime.now(),
+            attachments=[case_attachment],
+        )
 
         assert test_case.id == "tc1"
         assert test_case.key == "TEST-TC-1"
@@ -198,10 +197,10 @@ class TestModels:
         # Basic attachment
         attachment = Attachment(
             id="att1",
-                filename="document.pdf",
-                contentType="application/pdf",
-                size=1024,
-            )
+            filename="document.pdf",
+            contentType="application/pdf",
+            size=1024,
+        )
         assert attachment.id == "att1"
         assert attachment.filename == "document.pdf"
         assert attachment.content_type == "application/pdf"
@@ -224,11 +223,11 @@ class TestModels:
         """Test PaginatedResponse model."""
         response = PaginatedResponse(
             totalCount=100,
-                startAt=0,
-                maxResults=50,
-                isLast=False,
-                values=[{"id": "1", "name": "Item 1"}, {"id": "2", "name": "Item 2"}],
-            )
+            startAt=0,
+            maxResults=50,
+            isLast=False,
+            values=[{"id": "1", "name": "Item 1"}, {"id": "2", "name": "Item 2"}],
+        )
 
         assert response.total_count == 100
         assert response.start_at == 0

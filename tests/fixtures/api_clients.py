@@ -45,7 +45,7 @@ def zephyr_config() -> ZephyrConfig:
     return ZephyrConfig(
         base_url="https://api.zephyrscale.example.com/v2",
         api_token="test-token",
-        project_key="TEST"
+        project_key="TEST",
     )
 
 
@@ -64,7 +64,7 @@ def qtest_config() -> QTestConfig:
         base_url="https://api.qtest.example.com",
         username="test-user",
         password="test-password",
-        project_id=12345
+        project_id=12345,
     )
 
 
@@ -84,7 +84,7 @@ def mock_zephyr_client() -> MagicMock:
     # Mock common methods
     mock.get_projects.return_value = [
         MagicMock(id="1001", key="PROJ1", name="Project One"),
-        MagicMock(id="1002", key="PROJ2", name="Project Two")
+        MagicMock(id="1002", key="PROJ2", name="Project Two"),
     ]
 
     mock.get_test_cases.return_value = MagicMock()
@@ -110,7 +110,7 @@ def mock_qtest_client() -> MagicMock:
     # Mock common methods
     mock.get_projects.return_value = [
         MagicMock(id=1001, name="Project One"),
-        MagicMock(id=1002, name="Project Two")
+        MagicMock(id=1002, name="Project Two"),
     ]
 
     mock.get_test_cases.return_value = MagicMock()
@@ -138,7 +138,7 @@ def patch_zephyr_client() -> Generator[MagicMock, None, None]:
         # Setup default return values for common methods
         mock_instance.get_projects.return_value = [
             MagicMock(id="1001", key="PROJ1", name="Project One"),
-            MagicMock(id="1002", key="PROJ2", name="Project Two")
+            MagicMock(id="1002", key="PROJ2", name="Project Two"),
         ]
 
         mock_instance.get_test_cases.return_value = MagicMock()
@@ -169,7 +169,7 @@ def patch_qtest_client() -> Generator[MagicMock, None, None]:
         # Setup default return values for common methods
         mock_instance.get_projects.return_value = [
             MagicMock(id=1001, name="Project One"),
-            MagicMock(id=1002, name="Project Two")
+            MagicMock(id=1002, name="Project Two"),
         ]
 
         mock_instance.get_test_cases.return_value = MagicMock()
@@ -207,9 +207,9 @@ def zephyr_client_with_mock_api(zephyr_config: ZephyrConfig) -> Generator[Zephyr
         {
             "values": [
                 {"id": "1001", "key": "TEST", "name": "Test Project"},
-                {"id": "1002", "key": "DEMO", "name": "Demo Project"}
+                {"id": "1002", "key": "DEMO", "name": "Demo Project"},
             ]
-        }
+        },
     )
 
     harness.add_response(
@@ -233,9 +233,9 @@ def zephyr_client_with_mock_api(zephyr_config: ZephyrConfig) -> Generator[Zephyr
                             "id": "S-1",
                             "index": 1,
                             "description": "Step 1",
-                            "expectedResult": "Expected 1"
+                            "expectedResult": "Expected 1",
                         }
-                    ]
+                    ],
                 },
                 {
                     "id": "TC-2",
@@ -244,10 +244,10 @@ def zephyr_client_with_mock_api(zephyr_config: ZephyrConfig) -> Generator[Zephyr
                     "status": "Active",
                     "folder": {"id": "F-1", "name": "Test Folder"},
                     "priority": {"id": "P-2", "name": "Medium"},
-                    "steps": []
-                }
-            ]
-        }
+                    "steps": [],
+                },
+            ],
+        },
     )
 
     # Start the mock patching
@@ -279,11 +279,7 @@ def qtest_client_with_mock_api(qtest_config: QTestConfig) -> Generator[QTestClie
     harness.add_response(
         "POST",
         "/oauth/token",
-        {
-            "access_token": "mock-token",
-            "token_type": "bearer",
-            "expires_in": 3600
-        }
+        {"access_token": "mock-token", "token_type": "bearer", "expires_in": 3600},
     )
 
     harness.add_response(
@@ -293,11 +289,8 @@ def qtest_client_with_mock_api(qtest_config: QTestConfig) -> Generator[QTestClie
             "total": 2,
             "page": 1,
             "pageSize": 50,
-            "items": [
-                {"id": 12345, "name": "Test Project"},
-                {"id": 67890, "name": "Demo Project"}
-            ]
-        }
+            "items": [{"id": 12345, "name": "Test Project"}, {"id": 67890, "name": "Demo Project"}],
+        },
     )
 
     harness.add_response(
@@ -315,12 +308,8 @@ def qtest_client_with_mock_api(qtest_config: QTestConfig) -> Generator[QTestClie
                     "description": "Test case description",
                     "module_id": 2001,
                     "test_steps": [
-                        {
-                            "description": "Step 1",
-                            "expectedResult": "Expected 1",
-                            "order": 1
-                        }
-                    ]
+                        {"description": "Step 1", "expectedResult": "Expected 1", "order": 1}
+                    ],
                 },
                 {
                     "id": 1002,
@@ -328,10 +317,10 @@ def qtest_client_with_mock_api(qtest_config: QTestConfig) -> Generator[QTestClie
                     "pid": "TC-2",
                     "description": "Test case description",
                     "module_id": 2001,
-                    "test_steps": []
-                }
-            ]
-        }
+                    "test_steps": [],
+                },
+            ],
+        },
     )
 
     # Start the mock patching
@@ -353,12 +342,13 @@ def mock_response_factory() -> callable:
     Returns:
         callable: Function to create mock responses
     """
+
     def _create_response(
         status_code: int = 200,
         json_data: Optional[Dict[str, Any]] = None,
         headers: Optional[Dict[str, str]] = None,
         content: Optional[Union[str, bytes]] = None,
-        raise_for_status: bool = True
+        raise_for_status: bool = True,
     ) -> MagicMock:
         """
         Create a mock HTTP response.
@@ -409,4 +399,3 @@ def mock_response_factory() -> callable:
         return mock
 
     return _create_response
-

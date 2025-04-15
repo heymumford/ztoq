@@ -5,5 +5,4 @@ See LICENSE file for details.
 """
 
 
-
 # Core module

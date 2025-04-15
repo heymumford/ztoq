@@ -16,15 +16,11 @@ from tests.fixtures.base import (
     temp_file,
     temp_db_path,
     mock_response,
-    mock_requests_session
+    mock_requests_session,
 )
 
 # Import unit test fixtures
-from tests.fixtures.unit import (
-    mock_db_connection,
-    mock_db_cursor,
-    mock_file_system
-)
+from tests.fixtures.unit import mock_db_connection, mock_db_cursor, mock_file_system
 
 # Import integration test fixtures
 from tests.fixtures.integration import (
@@ -32,16 +28,11 @@ from tests.fixtures.integration import (
     sqlite_memory_connection,
     sqlite_file_engine,
     mock_external_api,
-    test_data_dir
+    test_data_dir,
 )
 
 # Import system test fixtures
-from tests.fixtures.system import (
-    skip_if_no_docker,
-    docker_compose_env,
-    cli_runner,
-    run_cli_command
-)
+from tests.fixtures.system import skip_if_no_docker, docker_compose_env, cli_runner, run_cli_command
 
 
 def pytest_configure(config):

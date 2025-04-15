@@ -18,9 +18,15 @@ import unittest.mock
 import pytest
 
 from ztoq.batch_strategies import (
-    BatchStrategy, SizeBatchStrategy, TimeBatchStrategy, AdaptiveBatchStrategy,
-    EntityTypeBatchStrategy, SimilarityBatchStrategy, configure_optimal_batch_size,
-    create_batches, estimate_processing_time,
+    BatchStrategy,
+    SizeBatchStrategy,
+    TimeBatchStrategy,
+    AdaptiveBatchStrategy,
+    EntityTypeBatchStrategy,
+    SimilarityBatchStrategy,
+    configure_optimal_batch_size,
+    create_batches,
+    estimate_processing_time,
 )
 
 # Mark the whole module as unit tests
@@ -74,7 +80,7 @@ def test_time_batch_strategy():
 
     strategy = TimeBatchStrategy(
         time_estimator=mock_time_estimator,
-        max_batch_time=1.0  # 1 second max processing time per batch
+        max_batch_time=1.0,  # 1 second max processing time per batch
     )
 
     batches = strategy.create_batches(entities)
@@ -115,7 +121,7 @@ def test_adaptive_batch_strategy():
         min_batch_size=5,
         max_batch_size=30,
         target_processing_time=0.5,  # 0.5 seconds target
-        adaptation_rate=0.2  # Adjust batch size by 20% each time
+        adaptation_rate=0.2,  # Adjust batch size by 20% each time
     )
 
     # Process several batches of entities to allow adaptation
@@ -141,12 +147,14 @@ def test_adaptive_batch_strategy():
     # If processing time is above target, batch size should decrease
     # If processing time is below target, batch size should increase
     for i in range(1, len(processing_times)):
-        batch_size, time = processing_times[i-1]
+        batch_size, time = processing_times[i - 1]
         next_batch_size = strategy.adapt_batch_size(batch_size, time)
 
         if time > 0.5:  # Above target -> smaller batches
             assert next_batch_size <= batch_size
-        elif time < 0.5 and batch_size < strategy.max_batch_size:  # Below target -> larger batches if not at max
+        elif (
+            time < 0.5 and batch_size < strategy.max_batch_size
+        ):  # Below target -> larger batches if not at max
             assert next_batch_size >= batch_size
         else:  # On target or at limits -> same or limited size
             assert next_batch_size <= strategy.max_batch_size
@@ -188,9 +196,7 @@ def test_similarity_batch_strategy():
         )
 
     strategy = SimilarityBatchStrategy(
-        feature_extractor=extract_features,
-        similarity_threshold=0.8,
-        max_batch_size=20
+        feature_extractor=extract_features, similarity_threshold=0.8, max_batch_size=20
     )
 
     batches = strategy.create_batches(entities)
@@ -215,7 +221,7 @@ def test_similarity_batch_strategy():
             features = extract_features(entity)
             # Calculate Euclidean distance (simple similarity metric)
             squared_diffs = sum((a - b) ** 2 for a, b in zip(first_features, features))
-            distance = squared_diffs ** 0.5
+            distance = squared_diffs**0.5
             # Convert to similarity (1 - normalized distance)
             # Max possible distance in 3D space with normalized 0-1 values is sqrt(3)
             similarity = 1 - distance / 3**0.5
@@ -237,7 +243,7 @@ def test_configure_optimal_batch_size():
         available_memory=available_memory,
         entity_size_mb=entity_size,
         parallelism=parallelism,
-        api_rate_limit=None
+        api_rate_limit=None,
     )
 
     # Batch size should be constrained by available memory divided by parallelism
@@ -251,7 +257,7 @@ def test_configure_optimal_batch_size():
         available_memory=10000,  # Large memory to not be the constraint
         entity_size_mb=entity_size,
         parallelism=parallelism,
-        api_rate_limit=100  # 100 requests per minute
+        api_rate_limit=100,  # 100 requests per minute
     )
 
     # With rate limit of 100/minute and 4 workers, each worker should handle 25/minute
@@ -330,10 +336,7 @@ def test_combined_strategies():
     type_strategy = EntityTypeBatchStrategy(type_extractor=extract_type)
     type_batches = type_strategy.create_batches(entities)
 
-    time_strategy = TimeBatchStrategy(
-        time_estimator=mock_time_estimator,
-        max_batch_time=1.0
-    )
+    time_strategy = TimeBatchStrategy(time_estimator=mock_time_estimator, max_batch_time=1.0)
 
     all_batches = []
     for type_batch in type_batches:
@@ -370,13 +373,15 @@ def test_adaptive_learning_over_time():
     entities = []
     for i in range(100):
         complexity = (i // 10) + 1  # Creates groups with same complexity
-        entities.append({
-            "id": f"TC-{i}",
-            "complexity": complexity,
-            "steps_count": 5,
-            "size": 5,
-            "type": "functional",
-        })
+        entities.append(
+            {
+                "id": f"TC-{i}",
+                "complexity": complexity,
+                "steps_count": 5,
+                "size": 5,
+                "type": "functional",
+            }
+        )
 
     random.shuffle(entities)  # Shuffle to ensure no inherent order
 
@@ -385,7 +390,7 @@ def test_adaptive_learning_over_time():
         min_batch_size=2,
         max_batch_size=50,
         target_processing_time=0.5,
-        adaptation_rate=0.2
+        adaptation_rate=0.2,
     )
 
     # Mock process function that simulates processing time based on complexity
@@ -409,11 +414,13 @@ def test_adaptive_learning_over_time():
         processing_time = mock_process(batch)
         throughput = len(batch) / processing_time if processing_time > 0 else 0
 
-        processing_metrics.append({
-            "batch_size": batch_size,
-            "time": processing_time,
-            "throughput": throughput,
-        })
+        processing_metrics.append(
+            {
+                "batch_size": batch_size,
+                "time": processing_time,
+                "throughput": throughput,
+            }
+        )
 
         strategy.adapt(processing_time)
 
@@ -435,9 +442,10 @@ def test_performance_measurement():
     strategies = [
         ("fixed_size", lambda e: create_batches(e, batch_size=batch_size)),
         ("size_based", lambda e: SizeBatchStrategy(max_batch_size=100).create_batches(e)),
-        ("type_based", lambda e: EntityTypeBatchStrategy(
-            lambda entity: entity["type"]
-        ).create_batches(e)),
+        (
+            "type_based",
+            lambda e: EntityTypeBatchStrategy(lambda entity: entity["type"]).create_batches(e),
+        ),
     ]
 
     # Simple "processing" function that simulates workload

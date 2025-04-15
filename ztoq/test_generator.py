@@ -110,14 +110,14 @@ class ZephyrTestGenerator:
         # These endpoints typically return entities with custom fields
         entity_patterns = [
             "/testcases",
-                "/testexecutions",
-                "/testcycles",
-                "/testplans",
-                "/testcase",
-                "/testexecution",
-                "/testcycle",
-                "/testplan",
-            ]
+            "/testexecutions",
+            "/testcycles",
+            "/testplans",
+            "/testcase",
+            "/testexecution",
+            "/testcycle",
+            "/testplan",
+        ]
 
         # Check if path appears to be an entity endpoint
         return any(pattern in path.lower() for pattern in entity_patterns)
@@ -134,11 +134,11 @@ class ZephyrTestGenerator:
         # These endpoints typically support attachments
         attachment_patterns = [
             "/attachment",
-                "/attachments",
-                "/testcases/",
-                "/testexecutions/",
-                "/teststeps/",
-            ]
+            "/attachments",
+            "/testcases/",
+            "/testexecutions/",
+            "/teststeps/",
+        ]
 
         # Check if path appears to support attachments
         return any(pattern in path.lower() for pattern in attachment_patterns)
@@ -176,16 +176,16 @@ class ZephyrTestGenerator:
         # Generate tests for each custom field type
         field_types = [
             "text",
-                "paragraph",
-                "checkbox",
-                "radio",
-                "dropdown",
-                "multipleSelect",
-                "date",
-                "datetime",
-                "numeric",
-                "table",
-            ]
+            "paragraph",
+            "checkbox",
+            "radio",
+            "dropdown",
+            "multipleSelect",
+            "date",
+            "datetime",
+            "numeric",
+            "table",
+        ]
 
         for field_type in field_types:
             # Create valid custom field test
@@ -195,13 +195,13 @@ class ZephyrTestGenerator:
 
             valid_test = {
                 "name": f"test_{operation_id}_valid_{field_type}_customfield",
-                    "description": f"Test {method.upper()} {path} with valid {field_type} custom field",
-                    "path": path,
-                    "method": method,
-                    "request_data": valid_test_data,
-                    "expected_status": 200 if method.lower() == "get" else 201,
-                    "validate_schema": True,
-                }
+                "description": f"Test {method.upper()} {path} with valid {field_type} custom field",
+                "path": path,
+                "method": method,
+                "request_data": valid_test_data,
+                "expected_status": 200 if method.lower() == "get" else 201,
+                "validate_schema": True,
+            }
             tests.append(valid_test)
 
             # Create invalid custom field test (for types with validation)
@@ -212,34 +212,34 @@ class ZephyrTestGenerator:
 
                 invalid_test = {
                     "name": f"test_{operation_id}_invalid_{field_type}_customfield",
-                        "description": f"Test {method.upper()} {path} with invalid {field_type} custom field",
-                        "path": path,
-                        "method": method,
-                        "request_data": invalid_test_data,
-                        "expected_status": 400,
-                        "validate_schema": False,
-                    }
+                    "description": f"Test {method.upper()} {path} with invalid {field_type} custom field",
+                    "path": path,
+                    "method": method,
+                    "request_data": invalid_test_data,
+                    "expected_status": 400,
+                    "validate_schema": False,
+                }
                 tests.append(invalid_test)
 
         # Test for missing custom field type
         missing_type_cf = {
             "id": "cf-missing-type",
-                "name": "Missing Type Field",
-                # missing "type" field
+            "name": "Missing Type Field",
+            # missing "type" field
             "value": "Some value",
-            }
+        }
         missing_type_data = base_data.copy()
         missing_type_data["customFields"] = [missing_type_cf]
 
         missing_type_test = {
             "name": f"test_{operation_id}_missing_customfield_type",
-                "description": f"Test {method.upper()} {path} with missing custom field type",
-                "path": path,
-                "method": method,
-                "request_data": missing_type_data,
-                "expected_status": 400,
-                "validate_schema": False,
-            }
+            "description": f"Test {method.upper()} {path} with missing custom field type",
+            "path": path,
+            "method": method,
+            "request_data": missing_type_data,
+            "expected_status": 400,
+            "validate_schema": False,
+        }
         tests.append(missing_type_test)
 
         return tests
@@ -256,9 +256,9 @@ class ZephyrTestGenerator:
         """
         field = {
             "id": f"cf-{field_type}-1",
-                "name": "{field_type.capitalize()} Field",
-                "type": field_type,
-            }
+            "name": "{field_type.capitalize()} Field",
+            "type": field_type,
+        }
 
         # Set valid or invalid value based on type
         if field_type == "text" or field_type == "paragraph":
@@ -305,73 +305,73 @@ class ZephyrTestGenerator:
         # Test uploading different file types
         file_types = [
             {"name": "text", "filename": "test.txt", "content_type": "text/plain"},
-                {"name": "image", "filename": "test.png", "content_type": "image/png"},
-                {"name": "pd", "filename": "test.pd", "content_type": "application/pdf"},
-                {"name": "binary", "filename": "test.bin", "content_type": "application/octet-stream"},
-            ]
+            {"name": "image", "filename": "test.png", "content_type": "image/png"},
+            {"name": "pd", "filename": "test.pd", "content_type": "application/pdf"},
+            {"name": "binary", "filename": "test.bin", "content_type": "application/octet-stream"},
+        ]
 
         for file_type in file_types:
             attachment_test = {
                 "name": f"test_{operation_id}_upload_{file_type['name']}_attachment",
-                    "description": f"Test {method.upper()} {path} with {file_type['name']} attachment",
-                    "path": path,
-                    "method": method,
-                    "file_upload": {
+                "description": f"Test {method.upper()} {path} with {file_type['name']} attachment",
+                "path": path,
+                "method": method,
+                "file_upload": {
                     "filename": file_type["filename"],
-                        "content_type": file_type["content_type"],
-                        "content": base64.b64encode(
+                    "content_type": file_type["content_type"],
+                    "content": base64.b64encode(
                         f"Mock {file_type['name']} content".encode()
                     ).decode("utf-8"),
-                    },
-                    "expected_status": 201 if method.lower() == "post" else 200,
-                    "validate_schema": True,
-                }
+                },
+                "expected_status": 201 if method.lower() == "post" else 200,
+                "validate_schema": True,
+            }
             tests.append(attachment_test)
 
         # Test uploading with invalid content type
         invalid_type_test = {
             "name": f"test_{operation_id}_invalid_content_type",
-                "description": f"Test {method.upper()} {path} with invalid content type",
-                "path": path,
-                "method": method,
-                "file_upload": {
+            "description": f"Test {method.upper()} {path} with invalid content type",
+            "path": path,
+            "method": method,
+            "file_upload": {
                 "filename": "test.txt",
-                    "content_type": "invalid/content-type",
-                    "content": base64.b64encode(b"Invalid content type test").decode("utf-8"),
-                },
-                "expected_status": 400,
-                "validate_schema": False,
-            }
+                "content_type": "invalid/content-type",
+                "content": base64.b64encode(b"Invalid content type test").decode("utf-8"),
+            },
+            "expected_status": 400,
+            "validate_schema": False,
+        }
         tests.append(invalid_type_test)
 
         # Test uploading empty file
         empty_file_test = {
             "name": f"test_{operation_id}_empty_file",
-                "description": f"Test {method.upper()} {path} with empty file",
-                "path": path,
-                "method": method,
-                "file_upload": {"filename": "empty.txt", "content_type": "text/plain", "content": ""},
-                "expected_status": 400,
-                "validate_schema": False,
-            }
+            "description": f"Test {method.upper()} {path} with empty file",
+            "path": path,
+            "method": method,
+            "file_upload": {"filename": "empty.txt", "content_type": "text/plain", "content": ""},
+            "expected_status": 400,
+            "validate_schema": False,
+        }
         tests.append(empty_file_test)
 
         # Test attachment on test step if it's a test step endpoint
         if "/teststeps/" in path or "/steps/" in path:
             step_attachment_test = {
                 "name": f"test_{operation_id}_step_attachment",
-                    "description": f"Test {method.upper()} {path} with step attachment",
-                    "path": path,
-                    "method": method,
-                    "file_upload": {
+                "description": f"Test {method.upper()} {path} with step attachment",
+                "path": path,
+                "method": method,
+                "file_upload": {
                     "filename": "step_attachment.png",
-                        "content_type": "image/png",
-                        "content": base64.b64encode(b"Step attachment content").decode("utf-8"),
-                        "step_id": "step-1",  # Assuming step ID is needed
+                    "content_type": "image/png",
+                    "content": base64.b64encode(b"Step attachment content").decode("utf-8"),
+                    "step_id": "step-1",  # Assuming step ID is needed
                 },
-                    "expected_status": 201 if method.lower() == "post" else 200,
-                    "validate_schema": True,
-                }
+                "expected_status": 201 if method.lower() == "post" else 200,
+                "validate_schema": True,
+            }
             tests.append(step_attachment_test)
 
         return tests
@@ -410,14 +410,14 @@ class ZephyrTestGenerator:
 
         return {
             "name": f"test_{operation_id}_happy_path",
-                "description": f"Test happy path for {method.upper()} {path}",
-                "path": path,
-                "method": method,
-                "request_data": request_data,
-                "params": params,
-                "expected_status": 200,
-                "validate_schema": True,
-            }
+            "description": f"Test happy path for {method.upper()} {path}",
+            "path": path,
+            "method": method,
+            "request_data": request_data,
+            "params": params,
+            "expected_status": 200,
+            "validate_schema": True,
+        }
 
     def _generate_parameter_tests(self, path: str, method: str) -> list[dict[str, Any]]:
         """Generate tests for endpoint parameters.
@@ -445,13 +445,13 @@ class ZephyrTestGenerator:
             param_name = param.get("name")
             test = {
                 "name": f"test_{operation_id}_missing_{param_name}",
-                    "description": f"Test {method.upper()} {path} with missing required parameter: {param_name}",
-                    "path": path,
-                    "method": method,
-                    "params": {},  # Will populate with all except the missing one
+                "description": f"Test {method.upper()} {path} with missing required parameter: {param_name}",
+                "path": path,
+                "method": method,
+                "params": {},  # Will populate with all except the missing one
                 "expected_status": 400,  # Assuming 400 for missing required param
                 "validate_schema": False,
-                }
+            }
 
             # Add all other required parameters
             for other_param in required_params:
@@ -476,13 +476,13 @@ class ZephyrTestGenerator:
                 # Test with invalid enum value
                 test = {
                     "name": f"test_{operation_id}_invalid_{param_name}",
-                        "description": f"Test {method.upper()} {path} with invalid enum value for {param_name}",
-                        "path": path,
-                        "method": method,
-                        "params": {param_name: "INVALID_VALUE"},
-                        "expected_status": 400,
-                        "validate_schema": False,
-                    }
+                    "description": f"Test {method.upper()} {path} with invalid enum value for {param_name}",
+                    "path": path,
+                    "method": method,
+                    "params": {param_name: "INVALID_VALUE"},
+                    "expected_status": 400,
+                    "validate_schema": False,
+                }
                 tests.append(test)
 
             elif param_type in ["integer", "number"]:
@@ -491,26 +491,26 @@ class ZephyrTestGenerator:
                     min_val = param_schema["minimum"]
                     test = {
                         "name": f"test_{operation_id}_{param_name}_below_minimum",
-                            "description": f"Test {method.upper()} {path} with {param_name} below minimum",
-                            "path": path,
-                            "method": method,
-                            "params": {param_name: min_val - 1},
-                            "expected_status": 400,
-                            "validate_schema": False,
-                        }
+                        "description": f"Test {method.upper()} {path} with {param_name} below minimum",
+                        "path": path,
+                        "method": method,
+                        "params": {param_name: min_val - 1},
+                        "expected_status": 400,
+                        "validate_schema": False,
+                    }
                     tests.append(test)
 
                 if "maximum" in param_schema:
                     max_val = param_schema["maximum"]
                     test = {
                         "name": f"test_{operation_id}_{param_name}_above_maximum",
-                            "description": f"Test {method.upper()} {path} with {param_name} above maximum",
-                            "path": path,
-                            "method": method,
-                            "params": {param_name: max_val + 1},
-                            "expected_status": 400,
-                            "validate_schema": False,
-                        }
+                        "description": f"Test {method.upper()} {path} with {param_name} above maximum",
+                        "path": path,
+                        "method": method,
+                        "params": {param_name: max_val + 1},
+                        "expected_status": 400,
+                        "validate_schema": False,
+                    }
                     tests.append(test)
 
         return tests
@@ -540,12 +540,12 @@ class ZephyrTestGenerator:
             response = responses[status_code]
             test = {
                 "name": f"test_{operation_id}_response_{status_code}",
-                    "description": f"Test {method.upper()} {path} with {status_code} response: {response.get('description', '')}",
-                    "path": path,
-                    "method": method,
-                    "expected_status": int(status_code),
-                    "validate_schema": True,
-                }
+                "description": f"Test {method.upper()} {path} with {status_code} response: {response.get('description', '')}",
+                "path": path,
+                "method": method,
+                "expected_status": int(status_code),
+                "validate_schema": True,
+            }
 
             # Add specific test setup based on status code
             if status_code.startswith("4"):
@@ -597,13 +597,13 @@ class ZephyrTestGenerator:
 
                     test = {
                         "name": f"test_{operation_id}_missing_{prop}",
-                            "description": f"Test {method.upper()} {path} with missing required property: {prop}",
-                            "path": path,
-                            "method": method,
-                            "request_data": invalid_data,
-                            "expected_status": 400,
-                            "validate_schema": False,
-                        }
+                        "description": f"Test {method.upper()} {path} with missing required property: {prop}",
+                        "path": path,
+                        "method": method,
+                        "request_data": invalid_data,
+                        "expected_status": 400,
+                        "validate_schema": False,
+                    }
                     tests.append(test)
 
             # For each property, generate tests with invalid types
@@ -628,13 +628,13 @@ class ZephyrTestGenerator:
 
                 test = {
                     "name": f"test_{operation_id}_invalid_{prop}_type",
-                        "description": f"Test {method.upper()} {path} with invalid type for {prop}",
-                        "path": path,
-                        "method": method,
-                        "request_data": invalid_data,
-                        "expected_status": 400,
-                        "validate_schema": False,
-                    }
+                    "description": f"Test {method.upper()} {path} with invalid type for {prop}",
+                    "path": path,
+                    "method": method,
+                    "request_data": invalid_data,
+                    "expected_status": 400,
+                    "validate_schema": False,
+                }
                 tests.append(test)
 
         return tests
@@ -834,30 +834,30 @@ class ZephyrTestGenerator:
         # Start with imports and fixtures
         lines = [
             "import pytest",
-                "import requests",
-                "from pathlib import Path",
-                "from typing import Dict, Any, List",
-                "",
-                "from ztoq.models import ZephyrConfig",
-                "from ztoq.zephyr_client import ZephyrClient",
-                "",
-                "",
-                "@pytest.fixture",
-                "def zephyr_client():",
-                '    """Create a Zephyr client for testing."""',
-                "    config = ZephyrConfig(",
-                "        base_url='https://api.zephyrscale.smartbear.com/v2',",
-                "        api_token='test-token',",
-                "        project_key='TEST'",
-                "    )",
-                "    client = ZephyrClient.from_openapi_spec(",
-                "        Path('docs/specs/z-openapi.yml'),",
-                "        config,",
-                "        log_level='DEBUG'",
-                "    )",
-                "    return client",
-                "",
-            ]
+            "import requests",
+            "from pathlib import Path",
+            "from typing import Dict, Any, List",
+            "",
+            "from ztoq.models import ZephyrConfig",
+            "from ztoq.zephyr_client import ZephyrClient",
+            "",
+            "",
+            "@pytest.fixture",
+            "def zephyr_client():",
+            '    """Create a Zephyr client for testing."""',
+            "    config = ZephyrConfig(",
+            "        base_url='https://api.zephyrscale.smartbear.com/v2',",
+            "        api_token='test-token',",
+            "        project_key='TEST'",
+            "    )",
+            "    client = ZephyrClient.from_openapi_spec(",
+            "        Path('docs/specs/z-openapi.yml'),",
+            "        config,",
+            "        log_level='DEBUG'",
+            "    )",
+            "    return client",
+            "",
+        ]
 
         # Add test functions
         for _endpoint_id, tests in test_suite.items():

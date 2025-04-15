@@ -17,19 +17,19 @@ from datetime import datetime
 from typing import Any
 from sqlalchemy import (
     Boolean,
-        Column,
-        DateTime,
-        Enum,
-        Float,
-        ForeignKey,
-        Index,
-        Integer,
-        JSON,
-        LargeBinary,
-        String,
-        Table,
-        Text,
-        UniqueConstraint,
+    Column,
+    DateTime,
+    Enum,
+    Float,
+    ForeignKey,
+    Index,
+    Integer,
+    JSON,
+    LargeBinary,
+    String,
+    Table,
+    Text,
+    UniqueConstraint,
 )
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
@@ -51,18 +51,18 @@ class EntityType(enum.Enum):
 # Association tables for many-to-many relationships
 case_label_association = Table(
     "case_label_association",
-        Base.metadata,
-        Column("test_case_id", String(50), ForeignKey("test_cases.id", ondelete="CASCADE")),
-        Column("label_id", String(50), ForeignKey("labels.id", ondelete="CASCADE")),
-        Index("idx_case_label", "test_case_id", "label_id"),
+    Base.metadata,
+    Column("test_case_id", String(50), ForeignKey("test_cases.id", ondelete="CASCADE")),
+    Column("label_id", String(50), ForeignKey("labels.id", ondelete="CASCADE")),
+    Index("idx_case_label", "test_case_id", "label_id"),
 )
 
 case_version_association = Table(
     "case_version_association",
-        Base.metadata,
-        Column("test_case_id", String(50), ForeignKey("test_cases.id", ondelete="CASCADE")),
-        Column("version_id", String(50), ForeignKey("case_versions.id", ondelete="CASCADE")),
-        Index("idx_case_version", "test_case_id", "version_id"),
+    Base.metadata,
+    Column("test_case_id", String(50), ForeignKey("test_cases.id", ondelete="CASCADE")),
+    Column("version_id", String(50), ForeignKey("case_versions.id", ondelete="CASCADE")),
+    Index("idx_case_version", "test_case_id", "version_id"),
 )
 
 
@@ -112,8 +112,8 @@ class Folder(Base):
     # Indexes
     __table_args__ = (
         Index("idx_folder_project", "project_key"),
-            Index("idx_folder_parent", "parent_id"),
-        )
+        Index("idx_folder_parent", "parent_id"),
+    )
 
     def __repr__(self):
         return f"<Folder(id='{self.id}', name='{self.name}', type='{self.folder_type}')>"
@@ -160,8 +160,8 @@ class Priority(Base):
     # Indexes
     __table_args__ = (
         Index("idx_priority_project", "project_key"),
-            Index("idx_priority_rank", "rank"),
-        )
+        Index("idx_priority_rank", "rank"),
+    )
 
     def __repr__(self):
         return f"<Priority(name='{self.name}', rank={self.rank})>"
@@ -249,8 +249,8 @@ class CustomFieldValue(Base):
     # Indexes
     __table_args__ = (
         Index("idx_custom_field_value_entity", "entity_type", "entity_id"),
-            Index("idx_custom_field_value_field", "field_id"),
-        )
+        Index("idx_custom_field_value_field", "field_id"),
+    )
 
     def __repr__(self):
         return f"<CustomFieldValue(field_id='{self.field_id}', entity='{self.entity_type.value}:{self.entity_id}')>"
@@ -371,9 +371,9 @@ class TestStep(Base):
     # Indexes
     __table_args__ = (
         Index("idx_step_test_case", "test_case_id"),
-            Index("idx_step_test_execution", "test_execution_id"),
-            Index("idx_step_index", "index"),
-        )
+        Index("idx_step_test_execution", "test_execution_id"),
+        Index("idx_step_index", "index"),
+    )
 
     def __repr__(self):
         return f"<TestStep(index={self.index}, description='{self.description[:20]}...')>"
@@ -413,10 +413,10 @@ class TestCase(Base):
     folder = relationship("Folder", back_populates="test_cases")
     steps = relationship(
         "TestStep",
-            back_populates="test_case",
-            foreign_keys=[TestStep.test_case_id],
-            cascade="all, delete-orphan",
-        )
+        back_populates="test_case",
+        foreign_keys=[TestStep.test_case_id],
+        cascade="all, delete-orphan",
+    )
     scripts = relationship("ScriptFile", back_populates="test_case", cascade="all, delete-orphan")
     executions = relationship("TestExecution", back_populates="test_case")
     labels = relationship("Label", secondary=case_label_association, back_populates="test_cases")
@@ -427,10 +427,10 @@ class TestCase(Base):
     # Indexes
     __table_args__ = (
         Index("idx_test_case_project", "project_key"),
-            Index("idx_test_case_folder", "folder_id"),
-            Index("idx_test_case_priority", "priority_id"),
-            Index("idx_test_case_status", "status"),
-        )
+        Index("idx_test_case_folder", "folder_id"),
+        Index("idx_test_case_priority", "priority_id"),
+        Index("idx_test_case_status", "status"),
+    )
 
     def __repr__(self):
         return f"<TestCase(key='{self.key}', name='{self.name}')>"
@@ -487,9 +487,9 @@ class TestCycle(Base):
     # Indexes
     __table_args__ = (
         Index("idx_test_cycle_project", "project_key"),
-            Index("idx_test_cycle_folder", "folder_id"),
-            Index("idx_test_cycle_status", "status"),
-        )
+        Index("idx_test_cycle_folder", "folder_id"),
+        Index("idx_test_cycle_status", "status"),
+    )
 
     def __repr__(self):
         return f"<TestCycle(key='{self.key}', name='{self.name}')>"
@@ -541,9 +541,9 @@ class TestPlan(Base):
     # Indexes
     __table_args__ = (
         Index("idx_test_plan_project", "project_key"),
-            Index("idx_test_plan_folder", "folder_id"),
-            Index("idx_test_plan_status", "status"),
-        )
+        Index("idx_test_plan_folder", "folder_id"),
+        Index("idx_test_plan_status", "status"),
+    )
 
     def __repr__(self):
         return f"<TestPlan(key='{self.key}', name='{self.name}')>"
@@ -594,19 +594,19 @@ class TestExecution(Base):
     environment = relationship("Environment", back_populates="test_executions")
     steps = relationship(
         "TestStep",
-            back_populates="test_execution",
-            foreign_keys=[TestStep.test_execution_id],
-            cascade="all, delete-orphan",
-        )
+        back_populates="test_execution",
+        foreign_keys=[TestStep.test_execution_id],
+        cascade="all, delete-orphan",
+    )
 
     # Indexes
     __table_args__ = (
         Index("idx_test_execution_project", "project_key"),
-            Index("idx_test_execution_cycle", "cycle_id"),
-            Index("idx_test_execution_case", "test_case_key"),
-            Index("idx_test_execution_status", "status"),
-            Index("idx_test_execution_environment", "environment_id"),
-        )
+        Index("idx_test_execution_cycle", "cycle_id"),
+        Index("idx_test_execution_case", "test_case_key"),
+        Index("idx_test_execution_status", "status"),
+        Index("idx_test_execution_environment", "environment_id"),
+    )
 
     def __repr__(self):
         return (
@@ -668,7 +668,9 @@ class RecommendationHistory(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     project_key = Column(String(50), nullable=False, index=True)
     timestamp = Column(DateTime, default=datetime.utcnow, index=True)
-    recommendation_id = Column(String(50), nullable=False, index=True)  # Unique ID for each recommendation
+    recommendation_id = Column(
+        String(50), nullable=False, index=True
+    )  # Unique ID for each recommendation
     priority = Column(String(10), nullable=False)  # high, medium, low
     category = Column(String(50), nullable=False)
     issue = Column(Text, nullable=False)
@@ -712,9 +714,9 @@ class EntityBatchState(Base):
     # Unique constraint to ensure we don't have duplicate batch entries
     __table_args__ = (
         UniqueConstraint("project_key", "entity_type", "batch_number", name="uq_entity_batch"),
-            Index("idx_entity_batch_project", "project_key"),
-            Index("idx_entity_batch_status", "status"),
-        )
+        Index("idx_entity_batch_project", "project_key"),
+        Index("idx_entity_batch_status", "status"),
+    )
 
     def __repr__(self):
         return f"<EntityBatchState(project='{self.project_key}', type='{self.entity_type}', batch={self.batch_number}, status='{self.status}')>"

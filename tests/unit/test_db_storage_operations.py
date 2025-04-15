@@ -14,14 +14,14 @@ from sqlalchemy import text
 from ztoq.core.db_manager import DatabaseConfig, SQLDatabaseManager
 from ztoq.core.db_models import (
     Attachment,
-        CustomFieldValue,
-        EntityType,
-        Folder,
-        Link,
-        Project,
-        TestCase,
-        TestCycle,
-        TestExecution,
+    CustomFieldValue,
+    EntityType,
+    Folder,
+    Link,
+    Project,
+    TestCase,
+    TestCycle,
+    TestExecution,
 )
 from ztoq.data_fetcher import FetchResult
 from ztoq.models import (
@@ -61,9 +61,8 @@ from ztoq.models import (
     Status as StatusModel,
 )
 
+
 @pytest.mark.unit()
-
-
 class TestDatabaseStorageOperations:
     @pytest.fixture()
     def db_config(self):
@@ -98,14 +97,14 @@ class TestDatabaseStorageOperations:
         """Create sample folders for testing."""
         return [
             FolderModel(id="FOLD-1", name="Test Cases", folderType="TEST_CASE", projectKey="TEST"),
-                FolderModel(
+            FolderModel(
                 id="FOLD-2",
-                    name="Test Cycles",
-                    folderType="TEST_CYCLE",
-                    projectKey="TEST",
-                    parentId="FOLD-1",
-                ),
-            ]
+                name="Test Cycles",
+                folderType="TEST_CYCLE",
+                projectKey="TEST",
+                parentId="FOLD-1",
+            ),
+        ]
 
     @pytest.fixture()
     def sample_statuses(self):
@@ -113,26 +112,26 @@ class TestDatabaseStorageOperations:
         return [
             StatusModel(
                 id="STAT-1",
-                    name="Active",
-                    description="Active status",
-                    color="#00FF00",
-                    type="TEST_CASE",
-                ),
-                StatusModel(
+                name="Active",
+                description="Active status",
+                color="#00FF00",
+                type="TEST_CASE",
+            ),
+            StatusModel(
                 id="STAT-2",
-                    name="Passed",
-                    description="Passed status",
-                    color="#00FF00",
-                    type="TEST_EXECUTION",
-                ),
-                StatusModel(
+                name="Passed",
+                description="Passed status",
+                color="#00FF00",
+                type="TEST_EXECUTION",
+            ),
+            StatusModel(
                 id="STAT-3",
-                    name="Failed",
-                    description="Failed status",
-                    color="#FF0000",
-                    type="TEST_EXECUTION",
-                ),
-            ]
+                name="Failed",
+                description="Failed status",
+                color="#FF0000",
+                type="TEST_EXECUTION",
+            ),
+        ]
 
     @pytest.fixture()
     def sample_priorities(self):
@@ -141,21 +140,21 @@ class TestDatabaseStorageOperations:
             PriorityModel(
                 id="PRI-1", name="High", description="High priority", color="#FF0000", rank=1
             ),
-                PriorityModel(
+            PriorityModel(
                 id="PRI-2", name="Medium", description="Medium priority", color="#FFFF00", rank=2
             ),
-                PriorityModel(
+            PriorityModel(
                 id="PRI-3", name="Low", description="Low priority", color="#00FF00", rank=3
             ),
-            ]
+        ]
 
     @pytest.fixture()
     def sample_environments(self):
         """Create sample environments for testing."""
         return [
             EnvironmentModel(id="ENV-1", name="Production", description="Production environment"),
-                EnvironmentModel(id="ENV-2", name="Staging", description="Staging environment"),
-            ]
+            EnvironmentModel(id="ENV-2", name="Staging", description="Staging environment"),
+        ]
 
     def test_create_new_entities(self, db_manager, sample_project, sample_folders):
         """Test creating new entities."""
@@ -219,58 +218,58 @@ class TestDatabaseStorageOperations:
         # Create test case with relationships
         case = CaseModel(
             id="TC-1",
-                key="TEST-1",
-                name="Login Test",
-                objective="Verify user login functionality",
-                precondition="User exists in system",
-                description="Test the login functionality",
-                status="Active",
-                priority=sample_priorities[0],
-                priority_name="High",
-                folder=sample_folders[0].id,
-                folder_name=sample_folders[0].name,
-                owner="user1",
-                owner_name="Test User",
-                created_on=datetime.now(),
-                created_by="user1",
-                projectKey=sample_project.key,  # Ensure project key is provided
+            key="TEST-1",
+            name="Login Test",
+            objective="Verify user login functionality",
+            precondition="User exists in system",
+            description="Test the login functionality",
+            status="Active",
+            priority=sample_priorities[0],
+            priority_name="High",
+            folder=sample_folders[0].id,
+            folder_name=sample_folders[0].name,
+            owner="user1",
+            owner_name="Test User",
+            created_on=datetime.now(),
+            created_by="user1",
+            projectKey=sample_project.key,  # Ensure project key is provided
             labels=["Regression", "Smoke"],
-                steps=[
+            steps=[
                 CaseStepModel(
                     id="STEP-1",  # Provide explicit ID
                     index=0,
-                        description="Navigate to login page",
-                        expected_result="Login page displayed",
-                    ),
-                    CaseStepModel(
+                    description="Navigate to login page",
+                    expected_result="Login page displayed",
+                ),
+                CaseStepModel(
                     id="STEP-2",  # Provide explicit ID
                     index=1,
-                        description="Enter credentials and submit",
-                        expected_result="User logged in successfully",
-                    ),
-                ],
-                custom_fields=[
+                    description="Enter credentials and submit",
+                    expected_result="User logged in successfully",
+                ),
+            ],
+            custom_fields=[
                 CustomFieldModel(id="CF-1", name="Test Type", type="text", value="Integration"),
-                    CustomFieldModel(id="CF-2", name="Is Automated", type="checkbox", value=True),
-                ],
-                links=[
+                CustomFieldModel(id="CF-2", name="Is Automated", type="checkbox", value=True),
+            ],
+            links=[
                 LinkModel(
                     id="LINK-1", name="Requirements", url="https://example.com/req", type="web"
                 )
             ],
-                attachments=[
+            attachments=[
                 AttachmentModel(
                     id="ATT-1",
-                        filename="screenshot.png",
-                        content_type="image/png",
-                        size=1024,
-                        created_on=datetime.now(),
-                        created_by="user1",
-                        content=base64.b64encode(b"test image data").decode("utf-8"),
-                    )
+                    filename="screenshot.png",
+                    content_type="image/png",
+                    size=1024,
+                    created_on=datetime.now(),
+                    created_by="user1",
+                    content=base64.b64encode(b"test image data").decode("utf-8"),
+                )
             ],
-                scripts=[],
-            )
+            scripts=[],
+        )
 
         # Save test case
         db_manager.save_test_case(case, sample_project.key)
@@ -278,25 +277,25 @@ class TestDatabaseStorageOperations:
         # Create test cycle
         cycle = CycleInfoModel(
             id="CYCLE-1",
-                key="TEST-C1",
-                name="Sprint 1 Testing",
-                description="Test cycle for Sprint 1",
-                status="Active",
-                status_name="Active",
-                folder=sample_folders[1].id,
-                folder_name=sample_folders[1].name,
-                owner="user1",
-                owner_name="Test User",
-                created_on=datetime.now(),
-                created_by="user1",
-                project_key=sample_project.key,
-                projectKey=sample_project.key,  # Ensure both forms are provided
+            key="TEST-C1",
+            name="Sprint 1 Testing",
+            description="Test cycle for Sprint 1",
+            status="Active",
+            status_name="Active",
+            folder=sample_folders[1].id,
+            folder_name=sample_folders[1].name,
+            owner="user1",
+            owner_name="Test User",
+            created_on=datetime.now(),
+            created_by="user1",
+            project_key=sample_project.key,
+            projectKey=sample_project.key,  # Ensure both forms are provided
             custom_fields=[
                 CustomFieldModel(id="CF-3", name="Sprint", type="text", value="Sprint 1")
             ],
-                links=[],
-                attachments=[],
-            )
+            links=[],
+            attachments=[],
+        )
 
         # Save test cycle
         db_manager.save_test_cycle(cycle, sample_project.key)
@@ -304,44 +303,44 @@ class TestDatabaseStorageOperations:
         # Create test execution
         execution = ExecutionModel(
             id="EXEC-1",
-                testCaseKey="TEST-1",
-                cycleId="CYCLE-1",
-                cycle_name="Sprint 1 Testing",
-                status="PASS",
-                status_name="Passed",
-                environment=sample_environments[0].id,
-                environment_name=sample_environments[0].name,
-                executed_by="user1",
-                executed_by_name="Test User",
-                executed_on=datetime.now(),
-                created_on=datetime.now(),
-                created_by="user1",
-                comment="Test passed with no issues",
-                projectKey=sample_project.key,  # Ensure project key is provided
+            testCaseKey="TEST-1",
+            cycleId="CYCLE-1",
+            cycle_name="Sprint 1 Testing",
+            status="PASS",
+            status_name="Passed",
+            environment=sample_environments[0].id,
+            environment_name=sample_environments[0].name,
+            executed_by="user1",
+            executed_by_name="Test User",
+            executed_on=datetime.now(),
+            created_on=datetime.now(),
+            created_by="user1",
+            comment="Test passed with no issues",
+            projectKey=sample_project.key,  # Ensure project key is provided
             steps=[
                 CaseStepModel(
                     id="EXEC-STEP-1",  # Provide explicit ID
                     index=0,
-                        description="Navigate to login page",
-                        expected_result="Login page displayed",
-                        actual_result="Login page displayed correctly",
-                        status="PASS",
-                    ),
-                    CaseStepModel(
+                    description="Navigate to login page",
+                    expected_result="Login page displayed",
+                    actual_result="Login page displayed correctly",
+                    status="PASS",
+                ),
+                CaseStepModel(
                     id="EXEC-STEP-2",  # Provide explicit ID
                     index=1,
-                        description="Enter credentials and submit",
-                        expected_result="User logged in successfully",
-                        actual_result="User logged in successfully",
-                        status="PASS",
-                    ),
-                ],
-                custom_fields=[
+                    description="Enter credentials and submit",
+                    expected_result="User logged in successfully",
+                    actual_result="User logged in successfully",
+                    status="PASS",
+                ),
+            ],
+            custom_fields=[
                 CustomFieldModel(id="CF-4", name="Browser", type="text", value="Chrome")
             ],
-                attachments=[],
-                links=[],
-            )
+            attachments=[],
+            links=[],
+        )
 
         # Save test execution
         db_manager.save_test_execution(execution, sample_project.key)
@@ -417,68 +416,68 @@ class TestDatabaseStorageOperations:
         # Create test case with steps
         case = CaseModel(
             id="TC-1",
-                key="TEST-1",
-                name="Login Test",
-                folder=folder.id,
-                priority=priority,
-                status="Active",
-                projectKey=sample_project.key,  # Ensure project key is provided
+            key="TEST-1",
+            name="Login Test",
+            folder=folder.id,
+            priority=priority,
+            status="Active",
+            projectKey=sample_project.key,  # Ensure project key is provided
             steps=[
                 CaseStepModel(
                     id="STEP-1",  # Add explicit ID to prevent conflicts
                     index=0,
-                        description="Original step 1",
-                        expected_result="Original result 1",
-                    ),
-                    CaseStepModel(
+                    description="Original step 1",
+                    expected_result="Original result 1",
+                ),
+                CaseStepModel(
                     id="STEP-2",  # Add explicit ID to prevent conflicts
                     index=1,
-                        description="Original step 2",
-                        expected_result="Original result 2",
-                    ),
-                ],
-                custom_fields=[
+                    description="Original step 2",
+                    expected_result="Original result 2",
+                ),
+            ],
+            custom_fields=[
                 CustomFieldModel(id="CF-1", name="Test Type", type="text", value="Original value")
             ],
-                links=[
+            links=[
                 LinkModel(
                     id="LINK-1",
-                        name="Original Link",
-                        url="https://example.com/original",
-                        type="web",
-                    )
+                    name="Original Link",
+                    url="https://example.com/original",
+                    type="web",
+                )
             ],
-            )
+        )
         db_manager.save_test_case(case, sample_project.key)
 
         # Update test case with new relationships
         updated_case = CaseModel(
             id="TC-1",  # Same ID
             key="TEST-1",
-                name="Updated Login Test",  # Changed name
+            name="Updated Login Test",  # Changed name
             folder=folder.id,
-                priority=priority,
-                status="Ready",  # Changed status
+            priority=priority,
+            status="Ready",  # Changed status
             projectKey=sample_project.key,  # Ensure project key is provided
             steps=[
                 CaseStepModel(
                     id="STEP-1",  # Same ID as before to ensure proper update
                     index=0,
-                        description="Updated step 1",  # Changed step
+                    description="Updated step 1",  # Changed step
                     expected_result="Updated result 1",
-                    ),
-                    # Removed step 2
+                ),
+                # Removed step 2
             ],
-                custom_fields=[
+            custom_fields=[
                 CustomFieldModel(id="CF-1", name="Test Type", type="text", value="Updated value"),
-                    CustomFieldModel(id="CF-2", name="New Field", type="text", value="New value"),
-                ],
-                links=[
+                CustomFieldModel(id="CF-2", name="New Field", type="text", value="New value"),
+            ],
+            links=[
                 LinkModel(
                     id="LINK-2", name="Updated Link", url="https://example.com/updated", type="web"
                 )
             ],
-            )
+        )
         db_manager.save_test_case(updated_case, sample_project.key)
 
         # Verify updates
@@ -529,11 +528,11 @@ class TestDatabaseStorageOperations:
         child_folders = [
             FolderModel(
                 id=f"FOLD-CHILD-{i}",
-                    name=f"Child Folder {i}",
-                    folderType="TEST_CASE",
-                    projectKey="TEST",
-                    parentId="FOLD-PARENT",
-                )
+                name=f"Child Folder {i}",
+                folderType="TEST_CASE",
+                projectKey="TEST",
+                parentId="FOLD-PARENT",
+            )
             for i in range(1, 4)
         ]
 
@@ -601,25 +600,25 @@ class TestDatabaseStorageOperations:
         # Create folder for the test case
         folder = FolderModel(
             id="FOLD-CF-TEST",
-                name="Test Folder for Custom Fields",
-                folderType="TEST_CASE",
-                projectKey=sample_project.key,
-            )
+            name="Test Folder for Custom Fields",
+            folderType="TEST_CASE",
+            projectKey=sample_project.key,
+        )
         db_manager.save_folder(folder, sample_project.key)
 
         # Create test case with a single basic custom field
         case = CaseModel(
             id="TC-CF-1",
-                key="TEST-CF-1",
-                name="Test Case with Custom Fields",
-                folder=folder.id,
-                projectKey=sample_project.key,
-                custom_fields=[
+            key="TEST-CF-1",
+            name="Test Case with Custom Fields",
+            folder=folder.id,
+            projectKey=sample_project.key,
+            custom_fields=[
                 CustomFieldModel(
                     id="CF-SIMPLE", name="Simple Field", type="text", value="Simple value"
                 )
             ],
-            )
+        )
         db_manager.save_test_case(case, sample_project.key)
 
         # Verify test case was created
@@ -639,19 +638,19 @@ class TestDatabaseStorageOperations:
 
         case = CaseModel(
             id="TC-1",
-                key="TEST-1",
-                name="Test Case",
-                project_key=sample_project.key,
-                attachments=[
+            key="TEST-1",
+            name="Test Case",
+            project_key=sample_project.key,
+            attachments=[
                 AttachmentModel(
                     id="ATT-1",
-                        filename="test.txt",
-                        content_type="text/plain",
-                        size=len(binary_data),
-                        content=base64_data,
-                    )
+                    filename="test.txt",
+                    content_type="text/plain",
+                    size=len(binary_data),
+                    content=base64_data,
+                )
             ],
-            )
+        )
         db_manager.save_test_case(case, sample_project.key)
 
         # Verify attachment was saved
@@ -676,19 +675,19 @@ class TestDatabaseStorageOperations:
         fetch_results = {
             "project": FetchResult(
                 entity_type="project",
-                    project_key="TEST",
-                    items=[sample_project],
-                    count=1,
-                    success=True,
-                ),
-                "folders": FetchResult(
+                project_key="TEST",
+                items=[sample_project],
+                count=1,
+                success=True,
+            ),
+            "folders": FetchResult(
                 entity_type="folders",
-                    project_key="TEST",
-                    items=[sample_folders[0], invalid_folder],
-                    count=2,
-                    success=True,
-                ),
-            }
+                project_key="TEST",
+                items=[sample_folders[0], invalid_folder],
+                count=2,
+                success=True,
+            ),
+        }
 
         # Create a session factory that will properly track transaction state
 
@@ -747,38 +746,38 @@ class TestDatabaseStorageOperations:
         for i in range(1, 6):
             case = CaseModel(
                 id=f"TC-{i}",
-                    key=f"TEST-{i}",
-                    name=f"Test Case {i}",
-                    folder=sample_folders[0].id,
-                    steps=[
+                key=f"TEST-{i}",
+                name=f"Test Case {i}",
+                folder=sample_folders[0].id,
+                steps=[
                     CaseStepModel(
                         index=0,
-                            description=f"Step 1 for case {i}",
-                            expected_result=f"Result 1 for case {i}",
-                        ),
-                        CaseStepModel(
+                        description=f"Step 1 for case {i}",
+                        expected_result=f"Result 1 for case {i}",
+                    ),
+                    CaseStepModel(
                         index=1,
-                            description=f"Step 2 for case {i}",
-                            expected_result=f"Result 2 for case {i}",
-                        ),
-                    ],
-                    custom_fields=[
+                        description=f"Step 2 for case {i}",
+                        expected_result=f"Result 2 for case {i}",
+                    ),
+                ],
+                custom_fields=[
                     CustomFieldModel(
                         id=f"CF-{i}", name=f"Field {i}", type="text", value=f"Value {i}"
                     )
                 ],
-                )
+            )
             db_manager.save_test_case(case, sample_project.key)
 
         # Create 2 test cycles
         for i in range(1, 3):
             cycle = CycleInfoModel(
                 id=f"CYCLE-{i}",
-                    key=f"TEST-C{i}",
-                    name=f"Test Cycle {i}",
-                    folder=sample_folders[1].id,
-                    project_key=sample_project.key,
-                )
+                key=f"TEST-C{i}",
+                name=f"Test Cycle {i}",
+                folder=sample_folders[1].id,
+                project_key=sample_project.key,
+            )
             db_manager.save_test_cycle(cycle, sample_project.key)
 
         # Create 3 test executions

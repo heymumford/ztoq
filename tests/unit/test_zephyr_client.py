@@ -11,25 +11,24 @@ import pytest
 import requests
 from ztoq.models import (
     Attachment,
-        Case,
-        Project,
-        TestCase,
-        ZephyrConfig,
+    Case,
+    Project,
+    TestCase,
+    ZephyrConfig,
 )
 from ztoq.zephyr_client import PaginatedIterator, ZephyrClient, configure_logging
 
+
 @pytest.mark.unit()
-
-
 class TestZephyrClient:
     @pytest.fixture()
     def config(self):
         """Create a test Zephyr configuration."""
         return ZephyrConfig(
             base_url="https://api.zephyrscale.example.com/v2",
-                api_token="test-token",
-                project_key="TEST",
-            )
+            api_token="test-token",
+            project_key="TEST",
+        )
 
     @pytest.fixture()
     def client(self, config):
@@ -41,8 +40,8 @@ class TestZephyrClient:
         assert client.config == config
         assert client.headers == {
             "Authorization": f"Bearer {config.api_token}",
-                "Content-Type": "application/json",
-            }
+            "Content-Type": "application/json",
+        }
         assert client.rate_limit_remaining == 1000
         assert client.rate_limit_reset == 0
 
@@ -54,8 +53,8 @@ class TestZephyrClient:
         mock_response.json.return_value = {"key": "value"}
         mock_response.headers = {
             "X-Rate-Limit-Remaining": "950",
-                "X-Rate-Limit-Reset": "1633046400",
-            }
+            "X-Rate-Limit-Reset": "1633046400",
+        }
         mock_request.return_value = mock_response
 
         # Make request
@@ -65,12 +64,12 @@ class TestZephyrClient:
         assert result == {"key": "value"}
         mock_request.assert_called_once_with(
             method="GET",
-                url="https://api.zephyrscale.example.com/v2/test-endpoint",
-                headers=client.headers,
-                params={"param": "value", "projectKey": "TEST"},
-                json=None,
-                files=None,
-            )
+            url="https://api.zephyrscale.example.com/v2/test-endpoint",
+            headers=client.headers,
+            params={"param": "value", "projectKey": "TEST"},
+            json=None,
+            files=None,
+        )
         assert client.rate_limit_remaining == 950
         assert client.rate_limit_reset == 1633046400
 
@@ -81,8 +80,8 @@ class TestZephyrClient:
         mock_response = MagicMock()
         mock_response.json.return_value = [
             {"id": "1", "key": "PROJ1", "name": "Project 1"},
-                {"id": "2", "key": "PROJ2", "name": "Project 2"},
-            ]
+            {"id": "2", "key": "PROJ2", "name": "Project 2"},
+        ]
         mock_request.return_value = mock_response
 
         # Call the method
@@ -106,22 +105,22 @@ class TestZephyrClient:
         mock_data = [
             {
                 "totalCount": 3,
-                    "startAt": 0,
-                    "maxResults": 2,
-                    "isLast": False,
-                    "values": [
+                "startAt": 0,
+                "maxResults": 2,
+                "isLast": False,
+                "values": [
                     {"id": "1", "key": "TEST-TC-1", "name": "Test Case 1"},
-                        {"id": "2", "key": "TEST-TC-2", "name": "Test Case 2"},
-                    ],
-                },
-                {
+                    {"id": "2", "key": "TEST-TC-2", "name": "Test Case 2"},
+                ],
+            },
+            {
                 "totalCount": 3,
-                    "startAt": 2,
-                    "maxResults": 2,
-                    "isLast": True,
-                    "values": [{"id": "3", "key": "TEST-TC-3", "name": "Test Case 3"}],
-                },
-            ]
+                "startAt": 2,
+                "maxResults": 2,
+                "isLast": True,
+                "values": [{"id": "3", "key": "TEST-TC-3", "name": "Test Case 3"}],
+            },
+        ]
         # Setup mock to return paginated data
         client._make_request = MagicMock()
         client._make_request.side_effect = lambda method, endpoint, params=None, **kwargs: (
@@ -142,7 +141,7 @@ class TestZephyrClient:
         # Verify we got the correct number of calls and results
         assert client._make_request.call_count == 2  # Two calls should be made
         # Instead of checking call parameters which might be unpredictable in test env,
-            # verify results are correct
+        # verify results are correct
         assert test_cases[0].key == "TEST-TC-1"
         assert test_cases[1].key == "TEST-TC-2"
         assert test_cases[2].key == "TEST-TC-3"
@@ -153,26 +152,26 @@ class TestZephyrClient:
         mock_custom_fields = [
             {
                 "id": "cf1",
-                    "name": "Requirements",
-                    "type": "text",
-                    "options": None,
-                    "entityTypes": ["testCase"],
-                },
-                {
+                "name": "Requirements",
+                "type": "text",
+                "options": None,
+                "entityTypes": ["testCase"],
+            },
+            {
                 "id": "cf2",
-                    "name": "Automated",
-                    "type": "checkbox",
-                    "options": None,
-                    "entityTypes": ["testCase"],
-                },
-                {
+                "name": "Automated",
+                "type": "checkbox",
+                "options": None,
+                "entityTypes": ["testCase"],
+            },
+            {
                 "id": "cf3",
-                    "name": "Test Type",
-                    "type": "dropdown",
-                    "options": ["Unit", "Integration", "E2E"],
-                    "entityTypes": ["testCase"],
-                },
-            ]
+                "name": "Test Type",
+                "type": "dropdown",
+                "options": ["Unit", "Integration", "E2E"],
+                "entityTypes": ["testCase"],
+            },
+        ]
 
         # Setup mock
         client._make_request = MagicMock(return_value={"values": mock_custom_fields})
@@ -199,16 +198,16 @@ class TestZephyrClient:
         reset_time = int(time.time()) + 5  # 5 seconds from now
         mock_rate_limited.headers = {
             "X-Rate-Limit-Remaining": "0",
-                "X-Rate-Limit-Reset": str(reset_time),
-            }
+            "X-Rate-Limit-Reset": str(reset_time),
+        }
 
         # Create a mock response for the second call after waiting
         mock_normal = MagicMock()
         mock_normal.json.return_value = {"key": "after_wait"}
         mock_normal.headers = {
             "X-Rate-Limit-Remaining": "1000",
-                "X-Rate-Limit-Reset": str(int(time.time()) + 3600),
-            }
+            "X-Rate-Limit-Reset": str(int(time.time()) + 3600),
+        }
 
         # Configure mock to return rate limited response first, then normal response
         mock_request.side_effect = [mock_rate_limited, mock_normal]
@@ -243,7 +242,7 @@ class TestZephyrClient:
         mock_past_reset.json.return_value = {"result": "past_reset"}
         mock_past_reset.headers = {
             "X-Rate-Limit-Remaining": "0",
-                "X-Rate-Limit-Reset": str(int(time.time()) - 60),  # 60 seconds in the past
+            "X-Rate-Limit-Reset": str(int(time.time()) - 60),  # 60 seconds in the past
         }
 
         # Case 3: Still have some limits remaining
@@ -251,8 +250,8 @@ class TestZephyrClient:
         mock_has_remaining.json.return_value = {"result": "has_remaining"}
         mock_has_remaining.headers = {
             "X-Rate-Limit-Remaining": "5",
-                "X-Rate-Limit-Reset": str(int(time.time()) + 60),
-            }
+            "X-Rate-Limit-Reset": str(int(time.time()) + 60),
+        }
 
         # Set up the mock to return the responses in sequence
         mock_request.side_effect = [mock_no_headers, mock_past_reset, mock_has_remaining]
@@ -336,10 +335,10 @@ class TestZephyrClient:
         # Setup side effects - fail 3 times then succeed
         mock_request.side_effect = [
             requests.exceptions.ConnectionError("Connection error 1"),
-                requests.exceptions.ConnectionError("Connection error 2"),
-                requests.exceptions.ConnectionError("Connection error 3"),
-                mock_response,
-            ]
+            requests.exceptions.ConnectionError("Connection error 2"),
+            requests.exceptions.ConnectionError("Connection error 3"),
+            mock_response,
+        ]
 
         # Implementing exponential backoff retry logic
         def retry_with_backoff(max_retries=3, initial_delay=0.1):
@@ -401,8 +400,8 @@ class TestZephyrClient:
         mock_error_response.status_code = 404
         mock_error_response.json.return_value = {
             "error": "Not Found",
-                "message": "Resource does not exist",
-            }
+            "message": "Resource does not exist",
+        }
         mock_error_response.text = '{"error": "Not Found", "message": "Resource does not exist"}'
 
         # Configure mock to return the error response
@@ -430,12 +429,12 @@ class TestZephyrClient:
         error_types = [
             (
                 requests.exceptions.ConnectionError("Failed to establish connection"),
-                    "Connection Error",
-                ),
-                (requests.exceptions.Timeout("Request timed out"), "Timeout Error"),
-                (requests.exceptions.RequestException("General request error"), "Request Error"),
-                (ValueError("JSON Parsing Error"), "JSON Parsing Error"),
-            ]
+                "Connection Error",
+            ),
+            (requests.exceptions.Timeout("Request timed out"), "Timeout Error"),
+            (requests.exceptions.RequestException("General request error"), "Request Error"),
+            (ValueError("JSON Parsing Error"), "JSON Parsing Error"),
+        ]
 
         for exception, expected_log in error_types:
             # Reset mock for each iteration
@@ -542,18 +541,18 @@ class TestZephyrClient:
         # Create data with sensitive fields
         sensitive_data = {
             "user": "test_user",
-                "api_token": "secret_token",
-                "password": "secret_pass",
-                "auth_key": "auth_secret",
-                "secret_field": "top_secret",
-                "description": "Non-sensitive data",
-                "nested": {
+            "api_token": "secret_token",
+            "password": "secret_pass",
+            "auth_key": "auth_secret",
+            "secret_field": "top_secret",
+            "description": "Non-sensitive data",
+            "nested": {
                 "secret_key": "very_secret",
-                    "normal_field": "normal_value",
-                    "deep_nested": {"password": "deep_secret", "api_token": "nested_token"},
-                },
-                "mixed_array": [{"token": "array_token"}, {"normal": "array_normal"}],
-            }
+                "normal_field": "normal_value",
+                "deep_nested": {"password": "deep_secret", "api_token": "nested_token"},
+            },
+            "mixed_array": [{"token": "array_token"}, {"normal": "array_normal"}],
+        }
 
         # Mask the data
         masked_data = client._mask_sensitive_data(sensitive_data)
@@ -594,9 +593,9 @@ class TestZephyrClient:
         # Create request with sensitive data
         sensitive_json = {
             "username": "test_user",
-                "api_token": "secret_token",
-                "password": "secret_pass",
-            }
+            "api_token": "secret_token",
+            "password": "secret_pass",
+        }
 
         # Verify masking works correctly directly
         masked_data = client._mask_sensitive_data(sensitive_json)
@@ -621,11 +620,11 @@ class TestZephyrClient:
         # Just verify that the iterator correctly sets up parameters for pagination
         iterator = PaginatedIterator(
             client=client,
-                endpoint="/paginated",
-                model_class=Case,
-                params={"filter": "test"},
-                page_size=20,
-            )
+            endpoint="/paginated",
+            model_class=Case,
+            params={"filter": "test"},
+            page_size=20,
+        )
 
         # Check that the parameters are set up correctly
         assert iterator.params["filter"] == "test"
@@ -649,12 +648,12 @@ class TestZephyrClient:
         # Test basic functionality of Attachment model
         attachment_data = {
             "id": "att123",
-                "filename": "test_attachment.txt",
-                "contentType": "text/plain",
-                "size": 12,
-                "createdBy": "user123",
-                "createdOn": "2023-01-01T12:00:00Z",
-            }
+            "filename": "test_attachment.txt",
+            "contentType": "text/plain",
+            "size": 12,
+            "createdBy": "user123",
+            "createdOn": "2023-01-01T12:00:00Z",
+        }
 
         # Create an attachment from the test data
         attachment = Attachment(**attachment_data)
@@ -710,21 +709,21 @@ class TestZephyrClient:
         # Mock the spec loading
         mock_spec = {
             "openapi": "3.0.0",
-                "info": {
+            "info": {
                 "title": "Zephyr Scale API",
-                    "version": "1.0.0",
-                    "description": "API for Zephyr Scale",
-                },
-                "paths": {
+                "version": "1.0.0",
+                "description": "API for Zephyr Scale",
+            },
+            "paths": {
                 "/testcases": {
                     "get": {
                         "summary": "Get test cases",
-                            "parameters": [{"name": "projectKey", "in": "query", "required": True}],
-                        }
+                        "parameters": [{"name": "projectKey", "in": "query", "required": True}],
+                    }
                 },
-                    "/folders": {"get": {"summary": "Get folders"}},
-                },
-            }
+                "/folders": {"get": {"summary": "Get folders"}},
+            },
+        }
         mock_load_spec.return_value = mock_spec
 
         # Mock the wrapper

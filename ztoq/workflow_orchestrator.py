@@ -25,9 +25,15 @@ from rich.console import Console
 from rich.progress import BarColumn, Progress, TaskProgressColumn, TextColumn, TimeElapsedColumn
 from rich.table import Table
 from ztoq.batch_strategies import (
-    BatchStrategy, SizeBatchStrategy, TimeBatchStrategy, AdaptiveBatchStrategy,
-    EntityTypeBatchStrategy, SimilarityBatchStrategy, configure_optimal_batch_size,
-    create_batches, estimate_processing_time,
+    BatchStrategy,
+    SizeBatchStrategy,
+    TimeBatchStrategy,
+    AdaptiveBatchStrategy,
+    EntityTypeBatchStrategy,
+    SimilarityBatchStrategy,
+    configure_optimal_batch_size,
+    create_batches,
+    estimate_processing_time,
 )
 from ztoq.database_factory import DatabaseFactory, DatabaseType, get_database_manager
 from ztoq.migration import EntityBatchTracker, MigrationState, ZephyrToQTestMigration
@@ -315,8 +321,7 @@ class WorkflowOrchestrator:
                     return 0.1  # Default 100KB per entity
 
             return SizeBatchStrategy(
-                max_batch_size=self.config.max_batch_memory_mb,
-                size_estimator=entity_size_estimator
+                max_batch_size=self.config.max_batch_memory_mb, size_estimator=entity_size_estimator
             )
 
         elif strategy_type == BatchingStrategy.TIME:
@@ -337,8 +342,7 @@ class WorkflowOrchestrator:
                     return 0.05  # Default 50ms per entity
 
             return TimeBatchStrategy(
-                time_estimator=entity_time_estimator,
-                max_batch_time=self.config.target_batch_time
+                time_estimator=entity_time_estimator, max_batch_time=self.config.target_batch_time
             )
 
         elif strategy_type == BatchingStrategy.ADAPTIVE:
@@ -349,7 +353,7 @@ class WorkflowOrchestrator:
                     min_batch_size=max(1, self.config.batch_size // 5),
                     max_batch_size=self.config.batch_size * 3,
                     target_processing_time=self.config.target_batch_time,
-                    adaptation_rate=0.2
+                    adaptation_rate=0.2,
                 )
             return self.adaptive_strategy
 
@@ -368,8 +372,7 @@ class WorkflowOrchestrator:
                     return "default"
 
             return EntityTypeBatchStrategy(
-                type_extractor=type_extractor,
-                max_batch_size=self.config.batch_size * 2
+                type_extractor=type_extractor, max_batch_size=self.config.batch_size * 2
             )
 
         elif strategy_type == BatchingStrategy.SIMILARITY:
@@ -403,12 +406,14 @@ class WorkflowOrchestrator:
             return SimilarityBatchStrategy(
                 feature_extractor=feature_extractor,
                 similarity_threshold=0.7,
-                max_batch_size=self.config.batch_size
+                max_batch_size=self.config.batch_size,
             )
 
         else:
             # Default to fixed-size batching
-            logger.warning(f"Unknown batching strategy '{strategy_type}', using fixed-size batching")
+            logger.warning(
+                f"Unknown batching strategy '{strategy_type}', using fixed-size batching"
+            )
             return lambda entities: create_batches(entities, batch_size=self.config.batch_size)
 
     def _add_event(
@@ -516,7 +521,9 @@ class WorkflowOrchestrator:
                 if self._can_skip_phase(phase):
                     # Don't skip rollback phase if explicitly requested
                     if phase != WorkflowPhase.ROLLBACK.value:
-                        self._add_event(phase, "skipped", f"Skipping {phase} phase (already completed)")
+                        self._add_event(
+                            phase, "skipped", f"Skipping {phase} phase (already completed)"
+                        )
                         if self.progress and phase in self.tasks:
                             self.progress.update(
                                 self.tasks[phase],
@@ -545,7 +552,9 @@ class WorkflowOrchestrator:
 
                 elif phase == WorkflowPhase.ROLLBACK.value:
                     if not self.rollback_enabled:
-                        self._add_event(phase, "skipped", "Skipping rollback phase (rollback is disabled)")
+                        self._add_event(
+                            phase, "skipped", "Skipping rollback phase (rollback is disabled)"
+                        )
                         results[phase] = {"status": "skipped", "reason": "Rollback is disabled"}
                     else:
                         rollback_results = await self._run_rollback_phase()
@@ -625,9 +634,7 @@ class WorkflowOrchestrator:
             # Check if we're in incremental mode
             if self.state.is_incremental:
                 self._add_event(
-                    phase,
-                    "in_progress",
-                    "Running incremental extraction (changed entities only)"
+                    phase, "in_progress", "Running incremental extraction (changed entities only)"
                 )
 
                 # Run incremental extraction
@@ -639,7 +646,7 @@ class WorkflowOrchestrator:
                 self._add_event(
                     phase,
                     "in_progress",
-                    f"Running extraction with optimized work queue (max workers: {self.config.max_workers})"
+                    f"Running extraction with optimized work queue (max workers: {self.config.max_workers})",
                 )
 
                 # Create an extraction worker queue
@@ -696,9 +703,7 @@ class WorkflowOrchestrator:
         # Run the tasks in parallel
         task_items = [(name, func) for name, func in extraction_tasks.items()]
         results = await run_in_thread_pool(
-            task_worker,
-            task_items,
-            max_workers=min(len(task_items), self.config.max_workers)
+            task_worker, task_items, max_workers=min(len(task_items), self.config.max_workers)
         )
 
         # Process the results
@@ -824,7 +829,7 @@ class WorkflowOrchestrator:
                 self._add_event(
                     phase,
                     "in_progress",
-                    "Running incremental transformation (changed entities only)"
+                    "Running incremental transformation (changed entities only)",
                 )
 
                 # Run incremental transformation
@@ -849,9 +854,7 @@ class WorkflowOrchestrator:
 
                 # Get all batches that need transformation
                 batches = self.db.get_entity_batches_by_status(
-                    project_key=self.config.project_key,
-                    entity_type="test_case",
-                    status="extracted"
+                    project_key=self.config.project_key, entity_type="test_case", status="extracted"
                 )
 
                 if not batches:
@@ -866,7 +869,7 @@ class WorkflowOrchestrator:
                     self._add_event(
                         phase,
                         "in_progress",
-                        f"Transforming {len(batch_ids)} batches with optimized work queue (max workers: {self.config.max_workers})"
+                        f"Transforming {len(batch_ids)} batches with optimized work queue (max workers: {self.config.max_workers})",
                     )
 
                     # Define batch transformation worker
@@ -877,14 +880,14 @@ class WorkflowOrchestrator:
                         return {
                             "batch_id": batch_id,
                             "result": result,
-                            "time": end_time - start_time
+                            "time": end_time - start_time,
                         }
 
                     # Run batch transformations in parallel
                     batch_results = await run_in_thread_pool(
                         transform_batch,
                         batch_ids,
-                        max_workers=min(len(batch_ids), self.config.max_workers)
+                        max_workers=min(len(batch_ids), self.config.max_workers),
                     )
 
                     # Process results
@@ -935,7 +938,7 @@ class WorkflowOrchestrator:
                 self._add_event(
                     phase,
                     "in_progress",
-                    f"Using optimized parallel transformation with {self.config.max_workers} workers"
+                    f"Using optimized parallel transformation with {self.config.max_workers} workers",
                 )
                 await self._run_parallel_transformation()
 
@@ -972,9 +975,7 @@ class WorkflowOrchestrator:
             # Check if we're in incremental mode
             if self.state.is_incremental:
                 self._add_event(
-                    phase,
-                    "in_progress",
-                    "Running incremental loading (changed entities only)"
+                    phase, "in_progress", "Running incremental loading (changed entities only)"
                 )
 
                 # Run incremental loading
@@ -984,7 +985,7 @@ class WorkflowOrchestrator:
                 self._add_event(
                     phase,
                     "in_progress",
-                    f"Running optimized parallel loading with {self.config.max_workers} workers"
+                    f"Running optimized parallel loading with {self.config.max_workers} workers",
                 )
                 await self._run_parallel_loading()
 
@@ -1021,12 +1022,11 @@ class WorkflowOrchestrator:
 
         # Process each entity type with appropriate batching strategy
         for entity_type in entity_types:
-            entity_type_clean = entity_type.rstrip('s')  # Remove trailing 's' for type extraction
+            entity_type_clean = entity_type.rstrip("s")  # Remove trailing 's' for type extraction
 
             # Get entities to transform
             entities = self.db.get_untransformed_entities(
-                project_key=self.config.project_key,
-                entity_type=entity_type_clean
+                project_key=self.config.project_key, entity_type=entity_type_clean
             )
 
             if not entities:
@@ -1053,7 +1053,9 @@ class WorkflowOrchestrator:
                 batches = batch_strategy(entities)
 
             batch_count = len(batches)
-            logger.info(f"Created {batch_count} batches of {entity_type} using {self.config.batching_strategy} strategy")
+            logger.info(
+                f"Created {batch_count} batches of {entity_type} using {self.config.batching_strategy} strategy"
+            )
 
             # Define worker function for batch transformation
             def transform_batch(batch):
@@ -1072,7 +1074,10 @@ class WorkflowOrchestrator:
                 batch_duration = batch_end_time - batch_start_time
 
                 # Record processing time for adaptive strategy
-                if self.config.batching_strategy == BatchingStrategy.ADAPTIVE and self.adaptive_strategy:
+                if (
+                    self.config.batching_strategy == BatchingStrategy.ADAPTIVE
+                    and self.adaptive_strategy
+                ):
                     self.batch_processing_history.append((batch_size, batch_duration))
                     # Adapt batch size for future batches
                     self.adaptive_strategy.adapt(batch_duration)
@@ -1081,14 +1086,12 @@ class WorkflowOrchestrator:
                     "entity_type": entity_type,
                     "batch_size": batch_size,
                     "result": result,
-                    "time": batch_duration
+                    "time": batch_duration,
                 }
 
             # Run batch transformations in parallel
             batch_results = await run_in_thread_pool(
-                transform_batch,
-                batches,
-                max_workers=min(batch_count, self.config.max_workers)
+                transform_batch, batches, max_workers=min(batch_count, self.config.max_workers)
             )
 
             # Process results
@@ -1118,7 +1121,7 @@ class WorkflowOrchestrator:
             transformation_results[entity_type] = {
                 "count": entity_type_count,
                 "time": entity_type_time,
-                "batches": batch_count
+                "batches": batch_count,
             }
 
         # Update transformation status
@@ -1132,8 +1135,8 @@ class WorkflowOrchestrator:
             metadata={
                 "total_time": total_time,
                 "strategy": self.config.batching_strategy,
-                "results": transformation_results
-            }
+                "results": transformation_results,
+            },
         )
 
         # Log overall results
@@ -1171,7 +1174,7 @@ class WorkflowOrchestrator:
                 project_key=self.config.project_key,
                 entity_type="test_case",
                 status="extracted",
-                is_incremental=True
+                is_incremental=True,
             )
 
             # Transform test cases
@@ -1214,17 +1217,13 @@ class WorkflowOrchestrator:
             {
                 "name": "test_cases",
                 "func": self.migration.load_test_cases,
-                "type": "testcase"  # Type name in the database
+                "type": "testcase",  # Type name in the database
             },
-            {
-                "name": "test_cycles",
-                "func": self.migration.load_test_cycles,
-                "type": "testcycle"
-            },
+            {"name": "test_cycles", "func": self.migration.load_test_cycles, "type": "testcycle"},
             {
                 "name": "test_executions",
                 "func": self.migration.load_test_executions,
-                "type": "execution"
+                "type": "execution",
             },
         ]
 
@@ -1236,8 +1235,7 @@ class WorkflowOrchestrator:
 
             # Get all transformed entities for this entity type
             entities = self.db.get_transformed_entities(
-                project_key=self.config.project_key,
-                entity_type=db_type
+                project_key=self.config.project_key, entity_type=db_type
             )
 
             if not entities:
@@ -1250,7 +1248,7 @@ class WorkflowOrchestrator:
                 continue
 
             # Get appropriate batch strategy for this entity type
-            entity_type_clean = entity_type.rstrip('s')  # Remove trailing 's'
+            entity_type_clean = entity_type.rstrip("s")  # Remove trailing 's'
             batch_strategy = self._create_batch_strategy(entity_type_clean)
 
             # Create batches using the strategy
@@ -1278,8 +1276,8 @@ class WorkflowOrchestrator:
                 batch_size = len(batch)
 
                 # Extract batch IDs if needed by the load function
-                if hasattr(batch[0], 'get') and callable(batch[0].get) and 'batch_id' in batch[0]:
-                    batch_ids = [item.get('batch_id') for item in batch]
+                if hasattr(batch[0], "get") and callable(batch[0].get) and "batch_id" in batch[0]:
+                    batch_ids = [item.get("batch_id") for item in batch]
                     result = load_func(batch_ids=batch_ids)
                 else:
                     # Direct loading of batched entities
@@ -1289,22 +1287,19 @@ class WorkflowOrchestrator:
                 batch_duration = end_time - start_time
 
                 # Record processing time for adaptive strategy
-                if self.config.batching_strategy == BatchingStrategy.ADAPTIVE and self.adaptive_strategy:
+                if (
+                    self.config.batching_strategy == BatchingStrategy.ADAPTIVE
+                    and self.adaptive_strategy
+                ):
                     self.batch_processing_history.append((batch_size, batch_duration))
                     # Adapt batch size for future batches
                     self.adaptive_strategy.adapt(batch_duration)
 
-                return {
-                    "batch_size": batch_size,
-                    "result": result,
-                    "time": batch_duration
-                }
+                return {"batch_size": batch_size, "result": result, "time": batch_duration}
 
             # Process batches in parallel
             batch_results = await run_in_thread_pool(
-                load_batch,
-                batches,
-                max_workers=min(batch_count, self.config.max_workers)
+                load_batch, batches, max_workers=min(batch_count, self.config.max_workers)
             )
 
             # Process results
@@ -1336,8 +1331,8 @@ class WorkflowOrchestrator:
                     "success_count": success_count,
                     "failed_count": failed_count,
                     "total_time": total_time,
-                    "strategy": self.config.batching_strategy
-                }
+                    "strategy": self.config.batching_strategy,
+                },
             )
 
         # Mark loading as completed
@@ -1353,9 +1348,9 @@ class WorkflowOrchestrator:
                 "config": {
                     "max_batch_memory_mb": self.config.max_batch_memory_mb,
                     "target_batch_time": self.config.target_batch_time,
-                    "max_workers": self.config.max_workers
-                }
-            }
+                    "max_workers": self.config.max_workers,
+                },
+            },
         )
 
         logger.info("Parallel loading completed")
@@ -1377,7 +1372,7 @@ class WorkflowOrchestrator:
                 project_key=self.config.project_key,
                 entity_type="test_case",
                 status="transformed",
-                is_incremental=True
+                is_incremental=True,
             )
 
             if transformed_batches:
@@ -1385,13 +1380,13 @@ class WorkflowOrchestrator:
 
                 # Use the migration's load method but with specific batches
                 # We could also implement a more selective loading strategy
-                loaded_count = self.migration.load_test_cases(batch_ids=[
-                    batch.get("batch_id") for batch in transformed_batches
-                ])
+                loaded_count = self.migration.load_test_cases(
+                    batch_ids=[batch.get("batch_id") for batch in transformed_batches]
+                )
 
                 loading_results["test_cases"] = {
                     "processed": len(transformed_batches),
-                    "loaded": loaded_count
+                    "loaded": loaded_count,
                 }
 
             # Do similar for test cycles, test executions, etc.
@@ -1422,7 +1417,9 @@ class WorkflowOrchestrator:
         self._add_event(phase, "in_progress", "Starting migration rollback")
 
         if self.progress and phase in self.tasks:
-            self.progress.update(self.tasks[phase], description="Rolling back migration...", total=None)
+            self.progress.update(
+                self.tasks[phase], description="Rolling back migration...", total=None
+            )
 
         try:
             # Start with determining what phases need to be rolled back
@@ -1443,16 +1440,14 @@ class WorkflowOrchestrator:
                 return {
                     "status": "completed",
                     "message": "No phases to roll back",
-                    "phases_rolled_back": []
+                    "phases_rolled_back": [],
                 }
 
             # Roll back in reverse order of execution
             rolled_back_phases = []
 
             for phase_to_rollback in phases_to_rollback:
-                self._add_event(
-                    phase, "in_progress", f"Rolling back {phase_to_rollback} phase"
-                )
+                self._add_event(phase, "in_progress", f"Rolling back {phase_to_rollback} phase")
 
                 if phase_to_rollback == WorkflowPhase.LOAD.value:
                     # Roll back loaded data from qTest
@@ -1481,18 +1476,14 @@ class WorkflowOrchestrator:
             return {
                 "status": "completed",
                 "phases_rolled_back": rolled_back_phases,
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
 
         except Exception as e:
             error_msg = f"Migration rollback failed: {str(e)}"
             self._add_event(phase, "failed", error_msg)
             self.state.update_rollback_status("failed", str(e))
-            return {
-                "status": "failed",
-                "error": str(e),
-                "timestamp": datetime.now().isoformat()
-            }
+            return {"status": "failed", "error": str(e), "timestamp": datetime.now().isoformat()}
 
     def _rollback_loaded_data(self) -> None:
         """Roll back loaded data from qTest."""
@@ -1685,11 +1676,13 @@ class WorkflowOrchestrator:
                     # Add issues to validation manager
                     for issue in rule_result:
                         self.validation_manager.add_issue(issue)
-                    results.append({
-                        "rule_id": rule.id,
-                        "rule_name": rule.name,
-                        "issues_count": len(rule_result)
-                    })
+                    results.append(
+                        {
+                            "rule_id": rule.id,
+                            "rule_name": rule.name,
+                            "issues_count": len(rule_result),
+                        }
+                    )
             except Exception as e:
                 logger.error(f"Error executing validation rule {rule.id}: {str(e)}", exc_info=True)
                 # Create a validation issue for the rule execution error
@@ -1710,9 +1703,9 @@ class WorkflowOrchestrator:
 
             # Run enhanced validation if available
             logger.info("Running enhanced post-migration validation checks")
-            validator = self.validator or MigrationValidator(self.validation_manager,
-                                                          project_key=project_key,
-                                                          db_manager=self.db)
+            validator = self.validator or MigrationValidator(
+                self.validation_manager, project_key=project_key, db_manager=self.db
+            )
 
             post_validator = PostMigrationValidator(validator)
             enhanced_results = post_validator.run_post_migration_validation(
@@ -1729,8 +1722,12 @@ class WorkflowOrchestrator:
                 if reports and len(reports) > 0:
                     enhanced_results["report_id"] = reports[0]["id"]
 
-            logger.info(f"Enhanced validation completed with {enhanced_results.get('total_issues', 0)} issues")
-            logger.info(f"Validation report ID: {enhanced_results.get('report_id', 'Not available')}")
+            logger.info(
+                f"Enhanced validation completed with {enhanced_results.get('total_issues', 0)} issues"
+            )
+            logger.info(
+                f"Validation report ID: {enhanced_results.get('report_id', 'Not available')}"
+            )
 
             # Log the validation success status
             if enhanced_results.get("success", False):
@@ -1779,8 +1776,8 @@ class WorkflowOrchestrator:
             "rule_results": results,
             "enhanced_validation": {
                 "performed": enhanced_validation_performed,
-                "results": enhanced_results if enhanced_validation_performed else {}
-            }
+                "results": enhanced_results if enhanced_validation_performed else {},
+            },
         }
 
         # Add recommendations if available
@@ -1985,7 +1982,7 @@ class WorkflowOrchestrator:
         self._add_event(
             "workflow",
             "in_progress",
-            f"Starting incremental migration with phases: {', '.join(phases)}"
+            f"Starting incremental migration with phases: {', '.join(phases)}",
         )
 
         try:

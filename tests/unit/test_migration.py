@@ -10,9 +10,8 @@ from ztoq.migration import EntityBatchTracker, MigrationState, ZephyrToQTestMigr
 from ztoq.models import ZephyrConfig
 from ztoq.qtest_models import QTestConfig
 
+
 @pytest.mark.unit()
-
-
 class TestMigrationState:
     @pytest.fixture()
     def db_mock(self):
@@ -38,10 +37,10 @@ class TestMigrationState:
         # Test loading existing state
         db_mock.get_migration_state.return_value = {
             "extraction_status": "completed",
-                "transformation_status": "in_progress",
-                "loading_status": "not_started",
-                "error_message": None,
-            }
+            "transformation_status": "in_progress",
+            "loading_status": "not_started",
+            "error_message": None,
+        }
 
         state = MigrationState("DEMO", db_mock)
         assert state.extraction_status == "completed"
@@ -80,8 +79,6 @@ class TestMigrationState:
 
 
 @pytest.mark.unit()
-
-
 class TestEntityBatchTracker:
     @pytest.fixture()
     def db_mock(self):
@@ -116,27 +113,25 @@ class TestEntityBatchTracker:
 
 
 @pytest.mark.unit()
-
-
 class TestZephyrToQTestMigration:
     @pytest.fixture()
     def zephyr_config(self):
         """Create a test Zephyr configuration."""
         return ZephyrConfig(
             base_url="https://api.zephyrscale.example.com/v2",
-                api_token="zephyr-token",
-                project_key="DEMO",
-            )
+            api_token="zephyr-token",
+            project_key="DEMO",
+        )
 
     @pytest.fixture()
     def qtest_config(self):
         """Create a test qTest configuration."""
         return QTestConfig(
             base_url="https://example.qtest.com",
-                username="test-user",
-                password="test-password",
-                project_id=12345,
-            )
+            username="test-user",
+            password="test-password",
+            project_id=12345,
+        )
 
     @pytest.fixture()
     def db_mock(self):
@@ -184,10 +179,10 @@ class TestZephyrToQTestMigration:
         # Entity mappings should be initialized as empty
         assert migration.entity_mappings == {
             "folders": {},
-                "test_cases": {},
-                "test_cycles": {},
-                "test_executions": {},
-            }
+            "test_cases": {},
+            "test_cycles": {},
+            "test_executions": {},
+        }
 
     def test_run_migration_all_phases(self, migration):
         """Test running a full migration (all phases)."""

@@ -18,16 +18,15 @@ from ztoq.migration import ZephyrToQTestMigration
 from ztoq.models import ZephyrConfig
 from ztoq.qtest_models import QTestConfig
 
+
 @pytest.mark.integration()
-
-
 class TestMigrationETLIntegration:
     """Integration tests for the full ETL migration workflow with a real SQLite database."""
 
     @pytest.fixture()
     def db_path(self):
         """Create a temporary SQLite database file for testing."""
-        temp_db_file = tempfile.NamedTemporaryFile(delete=False, suffix='.db')
+        temp_db_file = tempfile.NamedTemporaryFile(delete=False, suffix=".db")
         temp_db_file.close()
 
         # Create database URL
@@ -58,19 +57,19 @@ class TestMigrationETLIntegration:
         """Create a test Zephyr configuration."""
         return ZephyrConfig(
             base_url="https://api.zephyrscale.example.com/v2",
-                api_token="zephyr-token",
-                project_key="DEMO",
-            )
+            api_token="zephyr-token",
+            project_key="DEMO",
+        )
 
     @pytest.fixture()
     def qtest_config(self):
         """Create a test qTest configuration."""
         return QTestConfig(
             base_url="https://example.qtest.com",
-                username="test-user",
-                password="test-password",
-                project_id=12345,
-            )
+            username="test-user",
+            password="test-password",
+            project_id=12345,
+        )
 
     @pytest.fixture()
     def migration(self, zephyr_config, qtest_config, db_manager):
@@ -85,25 +84,35 @@ class TestMigrationETLIntegration:
             # Configure Zephyr client mock responses
             mock_zephyr_client.get_project.return_value = {
                 "id": "10001",
-                    "key": "DEMO",
-                    "name": "Demo Project",
-                    "description": "Project for testing migrations"
+                "key": "DEMO",
+                "name": "Demo Project",
+                "description": "Project for testing migrations",
             }
 
             mock_zephyr_client.get_folders.return_value = [
-                {"id": "folder-1", "name": "Folder 1", "parentId": None, "description": "Root folder"},
-                    {"id": "folder-2", "name": "Folder 2", "parentId": "folder-1", "description": "Subfolder"}
+                {
+                    "id": "folder-1",
+                    "name": "Folder 1",
+                    "parentId": None,
+                    "description": "Root folder",
+                },
+                {
+                    "id": "folder-2",
+                    "name": "Folder 2",
+                    "parentId": "folder-1",
+                    "description": "Subfolder",
+                },
             ]
 
             mock_zephyr_client.get_test_cases.return_value = [
                 {
                     "id": "tc-001",
-                        "name": "Test Case 1",
-                        "description": "First test case",
-                        "precondition": "System is running",
-                        "folderId": "folder-2",
-                        "priority": "high",
-                        "attachments": []
+                    "name": "Test Case 1",
+                    "description": "First test case",
+                    "precondition": "System is running",
+                    "folderId": "folder-2",
+                    "priority": "high",
+                    "attachments": [],
                 }
             ]
 
@@ -114,23 +123,23 @@ class TestMigrationETLIntegration:
             mock_zephyr_client.get_test_cycles.return_value = [
                 {
                     "id": "cycle-1",
-                        "name": "Sprint 1",
-                        "description": "First sprint cycle",
-                        "folderId": "folder-1",
-                        "startDate": "2025-01-01",
-                        "endDate": "2025-01-15"
+                    "name": "Sprint 1",
+                    "description": "First sprint cycle",
+                    "folderId": "folder-1",
+                    "startDate": "2025-01-01",
+                    "endDate": "2025-01-15",
                 }
             ]
 
             mock_zephyr_client.get_test_executions.return_value = [
                 {
                     "id": "exec-1",
-                        "testCaseId": "tc-001",
-                        "testCycleId": "cycle-1",
-                        "status": "pass",
-                        "executionTime": "2025-01-02",
-                        "comment": "All tests passed",
-                        "attachments": []
+                    "testCaseId": "tc-001",
+                    "testCycleId": "cycle-1",
+                    "status": "pass",
+                    "executionTime": "2025-01-02",
+                    "comment": "All tests passed",
+                    "attachments": [],
                 }
             ]
 
@@ -150,11 +159,11 @@ class TestMigrationETLIntegration:
 
             migration = ZephyrToQTestMigration(
                 zephyr_config,
-                    qtest_config,
-                    db_manager,
-                    batch_size=10,
-                    max_workers=2,
-                    attachments_dir=attachments_dir
+                qtest_config,
+                db_manager,
+                batch_size=10,
+                max_workers=2,
+                attachments_dir=attachments_dir,
             )
 
             # Store mocks in migration for test access
@@ -174,9 +183,11 @@ class TestMigrationETLIntegration:
 
         # Check final migration state in database
         session = db_manager.session
-        migration_state = session.query(MigrationStateModel).filter_by(
-            project_key=migration.zephyr_config.project_key
-        ).first()
+        migration_state = (
+            session.query(MigrationStateModel)
+            .filter_by(project_key=migration.zephyr_config.project_key)
+            .first()
+        )
 
         assert migration_state is not None
         assert migration_state.extraction_status == "completed"
@@ -238,9 +249,11 @@ class TestMigrationETLIntegration:
 
         # Check migration state in database
         session = db_manager.session
-        migration_state = session.query(MigrationStateModel).filter_by(
-            project_key=migration.zephyr_config.project_key
-        ).first()
+        migration_state = (
+            session.query(MigrationStateModel)
+            .filter_by(project_key=migration.zephyr_config.project_key)
+            .first()
+        )
 
         assert migration_state is not None
         assert migration_state.extraction_status == "completed"

@@ -32,9 +32,8 @@ from ztoq.models import (
 )
 from ztoq.data_fetcher import FetchResult
 
+
 @pytest.mark.unit()
-
-
 class TestDatabaseTransactions:
     @pytest.fixture()
     def db_config(self):
@@ -106,9 +105,9 @@ class TestDatabaseTransactions:
         # Try to create a test case with an invalid folder reference
         case = CaseModel(
             id="TC-1",
-                key="TEST-1",
-                name="Test Case",
-                folder="NONEXISTENT",  # This folder doesn't exist
+            key="TEST-1",
+            name="Test Case",
+            folder="NONEXISTENT",  # This folder doesn't exist
             projectKey="TEST",  # Add required field
         )
 
@@ -315,7 +314,6 @@ class TestDatabaseTransactions:
         """Test that save_project_data operates within a transaction."""
         # Create mock data with an error
 
-
         # Create valid project
         project = ProjectModel(id="PRJ-1", key="TEST", name="Test Project")
 
@@ -335,14 +333,14 @@ class TestDatabaseTransactions:
             "project": FetchResult(
                 entity_type="project", project_key="TEST", items=[project], count=1, success=True
             ),
-                "folders": FetchResult(
+            "folders": FetchResult(
                 entity_type="folders",
                 project_key="TEST",
                 items=[valid_folder, invalid_folder],
                 count=2,
                 success=True,
             ),
-            }
+        }
 
         # First make sure we have a clean database state
         with db_manager.get_session() as session:
@@ -494,7 +492,9 @@ class TestDatabaseTransactions:
                 for tc in test_cases:
                     # If any exist, delete them now to clean up
                     session.delete(tc)
-                assert False, f"Found {len(test_cases)} test cases when should be 0 (transaction didn't roll back)"
+                assert (
+                    False
+                ), f"Found {len(test_cases)} test cases when should be 0 (transaction didn't roll back)"
             else:
                 # Test case wasn't committed, transaction successfully rolled back
                 pass

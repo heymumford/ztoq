@@ -23,10 +23,7 @@ from ztoq.zephyr_client import ZephyrClient
 T = TypeVar("T")
 logger = logging.getLogger(__name__)
 
-
 @dataclass(frozen=True)
-
-
 class FetchResult:
     """Immutable container for fetch operation results."""
 
@@ -37,7 +34,6 @@ class FetchResult:
     success: bool
     error: str | None = None
 
-
 def create_authenticated_client(config: ZephyrConfig) -> ZephyrClient:
     """
     Creates an authenticated Zephyr client using the provided configuration.
@@ -46,7 +42,6 @@ def create_authenticated_client(config: ZephyrConfig) -> ZephyrClient:
     with the Zephyr Scale API.
     """
     return ZephyrClient(config)
-
 
 def fetch_projects(client: ZephyrClient) -> list[Project]:
     """
@@ -61,7 +56,6 @@ def fetch_projects(client: ZephyrClient) -> list[Project]:
         logger.error(f"Failed to fetch projects: {str(e)}")
         return []
 
-
 def fetch_all_test_cases(client: ZephyrClient, project_key: str) -> FetchResult:
     """
     Retrieves all test cases for a specific project.
@@ -74,23 +68,22 @@ def fetch_all_test_cases(client: ZephyrClient, project_key: str) -> FetchResult:
         test_cases = list(client.get_test_cases(project_key=project_key))
         return FetchResult(
             entity_type="test_cases",
-                project_key=project_key,
-                items=test_cases,
-                count=len(test_cases),
-                success=True,
-            )
+            project_key=project_key,
+            items=test_cases,
+            count=len(test_cases),
+            success=True,
+        )
     except Exception as e:
         error_message = f"Failed to fetch test cases for project {project_key}: {str(e)}"
         logger.error(error_message)
         return FetchResult(
             entity_type="test_cases",
-                project_key=project_key,
-                items=[],
-                count=0,
-                success=False,
-                error=error_message,
-            )
-
+            project_key=project_key,
+            items=[],
+            count=0,
+            success=False,
+            error=error_message,
+        )
 
 def fetch_all_test_cycles(client: ZephyrClient, project_key: str) -> FetchResult:
     """
@@ -104,23 +97,22 @@ def fetch_all_test_cycles(client: ZephyrClient, project_key: str) -> FetchResult
         test_cycles = list(client.get_test_cycles(project_key=project_key))
         return FetchResult(
             entity_type="test_cycles",
-                project_key=project_key,
-                items=test_cycles,
-                count=len(test_cycles),
-                success=True,
-            )
+            project_key=project_key,
+            items=test_cycles,
+            count=len(test_cycles),
+            success=True,
+        )
     except Exception as e:
         error_message = f"Failed to fetch test cycles for project {project_key}: {str(e)}"
         logger.error(error_message)
         return FetchResult(
             entity_type="test_cycles",
-                project_key=project_key,
-                items=[],
-                count=0,
-                success=False,
-                error=error_message,
-            )
-
+            project_key=project_key,
+            items=[],
+            count=0,
+            success=False,
+            error=error_message,
+        )
 
 def fetch_all_test_executions(client: ZephyrClient, project_key: str) -> FetchResult:
     """
@@ -134,23 +126,22 @@ def fetch_all_test_executions(client: ZephyrClient, project_key: str) -> FetchRe
         test_executions = list(client.get_test_executions(project_key=project_key))
         return FetchResult(
             entity_type="test_executions",
-                project_key=project_key,
-                items=test_executions,
-                count=len(test_executions),
-                success=True,
-            )
+            project_key=project_key,
+            items=test_executions,
+            count=len(test_executions),
+            success=True,
+        )
     except Exception as e:
         error_message = f"Failed to fetch test executions for project {project_key}: {str(e)}"
         logger.error(error_message)
         return FetchResult(
             entity_type="test_executions",
-                project_key=project_key,
-                items=[],
-                count=0,
-                success=False,
-                error=error_message,
-            )
-
+            project_key=project_key,
+            items=[],
+            count=0,
+            success=False,
+            error=error_message,
+        )
 
 def fetch_folders(client: ZephyrClient, project_key: str) -> FetchResult:
     """
@@ -163,23 +154,22 @@ def fetch_folders(client: ZephyrClient, project_key: str) -> FetchResult:
         folders = client.get_folders(project_key=project_key)
         return FetchResult(
             entity_type="folders",
-                project_key=project_key,
-                items=folders,
-                count=len(folders),
-                success=True,
-            )
+            project_key=project_key,
+            items=folders,
+            count=len(folders),
+            success=True,
+        )
     except Exception as e:
         error_message = f"Failed to fetch folders for project {project_key}: {str(e)}"
         logger.error(error_message)
         return FetchResult(
             entity_type="folders",
-                project_key=project_key,
-                items=[],
-                count=0,
-                success=False,
-                error=error_message,
-            )
-
+            project_key=project_key,
+            items=[],
+            count=0,
+            success=False,
+            error=error_message,
+        )
 
 def fetch_statuses(client: ZephyrClient, project_key: str) -> FetchResult:
     """
@@ -193,23 +183,22 @@ def fetch_statuses(client: ZephyrClient, project_key: str) -> FetchResult:
         statuses = client.get_statuses(project_key=project_key)
         return FetchResult(
             entity_type="statuses",
-                project_key=project_key,
-                items=statuses,
-                count=len(statuses),
-                success=True,
-            )
+            project_key=project_key,
+            items=statuses,
+            count=len(statuses),
+            success=True,
+        )
     except Exception as e:
         error_message = f"Failed to fetch statuses for project {project_key}: {str(e)}"
         logger.error(error_message)
         return FetchResult(
             entity_type="statuses",
-                project_key=project_key,
-                items=[],
-                count=0,
-                success=False,
-                error=error_message,
-            )
-
+            project_key=project_key,
+            items=[],
+            count=0,
+            success=False,
+            error=error_message,
+        )
 
 def fetch_priorities(client: ZephyrClient, project_key: str) -> FetchResult:
     """
@@ -222,23 +211,22 @@ def fetch_priorities(client: ZephyrClient, project_key: str) -> FetchResult:
         priorities = client.get_priorities(project_key=project_key)
         return FetchResult(
             entity_type="priorities",
-                project_key=project_key,
-                items=priorities,
-                count=len(priorities),
-                success=True,
-            )
+            project_key=project_key,
+            items=priorities,
+            count=len(priorities),
+            success=True,
+        )
     except Exception as e:
         error_message = f"Failed to fetch priorities for project {project_key}: {str(e)}"
         logger.error(error_message)
         return FetchResult(
             entity_type="priorities",
-                project_key=project_key,
-                items=[],
-                count=0,
-                success=False,
-                error=error_message,
-            )
-
+            project_key=project_key,
+            items=[],
+            count=0,
+            success=False,
+            error=error_message,
+        )
 
 def fetch_environments(client: ZephyrClient, project_key: str) -> FetchResult:
     """
@@ -252,28 +240,27 @@ def fetch_environments(client: ZephyrClient, project_key: str) -> FetchResult:
         environments = client.get_environments(project_key=project_key)
         return FetchResult(
             entity_type="environments",
-                project_key=project_key,
-                items=environments,
-                count=len(environments),
-                success=True,
-            )
+            project_key=project_key,
+            items=environments,
+            count=len(environments),
+            success=True,
+        )
     except Exception as e:
         error_message = f"Failed to fetch environments for project {project_key}: {str(e)}"
         logger.error(error_message)
         return FetchResult(
             entity_type="environments",
-                project_key=project_key,
-                items=[],
-                count=0,
-                success=False,
-                error=error_message,
-            )
-
+            project_key=project_key,
+            items=[],
+            count=0,
+            success=False,
+            error=error_message,
+        )
 
 def fetch_all_project_data(
     client: ZephyrClient,
-        project_key: str,
-        progress_callback: Callable[[str, str, bool], None] | None = None,
+    project_key: str,
+    progress_callback: Callable[[str, str, bool], None] | None = None,
 ) -> dict[str, FetchResult]:
     """
     Retrieves all test data for a specific project using parallel processing.
@@ -292,13 +279,13 @@ def fetch_all_project_data(
     """
     fetch_functions = {
         "test_cases": lambda: fetch_all_test_cases(client, project_key),
-            "test_cycles": lambda: fetch_all_test_cycles(client, project_key),
-            "test_executions": lambda: fetch_all_test_executions(client, project_key),
-            "folders": lambda: fetch_folders(client, project_key),
-            "statuses": lambda: fetch_statuses(client, project_key),
-            "priorities": lambda: fetch_priorities(client, project_key),
-            "environments": lambda: fetch_environments(client, project_key),
-        }
+        "test_cycles": lambda: fetch_all_test_cycles(client, project_key),
+        "test_executions": lambda: fetch_all_test_executions(client, project_key),
+        "folders": lambda: fetch_folders(client, project_key),
+        "statuses": lambda: fetch_statuses(client, project_key),
+        "priorities": lambda: fetch_priorities(client, project_key),
+        "environments": lambda: fetch_environments(client, project_key),
+    }
 
     results: dict[str, FetchResult] = {}
 
@@ -325,11 +312,10 @@ def fetch_all_project_data(
 
     return results
 
-
 def fetch_all_projects_data(
     client: ZephyrClient,
-        project_keys: list[str] | None = None,
-        progress_callback: Callable[[str, str, bool], None] | None = None,
+    project_keys: list[str] | None = None,
+    progress_callback: Callable[[str, str, bool], None] | None = None,
 ) -> dict[str, dict[str, FetchResult]]:
     """
     Retrieves all test data for multiple projects.

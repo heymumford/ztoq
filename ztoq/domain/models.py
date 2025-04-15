@@ -7,6 +7,7 @@ See LICENSE file for details.
 from typing import Any
 from pydantic import BaseModel
 
+
 class OpenAPISpec(BaseModel):
     """OpenAPI specification model."""
 

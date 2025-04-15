@@ -26,15 +26,9 @@ from ztoq.models import (
     Attachment,
     Folder,
     Environment,
-    ZephyrConfig
+    ZephyrConfig,
 )
-from ztoq.qtest_models import (
-    QTestProject,
-    QTestTestCase,
-    QTestTestCycle,
-    QTestTestRun,
-    QTestConfig
-)
+from ztoq.qtest_models import QTestProject, QTestTestCase, QTestTestCycle, QTestTestRun, QTestConfig
 
 
 class OpenAPISpecFactory(ModelFactory):
@@ -48,9 +42,9 @@ class OpenAPISpecFactory(ModelFactory):
         "data": lambda: {
             "info": {"title": "Test API", "version": "1.0.0"},
             "paths": {"/test": {"get": {"summary": "Test endpoint"}}},
-            "components": {"schemas": {}}
+            "components": {"schemas": {}},
         },
-        "path": lambda: f"/path/to/api-spec-{BaseFactory.random_string(5)}.yaml"
+        "path": lambda: f"/path/to/api-spec-{BaseFactory.random_string(5)}.yaml",
     }
 
 
@@ -63,7 +57,7 @@ class ProjectFactory(ModelFactory):
         "id": lambda: str(BaseFactory.random_int(1000, 9999)),
         "key": lambda: BaseFactory.random_string(4).upper(),
         "name": lambda: f"Project-{BaseFactory.random_string(8)}",
-        "description": lambda: f"Test project description {BaseFactory.random_string(15)}"
+        "description": lambda: f"Test project description {BaseFactory.random_string(15)}",
     }
 
 
@@ -77,7 +71,7 @@ class PriorityFactory(ModelFactory):
         "name": lambda: BaseFactory.random_choice(["High", "Medium", "Low"]),
         "description": lambda: f"Priority description {BaseFactory.random_string(10)}",
         "color": lambda: BaseFactory.random_choice(["#ff0000", "#00ff00", "#0000ff"]),
-        "rank": lambda: BaseFactory.random_int(1, 5)
+        "rank": lambda: BaseFactory.random_int(1, 5),
     }
 
 
@@ -91,7 +85,7 @@ class StatusFactory(ModelFactory):
         "name": lambda: BaseFactory.random_choice(["Active", "Draft", "Completed", "Deprecated"]),
         "description": lambda: f"Status description {BaseFactory.random_string(10)}",
         "color": lambda: BaseFactory.random_choice(["#ffff00", "#00ffff", "#ff00ff"]),
-        "type": lambda: BaseFactory.random_choice(["TEST_CASE", "TEST_CYCLE", "TEST_EXECUTION"])
+        "type": lambda: BaseFactory.random_choice(["TEST_CASE", "TEST_CYCLE", "TEST_EXECUTION"]),
     }
 
 
@@ -108,7 +102,7 @@ class CaseStepFactory(ModelFactory):
         "data": lambda: None,
         "actual_result": lambda: None,
         "status": lambda: None,
-        "attachments": lambda: []
+        "attachments": lambda: [],
     }
 
 
@@ -121,7 +115,7 @@ class CustomFieldFactory(ModelFactory):
         "id": lambda: str(BaseFactory.random_int(1000, 9999)),
         "name": lambda: f"CustomField-{BaseFactory.random_string(5)}",
         "type": lambda: BaseFactory.random_choice(["text", "paragraph", "checkbox", "dropdown"]),
-        "value": lambda: BaseFactory.random_string(10)
+        "value": lambda: BaseFactory.random_string(10),
     }
 
     @classmethod
@@ -151,9 +145,7 @@ class CustomFieldFactory(ModelFactory):
                 kwargs["value"] = BaseFactory.random_choice(["Option 1", "Option 2", "Option 3"])
             elif field_type == "multipleSelect":
                 kwargs["value"] = BaseFactory.random_subset(
-                    ["Option 1", "Option 2", "Option 3", "Option 4"],
-                    min_size=1,
-                    max_size=3
+                    ["Option 1", "Option 2", "Option 3", "Option 4"], min_size=1, max_size=3
                 )
 
         # Create the custom field using the parent class method
@@ -170,7 +162,7 @@ class LinkFactory(ModelFactory):
         "name": lambda: f"Link-{BaseFactory.random_string(5)}",
         "url": lambda: f"https://example.com/{BaseFactory.random_string(10)}",
         "description": lambda: f"Link description {BaseFactory.random_string(15)}",
-        "type": lambda: BaseFactory.random_choice(["issue", "web", "testCycle"])
+        "type": lambda: BaseFactory.random_choice(["issue", "web", "testCycle"]),
     }
 
 
@@ -186,7 +178,7 @@ class AttachmentFactory(ModelFactory):
         "size": lambda: BaseFactory.random_int(100, 10000),
         "created_on": lambda: BaseFactory.random_date(),
         "created_by": lambda: f"user-{BaseFactory.random_string(5)}",
-        "content": lambda: None
+        "content": lambda: None,
     }
 
 
@@ -200,7 +192,7 @@ class FolderFactory(ModelFactory):
         "name": lambda: f"Folder-{BaseFactory.random_string(5)}",
         "folder_type": lambda: BaseFactory.random_choice(["TEST_CASE", "TEST_CYCLE"]),
         "parent_id": lambda: None,
-        "project_key": lambda: BaseFactory.random_string(4).upper()
+        "project_key": lambda: BaseFactory.random_string(4).upper(),
     }
 
 
@@ -212,7 +204,7 @@ class EnvironmentFactory(ModelFactory):
     DEFAULTS = {
         "id": lambda: str(BaseFactory.random_int(1000, 9999)),
         "name": lambda: f"Environment-{BaseFactory.random_string(5)}",
-        "description": lambda: f"Environment description {BaseFactory.random_string(15)}"
+        "description": lambda: f"Environment description {BaseFactory.random_string(15)}",
     }
 
 
@@ -224,7 +216,7 @@ class ZephyrConfigFactory(ModelFactory):
     DEFAULTS = {
         "base_url": lambda: "https://api.example.com/v2",
         "api_token": lambda: f"token-{BaseFactory.random_string(20)}",
-        "project_key": lambda: BaseFactory.random_string(4).upper()
+        "project_key": lambda: BaseFactory.random_string(4).upper(),
     }
 
 
@@ -259,7 +251,7 @@ class TestCaseFactory(ModelFactory):
         "links": lambda: [],
         "scripts": lambda: [],
         "versions": lambda: [],
-        "attachments": lambda: []
+        "attachments": lambda: [],
     }
 
     @classmethod
@@ -277,7 +269,7 @@ class TestCaseFactory(ModelFactory):
         # Create the steps
         steps = []
         for i in range(step_count):
-            steps.append(CaseStepFactory.create(index=i+1))
+            steps.append(CaseStepFactory.create(index=i + 1))
 
         # Add steps to kwargs
         if "steps" not in kwargs:
@@ -310,7 +302,7 @@ class TestCycleFactory(ModelFactory):
         "updated_by": lambda: str(BaseFactory.random_int(1000, 9999)),
         "custom_fields": lambda: [],
         "links": lambda: [],
-        "attachments": lambda: []
+        "attachments": lambda: [],
     }
 
 
@@ -325,7 +317,9 @@ class TestExecutionFactory(ModelFactory):
         "cycle_id": lambda: str(BaseFactory.random_int(1000, 9999)),
         "cycle_name": lambda: f"Cycle-{BaseFactory.random_string(5)}",
         "status": lambda: BaseFactory.random_choice(["Passed", "Failed", "Blocked", "Not Run"]),
-        "status_name": lambda: BaseFactory.random_choice(["Passed", "Failed", "Blocked", "Not Run"]),
+        "status_name": lambda: BaseFactory.random_choice(
+            ["Passed", "Failed", "Blocked", "Not Run"]
+        ),
         "environment": lambda: str(BaseFactory.random_int(1000, 9999)),
         "environment_name": lambda: f"Environment-{BaseFactory.random_string(5)}",
         "executed_by": lambda: str(BaseFactory.random_int(1000, 9999)),
@@ -340,7 +334,7 @@ class TestExecutionFactory(ModelFactory):
         "steps": lambda: [],
         "custom_fields": lambda: [],
         "links": lambda: [],
-        "attachments": lambda: []
+        "attachments": lambda: [],
     }
 
     @classmethod
@@ -366,7 +360,7 @@ class TestExecutionFactory(ModelFactory):
                 expected_result=case_step.expected_result,
                 data=case_step.data,
                 status=BaseFactory.random_choice(["Passed", "Failed", "Blocked", "Not Run"]),
-                actual_result=f"Actual result {BaseFactory.random_string(15)}"
+                actual_result=f"Actual result {BaseFactory.random_string(15)}",
             )
             steps.append(execution_step)
 
@@ -391,7 +385,7 @@ class QTestConfigFactory(ModelFactory):
         "base_url": lambda: "https://qtest.example.com",
         "username": lambda: f"user_{BaseFactory.random_string(5)}",
         "password": lambda: f"pass_{BaseFactory.random_string(10)}",
-        "project_id": lambda: BaseFactory.random_int(1000, 9999)
+        "project_id": lambda: BaseFactory.random_int(1000, 9999),
     }
 
 
@@ -477,7 +471,7 @@ class QTestTestCycleFactory(ModelFactory):
         "pid": lambda: f"CY-{BaseFactory.random_int(100, 999)}",
         "project_id": lambda: BaseFactory.random_int(1000, 9999),
         "release_id": lambda: BaseFactory.random_int(1000, 9999),
-        "properties": lambda: []
+        "properties": lambda: [],
     }
 
     @classmethod

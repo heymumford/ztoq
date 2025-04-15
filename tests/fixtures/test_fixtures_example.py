@@ -26,12 +26,10 @@ from tests.fixtures import (
     mock_env_vars,
     temp_dir,
     temp_file,
-
     # Database fixtures
     sqlalchemy_memory_session,
     populate_test_db,
     mock_sqlalchemy_session,
-
     # API client fixtures
     zephyr_config,
     qtest_config,
@@ -39,16 +37,14 @@ from tests.fixtures import (
     mock_qtest_client,
     zephyr_client_with_mock_api,
     qtest_client_with_mock_api,
-
     # API mocking fixtures
     mock_zephyr_api,
     mock_qtest_api,
     mock_both_apis,
-
     # Factory classes
     ProjectFactory,
     TestCaseFactory,
-    QTestTestCaseFactory
+    QTestTestCaseFactory,
 )
 
 
@@ -84,13 +80,7 @@ def test_integration_with_api_mocking(mock_zephyr_api, sqlalchemy_memory_session
     """Example of an integration test with API mocking."""
     # Arrange: Configure the mock API
     mock_zephyr_api.add_response(
-        "GET",
-        "/projects",
-        {
-            "values": [
-                {"id": "1001", "key": "TEST", "name": "Test Project"}
-            ]
-        }
+        "GET", "/projects", {"values": [{"id": "1001", "key": "TEST", "name": "Test Project"}]}
     )
 
     mock_zephyr_api.add_response(
@@ -101,22 +91,15 @@ def test_integration_with_api_mocking(mock_zephyr_api, sqlalchemy_memory_session
             "startAt": 0,
             "maxResults": 50,
             "isLast": True,
-            "values": [
-                {
-                    "id": "TC-1",
-                    "key": "TEST-T1",
-                    "name": "Test Case 1",
-                    "status": "Active"
-                }
-            ]
-        }
+            "values": [{"id": "TC-1", "key": "TEST-T1", "name": "Test Case 1", "status": "Active"}],
+        },
     )
 
     # Act: Create a real client and use it with the mocked API
     config = ZephyrConfig(
         base_url="https://api.zephyrscale.example.com/v2",
         api_token="mock-token",
-        project_key="TEST"
+        project_key="TEST",
     )
     client = ZephyrClient(config)
 
@@ -178,44 +161,27 @@ def test_integration_with_multiple_apis(mock_both_apis):
 
     # Configure Zephyr API
     zephyr_harness.add_response(
-        "GET",
-        "/projects",
-        {
-            "values": [
-                {"id": "1001", "key": "TEST", "name": "Test Project"}
-            ]
-        }
+        "GET", "/projects", {"values": [{"id": "1001", "key": "TEST", "name": "Test Project"}]}
     )
 
     # Configure qTest API
     qtest_harness.add_response(
         "POST",
         "/oauth/token",
-        {
-            "access_token": "mock-token",
-            "token_type": "bearer",
-            "expires_in": 3600
-        }
+        {"access_token": "mock-token", "token_type": "bearer", "expires_in": 3600},
     )
 
     qtest_harness.add_response(
         "GET",
         "/api/v3/projects",
-        {
-            "total": 1,
-            "page": 1,
-            "pageSize": 50,
-            "items": [
-                {"id": 12345, "name": "Test Project"}
-            ]
-        }
+        {"total": 1, "page": 1, "pageSize": 50, "items": [{"id": 12345, "name": "Test Project"}]},
     )
 
     # Create clients
     zephyr_config_obj = ZephyrConfig(
         base_url="https://api.zephyrscale.example.com/v2",
         api_token="mock-token",
-        project_key="TEST"
+        project_key="TEST",
     )
     zephyr_client = ZephyrClient(zephyr_config_obj)
 
@@ -223,7 +189,7 @@ def test_integration_with_multiple_apis(mock_both_apis):
         base_url="https://api.qtest.example.com",
         username="test-user",
         password="test-password",
-        project_id=12345
+        project_id=12345,
     )
     qtest_client = QTestClient(qtest_config_obj)
 
@@ -240,10 +206,7 @@ def test_integration_with_multiple_apis(mock_both_apis):
 
 # Example 6: Using Pre-Configured Client Fixtures
 @pytest.mark.integration
-def test_integration_with_client_fixtures(
-    zephyr_client_with_mock_api,
-    qtest_client_with_mock_api
-):
+def test_integration_with_client_fixtures(zephyr_client_with_mock_api, qtest_client_with_mock_api):
     """Example of an integration test with pre-configured client fixtures."""
     # These clients are already configured with mock responses
 
@@ -282,4 +245,3 @@ def test_system_with_mock_externals(mock_env_vars, cli_runner, run_cli_command):
     assert result["successful"] == True
     assert "Hello, ZTOQ!" in result["stdout"]
     assert result["returncode"] == 0
-

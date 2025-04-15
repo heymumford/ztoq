@@ -14,13 +14,7 @@ from typing import Dict, Any, Generator, Optional, List
 from unittest.mock import MagicMock, patch
 
 # Import the base fixtures
-from tests.fixtures.base import (
-    base_test_env,
-    mock_env_vars,
-    temp_dir,
-    temp_file,
-    temp_db_path
-)
+from tests.fixtures.base import base_test_env, mock_env_vars, temp_dir, temp_file, temp_db_path
 
 
 @pytest.fixture
@@ -37,10 +31,7 @@ def skip_if_no_docker() -> None:
 
     try:
         result = subprocess.run(
-            ["docker", "--version"],
-            capture_output=True,
-            text=True,
-            check=False
+            ["docker", "--version"], capture_output=True, text=True, check=False
         )
         if result.returncode != 0:
             pytest.skip("Docker not available")
@@ -49,7 +40,9 @@ def skip_if_no_docker() -> None:
 
 
 @pytest.fixture
-def docker_compose_env(temp_dir: Path, base_test_env: Dict[str, str]) -> Generator[Dict[str, Any], None, None]:
+def docker_compose_env(
+    temp_dir: Path, base_test_env: Dict[str, str]
+) -> Generator[Dict[str, Any], None, None]:
     """
     Set up a Docker Compose environment for system testing.
 
@@ -90,7 +83,7 @@ def docker_compose_env(temp_dir: Path, base_test_env: Dict[str, str]) -> Generat
         "attachments_dir": attachments_dir,
         "data_dir": data_dir,
         "reports_dir": reports_dir,
-        "env_vars": base_test_env
+        "env_vars": base_test_env,
     }
 
     yield env_info
@@ -99,7 +92,9 @@ def docker_compose_env(temp_dir: Path, base_test_env: Dict[str, str]) -> Generat
 
 
 @pytest.fixture
-def cli_runner(temp_dir: Path, base_test_env: Dict[str, str]) -> Generator[Dict[str, Any], None, None]:
+def cli_runner(
+    temp_dir: Path, base_test_env: Dict[str, str]
+) -> Generator[Dict[str, Any], None, None]:
     """
     Set up an environment for testing the CLI application.
 
@@ -137,7 +132,7 @@ def cli_runner(temp_dir: Path, base_test_env: Dict[str, str]) -> Generator[Dict[
         "input_dir": input_dir,
         "output_dir": output_dir,
         "env_vars": base_test_env,
-        "original_env": original_env
+        "original_env": original_env,
     }
 
     yield env_info
@@ -158,6 +153,7 @@ def run_cli_command() -> Generator[callable, None, None]:
     Yields:
         callable: Function to run CLI commands
     """
+
     def _run_command(command: List[str], cwd: Optional[Path] = None) -> Dict[str, Any]:
         """
         Run a CLI command and return its results.
@@ -176,11 +172,7 @@ def run_cli_command() -> Generator[callable, None, None]:
 
             # Run the command
             process = subprocess.run(
-                command,
-                capture_output=True,
-                text=True,
-                check=False,
-                cwd=str(cwd) if cwd else None
+                command, capture_output=True, text=True, check=False, cwd=str(cwd) if cwd else None
             )
 
             # Return results
@@ -188,7 +180,7 @@ def run_cli_command() -> Generator[callable, None, None]:
                 "returncode": process.returncode,
                 "stdout": process.stdout,
                 "stderr": process.stderr,
-                "successful": process.returncode == 0
+                "successful": process.returncode == 0,
             }
         except subprocess.SubprocessError as e:
             # Handle subprocess errors
@@ -197,7 +189,7 @@ def run_cli_command() -> Generator[callable, None, None]:
                 "stdout": "",
                 "stderr": str(e),
                 "successful": False,
-                "error": e
+                "error": e,
             }
 
     yield _run_command
