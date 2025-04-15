@@ -39,14 +39,14 @@ For detailed instructions on obtaining and configuring API tokens, see the [API 
 ```
 Test Type       | Count | Passing | Coverage
 --------------- | ----- | ------- | --------
-Unit Tests      | 40    | 40      | 92%
-Integration     | 3     | 3       | 75%
-E2E Tests       | 2     | 2       | 80%
+Unit Tests      | 49    | 49      | 92%
+Integration     | 36    | 36      | 85%
+System Tests    | 1     | 1       | 80%
 --------------- | ----- | ------- | --------
-Total           | 45    | 45      | 88%
+Total           | 86    | 86      | 88%
 ```
 
-*Updated: 2025-04-14*
+*Updated: 2025-04-15*
 
 ## Features
 
@@ -64,6 +64,8 @@ Total           | 45    | 45      | 88%
 - Mock data generation for testing
 - Complete ETL migration pipeline from Zephyr Scale to qTest
 - Batch processing and parallel operations for large migrations
+- SQL-based batch transformer for high-performance data transformation
+- Memory-efficient processing for large datasets with pandas
 - Resumable migration with state tracking
 - Attachment handling for complete data migration
 
@@ -191,13 +193,83 @@ poetry run ztoq migrate run \
   --qtest-password YOUR_PASSWORD \
   --qtest-project-id 12345 \
   --db-type sqlite \
-  --db-path ./migration.db
+  --db-path ./migration.db \
+  --batch-size 100 \
+  --max-workers 8
 
 # Check migration status
 poetry run ztoq migrate status \
   --db-type sqlite \
   --db-path ./migration.db \
   --project-key PROJECT
+
+# Run migration with specific options
+poetry run ztoq migrate run \
+  --zephyr-project-key PROJECT \
+  --db-path ./migration.db \
+  --batch-size 200 \
+  --use-batch-transformer true \
+  --phases transform
+
+# Run migration with validation and rollback support
+poetry run ztoq migrate run \
+  --zephyr-project-key PROJECT \
+  --phases extract,transform,load,validate \
+  --no-rollback false \
+  --incremental true \
+  --report-format html \
+  --output-dir ./reports
+```
+
+### Workflow Operations
+
+The workflow commands provide more fine-grained control over individual phases of the migration process:
+
+```bash
+# Extract data from Zephyr Scale
+poetry run ztoq workflow extract \
+  --zephyr-base-url https://api.atlassian.com/ex/jira/your-instance/rest/zephyr/1.0 \
+  --zephyr-api-token YOUR_ZEPHYR_TOKEN \
+  --zephyr-project-key PROJECT \
+  --db-type sqlite \
+  --db-path ./migration.db
+
+# Transform extracted data for qTest
+poetry run ztoq workflow transform \
+  --db-type sqlite \
+  --db-path ./migration.db \
+  --project-key PROJECT \
+  --batch-size 100 \
+  --use-batch-transformer true
+
+# Load transformed data into qTest
+poetry run ztoq workflow load \
+  --qtest-base-url https://yourcompany.qtestnet.com \
+  --qtest-username YOUR_USERNAME \
+  --qtest-password YOUR_PASSWORD \
+  --qtest-project-id 12345 \
+  --db-type sqlite \
+  --db-path ./migration.db \
+  --project-key PROJECT \
+  --max-workers 5
+
+# Run validation on migrated data
+poetry run ztoq workflow validate \
+  --qtest-base-url https://yourcompany.qtestnet.com \
+  --qtest-username YOUR_USERNAME \
+  --qtest-password YOUR_PASSWORD \
+  --qtest-project-id 12345 \
+  --db-type sqlite \
+  --db-path ./migration.db \
+  --project-key PROJECT \
+  --output-format json
+
+# Run rollback for failed migrations
+poetry run ztoq workflow rollback \
+  --db-type sqlite \
+  --db-path ./migration.db \
+  --project-key PROJECT \
+  --phases load,transform,extract
 ```
 
 For detailed migration instructions, see the [Migration Guide](docs/migration-guide.md).
@@ -640,5 +712,6 @@ This repository demonstrates how thoughtful design and investment in quality can
 
 ---
 *Copyright (c) 2025 Eric C. Mumford (@heymumford) - Licensed under [MIT License](LICENSE)*
+*Last updated: April 15, 2025*
 
 #datamigration #testmanagement #zephyrscale #qtest #pythontool #etl #testautomation #dataextraction #apiclient #testtoolmigration #opensource #pythonapi #testdataintegration
