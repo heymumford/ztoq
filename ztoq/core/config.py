@@ -367,7 +367,8 @@ class ZephyrConfig(BaseConfig):
     ENV_PREFIX: ClassVar[str] = "ZTOQ_"
 
     @field_validator("base_url")
-    def validate_base_url(self, value):
+    @classmethod
+    def validate_base_url(cls, value):
         """Validate base URL format."""
         if not value:
             raise ValueError("base_url must be provided")
@@ -378,7 +379,8 @@ class ZephyrConfig(BaseConfig):
         return value
 
     @field_validator("api_token")
-    def validate_api_token(self, value):
+    @classmethod
+    def validate_api_token(cls, value):
         """Validate API token."""
         if not value:
             raise ValueError("api_token must be provided")
@@ -438,7 +440,8 @@ class QTestConfig(BaseConfig):
     ENV_PREFIX: ClassVar[str] = "ZTOQ_"
 
     @field_validator("base_url")
-    def validate_base_url(self, value):
+    @classmethod
+    def validate_base_url(cls, value):
         """Validate base URL format."""
         if not value:
             raise ValueError("base_url must be provided")
