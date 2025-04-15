@@ -23,24 +23,64 @@ from rich.progress import (
 )
 from rich.table import Table
 
-# Use absolute import to ensure we get the installed package, not local directory
+# Bypass local imports to ensure we use the installed alembic
 import sys
 import os
-import inspect
 from pathlib import Path
 
-# Temporarily remove the current working directory from sys.path to avoid local imports
-cwd = os.getcwd()
-if cwd in sys.path:
-    sys.path.remove(cwd)
+# Use project root in path
+project_root = Path(__file__).parent.parent
+sys.path.insert(0, str(project_root))
 
-# Import the installed alembic modules
-import alembic.command as alembic_command
-import alembic.config as alembic_config
-
-# Restore the path
-if cwd not in sys.path:
-    sys.path.insert(0, cwd)
+# Import our alembic proxy that ensures we use the virtualenv version
+try:
+    # Try to use environment variable if available
+    if os.environ.get("ALEMBIC_PATH"):
+        alembic_path = os.environ["ALEMBIC_PATH"]
+        sys.path.insert(0, alembic_path)
+        import alembic.command as alembic_command
+        import alembic.config as alembic_config
+        sys.path.pop(0)
+    # Otherwise, import with a workaround to skip local directory
+    else:
+        # Try a simple approach - rename local alembic temporarily
+        local_alembic = project_root / "alembic"
+        local_alembic_tmp = project_root / "alembic_tmp"
+        
+        alembic_renamed = False
+        if local_alembic.exists():
+            try:
+                os.rename(local_alembic, local_alembic_tmp)
+                alembic_renamed = True
+                
+                # Now import alembic from the environment
+                import alembic.command as alembic_command
+                import alembic.config as alembic_config
+            finally:
+                # Restore the original name
+                if alembic_renamed:
+                    os.rename(local_alembic_tmp, local_alembic)
+        else:
+            # No local alembic to worry about
+            import alembic.command as alembic_command
+            import alembic.config as alembic_config
+except ImportError as e:
+    # If all else fails, use a fallback mechanism
+    import subprocess
+    result = subprocess.run(
+        ["poetry", "run", "python", "-c", 
+         "import sys; print(sys.path)"],
+        capture_output=True,
+        text=True
+    )
+    sys_path = result.stdout.strip()
+    
+    # Print error for debugging
+    print(f"Failed to import alembic: {e}")
+    print(f"Python path: {sys_path}")
+    
+    # Raise the original error
+    raise
 from ztoq.core.config import (
     DatabaseConfig,
     QTestConfig,
