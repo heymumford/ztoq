@@ -81,20 +81,20 @@ def run_tests() -> TestSuiteResults:
 
     # Run unit tests
     returncode, stdout, stderr = run_command(
-        ["poetry", "run", "pytest", "tests/unit", "-v"], ROOT_DIR
+        ["poetry", "run", "pytest", "tests/unit", "-v"], ROOT_DIR,
     )
     parse_test_results(stdout, results.unit)
 
     # Run integration tests
     returncode, stdout, stderr = run_command(
-        ["poetry", "run", "pytest", "tests/integration", "-v"], ROOT_DIR
+        ["poetry", "run", "pytest", "tests/integration", "-v"], ROOT_DIR,
     )
     parse_test_results(stdout, results.integration)
 
     # Run e2e tests if they exist
     if (TESTS_DIR / "e2e").exists():
         returncode, stdout, stderr = run_command(
-            ["poetry", "run", "pytest", "tests/e2e", "-v"], ROOT_DIR
+            ["poetry", "run", "pytest", "tests/e2e", "-v"], ROOT_DIR,
         )
         parse_test_results(stdout, results.e2e)
 
@@ -298,13 +298,12 @@ def update_readme(results: TestSuiteResults, test_counts: dict[str, int]) -> Non
             test_pyramid_section.strip(),
             content,
         )
+    # Add section before Features
+    elif "## Features" in content:
+        content = content.replace("## Features", test_pyramid_section + "\n## Features")
     else:
-        # Add section before Features
-        if "## Features" in content:
-            content = content.replace("## Features", test_pyramid_section + "\n## Features")
-        else:
-            # Append to the end if Features section not found
-            content += "\n" + test_pyramid_section
+        # Append to the end if Features section not found
+        content += "\n" + test_pyramid_section
 
     # Write updated content
     with open(README_PATH, "w") as f:
@@ -318,7 +317,7 @@ def build_project() -> int:
     # Get test counts
     test_counts = count_tests_by_type()
     print(
-        f"Found tests: {test_counts['unit']} unit, {test_counts['integration']} integration, {test_counts['e2e']} e2e"
+        f"Found tests: {test_counts['unit']} unit, {test_counts['integration']} integration, {test_counts['e2e']} e2e",
     )
 
     # Run linting
@@ -342,7 +341,7 @@ def build_project() -> int:
 
     # Build documentation
     returncode, stdout, stderr = run_command(
-        ["poetry", "run", "python", "utils/build.py", "docs"], ROOT_DIR
+        ["poetry", "run", "python", "utils/build.py", "docs"], ROOT_DIR,
     )
     if returncode != 0:
         print(f"Documentation build failed:\n{stderr}")
@@ -361,9 +360,8 @@ def build_project() -> int:
     if total.failed > 0:
         print(f"\nBuild completed with {total.failed} test failures")
         return 1
-    else:
-        print("\nBuild completed successfully")
-        return 0
+    print("\nBuild completed successfully")
+    return 0
 
 
 def save_build_info() -> None:
@@ -416,8 +414,7 @@ def main() -> int:
         # Just update the build info
         save_build_info()
         return 0
-    else:
-        return build_project()
+    return build_project()
 
 
 if __name__ == "__main__":

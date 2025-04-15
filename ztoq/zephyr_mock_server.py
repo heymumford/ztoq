@@ -12,47 +12,31 @@ The mock server supports the main Zephyr API endpoints including projects, test 
 test cycles, folders, and executions.
 """
 
-import copy
-import json
 import logging
 import random
 import re
 import time
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Tuple, Union
+from datetime import datetime
+from typing import Any
 
 from pydantic import ValidationError
 
 from ztoq.models import (
-    Attachment,
     Case,
-    CaseStep,
-    CustomField,
     CycleInfo,
-    Environment,
     Execution,
     Folder,
-    Link,
     Plan,
-    PaginatedResponse,
-    Priority,
     Project,
-    Status,
-    ZephyrConfig,
 )
-
 from ztoq.zephyr_mock_factory import (
     AttachmentFactory,
     CaseFactory,
-    CaseStepFactory,
     CustomFieldFactory,
     CycleInfoFactory,
     EnvironmentFactory,
     ExecutionFactory,
     FolderFactory,
-    LinkFactory,
-    PaginatedResponseFactory,
-    PlanFactory,
     PriorityFactory,
     ProjectFactory,
     StatusFactory,
@@ -96,8 +80,8 @@ class ZephyrMockServer:
         self._initialize_sample_data()
 
     def _validate_model(
-        self, data: dict, model_class, exclude_none: bool = True
-    ) -> Tuple[bool, Optional[dict], Optional[str]]:
+        self, data: dict, model_class, exclude_none: bool = True,
+    ) -> tuple[bool, dict | None, str | None]:
         """
         Validate data against a Pydantic model.
 
@@ -108,6 +92,7 @@ class ZephyrMockServer:
 
         Returns:
             A tuple (is_valid, validated_data, error_message)
+
         """
         try:
             # For create operations, if id is not provided, generate one
@@ -122,11 +107,11 @@ class ZephyrMockServer:
 
             return True, validated_data, None
         except ValidationError as e:
-            logger.warning(f"Validation error: {str(e)}")
+            logger.warning(f"Validation error: {e!s}")
             return False, None, str(e)
         except Exception as e:
-            logger.error(f"Unexpected error during validation: {str(e)}")
-            return False, None, f"Internal server error: {str(e)}"
+            logger.error(f"Unexpected error during validation: {e!s}")
+            return False, None, f"Internal server error: {e!s}"
 
     def _format_error_response(self, message: str, status_code: int = 400) -> dict:
         """
@@ -138,13 +123,14 @@ class ZephyrMockServer:
 
         Returns:
             A standardized error response dictionary
+
         """
         return {
             "error": {
                 "message": message,
                 "code": status_code,
                 "timestamp": datetime.now().isoformat(),
-            }
+            },
         }
 
     def _initialize_sample_data(self):
@@ -183,7 +169,7 @@ class ZephyrMockServer:
         priority_names = ["High", "Medium", "Low"]
         for i, name in enumerate(priority_names, 1):
             priority = PriorityFactory.create(
-                id=str(i), name=name, rank=i, description=f"{name} priority"
+                id=str(i), name=name, rank=i, description=f"{name} priority",
             ).model_dump()
             self.data["priorities"][priority["id"]] = priority
 
@@ -191,7 +177,7 @@ class ZephyrMockServer:
         env_names = ["Development", "Testing", "Production"]
         for i, name in enumerate(env_names, 1):
             env = EnvironmentFactory.create(
-                id=str(i), name=name, description=f"{name} environment"
+                id=str(i), name=name, description=f"{name} environment",
             ).model_dump()
             self.data["environments"][env["id"]] = env
 
@@ -277,7 +263,7 @@ class ZephyrMockServer:
                     folder_name=folder["name"],
                     project_key=project_key,
                     priority=PriorityFactory.create(
-                        id=str(random.randint(1, 3)), name=random.choice(["High", "Medium", "Low"])
+                        id=str(random.randint(1, 3)), name=random.choice(["High", "Medium", "Low"]),
                     ),
                     status=random.choice(["Active", "Draft", "Deprecated"]),
                     step_count=random.randint(2, 5),
@@ -368,11 +354,11 @@ class ZephyrMockServer:
         self,
         method: str,
         endpoint: str,
-        params: Optional[Dict[str, Any]] = None,
-        data: Optional[Dict[str, Any]] = None,
-        headers: Optional[Dict[str, Any]] = None,
-        files: Optional[Dict[str, Any]] = None,
-    ) -> Dict[str, Any]:
+        params: dict[str, Any] | None = None,
+        data: dict[str, Any] | None = None,
+        headers: dict[str, Any] | None = None,
+        files: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
         """
         Handle a mock API request.
 
@@ -386,6 +372,7 @@ class ZephyrMockServer:
 
         Returns:
             API response data
+
         """
         # Set defaults
         if params is None:
@@ -409,7 +396,7 @@ class ZephyrMockServer:
                 "data": data,
                 "headers": headers,
                 "files": files is not None,
-            }
+            },
         )
 
         # Randomly generate errors based on error rate
@@ -437,37 +424,36 @@ class ZephyrMockServer:
         # Route to appropriate handler based on endpoint
         if endpoint.startswith("/projects"):
             return self._handle_projects(method, endpoint, params, data)
-        elif endpoint.startswith("/folders"):
+        if endpoint.startswith("/folders"):
             return self._handle_folders(method, endpoint, params, data)
-        elif endpoint.startswith("/testcases"):
+        if endpoint.startswith("/testcases"):
             return self._handle_test_cases(method, endpoint, params, data)
-        elif endpoint.startswith("/testcycles"):
+        if endpoint.startswith("/testcycles"):
             return self._handle_test_cycles(method, endpoint, params, data)
-        elif endpoint.startswith("/testplans"):
+        if endpoint.startswith("/testplans"):
             return self._handle_test_plans(method, endpoint, params, data)
-        elif endpoint.startswith("/testexecutions"):
+        if endpoint.startswith("/testexecutions"):
             return self._handle_test_executions(method, endpoint, params, data)
-        elif endpoint.startswith("/attachments"):
+        if endpoint.startswith("/attachments"):
             return self._handle_attachments(method, endpoint, params, data, files)
-        elif endpoint.startswith("/statuses"):
+        if endpoint.startswith("/statuses"):
             return self._handle_statuses(method, endpoint, params, data)
-        elif endpoint.startswith("/priorities"):
+        if endpoint.startswith("/priorities"):
             return self._handle_priorities(method, endpoint, params, data)
-        elif endpoint.startswith("/environments"):
+        if endpoint.startswith("/environments"):
             return self._handle_environments(method, endpoint, params, data)
-        elif endpoint.startswith("/customfields"):
+        if endpoint.startswith("/customfields"):
             return self._handle_custom_fields(method, endpoint, params, data)
-        else:
-            return self._format_error_response(f"Unsupported endpoint: {endpoint}", 404)
+        return self._format_error_response(f"Unsupported endpoint: {endpoint}", 404)
 
-    def _extract_token_from_headers(self, headers: Dict[str, str]) -> Optional[str]:
+    def _extract_token_from_headers(self, headers: dict[str, str]) -> str | None:
         """Extract the bearer token from request headers."""
         auth_header = headers.get("Authorization", "")
         if auth_header.startswith("Bearer "):
             return auth_header[7:]  # Remove "Bearer " prefix
         return None
 
-    def _handle_auth(self, method: str, data: Dict[str, Any]) -> Dict[str, Any]:
+    def _handle_auth(self, method: str, data: dict[str, Any]) -> dict[str, Any]:
         """Handle authentication requests."""
         if method != "POST":
             return self._format_error_response("Method not allowed", 405)
@@ -478,8 +464,8 @@ class ZephyrMockServer:
         return {"access_token": token, "token_type": "bearer", "expires_in": 3600}
 
     def _handle_projects(
-        self, method: str, endpoint: str, params: Dict[str, Any], data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, method: str, endpoint: str, params: dict[str, Any], data: dict[str, Any],
+    ) -> dict[str, Any]:
         """Handle projects endpoint requests."""
         # List projects
         if endpoint == "/projects" and method == "GET":
@@ -505,15 +491,14 @@ class ZephyrMockServer:
         if project_key_match and method == "GET":
             project_key = project_key_match.group(1)
             project = next(
-                (p for p in self.data["projects"].values() if p["key"] == project_key), None
+                (p for p in self.data["projects"].values() if p["key"] == project_key), None,
             )
 
             if project:
                 return project
-            else:
-                return self._format_error_response(
-                    f"Project not found with key: {project_key}", 404
-                )
+            return self._format_error_response(
+                f"Project not found with key: {project_key}", 404,
+            )
 
         # Create project
         if endpoint == "/projects" and method == "POST":
@@ -535,12 +520,12 @@ class ZephyrMockServer:
             return validated_data
 
         return self._format_error_response(
-            f"Unsupported operation for projects: {method} {endpoint}", 400
+            f"Unsupported operation for projects: {method} {endpoint}", 400,
         )
 
     def _handle_folders(
-        self, method: str, endpoint: str, params: Dict[str, Any], data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, method: str, endpoint: str, params: dict[str, Any], data: dict[str, Any],
+    ) -> dict[str, Any]:
         """Handle folders endpoint requests."""
         # List folders
         if endpoint == "/folders" and method == "GET":
@@ -576,8 +561,7 @@ class ZephyrMockServer:
 
             if folder_id in self.data["folders"]:
                 return self.data["folders"][folder_id]
-            else:
-                return self._format_error_response(f"Folder not found with ID: {folder_id}", 404)
+            return self._format_error_response(f"Folder not found with ID: {folder_id}", 404)
 
         # Create folder
         if endpoint == "/folders" and method == "POST":
@@ -599,12 +583,12 @@ class ZephyrMockServer:
             return validated_data
 
         return self._format_error_response(
-            f"Unsupported operation for folders: {method} {endpoint}", 400
+            f"Unsupported operation for folders: {method} {endpoint}", 400,
         )
 
     def _handle_test_cases(
-        self, method: str, endpoint: str, params: Dict[str, Any], data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, method: str, endpoint: str, params: dict[str, Any], data: dict[str, Any],
+    ) -> dict[str, Any]:
         """Handle test cases endpoint requests."""
         # List test cases
         if endpoint == "/testcases" and method == "GET":
@@ -635,15 +619,14 @@ class ZephyrMockServer:
         if test_case_key_match and method == "GET":
             test_case_key = test_case_key_match.group(1)
             test_case = next(
-                (tc for tc in self.data["test_cases"].values() if tc["key"] == test_case_key), None
+                (tc for tc in self.data["test_cases"].values() if tc["key"] == test_case_key), None,
             )
 
             if test_case:
                 return test_case
-            else:
-                return self._format_error_response(
-                    f"Test case not found with key: {test_case_key}", 404
-                )
+            return self._format_error_response(
+                f"Test case not found with key: {test_case_key}", 404,
+            )
 
         # Create test case
         if endpoint == "/testcases" and method == "POST":
@@ -665,12 +648,12 @@ class ZephyrMockServer:
             return validated_data
 
         return self._format_error_response(
-            f"Unsupported operation for test cases: {method} {endpoint}", 400
+            f"Unsupported operation for test cases: {method} {endpoint}", 400,
         )
 
     def _handle_test_cycles(
-        self, method: str, endpoint: str, params: Dict[str, Any], data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, method: str, endpoint: str, params: dict[str, Any], data: dict[str, Any],
+    ) -> dict[str, Any]:
         """Handle test cycles endpoint requests."""
         # List test cycles
         if endpoint == "/testcycles" and method == "GET":
@@ -707,10 +690,9 @@ class ZephyrMockServer:
 
             if test_cycle:
                 return test_cycle
-            else:
-                return self._format_error_response(
-                    f"Test cycle not found with key: {test_cycle_key}", 404
-                )
+            return self._format_error_response(
+                f"Test cycle not found with key: {test_cycle_key}", 404,
+            )
 
         # Create test cycle
         if endpoint == "/testcycles" and method == "POST":
@@ -732,12 +714,12 @@ class ZephyrMockServer:
             return validated_data
 
         return self._format_error_response(
-            f"Unsupported operation for test cycles: {method} {endpoint}", 400
+            f"Unsupported operation for test cycles: {method} {endpoint}", 400,
         )
 
     def _handle_test_plans(
-        self, method: str, endpoint: str, params: Dict[str, Any], data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, method: str, endpoint: str, params: dict[str, Any], data: dict[str, Any],
+    ) -> dict[str, Any]:
         """Handle test plans endpoint requests."""
         # List test plans
         if endpoint == "/testplans" and method == "GET":
@@ -768,15 +750,14 @@ class ZephyrMockServer:
         if test_plan_key_match and method == "GET":
             test_plan_key = test_plan_key_match.group(1)
             test_plan = next(
-                (tp for tp in self.data["test_plans"].values() if tp["key"] == test_plan_key), None
+                (tp for tp in self.data["test_plans"].values() if tp["key"] == test_plan_key), None,
             )
 
             if test_plan:
                 return test_plan
-            else:
-                return self._format_error_response(
-                    f"Test plan not found with key: {test_plan_key}", 404
-                )
+            return self._format_error_response(
+                f"Test plan not found with key: {test_plan_key}", 404,
+            )
 
         # Create test plan
         if endpoint == "/testplans" and method == "POST":
@@ -798,12 +779,12 @@ class ZephyrMockServer:
             return validated_data
 
         return self._format_error_response(
-            f"Unsupported operation for test plans: {method} {endpoint}", 400
+            f"Unsupported operation for test plans: {method} {endpoint}", 400,
         )
 
     def _handle_test_executions(
-        self, method: str, endpoint: str, params: Dict[str, Any], data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, method: str, endpoint: str, params: dict[str, Any], data: dict[str, Any],
+    ) -> dict[str, Any]:
         """Handle test executions endpoint requests."""
         # List test executions
         if endpoint == "/testexecutions" and method == "GET":
@@ -848,10 +829,9 @@ class ZephyrMockServer:
 
             if test_execution_id in self.data["test_executions"]:
                 return self.data["test_executions"][test_execution_id]
-            else:
-                return self._format_error_response(
-                    f"Test execution not found with ID: {test_execution_id}", 404
-                )
+            return self._format_error_response(
+                f"Test execution not found with ID: {test_execution_id}", 404,
+            )
 
         # Create test execution
         if endpoint == "/testexecutions" and method == "POST":
@@ -873,23 +853,23 @@ class ZephyrMockServer:
             return validated_data
 
         return self._format_error_response(
-            f"Unsupported operation for test executions: {method} {endpoint}", 400
+            f"Unsupported operation for test executions: {method} {endpoint}", 400,
         )
 
     def _handle_attachments(
         self,
         method: str,
         endpoint: str,
-        params: Dict[str, Any],
-        data: Dict[str, Any],
-        files: Optional[Dict[str, Any]],
-    ) -> Dict[str, Any]:
+        params: dict[str, Any],
+        data: dict[str, Any],
+        files: dict[str, Any] | None,
+    ) -> dict[str, Any]:
         """Handle attachments endpoint requests."""
         # Upload attachment
         entity_attachment_match = re.match(r"^/(\w+)s/([A-Za-z0-9\-]+)/attachments$", endpoint)
         if entity_attachment_match and method == "POST":
-            entity_type = entity_attachment_match.group(1)
-            entity_id = entity_attachment_match.group(2)
+            entity_attachment_match.group(1)
+            entity_attachment_match.group(2)
 
             if not files:
                 return self._format_error_response("No file provided", 400)
@@ -898,7 +878,7 @@ class ZephyrMockServer:
             attachment_id = str(len(self.data["attachments"]) + 1)
 
             # Mock file details
-            file_data = list(files.values())[0]
+            file_data = next(iter(files.values()))
             if isinstance(file_data, tuple):
                 filename, content = file_data[0], file_data[1]
                 content_type = file_data[2] if len(file_data) > 2 else "application/octet-stream"
@@ -924,8 +904,8 @@ class ZephyrMockServer:
 
         # Get attachments for entity
         if entity_attachment_match and method == "GET":
-            entity_type = entity_attachment_match.group(1)
-            entity_id = entity_attachment_match.group(2)
+            entity_attachment_match.group(1)
+            entity_attachment_match.group(2)
 
             # In a real server, we'd filter by entity type and ID
             # For mock, we'll just return a few random attachments
@@ -948,22 +928,21 @@ class ZephyrMockServer:
                 # For mock, we'd normally return the binary content
                 # But for testing, we'll return a mock response
                 return b"Mock attachment content"
-            else:
-                return self._format_error_response(
-                    f"Attachment not found with ID: {attachment_id}", 404
-                )
+            return self._format_error_response(
+                f"Attachment not found with ID: {attachment_id}", 404,
+            )
 
         return self._format_error_response(
-            f"Unsupported operation for attachments: {method} {endpoint}", 400
+            f"Unsupported operation for attachments: {method} {endpoint}", 400,
         )
 
     def _handle_statuses(
-        self, method: str, endpoint: str, params: Dict[str, Any], data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, method: str, endpoint: str, params: dict[str, Any], data: dict[str, Any],
+    ) -> dict[str, Any]:
         """Handle statuses endpoint requests."""
         # List statuses
         if endpoint == "/statuses" and method == "GET":
-            project_key = params.get("projectKey")
+            params.get("projectKey")
             entity_type = params.get("entityType")
 
             # Filter statuses
@@ -987,16 +966,16 @@ class ZephyrMockServer:
             }
 
         return self._format_error_response(
-            f"Unsupported operation for statuses: {method} {endpoint}", 400
+            f"Unsupported operation for statuses: {method} {endpoint}", 400,
         )
 
     def _handle_priorities(
-        self, method: str, endpoint: str, params: Dict[str, Any], data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, method: str, endpoint: str, params: dict[str, Any], data: dict[str, Any],
+    ) -> dict[str, Any]:
         """Handle priorities endpoint requests."""
         # List priorities
         if endpoint == "/priorities" and method == "GET":
-            project_key = params.get("projectKey")
+            params.get("projectKey")
 
             # Get all priorities
             priorities = self.data["priorities"].values()
@@ -1017,16 +996,16 @@ class ZephyrMockServer:
             }
 
         return self._format_error_response(
-            f"Unsupported operation for priorities: {method} {endpoint}", 400
+            f"Unsupported operation for priorities: {method} {endpoint}", 400,
         )
 
     def _handle_environments(
-        self, method: str, endpoint: str, params: Dict[str, Any], data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, method: str, endpoint: str, params: dict[str, Any], data: dict[str, Any],
+    ) -> dict[str, Any]:
         """Handle environments endpoint requests."""
         # List environments
         if endpoint == "/environments" and method == "GET":
-            project_key = params.get("projectKey")
+            params.get("projectKey")
 
             # Get all environments
             environments = self.data["environments"].values()
@@ -1047,17 +1026,17 @@ class ZephyrMockServer:
             }
 
         return self._format_error_response(
-            f"Unsupported operation for environments: {method} {endpoint}", 400
+            f"Unsupported operation for environments: {method} {endpoint}", 400,
         )
 
     def _handle_custom_fields(
-        self, method: str, endpoint: str, params: Dict[str, Any], data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, method: str, endpoint: str, params: dict[str, Any], data: dict[str, Any],
+    ) -> dict[str, Any]:
         """Handle custom fields endpoint requests."""
         # List custom fields
         if endpoint == "/customfields" and method == "GET":
-            project_key = params.get("projectKey")
-            entity_type = params.get("entityType")
+            params.get("projectKey")
+            params.get("entityType")
 
             # In a real server, we'd filter by project key and entity type
             # For mock, we'll just create a few custom fields on the fly
@@ -1065,7 +1044,7 @@ class ZephyrMockServer:
             for i in range(3):
                 field_type = random.choice(["TEXT", "PARAGRAPH", "CHECKBOX", "NUMERIC", "DATE"])
                 custom_field = CustomFieldFactory.create(
-                    id=str(i + 1), name=f"Custom Field {i + 1}", type=field_type
+                    id=str(i + 1), name=f"Custom Field {i + 1}", type=field_type,
                 ).model_dump()
                 custom_fields.append(custom_field)
 
@@ -1078,5 +1057,5 @@ class ZephyrMockServer:
             }
 
         return self._format_error_response(
-            f"Unsupported operation for custom fields: {method} {endpoint}", 400
+            f"Unsupported operation for custom fields: {method} {endpoint}", 400,
         )

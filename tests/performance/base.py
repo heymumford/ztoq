@@ -17,12 +17,12 @@ import logging
 import os
 import statistics
 import time
-from collections import defaultdict
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime
 from functools import wraps
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
+from typing import Any
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -41,22 +41,22 @@ class PerformanceMeasurement:
     operation: str
     duration: float
     timestamp: float = field(default_factory=time.time)
-    dataset_size: Optional[int] = None
-    batch_size: Optional[int] = None
-    concurrency: Optional[int] = None
-    memory_before: Optional[float] = None
-    memory_after: Optional[float] = None
-    cpu_percent: Optional[float] = None
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    dataset_size: int | None = None
+    batch_size: int | None = None
+    concurrency: int | None = None
+    memory_before: float | None = None
+    memory_after: float | None = None
+    cpu_percent: float | None = None
+    metadata: dict[str, Any] = field(default_factory=dict)
 
     @property
-    def memory_delta(self) -> Optional[float]:
+    def memory_delta(self) -> float | None:
         """Return memory usage delta if both before and after measurements are available."""
         if self.memory_before is not None and self.memory_after is not None:
             return self.memory_after - self.memory_before
         return None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert measurement to dictionary for serialization."""
         result = {
             "name": self.name,
@@ -89,14 +89,14 @@ class PerformanceResult:
     """Collection of performance measurements with analysis capabilities."""
 
     name: str
-    measurements: List[PerformanceMeasurement] = field(default_factory=list)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    measurements: list[PerformanceMeasurement] = field(default_factory=list)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
     def add_measurement(self, measurement: PerformanceMeasurement) -> None:
         """Add a measurement to the result set."""
         self.measurements.append(measurement)
 
-    def get_stats(self, operation: Optional[str] = None) -> Dict[str, Any]:
+    def get_stats(self, operation: str | None = None) -> dict[str, Any]:
         """Calculate statistics for the measurements."""
         filtered = (
             self.measurements if operation is None else [m for m in self.measurements if m.operation == operation]
@@ -138,8 +138,8 @@ class PerformanceResult:
 
         return stats
 
-    def plot_durations(self, operation: Optional[str] = None,
-                       save_path: Optional[str] = None) -> Figure:
+    def plot_durations(self, operation: str | None = None,
+                       save_path: str | None = None) -> Figure:
         """Plot performance measurements."""
         filtered = (
             self.measurements if operation is None else [m for m in self.measurements if m.operation == operation]
@@ -188,7 +188,7 @@ class PerformanceResult:
                     window_times.append((window[0].timestamp + window[-1].timestamp) / 2 - filtered[0].timestamp)
 
             if throughputs:
-                ax3.plot(window_times, throughputs, marker='o', linestyle='-', color='purple')
+                ax3.plot(window_times, throughputs, marker="o", linestyle="-", color="purple")
                 ax3.set_xlabel("Time since start (seconds)")
                 ax3.set_ylabel("Throughput (ops/second)")
                 ax3.set_title("Throughput over time")
@@ -209,7 +209,7 @@ class PerformanceResult:
 
         return fig
 
-    def save_to_file(self, file_path: Union[str, Path]) -> None:
+    def save_to_file(self, file_path: str | Path) -> None:
         """Save performance results to a JSON file."""
         file_path = Path(file_path)
         file_path.parent.mkdir(parents=True, exist_ok=True)
@@ -227,11 +227,11 @@ class PerformanceResult:
         logger.info(f"Performance results saved to {file_path}")
 
     @classmethod
-    def load_from_file(cls, file_path: Union[str, Path]) -> "PerformanceResult":
+    def load_from_file(cls, file_path: str | Path) -> "PerformanceResult":
         """Load performance results from a JSON file."""
         file_path = Path(file_path)
 
-        with open(file_path, "r") as f:
+        with open(file_path) as f:
             data = json.load(f)
 
         result = cls(name=data["name"], metadata=data.get("metadata", {}))
@@ -258,7 +258,7 @@ class PerformanceResult:
 class PerformanceTest:
     """Base class for performance tests."""
 
-    def __init__(self, name: str, output_dir: Optional[str] = None):
+    def __init__(self, name: str, output_dir: str | None = None):
         """Initialize performance test.
 
         Args:
@@ -270,7 +270,7 @@ class PerformanceTest:
 
         # Set up output directory
         self.output_dir = output_dir or os.environ.get(
-            "ZTOQ_PERFORMANCE_OUTPUT", "/tmp/ztoq_performance"
+            "ZTOQ_PERFORMANCE_OUTPUT", "/tmp/ztoq_performance",
         )
         self.output_path = Path(self.output_dir) / f"{name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
 
@@ -300,10 +300,10 @@ class PerformanceTest:
     def measure(
         self,
         operation: str,
-        dataset_size: Optional[int] = None,
-        batch_size: Optional[int] = None,
-        concurrency: Optional[int] = None,
-        metadata: Optional[Dict[str, Any]] = None,
+        dataset_size: int | None = None,
+        batch_size: int | None = None,
+        concurrency: int | None = None,
+        metadata: dict[str, Any] | None = None,
     ) -> Callable:
         """Decorator to measure performance of a function.
 
@@ -355,7 +355,7 @@ class PerformanceTest:
                 logger.info(
                     f"Operation '{operation}' completed in {duration:.4f}s "
                     f"(Memory: {memory_before:.1f}MB → {memory_after:.1f}MB, "
-                    f"CPU: {cpu_percent:.1f}%)"
+                    f"CPU: {cpu_percent:.1f}%)",
                 )
 
                 return result
@@ -414,7 +414,7 @@ class DataGenerator:
     """Utility for generating test data for performance tests."""
 
     @staticmethod
-    def generate_test_cases(count: int, with_steps: bool = True) -> List[Dict[str, Any]]:
+    def generate_test_cases(count: int, with_steps: bool = True) -> list[dict[str, Any]]:
         """Generate test case data for performance testing.
 
         Args:
@@ -438,7 +438,7 @@ class DataGenerator:
                 "owner": f"user{i % 10 + 1}@example.com",
                 "custom_fields": {
                     f"custom_field_{j}": f"value_{i}_{j}" for j in range(1, 6)
-                }
+                },
             }
 
             if with_steps:
@@ -447,7 +447,7 @@ class DataGenerator:
                         "id": i * 100 + j,
                         "order": j,
                         "description": f"Step {j} description for test case {i+1}",
-                        "expected_result": f"Expected result for step {j} of test case {i+1}"
+                        "expected_result": f"Expected result for step {j} of test case {i+1}",
                     } for j in range(1, 6)  # 5 steps per test case
                 ]
 
@@ -456,7 +456,7 @@ class DataGenerator:
         return test_cases
 
     @staticmethod
-    def generate_test_cycles(count: int, test_cases_per_cycle: int = 10) -> List[Dict[str, Any]]:
+    def generate_test_cycles(count: int, test_cases_per_cycle: int = 10) -> list[dict[str, Any]]:
         """Generate test cycle data for performance testing.
 
         Args:
@@ -482,12 +482,12 @@ class DataGenerator:
                     {
                         "id": j + 1,
                         "key": f"TC-{j+1}",
-                        "name": f"Test Case {j+1}"
+                        "name": f"Test Case {j+1}",
                     } for j in range(i * test_cases_per_cycle, (i + 1) * test_cases_per_cycle)
                 ],
                 "custom_fields": {
                     f"custom_field_{j}": f"value_{i}_{j}" for j in range(1, 3)
-                }
+                },
             }
 
             test_cycles.append(test_cycle)
@@ -495,7 +495,7 @@ class DataGenerator:
         return test_cycles
 
     @staticmethod
-    def generate_test_executions(count: int, steps_per_execution: int = 5) -> List[Dict[str, Any]]:
+    def generate_test_executions(count: int, steps_per_execution: int = 5) -> list[dict[str, Any]]:
         """Generate test execution data for performance testing.
 
         Args:
@@ -526,12 +526,12 @@ class DataGenerator:
                         "id": i * 100 + j,
                         "order": j,
                         "status": "Passed" if j % 3 != 1 else "Failed",
-                        "comment": f"Step {j} result for execution {i+1}"
+                        "comment": f"Step {j} result for execution {i+1}",
                     } for j in range(1, steps_per_execution + 1)
                 ],
                 "custom_fields": {
                     f"custom_field_{j}": f"value_{i}_{j}" for j in range(1, 4)
-                }
+                },
             }
 
             test_executions.append(execution)
@@ -544,19 +544,18 @@ def format_duration(seconds: float) -> str:
     """Format duration in a human-readable way."""
     if seconds < 0.001:
         return f"{seconds * 1000000:.2f} µs"
-    elif seconds < 1:
+    if seconds < 1:
         return f"{seconds * 1000:.2f} ms"
-    elif seconds < 60:
+    if seconds < 60:
         return f"{seconds:.2f} s"
-    elif seconds < 3600:
+    if seconds < 3600:
         minutes = seconds // 60
         secs = seconds % 60
         return f"{int(minutes)}m {secs:.2f}s"
-    else:
-        hours = seconds // 3600
-        minutes = (seconds % 3600) // 60
-        secs = seconds % 60
-        return f"{int(hours)}h {int(minutes)}m {secs:.2f}s"
+    hours = seconds // 3600
+    minutes = (seconds % 3600) // 60
+    secs = seconds % 60
+    return f"{int(hours)}h {int(minutes)}m {secs:.2f}s"
 
 
 def format_memory(bytes_value: float) -> str:

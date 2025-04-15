@@ -12,21 +12,22 @@ with the database factory and helpers.
 """
 
 import os
-import unittest
-from unittest.mock import patch, MagicMock
 import tempfile
+import unittest
+from unittest.mock import MagicMock, patch
+
 import pytest
 
 from ztoq.database_factory import DatabaseFactory, DatabaseType
-from ztoq.optimized_database_manager import OptimizedDatabaseManager
 from ztoq.db_optimization_helpers import (
+    get_database_performance_report,
     get_optimized_database_manager,
     migrate_to_optimized_manager,
-    get_database_performance_report,
-    reset_performance_tracking,
     optimize_for_reads,
     optimize_for_writes,
+    reset_performance_tracking,
 )
+from ztoq.optimized_database_manager import OptimizedDatabaseManager
 
 
 @pytest.mark.integration
@@ -53,7 +54,7 @@ class TestDatabaseOptimizationIntegration(unittest.TestCase):
 
             # Call the get_optimized_database_manager function
             manager = get_optimized_database_manager(
-                db_type=DatabaseType.SQLITE, db_path=self.db_path
+                db_type=DatabaseType.SQLITE, db_path=self.db_path,
             )
 
             # Verify that the mock was returned and the function was called with optimize=True

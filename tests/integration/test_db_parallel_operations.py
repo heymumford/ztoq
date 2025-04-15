@@ -10,26 +10,18 @@ import os
 import shutil
 import tempfile
 import time
+
 import pytest
 from sqlalchemy.exc import IntegrityError
+
 from ztoq.core.db_manager import DatabaseConfig, SQLDatabaseManager
 from ztoq.core.db_models import EntityBatchState, Folder, TestCase
 from ztoq.models import (
     Case as CaseModel,
-)
-from ztoq.models import (
     CustomField as CustomFieldModel,
-)
-from ztoq.models import (
     CycleInfo as CycleInfoModel,
-)
-from ztoq.models import (
     Execution as ExecutionModel,
-)
-from ztoq.models import (
     Folder as FolderModel,
-)
-from ztoq.models import (
     Project as ProjectModel,
 )
 
@@ -37,7 +29,7 @@ from ztoq.models import (
 logger = logging.getLogger(__name__)
 
 
-@pytest.mark.integration()
+@pytest.mark.integration
 class TestDatabaseParallelOperations:
     """Integration tests for parallel database operations."""
 
@@ -50,7 +42,7 @@ class TestDatabaseParallelOperations:
         # Cleanup
         shutil.rmtree(temp_dir)
 
-    @pytest.fixture()
+    @pytest.fixture
     def db_manager(self, temp_db_path):
         """Create a database manager for testing."""
         config = DatabaseConfig(db_type="sqlite", db_path=temp_db_path)
@@ -64,7 +56,7 @@ class TestDatabaseParallelOperations:
 
         return manager
 
-    @pytest.fixture()
+    @pytest.fixture
     def test_project(self, db_manager):
         """Create a test project in the database."""
         project = ProjectModel(
@@ -239,7 +231,7 @@ class TestDatabaseParallelOperations:
                 return "created"
             except Exception as e:
                 logger.error(f"Error creating test case: {e}")
-                return f"create_error: {str(e)}"
+                return f"create_error: {e!s}"
 
         # Function to update an existing test case
         def update_test_case(index):
@@ -267,7 +259,7 @@ class TestDatabaseParallelOperations:
                 return "updated"
             except Exception as e:
                 logger.error(f"Error updating test case: {e}")
-                return f"update_error: {str(e)}"
+                return f"update_error: {e!s}"
 
         # Function to delete a test case
         def delete_test_case(index):
@@ -283,7 +275,7 @@ class TestDatabaseParallelOperations:
                     return "deleted"
             except Exception as e:
                 logger.error(f"Error deleting test case: {e}")
-                return f"delete_error: {str(e)}"
+                return f"delete_error: {e!s}"
 
         # Define the operations (10 reads, 5 creates, 5 updates, 3 deletes)
         operations = []
@@ -437,7 +429,7 @@ class TestDatabaseParallelOperations:
                 batch = (
                     session.query(EntityBatchState)
                     .filter_by(
-                        project_key=test_project.key, entity_type="test_case", batch_number=i
+                        project_key=test_project.key, entity_type="test_case", batch_number=i,
                     )
                     .first()
                 )
@@ -507,7 +499,7 @@ class TestDatabaseParallelOperations:
         with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
             futures = [
                 executor.submit(update_with_transaction, case_id, status, sleep_time)
-                for status, sleep_time in zip(statuses, sleep_times)
+                for status, sleep_time in zip(statuses, sleep_times, strict=False)
             ]
             results = [future.result() for future in concurrent.futures.as_completed(futures)]
 
@@ -593,10 +585,10 @@ class TestDatabaseParallelOperations:
                     folder=folder.id,
                     custom_fields=[
                         CustomFieldModel(
-                            id=f"CF-{index}-1", name="Priority", type="dropdown", value="High"
+                            id=f"CF-{index}-1", name="Priority", type="dropdown", value="High",
                         ),
                         CustomFieldModel(
-                            id=f"CF-{index}-2", name="Complexity", type="dropdown", value="Medium"
+                            id=f"CF-{index}-2", name="Complexity", type="dropdown", value="Medium",
                         ),
                     ],
                     attachments=[],

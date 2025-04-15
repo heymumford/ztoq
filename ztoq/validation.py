@@ -13,133 +13,26 @@ error reporting.
 """
 
 import collections
-import enum
 import functools
 import json
 import logging
-import re
 import time
-from dataclasses import dataclass, field
 from datetime import datetime
-from enum import Enum
-from typing import Any, Dict, List, Optional, Set, Tuple, Union
-from ztoq.validation_rules import get_built_in_rules
-import requests.exceptions
+from typing import Any
+
 import httpx
+import requests.exceptions
+
+from ztoq.validation_rules import get_built_in_rules
+from ztoq.validation_types import (
+    ValidationIssue,
+    ValidationLevel,
+    ValidationPhase,
+    ValidationRule,
+    ValidationScope,
+)
 
 logger = logging.getLogger("ztoq.validation")
-
-
-class ValidationLevel(Enum):
-    """Validation levels for different severity of issues."""
-
-    INFO = "info"
-    WARNING = "warning"
-    ERROR = "error"
-    CRITICAL = "critical"
-
-
-class ValidationScope(Enum):
-    """Scopes where validation can be applied."""
-
-    PROJECT = "project"
-    FOLDER = "folder"
-    TEST_CASE = "test_case"
-    TEST_CASE_STEP = "test_case_step"
-    TEST_CYCLE = "test_cycle"
-    TEST_EXECUTION = "test_execution"
-    ATTACHMENT = "attachment"
-    CUSTOM_FIELD = "custom_field"
-    RELATIONSHIP = "relationship"
-    SYSTEM = "system"
-    DATABASE = "database"
-
-
-class ValidationPhase(Enum):
-    """Migration phases where validation can occur."""
-
-    PRE_MIGRATION = "pre_migration"
-    EXTRACTION = "extraction"
-    TRANSFORMATION = "transformation"
-    LOADING = "loading"
-    POST_MIGRATION = "post_migration"
-
-
-@dataclass
-class ValidationIssue:
-    """Represents a single validation issue."""
-
-    id: str  # Unique identifier for the issue
-    level: ValidationLevel
-    scope: ValidationScope
-    phase: ValidationPhase
-    message: str
-    entity_id: Optional[str] = None
-    entity_type: Optional[str] = None
-    field_name: Optional[str] = None
-    details: Optional[Dict[str, Any]] = None
-    timestamp: datetime = field(default_factory=datetime.now)
-
-    def to_dict(self) -> Dict[str, Any]:
-        """Convert the issue to a dictionary."""
-        return {
-            "id": self.id,
-            "level": self.level.value,
-            "scope": self.scope.value,
-            "phase": self.phase.value,
-            "message": self.message,
-            "entity_id": self.entity_id,
-            "entity_type": self.entity_type,
-            "field_name": self.field_name,
-            "details": self.details,
-            "timestamp": self.timestamp.isoformat(),
-        }
-
-    @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "ValidationIssue":
-        """Create a ValidationIssue from a dictionary."""
-        return cls(
-            id=data["id"],
-            level=ValidationLevel(data["level"]),
-            scope=ValidationScope(data["scope"]),
-            phase=ValidationPhase(data["phase"]),
-            message=data["message"],
-            entity_id=data.get("entity_id"),
-            entity_type=data.get("entity_type"),
-            field_name=data.get("field_name"),
-            details=data.get("details"),
-            timestamp=datetime.fromisoformat(data["timestamp"])
-            if "timestamp" in data
-            else datetime.now(),
-        )
-
-
-@dataclass
-class ValidationRule:
-    """Definition of a validation rule to be applied."""
-
-    id: str  # Unique identifier for the rule
-    name: str
-    description: str
-    scope: ValidationScope
-    phase: ValidationPhase
-    level: ValidationLevel = ValidationLevel.ERROR
-    enabled: bool = True
-
-    def validate(self, entity: Any, context: Dict[str, Any]) -> List[ValidationIssue]:
-        """
-        Execute the validation logic on an entity.
-
-        This is a base implementation that should be overridden by subclasses.
-
-        Args:
-            entity: The entity to validate
-            context: Additional context for validation
-
-        Returns:
-            List of validation issues found
-        """
-        return []
 
 
 class ValidationRuleRegistry:
@@ -147,11 +40,11 @@ class ValidationRuleRegistry:
 
     def __init__(self):
         """Initialize the registry."""
-        self.rules: Dict[str, ValidationRule] = {}
-        self.rules_by_scope: Dict[ValidationScope, List[ValidationRule]] = {
+        self.rules: dict[str, ValidationRule] = {}
+        self.rules_by_scope: dict[ValidationScope, list[ValidationRule]] = {
             scope: [] for scope in ValidationScope
         }
-        self.rules_by_phase: Dict[ValidationPhase, List[ValidationRule]] = {
+        self.rules_by_phase: dict[ValidationPhase, list[ValidationRule]] = {
             phase: [] for phase in ValidationPhase
         }
 
@@ -161,6 +54,7 @@ class ValidationRuleRegistry:
 
         Args:
             rule: The validation rule to register
+
         """
         if rule.id in self.rules:
             logger.warning(f"Rule with ID {rule.id} already exists, overwriting")
@@ -171,7 +65,7 @@ class ValidationRuleRegistry:
 
         logger.debug(f"Registered validation rule: {rule.id} ({rule.name})")
 
-    def get_rules_for_scope(self, scope: ValidationScope) -> List[ValidationRule]:
+    def get_rules_for_scope(self, scope: ValidationScope) -> list[ValidationRule]:
         """
         Get all rules for a specific scope.
 
@@ -180,10 +74,11 @@ class ValidationRuleRegistry:
 
         Returns:
             List of validation rules for the scope
+
         """
         return self.rules_by_scope.get(scope, [])
 
-    def get_rules_for_phase(self, phase: ValidationPhase) -> List[ValidationRule]:
+    def get_rules_for_phase(self, phase: ValidationPhase) -> list[ValidationRule]:
         """
         Get all rules for a specific phase.
 
@@ -192,12 +87,13 @@ class ValidationRuleRegistry:
 
         Returns:
             List of validation rules for the phase
+
         """
         return self.rules_by_phase.get(phase, [])
 
     def get_active_rules(
-        self, scope: Optional[ValidationScope] = None, phase: Optional[ValidationPhase] = None
-    ) -> List[ValidationRule]:
+        self, scope: ValidationScope | None = None, phase: ValidationPhase | None = None,
+    ) -> list[ValidationRule]:
         """
         Get all active rules, optionally filtered by scope and phase.
 
@@ -207,6 +103,7 @@ class ValidationRuleRegistry:
 
         Returns:
             List of active validation rules
+
         """
         rules = [rule for rule in self.rules.values() if rule.enabled]
 
@@ -235,12 +132,13 @@ class ValidationManager:
         Args:
             database: Database manager instance
             project_key: The Zephyr project key
+
         """
         self.database = database
         self.project_key = project_key
         self.registry = ValidationRuleRegistry()
-        self.issues: List[ValidationIssue] = []
-        self.issue_counts: Dict[ValidationLevel, int] = {level: 0 for level in ValidationLevel}
+        self.issues: list[ValidationIssue] = []
+        self.issue_counts: dict[ValidationLevel, int] = dict.fromkeys(ValidationLevel, 0)
 
         # Register built-in validation rules
         self._register_built_in_rules()
@@ -254,7 +152,7 @@ class ValidationManager:
             for rule in self.registry.rules.values():
                 self.database.save_validation_rule(rule)
         except Exception as e:
-            logger.error(f"Failed to save validation rules to database: {str(e)}")
+            logger.error(f"Failed to save validation rules to database: {e!s}")
 
     def _register_built_in_rules(self) -> None:
         """Register the built-in validation rules."""
@@ -268,6 +166,7 @@ class ValidationManager:
 
         Args:
             issue: The validation issue to add
+
         """
         self.issues.append(issue)
         self.issue_counts[issue.level] += 1
@@ -296,6 +195,7 @@ class ValidationManager:
 
         Args:
             issue: The validation issue to save
+
         """
         try:
             self.database.save_validation_issue(
@@ -303,16 +203,16 @@ class ValidationManager:
                 project_key=self.project_key,
             )
         except Exception as e:
-            logger.error(f"Failed to save validation issue to database: {str(e)}")
+            logger.error(f"Failed to save validation issue to database: {e!s}")
 
     def get_issues(
         self,
-        level: Optional[ValidationLevel] = None,
-        scope: Optional[ValidationScope] = None,
-        phase: Optional[ValidationPhase] = None,
-        entity_type: Optional[str] = None,
-        entity_id: Optional[str] = None,
-    ) -> List[ValidationIssue]:
+        level: ValidationLevel | None = None,
+        scope: ValidationScope | None = None,
+        phase: ValidationPhase | None = None,
+        entity_type: str | None = None,
+        entity_id: str | None = None,
+    ) -> list[ValidationIssue]:
         """
         Get validation issues filtered by various criteria.
 
@@ -325,6 +225,7 @@ class ValidationManager:
 
         Returns:
             List of validation issues matching the criteria
+
         """
         issues = self.issues
 
@@ -345,7 +246,7 @@ class ValidationManager:
 
         return issues
 
-    def get_issue_count(self, level: Optional[ValidationLevel] = None) -> int:
+    def get_issue_count(self, level: ValidationLevel | None = None) -> int:
         """
         Get the count of validation issues, optionally filtered by level.
 
@@ -354,6 +255,7 @@ class ValidationManager:
 
         Returns:
             Count of validation issues
+
         """
         if level:
             return self.issue_counts[level]
@@ -365,6 +267,7 @@ class ValidationManager:
 
         Returns:
             True if there are critical issues, False otherwise
+
         """
         return self.issue_counts[ValidationLevel.CRITICAL] > 0
 
@@ -374,6 +277,7 @@ class ValidationManager:
 
         Returns:
             True if there are error issues, False otherwise
+
         """
         return self.issue_counts[ValidationLevel.ERROR] > 0
 
@@ -382,8 +286,8 @@ class ValidationManager:
         entity: Any,
         scope: ValidationScope,
         phase: ValidationPhase,
-        context: Optional[Dict[str, Any]] = None,
-    ) -> List[ValidationIssue]:
+        context: dict[str, Any] | None = None,
+    ) -> list[ValidationIssue]:
         """
         Execute validation rules for a given entity.
 
@@ -395,6 +299,7 @@ class ValidationManager:
 
         Returns:
             List of validation issues found
+
         """
         if context is None:
             context = {}
@@ -419,7 +324,7 @@ class ValidationManager:
                     self.add_issue(issue)
                 all_issues.extend(issues)
             except Exception as e:
-                logger.error(f"Error executing validation rule {rule.id}: {str(e)}")
+                logger.error(f"Error executing validation rule {rule.id}: {e!s}")
                 # Create a system-level validation issue for the rule failure
                 error_issue = ValidationIssue(
                     id=f"rule_execution_error_{int(time.time())}",
@@ -435,8 +340,8 @@ class ValidationManager:
         return all_issues
 
     def execute_all_validations(
-        self, phase: ValidationPhase, entities_by_scope: Dict[ValidationScope, List[Any]]
-    ) -> Dict[ValidationScope, List[ValidationIssue]]:
+        self, phase: ValidationPhase, entities_by_scope: dict[ValidationScope, list[Any]],
+    ) -> dict[ValidationScope, list[ValidationIssue]]:
         """
         Execute all validation rules for the given phase.
 
@@ -446,6 +351,7 @@ class ValidationManager:
 
         Returns:
             Dictionary mapping scopes to lists of validation issues
+
         """
         results = {scope: [] for scope in ValidationScope}
 
@@ -459,12 +365,13 @@ class ValidationManager:
 
         return results
 
-    def get_summary(self) -> Dict[str, Any]:
+    def get_summary(self) -> dict[str, Any]:
         """
         Get a summary of all validation issues.
 
         Returns:
             Dictionary containing validation summary
+
         """
         return {
             "project_key": self.project_key,
@@ -480,7 +387,7 @@ class ValidationManager:
             "has_error_issues": self.has_error_issues(),
         }
 
-    def _count_by_field(self, field: str) -> Dict[str, int]:
+    def _count_by_field(self, field: str) -> dict[str, int]:
         """
         Count issues by a specific field.
 
@@ -489,6 +396,7 @@ class ValidationManager:
 
         Returns:
             Dictionary mapping field values to counts
+
         """
         counts = collections.Counter()
         for issue in self.issues:
@@ -497,8 +405,8 @@ class ValidationManager:
         return dict(counts)
 
     def get_report(
-        self, include_details: bool = True, max_issues_per_category: int = 100
-    ) -> Dict[str, Any]:
+        self, include_details: bool = True, max_issues_per_category: int = 100,
+    ) -> dict[str, Any]:
         """
         Generate a detailed validation report.
 
@@ -508,6 +416,7 @@ class ValidationManager:
 
         Returns:
             Dictionary containing the validation report
+
         """
         summary = self.get_summary()
 
@@ -543,6 +452,7 @@ class ValidationManager:
         Args:
             filename: Path to save the report
             include_details: Whether to include issue details in the report
+
         """
         report = self.get_report(include_details=include_details)
 
@@ -550,7 +460,7 @@ class ValidationManager:
         try:
             self.database.save_validation_report(self.project_key, report)
         except Exception as e:
-            logger.error(f"Failed to save validation report to database: {str(e)}")
+            logger.error(f"Failed to save validation report to database: {e!s}")
 
         # Also save to file if filename is provided
         if filename:
@@ -576,6 +486,7 @@ class MigrationValidator:
 
         Args:
             validation_manager: The validation manager instance
+
         """
         self.validation_manager = validation_manager
         self.project_key = validation_manager.project_key
@@ -591,6 +502,7 @@ class MigrationValidator:
 
         Returns:
             True if validation passes, False otherwise
+
         """
         logger.info("Validating pre-migration requirements and configuration")
 
@@ -612,26 +524,27 @@ class MigrationValidator:
         # Check for critical issues
         if self.validation_manager.has_critical_issues():
             logger.critical(
-                "Pre-migration validation found critical issues, migration cannot proceed"
+                "Pre-migration validation found critical issues, migration cannot proceed",
             )
             return False
 
         # Warn if there are error issues
         if self.validation_manager.has_error_issues():
             logger.error(
-                "Pre-migration validation found error issues, migration may encounter problems"
+                "Pre-migration validation found error issues, migration may encounter problems",
             )
 
         logger.info("Pre-migration validation completed")
         return True
 
-    def _validate_zephyr_connectivity(self, zephyr_client: Any, context: Dict[str, Any]) -> None:
+    def _validate_zephyr_connectivity(self, zephyr_client: Any, context: dict[str, Any]) -> None:
         """
         Validate connectivity to Zephyr Scale API.
 
         Args:
             zephyr_client: The Zephyr client instance
             context: Additional context for validation
+
         """
         try:
             # Try to make a simple API call
@@ -647,13 +560,14 @@ class MigrationValidator:
             )
             self.validation_manager.add_issue(issue)
 
-    def _validate_qtest_connectivity(self, qtest_client: Any, context: Dict[str, Any]) -> None:
+    def _validate_qtest_connectivity(self, qtest_client: Any, context: dict[str, Any]) -> None:
         """
         Validate connectivity to qTest API.
 
         Args:
             qtest_client: The qTest client instance
             context: Additional context for validation
+
         """
         try:
             # Try to make a simple API call
@@ -669,13 +583,14 @@ class MigrationValidator:
             )
             self.validation_manager.add_issue(issue)
 
-    def _validate_zephyr_project(self, zephyr_client: Any, context: Dict[str, Any]) -> None:
+    def _validate_zephyr_project(self, zephyr_client: Any, context: dict[str, Any]) -> None:
         """
         Validate that the Zephyr project exists.
 
         Args:
             zephyr_client: The Zephyr client instance
             context: Additional context for validation
+
         """
         try:
             project = zephyr_client.get_project(self.project_key)
@@ -699,13 +614,14 @@ class MigrationValidator:
             )
             self.validation_manager.add_issue(issue)
 
-    def _validate_qtest_project(self, qtest_client: Any, context: Dict[str, Any]) -> None:
+    def _validate_qtest_project(self, qtest_client: Any, context: dict[str, Any]) -> None:
         """
         Validate that the qTest project exists.
 
         Args:
             qtest_client: The qTest client instance
             context: Additional context for validation
+
         """
         try:
             project_id = qtest_client.config.project_id
@@ -725,12 +641,12 @@ class MigrationValidator:
                 level=ValidationLevel.CRITICAL,
                 scope=ValidationScope.PROJECT,
                 phase=ValidationPhase.PRE_MIGRATION,
-                message=f"Error checking qTest project",
+                message="Error checking qTest project",
                 details={"error": str(e)},
             )
             self.validation_manager.add_issue(issue)
 
-    def validate_extraction(self, extracted_data: Dict[str, List[Any]]) -> bool:
+    def validate_extraction(self, extracted_data: dict[str, list[Any]]) -> bool:
         """
         Validate extracted data from Zephyr.
 
@@ -739,6 +655,7 @@ class MigrationValidator:
 
         Returns:
             True if validation passes, False otherwise
+
         """
         logger.info("Validating extracted data")
 
@@ -754,7 +671,7 @@ class MigrationValidator:
 
         # Execute validations for all entities
         self.validation_manager.execute_all_validations(
-            ValidationPhase.EXTRACTION, entities_by_scope
+            ValidationPhase.EXTRACTION, entities_by_scope,
         )
 
         # Check for critical issues
@@ -765,7 +682,7 @@ class MigrationValidator:
         logger.info("Extraction validation completed")
         return True
 
-    def validate_transformation(self, transformed_data: Dict[str, List[Any]]) -> bool:
+    def validate_transformation(self, transformed_data: dict[str, list[Any]]) -> bool:
         """
         Validate transformed data.
 
@@ -774,6 +691,7 @@ class MigrationValidator:
 
         Returns:
             True if validation passes, False otherwise
+
         """
         logger.info("Validating transformed data")
 
@@ -786,7 +704,7 @@ class MigrationValidator:
 
         # Execute validations for all entities
         self.validation_manager.execute_all_validations(
-            ValidationPhase.TRANSFORMATION, entities_by_scope
+            ValidationPhase.TRANSFORMATION, entities_by_scope,
         )
 
         # Check for critical issues
@@ -797,7 +715,7 @@ class MigrationValidator:
         logger.info("Transformation validation completed")
         return True
 
-    def validate_loading(self, loaded_data: Dict[str, List[Any]]) -> bool:
+    def validate_loading(self, loaded_data: dict[str, list[Any]]) -> bool:
         """
         Validate loaded data in qTest.
 
@@ -806,6 +724,7 @@ class MigrationValidator:
 
         Returns:
             True if validation passes, False otherwise
+
         """
         logger.info("Validating loaded data")
 
@@ -836,6 +755,7 @@ class MigrationValidator:
 
         Returns:
             True if validation passes, False otherwise
+
         """
         logger.info("Performing post-migration validation")
 
@@ -866,7 +786,7 @@ class MigrationValidator:
         for rule in rules:
             logger.info(f"Running validation rule: {rule.name}")
             self.validation_manager.execute_validation(
-                None, rule.scope, ValidationPhase.POST_MIGRATION, context
+                None, rule.scope, ValidationPhase.POST_MIGRATION, context,
             )
 
         # Check for critical issues
@@ -877,12 +797,13 @@ class MigrationValidator:
         logger.info("Post-migration validation completed")
         return True
 
-    def _get_source_entity_counts(self) -> Dict[str, int]:
+    def _get_source_entity_counts(self) -> dict[str, int]:
         """
         Get counts of source entities.
 
         Returns:
             Dictionary mapping entity types to counts
+
         """
         counts = {}
 
@@ -898,10 +819,10 @@ class MigrationValidator:
 
             # Count test executions
             counts["test_executions"] = self.database.count_entities(
-                self.project_key, "test_executions"
+                self.project_key, "test_executions",
             )
         except Exception as e:
-            logger.error(f"Error getting source entity counts: {str(e)}")
+            logger.error(f"Error getting source entity counts: {e!s}")
             issue = ValidationIssue(
                 id=f"source_count_error_{int(time.time())}",
                 level=ValidationLevel.ERROR,
@@ -914,37 +835,38 @@ class MigrationValidator:
 
         return counts
 
-    def _get_loaded_entity_counts(self) -> Dict[str, int]:
+    def _get_loaded_entity_counts(self) -> dict[str, int]:
         """
         Get counts of loaded entities.
 
         Returns:
             Dictionary mapping entity types to counts
+
         """
         counts = {}
 
         try:
             # Count modules (folders)
             counts["modules"] = self.database.count_entity_mappings(
-                self.project_key, "folder_to_module"
+                self.project_key, "folder_to_module",
             )
 
             # Count test cases
             counts["test_cases"] = self.database.count_entity_mappings(
-                self.project_key, "testcase_to_testcase"
+                self.project_key, "testcase_to_testcase",
             )
 
             # Count test cycles
             counts["test_cycles"] = self.database.count_entity_mappings(
-                self.project_key, "cycle_to_cycle"
+                self.project_key, "cycle_to_cycle",
             )
 
             # Count test executions
             counts["test_executions"] = self.database.count_entity_mappings(
-                self.project_key, "execution_to_run"
+                self.project_key, "execution_to_run",
             )
         except Exception as e:
-            logger.error(f"Error getting loaded entity counts: {str(e)}")
+            logger.error(f"Error getting loaded entity counts: {e!s}")
             issue = ValidationIssue(
                 id=f"loaded_count_error_{int(time.time())}",
                 level=ValidationLevel.ERROR,
@@ -958,7 +880,7 @@ class MigrationValidator:
         return counts
 
     def _validate_entity_counts(
-        self, source_counts: Dict[str, int], loaded_counts: Dict[str, int]
+        self, source_counts: dict[str, int], loaded_counts: dict[str, int],
     ) -> None:
         """
         Validate that entity counts match.
@@ -966,6 +888,7 @@ class MigrationValidator:
         Args:
             source_counts: Dictionary mapping entity types to source counts
             loaded_counts: Dictionary mapping entity types to loaded counts
+
         """
         # Check folders vs modules
         if "folders" in source_counts and "modules" in loaded_counts:
@@ -1041,7 +964,7 @@ class MigrationValidator:
         try:
             # Get test cases with invalid module references
             invalid_module_refs = self.database.find_invalid_references(
-                self.project_key, "test_cases", "module_id", "modules", "id"
+                self.project_key, "test_cases", "module_id", "modules", "id",
             )
 
             if invalid_module_refs:
@@ -1055,13 +978,13 @@ class MigrationValidator:
                 )
                 self.validation_manager.add_issue(issue)
         except Exception as e:
-            logger.error(f"Error validating module references: {str(e)}")
+            logger.error(f"Error validating module references: {e!s}")
 
         # Check test executions have valid test case references
         try:
             # Get test executions with invalid test case references
             invalid_testcase_refs = self.database.find_invalid_references(
-                self.project_key, "test_runs", "test_case_id", "test_cases", "id"
+                self.project_key, "test_runs", "test_case_id", "test_cases", "id",
             )
 
             if invalid_testcase_refs:
@@ -1075,13 +998,13 @@ class MigrationValidator:
                 )
                 self.validation_manager.add_issue(issue)
         except Exception as e:
-            logger.error(f"Error validating test case references: {str(e)}")
+            logger.error(f"Error validating test case references: {e!s}")
 
         # Check test executions have valid test cycle references
         try:
             # Get test executions with invalid test cycle references
             invalid_cycle_refs = self.database.find_invalid_references(
-                self.project_key, "test_runs", "test_cycle_id", "test_cycles", "id"
+                self.project_key, "test_runs", "test_cycle_id", "test_cycles", "id",
             )
 
             if invalid_cycle_refs:
@@ -1095,9 +1018,9 @@ class MigrationValidator:
                 )
                 self.validation_manager.add_issue(issue)
         except Exception as e:
-            logger.error(f"Error validating test cycle references: {str(e)}")
+            logger.error(f"Error validating test cycle references: {e!s}")
 
-    def generate_validation_report(self, filename: str = None) -> Dict[str, Any]:
+    def generate_validation_report(self, filename: str | None = None) -> dict[str, Any]:
         """
         Generate a validation report and optionally save it to a file.
 
@@ -1106,6 +1029,7 @@ class MigrationValidator:
 
         Returns:
             Dictionary containing the validation report
+
         """
         return self.validation_manager.save_report(filename)
 
@@ -1118,6 +1042,7 @@ class MigrationValidator:
 
         Returns:
             True if validation passes, False otherwise
+
         """
         logger.info(f"Running pre-{phase.value} validation")
 
@@ -1150,6 +1075,7 @@ class MigrationValidator:
 
         Returns:
             True if validation passes, False otherwise
+
         """
         logger.info(f"Running post-{phase.value} validation")
 
@@ -1187,8 +1113,8 @@ class RetryPolicy:
         max_retries: int = 3,
         retry_delay: float = 1.0,
         backoff_factor: float = 2.0,
-        retry_codes: Optional[Set[int]] = None,
-        retry_exceptions: Optional[List[type]] = None,
+        retry_codes: set[int] | None = None,
+        retry_exceptions: list[type] | None = None,
     ):
         """
         Initialize the retry policy.
@@ -1199,6 +1125,7 @@ class RetryPolicy:
             backoff_factor: Factor to increase delay with each retry
             retry_codes: Set of HTTP status codes to retry on
             retry_exceptions: List of exception types to retry on
+
         """
         self.max_retries = max_retries
         self.retry_delay = retry_delay
@@ -1223,7 +1150,7 @@ class RetryPolicy:
                     requests.exceptions.HTTPError,
                     requests.exceptions.ChunkedEncodingError,
                     requests.exceptions.TooManyRedirects,
-                ]
+                ],
             )
         except ImportError:
             pass
@@ -1239,7 +1166,7 @@ class RetryPolicy:
                     httpx.PoolTimeout,
                     httpx.NetworkError,
                     httpx.ProtocolError,
-                ]
+                ],
             )
         except ImportError:
             pass
@@ -1252,7 +1179,7 @@ class RetryPolicy:
         self.retry_exceptions = retry_exception_classes
 
     def should_retry(
-        self, attempt: int, exception: Exception = None, status_code: int = None
+        self, attempt: int, exception: Exception | None = None, status_code: int | None = None,
     ) -> bool:
         """
         Determine if an operation should be retried.
@@ -1264,6 +1191,7 @@ class RetryPolicy:
 
         Returns:
             True if the operation should be retried, False otherwise
+
         """
         # Check if we've exceeded the maximum retries
         if attempt >= self.max_retries:
@@ -1290,6 +1218,7 @@ class RetryPolicy:
 
         Returns:
             Delay in seconds before the next retry
+
         """
         return self.retry_delay * (self.backoff_factor**attempt)
 
@@ -1308,6 +1237,7 @@ class MigrationRetryHandler:
 
         Args:
             retry_policy: The retry policy to use
+
         """
         self.retry_policy = retry_policy or RetryPolicy()
         self.logger = logging.getLogger("ztoq.migration.retry")
@@ -1323,6 +1253,7 @@ class MigrationRetryHandler:
 
         Returns:
             Decorator function that adds retry logic
+
         """
 
         def decorator(func):
@@ -1365,16 +1296,16 @@ class MigrationRetryHandler:
                                 log_context = f" [{scope}]"
 
                             self.logger.warning(
-                                f"Retrying {func.__name__}{log_context} after error: {str(e)}. "
+                                f"Retrying {func.__name__}{log_context} after error: {e!s}. "
                                 f"Attempt {attempt + 1}/{self.retry_policy.max_retries}. "
-                                f"Waiting {delay:.2f}s"
+                                f"Waiting {delay:.2f}s",
                             )
                             time.sleep(delay)
                             attempt += 1
                         else:
                             self.logger.error(
                                 f"Failed to execute {func.__name__} after "
-                                f"{attempt + 1} attempts: {str(e)}"
+                                f"{attempt + 1} attempts: {e!s}",
                             )
                             raise
 

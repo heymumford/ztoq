@@ -1,9 +1,7 @@
 """Integration tests for Docker Compose configuration for migration."""
-import os
-import io
-import pytest
-import re
 from pathlib import Path
+
+import pytest
 import yaml
 
 # Mark all tests in this module as docker integration tests
@@ -21,7 +19,7 @@ class TestDockerComposeConfiguration:
         )
         assert compose_path.exists(), f"Docker Compose file not found at {compose_path}"
 
-        with open(compose_path, "r") as f:
+        with open(compose_path) as f:
             compose_data = yaml.safe_load(f)
 
         return compose_data
@@ -96,7 +94,7 @@ class TestDockerComposeConfiguration:
         # Check image
         assert "image" in postgres, "postgres service should specify an image"
         assert postgres["image"].startswith(
-            "postgres:"
+            "postgres:",
         ), "postgres image should be a postgres image"
 
         # Check volumes

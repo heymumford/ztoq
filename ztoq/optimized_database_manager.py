@@ -14,7 +14,7 @@ access patterns for improved performance with large datasets.
 import json
 import logging
 from datetime import datetime
-from typing import Any, Dict, List, Optional, TypeVar
+from typing import Any, TypeVar
 
 from sqlalchemy import func
 from sqlalchemy.orm import Session
@@ -35,8 +35,8 @@ from ztoq.database_optimizations import (
     cached_query,
     db_stats,
     keyset_pagination,
-    transaction_scope,
     tracked_execution,
+    transaction_scope,
 )
 from ztoq.models import (
     Case as CaseModel,
@@ -71,6 +71,7 @@ class OptimizedDatabaseManager(SQLDatabaseManager):
         Args:
             config: Database configuration (optional if base_manager is provided)
             base_manager: Base database manager instance to wrap (optional)
+
         """
         if base_manager:
             # If base_manager is provided, we'll delegate to it
@@ -87,7 +88,7 @@ class OptimizedDatabaseManager(SQLDatabaseManager):
 
     @tracked_execution("get_project")
     @cached_query(ttl_seconds=300)  # Cache projects for 5 minutes
-    def get_project(self, project_key: str) -> Optional[Project]:
+    def get_project(self, project_key: str) -> Project | None:
         """
         Get a project by key with caching.
 
@@ -96,6 +97,7 @@ class OptimizedDatabaseManager(SQLDatabaseManager):
 
         Returns:
             Project instance or None if not found
+
         """
         with self.get_session() as session:
             return session.query(Project).filter_by(key=project_key).first()
@@ -107,6 +109,7 @@ class OptimizedDatabaseManager(SQLDatabaseManager):
 
         Args:
             project_model: Project model instance
+
         """
         super().save_project(project_model)
 
@@ -114,7 +117,7 @@ class OptimizedDatabaseManager(SQLDatabaseManager):
         self._model_cache.invalidate(f"get_project:{project_model.key}")
 
     @tracked_execution("batch_save_folders")
-    def batch_save_folders(self, folders: List[FolderModel], project_key: str) -> None:
+    def batch_save_folders(self, folders: list[FolderModel], project_key: str) -> None:
         """
         Save multiple folders in a single batch operation.
 
@@ -123,6 +126,7 @@ class OptimizedDatabaseManager(SQLDatabaseManager):
         Args:
             folders: List of folder models
             project_key: Project key
+
         """
         if not folders:
             return
@@ -142,13 +146,14 @@ class OptimizedDatabaseManager(SQLDatabaseManager):
             bulk_insert(session, Folder, folder_dicts)
 
     @tracked_execution("batch_save_test_cases")
-    def batch_save_test_cases(self, test_cases: List[CaseModel], project_key: str) -> None:
+    def batch_save_test_cases(self, test_cases: list[CaseModel], project_key: str) -> None:
         """
         Save multiple test cases in a single batch operation.
 
         Args:
             test_cases: List of test case models
             project_key: Project key
+
         """
         if not test_cases:
             return
@@ -160,13 +165,14 @@ class OptimizedDatabaseManager(SQLDatabaseManager):
             batch = test_cases[i : i + batch_size]
             self._save_test_case_batch(batch, project_key)
 
-    def _save_test_case_batch(self, test_cases: List[CaseModel], project_key: str) -> None:
+    def _save_test_case_batch(self, test_cases: list[CaseModel], project_key: str) -> None:
         """
         Save a batch of test cases.
 
         Args:
             test_cases: Batch of test case models
             project_key: Project key
+
         """
         with self.get_session() as session:
             with transaction_scope(session):
@@ -189,7 +195,7 @@ class OptimizedDatabaseManager(SQLDatabaseManager):
                     # Handle related entities
                     self._handle_test_case_relations(session, test_case, project_key)
 
-    def _test_case_to_dict(self, test_case: CaseModel, project_key: str) -> Dict[str, Any]:
+    def _test_case_to_dict(self, test_case: CaseModel, project_key: str) -> dict[str, Any]:
         """
         Convert a test case model to a dictionary for database storage.
 
@@ -199,6 +205,7 @@ class OptimizedDatabaseManager(SQLDatabaseManager):
 
         Returns:
             Dictionary representation of the test case
+
         """
         # Handle priority - it could be an object or a dict
         priority_id = None
@@ -236,7 +243,7 @@ class OptimizedDatabaseManager(SQLDatabaseManager):
         }
 
     def _handle_test_case_relations(
-        self, session: Session, test_case: CaseModel, project_key: str
+        self, session: Session, test_case: CaseModel, project_key: str,
     ) -> None:
         """
         Handle relations for a test case.
@@ -245,15 +252,15 @@ class OptimizedDatabaseManager(SQLDatabaseManager):
             session: Database session
             test_case: Test case model
             project_key: Project key
+
         """
         # This is a simplified implementation - in a real implementation
         # we would handle steps, custom fields, links, scripts, versions, and attachments
-        pass
 
     @tracked_execution("get_test_cases")
     def get_test_cases(
-        self, project_key: str, page_size: int = 100, last_id: Optional[str] = None
-    ) -> List[TestCase]:
+        self, project_key: str, page_size: int = 100, last_id: str | None = None,
+    ) -> list[TestCase]:
         """
         Get test cases using efficient keyset pagination.
 
@@ -264,6 +271,7 @@ class OptimizedDatabaseManager(SQLDatabaseManager):
 
         Returns:
             List of test cases
+
         """
         with self.get_session() as session:
             return keyset_pagination(
@@ -286,6 +294,7 @@ class OptimizedDatabaseManager(SQLDatabaseManager):
 
         Returns:
             Count of test cases
+
         """
         with self.get_session() as session:
             return (
@@ -294,7 +303,7 @@ class OptimizedDatabaseManager(SQLDatabaseManager):
             )
 
     @tracked_execution("get_test_case_by_key")
-    def get_test_case_by_key(self, test_case_key: str) -> Optional[TestCase]:
+    def get_test_case_by_key(self, test_case_key: str) -> TestCase | None:
         """
         Get a test case by key with index optimization.
 
@@ -303,18 +312,20 @@ class OptimizedDatabaseManager(SQLDatabaseManager):
 
         Returns:
             Test case instance or None if not found
+
         """
         with self.get_session() as session:
             return session.query(TestCase).filter_by(key=test_case_key).first()
 
     @tracked_execution("batch_save_test_cycles")
-    def batch_save_test_cycles(self, test_cycles: List[CycleInfoModel], project_key: str) -> None:
+    def batch_save_test_cycles(self, test_cycles: list[CycleInfoModel], project_key: str) -> None:
         """
         Save multiple test cycles in a single batch operation.
 
         Args:
             test_cycles: List of test cycle models
             project_key: Project key
+
         """
         if not test_cycles:
             return
@@ -326,13 +337,14 @@ class OptimizedDatabaseManager(SQLDatabaseManager):
             batch = test_cycles[i : i + batch_size]
             self._save_test_cycle_batch(batch, project_key)
 
-    def _save_test_cycle_batch(self, test_cycles: List[CycleInfoModel], project_key: str) -> None:
+    def _save_test_cycle_batch(self, test_cycles: list[CycleInfoModel], project_key: str) -> None:
         """
         Save a batch of test cycles.
 
         Args:
             test_cycles: Batch of test cycle models
             project_key: Project key
+
         """
         with self.get_session() as session:
             with transaction_scope(session):
@@ -355,7 +367,7 @@ class OptimizedDatabaseManager(SQLDatabaseManager):
                     # Handle related entities
                     self._handle_test_cycle_relations(session, test_cycle, project_key)
 
-    def _test_cycle_to_dict(self, test_cycle: CycleInfoModel, project_key: str) -> Dict[str, Any]:
+    def _test_cycle_to_dict(self, test_cycle: CycleInfoModel, project_key: str) -> dict[str, Any]:
         """
         Convert a test cycle model to a dictionary for database storage.
 
@@ -365,6 +377,7 @@ class OptimizedDatabaseManager(SQLDatabaseManager):
 
         Returns:
             Dictionary representation of the test cycle
+
         """
         return {
             "id": test_cycle.id,
@@ -385,7 +398,7 @@ class OptimizedDatabaseManager(SQLDatabaseManager):
         }
 
     def _handle_test_cycle_relations(
-        self, session: Session, test_cycle: CycleInfoModel, project_key: str
+        self, session: Session, test_cycle: CycleInfoModel, project_key: str,
     ) -> None:
         """
         Handle relations for a test cycle.
@@ -394,14 +407,14 @@ class OptimizedDatabaseManager(SQLDatabaseManager):
             session: Database session
             test_cycle: Test cycle model
             project_key: Project key
+
         """
         # This is a simplified implementation - in a real implementation
         # we would handle custom fields, links, and attachments
-        pass
 
     @tracked_execution("batch_save_test_executions")
     def batch_save_test_executions(
-        self, test_executions: List[ExecutionModel], project_key: str
+        self, test_executions: list[ExecutionModel], project_key: str,
     ) -> None:
         """
         Save multiple test executions in a single batch operation.
@@ -409,6 +422,7 @@ class OptimizedDatabaseManager(SQLDatabaseManager):
         Args:
             test_executions: List of test execution models
             project_key: Project key
+
         """
         if not test_executions:
             return
@@ -421,7 +435,7 @@ class OptimizedDatabaseManager(SQLDatabaseManager):
             self._save_test_execution_batch(batch, project_key)
 
     def _save_test_execution_batch(
-        self, test_executions: List[ExecutionModel], project_key: str
+        self, test_executions: list[ExecutionModel], project_key: str,
     ) -> None:
         """
         Save a batch of test executions.
@@ -429,6 +443,7 @@ class OptimizedDatabaseManager(SQLDatabaseManager):
         Args:
             test_executions: Batch of test execution models
             project_key: Project key
+
         """
         with self.get_session() as session:
             with transaction_scope(session):
@@ -452,8 +467,8 @@ class OptimizedDatabaseManager(SQLDatabaseManager):
                     self._handle_test_execution_relations(session, test_execution, project_key)
 
     def _test_execution_to_dict(
-        self, test_execution: ExecutionModel, project_key: str
-    ) -> Dict[str, Any]:
+        self, test_execution: ExecutionModel, project_key: str,
+    ) -> dict[str, Any]:
         """
         Convert a test execution model to a dictionary for database storage.
 
@@ -463,16 +478,17 @@ class OptimizedDatabaseManager(SQLDatabaseManager):
 
         Returns:
             Dictionary representation of the test execution
+
         """
         # Handle camelCase to snake_case mapping for Pydantic model attributes
         test_case_key = getattr(test_execution, "testCaseKey", None) or getattr(
-            test_execution, "test_case_key", None
+            test_execution, "test_case_key", None,
         )
         cycle_id = getattr(test_execution, "cycleId", None) or getattr(
-            test_execution, "cycle_id", None
+            test_execution, "cycle_id", None,
         )
         environment_id = getattr(test_execution, "environment", None) or getattr(
-            test_execution, "environment_id", None
+            test_execution, "environment_id", None,
         )
 
         return {
@@ -497,7 +513,7 @@ class OptimizedDatabaseManager(SQLDatabaseManager):
         }
 
     def _handle_test_execution_relations(
-        self, session: Session, test_execution: ExecutionModel, project_key: str
+        self, session: Session, test_execution: ExecutionModel, project_key: str,
     ) -> None:
         """
         Handle relations for a test execution.
@@ -506,15 +522,15 @@ class OptimizedDatabaseManager(SQLDatabaseManager):
             session: Database session
             test_execution: Test execution model
             project_key: Project key
+
         """
         # This is a simplified implementation - in a real implementation
         # we would handle steps, custom fields, links, and attachments
-        pass
 
     @tracked_execution("create_entity_batch_states")
     def create_entity_batch_states(
-        self, project_key: str, entity_type: str, batch_count: int, items_per_batch: int
-    ) -> List[EntityBatchState]:
+        self, project_key: str, entity_type: str, batch_count: int, items_per_batch: int,
+    ) -> list[EntityBatchState]:
         """
         Create multiple entity batch state records in a single operation.
 
@@ -526,6 +542,7 @@ class OptimizedDatabaseManager(SQLDatabaseManager):
 
         Returns:
             List of created entity batch state records
+
         """
         batch_states = []
 
@@ -548,7 +565,7 @@ class OptimizedDatabaseManager(SQLDatabaseManager):
 
     @tracked_execution("update_entity_batch_states")
     def update_entity_batch_states(
-        self, batch_ids: List[int], status: str, processed_counts: Optional[List[int]] = None
+        self, batch_ids: list[int], status: str, processed_counts: list[int] | None = None,
     ) -> None:
         """
         Update multiple entity batch state records in a single operation.
@@ -557,6 +574,7 @@ class OptimizedDatabaseManager(SQLDatabaseManager):
             batch_ids: List of batch IDs
             status: New status
             processed_counts: Optional list of processed counts
+
         """
         if not batch_ids:
             return
@@ -584,12 +602,13 @@ class OptimizedDatabaseManager(SQLDatabaseManager):
                             batch.completed_at = now
 
     @tracked_execution("get_statistics")
-    def get_performance_statistics(self) -> Dict[str, Any]:
+    def get_performance_statistics(self) -> dict[str, Any]:
         """
         Get database performance statistics.
 
         Returns:
             Dictionary with performance statistics
+
         """
         stats = db_stats.get_stats()
 

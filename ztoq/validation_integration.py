@@ -12,8 +12,10 @@ framework, ensuring that validation rules are applied at the appropriate phases 
 """
 
 import logging
+from collections.abc import Callable
 from functools import wraps
-from typing import Any, Callable, Dict, List, Type, TypeVar
+from typing import TypeVar
+
 from ztoq.validation import (
     MigrationRetryHandler,
     MigrationValidator,
@@ -22,7 +24,6 @@ from ztoq.validation import (
     ValidationLevel,
     ValidationManager,
     ValidationPhase,
-    ValidationRule,
     ValidationScope,
 )
 from ztoq.validation_rules import get_built_in_rules
@@ -37,7 +38,7 @@ class MigrationValidationDecorators:
     """Provides decorators for adding validation to migration methods."""
 
     def __init__(
-        self, validation_manager: ValidationManager, retry_handler: MigrationRetryHandler = None
+        self, validation_manager: ValidationManager, retry_handler: MigrationRetryHandler = None,
     ):
         """
         Initialize the decorator provider.
@@ -45,10 +46,11 @@ class MigrationValidationDecorators:
         Args:
             validation_manager: The validation manager instance
             retry_handler: Optional retry handler for transient errors
+
         """
         self.validation_manager = validation_manager
         self.retry_handler = retry_handler or MigrationRetryHandler(
-            RetryPolicy(max_attempts=3, backoff_factor=2.0)
+            RetryPolicy(max_attempts=3, backoff_factor=2.0),
         )
 
     def validate_extraction(self, scope: ValidationScope):
@@ -57,6 +59,7 @@ class MigrationValidationDecorators:
 
         Args:
             scope: The validation scope for the operation
+
         """
 
         def decorator(func: Callable[..., T]) -> Callable[..., T]:
@@ -68,7 +71,7 @@ class MigrationValidationDecorators:
 
                 # Run pre-extraction validation
                 self.validation_manager.run_validation(
-                    ValidationPhase.PRE_EXTRACTION, scope, pre_validation_context
+                    ValidationPhase.PRE_EXTRACTION, scope, pre_validation_context,
                 )
 
                 # Apply retry policy for extraction operations
@@ -90,7 +93,7 @@ class MigrationValidationDecorators:
                         validation_context["entity_id"] = entity_id
 
                     self.validation_manager.run_validation(
-                        ValidationPhase.EXTRACTION, scope, validation_context
+                        ValidationPhase.EXTRACTION, scope, validation_context,
                     )
                     return result
                 except Exception as e:
@@ -99,12 +102,12 @@ class MigrationValidationDecorators:
                         ValidationIssue(
                             rule_id="extraction_error",
                             level=ValidationLevel.ERROR,
-                            message=f"Extraction failed: {str(e)}",
+                            message=f"Extraction failed: {e!s}",
                             entity_id=entity_id if entity_id else "unknown",
                             scope=scope,
                             phase=ValidationPhase.EXTRACTION,
                             context={"error": str(e), "exception_type": type(e).__name__},
-                        )
+                        ),
                     )
                     raise
 
@@ -118,6 +121,7 @@ class MigrationValidationDecorators:
 
         Args:
             scope: The validation scope for the operation
+
         """
 
         def decorator(func: Callable[..., T]) -> Callable[..., T]:
@@ -137,7 +141,7 @@ class MigrationValidationDecorators:
 
                 # Run pre-transformation validation
                 self.validation_manager.run_validation(
-                    ValidationPhase.PRE_TRANSFORMATION, scope, pre_validation_context
+                    ValidationPhase.PRE_TRANSFORMATION, scope, pre_validation_context,
                 )
 
                 try:
@@ -151,7 +155,7 @@ class MigrationValidationDecorators:
                         "entity_id": entity_id,
                     }
                     self.validation_manager.run_validation(
-                        ValidationPhase.TRANSFORMATION, scope, validation_context
+                        ValidationPhase.TRANSFORMATION, scope, validation_context,
                     )
                     return result
                 except Exception as e:
@@ -160,12 +164,12 @@ class MigrationValidationDecorators:
                         ValidationIssue(
                             rule_id="transformation_error",
                             level=ValidationLevel.ERROR,
-                            message=f"Transformation failed: {str(e)}",
+                            message=f"Transformation failed: {e!s}",
                             entity_id=entity_id,
                             scope=scope,
                             phase=ValidationPhase.TRANSFORMATION,
                             context={"error": str(e), "exception_type": type(e).__name__},
-                        )
+                        ),
                     )
                     raise
 
@@ -179,6 +183,7 @@ class MigrationValidationDecorators:
 
         Args:
             scope: The validation scope for the operation
+
         """
 
         def decorator(func: Callable[..., T]) -> Callable[..., T]:
@@ -196,7 +201,7 @@ class MigrationValidationDecorators:
 
                 # Run pre-loading validation
                 self.validation_manager.run_validation(
-                    ValidationPhase.PRE_LOADING, scope, pre_validation_context
+                    ValidationPhase.PRE_LOADING, scope, pre_validation_context,
                 )
 
                 # Apply retry policy for loading operations (API calls)
@@ -219,7 +224,7 @@ class MigrationValidationDecorators:
                         "entity_id": entity_id,
                     }
                     self.validation_manager.run_validation(
-                        ValidationPhase.LOADING, scope, validation_context
+                        ValidationPhase.LOADING, scope, validation_context,
                     )
                     return result
                 except Exception as e:
@@ -228,12 +233,12 @@ class MigrationValidationDecorators:
                         ValidationIssue(
                             rule_id="loading_error",
                             level=ValidationLevel.ERROR,
-                            message=f"Loading failed: {str(e)}",
+                            message=f"Loading failed: {e!s}",
                             entity_id=entity_id,
                             scope=scope,
                             phase=ValidationPhase.LOADING,
                             context={"error": str(e), "exception_type": type(e).__name__},
-                        )
+                        ),
                     )
                     raise
 
@@ -258,6 +263,7 @@ class EnhancedMigration:
             migration: The ZephyrToQTestMigration instance to wrap
             database: Database manager instance
             project_key: The Zephyr project key
+
         """
         self.migration = migration
         self.db = database
@@ -284,57 +290,57 @@ class EnhancedMigration:
         """Set up method wrappers for the migration class."""
         # Extract methods
         self.migration._extract_folders = self.decorators.validate_extraction(
-            ValidationScope.FOLDER
+            ValidationScope.FOLDER,
         )(self.migration._extract_folders)
 
         self.migration._extract_test_cases = self.decorators.validate_extraction(
-            ValidationScope.TEST_CASE
+            ValidationScope.TEST_CASE,
         )(self.migration._extract_test_cases)
 
         self.migration._extract_test_cycles = self.decorators.validate_extraction(
-            ValidationScope.TEST_CYCLE
+            ValidationScope.TEST_CYCLE,
         )(self.migration._extract_test_cycles)
 
         self.migration._extract_test_executions = self.decorators.validate_extraction(
-            ValidationScope.TEST_EXECUTION
+            ValidationScope.TEST_EXECUTION,
         )(self.migration._extract_test_executions)
 
         # Transform methods
         self.migration._transform_project = self.decorators.validate_transformation(
-            ValidationScope.PROJECT
+            ValidationScope.PROJECT,
         )(self.migration._transform_project)
 
         self.migration._transform_folders_to_modules = self.decorators.validate_transformation(
-            ValidationScope.FOLDER
+            ValidationScope.FOLDER,
         )(self.migration._transform_folders_to_modules)
 
         self.migration._transform_test_cases = self.decorators.validate_transformation(
-            ValidationScope.TEST_CASE
+            ValidationScope.TEST_CASE,
         )(self.migration._transform_test_cases)
 
         self.migration._transform_test_cycles = self.decorators.validate_transformation(
-            ValidationScope.TEST_CYCLE
+            ValidationScope.TEST_CYCLE,
         )(self.migration._transform_test_cycles)
 
         self.migration._transform_test_executions = self.decorators.validate_transformation(
-            ValidationScope.TEST_EXECUTION
+            ValidationScope.TEST_EXECUTION,
         )(self.migration._transform_test_executions)
 
         # Load methods
         self.migration._create_module_in_qtest = self.decorators.validate_loading(
-            ValidationScope.FOLDER
+            ValidationScope.FOLDER,
         )(self.migration._create_module_in_qtest)
 
         self.migration._create_test_case_in_qtest = self.decorators.validate_loading(
-            ValidationScope.TEST_CASE
+            ValidationScope.TEST_CASE,
         )(self.migration._create_test_case_in_qtest)
 
         self.migration._create_test_cycle_in_qtest = self.decorators.validate_loading(
-            ValidationScope.TEST_CYCLE
+            ValidationScope.TEST_CYCLE,
         )(self.migration._create_test_cycle_in_qtest)
 
         self.migration._create_execution_in_qtest = self.decorators.validate_loading(
-            ValidationScope.TEST_EXECUTION
+            ValidationScope.TEST_EXECUTION,
         )(self.migration._create_execution_in_qtest)
 
     def run_migration(self, phases=None):
@@ -343,6 +349,7 @@ class EnhancedMigration:
 
         Args:
             phases: Optional list of phases to run
+
         """
         if not phases:
             phases = ["extract", "transform", "load"]
@@ -419,5 +426,6 @@ def get_enhanced_migration(migration, database, project_key):
 
     Returns:
         EnhancedMigration: The enhanced migration wrapper
+
     """
     return EnhancedMigration(migration, database, project_key)

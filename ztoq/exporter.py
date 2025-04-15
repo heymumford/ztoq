@@ -8,7 +8,9 @@ import logging
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
+
 from rich.progress import Progress
+
 from ztoq.models import TestExecution, ZephyrConfig
 from ztoq.storage import JSONStorage, SQLiteStorage
 from ztoq.zephyr_client import ZephyrClient
@@ -26,13 +28,15 @@ class ZephyrExporter:
         output_path: Path | None = None,
         concurrency: int = 2,
     ):
-        """Initialize the Zephyr exporter.
+        """
+        Initialize the Zephyr exporter.
 
         Args:
             client: ZephyrClient instance
             output_format: Output format - "json" or "sqlite"
             output_path: Output path for data (directory for JSON, file for SQLite)
             concurrency: Number of concurrent requests for bulk operations
+
         """
         self.client = client
         self.output_format = output_format.lower()
@@ -50,13 +54,15 @@ class ZephyrExporter:
             raise ValueError(f"Unsupported output format: {output_format}")
 
     def export_all(self, progress: Progress | None = None) -> dict[str, int]:
-        """Export all test data for the configured project.
+        """
+        Export all test data for the configured project.
 
         Args:
             progress: Optional Progress instance for progress reporting
 
         Returns:
             Dictionary with counts of exported items
+
         """
         project_key = self.client.config.project_key
         counts = {}
@@ -104,7 +110,7 @@ class ZephyrExporter:
 
         if progress:
             progress.update(
-                task, advance=1, description=f"[cyan]Exported {len(test_cases)} test cases"
+                task, advance=1, description=f"[cyan]Exported {len(test_cases)} test cases",
             )
 
         # Save test cases
@@ -121,7 +127,7 @@ class ZephyrExporter:
 
         if progress:
             progress.update(
-                task, advance=1, description=f"[cyan]Exported {len(test_cycles)} test cycles"
+                task, advance=1, description=f"[cyan]Exported {len(test_cycles)} test cycles",
             )
 
         # Save test cycles
@@ -176,7 +182,7 @@ class ZephyrExporter:
 
         if progress:
             progress.update(
-                task, advance=1, description=f"[cyan]Exported {len(all_executions)} test executions"
+                task, advance=1, description=f"[cyan]Exported {len(all_executions)} test executions",
             )
 
         # Save test executions
@@ -189,19 +195,21 @@ class ZephyrExporter:
 
         if progress:
             progress.update(
-                task, advance=1, description=f"[green]Completed export for {project_key}"
+                task, advance=1, description=f"[green]Completed export for {project_key}",
             )
 
         return counts
 
     def _fetch_executions_for_cycle(self, cycle_id: str) -> list[TestExecution]:
-        """Fetch all executions for a test cycle.
+        """
+        Fetch all executions for a test cycle.
 
         Args:
             cycle_id: Test cycle ID
 
         Returns:
             List of test executions
+
         """
         return list(self.client.get_test_executions(cycle_id=cycle_id))
 
@@ -217,7 +225,8 @@ class ZephyrExportManager:
         spec_path: Path | None = None,
         concurrency: int = 2,
     ):
-        """Initialize the export manager.
+        """
+        Initialize the export manager.
 
         Args:
             config: ZephyrConfig object
@@ -225,6 +234,7 @@ class ZephyrExportManager:
             output_dir: Base output directory
             spec_path: Path to OpenAPI spec file
             concurrency: Number of concurrent requests for bulk operations
+
         """
         self.config = config
         self.output_format = output_format
@@ -233,9 +243,10 @@ class ZephyrExportManager:
         self.concurrency = concurrency
 
     def export_project(
-        self, project_key: str | None = None, progress: Progress | None = None
+        self, project_key: str | None = None, progress: Progress | None = None,
     ) -> dict[str, int]:
-        """Export data for a specific project.
+        """
+        Export data for a specific project.
 
         Args:
             project_key: Project key (defaults to config's project_key)
@@ -243,12 +254,13 @@ class ZephyrExportManager:
 
         Returns:
             Dictionary with counts of exported items
+
         """
         pk = project_key or self.config.project_key
 
         # Update config to use the specified project key
         config = ZephyrConfig(
-            base_url=self.config.base_url, api_token=self.config.api_token, project_key=pk
+            base_url=self.config.base_url, api_token=self.config.api_token, project_key=pk,
         )
 
         # Create client
@@ -278,7 +290,8 @@ class ZephyrExportManager:
         projects_to_export: list[str] | None = None,
         progress_callback: Callable[[str, str, int, int], None] | None = None,
     ) -> dict[str, dict[str, int]]:
-        """Export data for multiple projects.
+        """
+        Export data for multiple projects.
 
         Args:
             projects_to_export: List of project keys to export (defaults to all projects)
@@ -287,6 +300,7 @@ class ZephyrExportManager:
 
         Returns:
             Dictionary mapping project keys to export statistics
+
         """
         # Create client to get projects list
         if self.spec_path:
@@ -318,6 +332,6 @@ class ZephyrExportManager:
             except Exception as e:
                 logger.error(f"Error exporting project {project.key}: {e}")
                 if progress_callback:
-                    progress_callback(project.key, f"error: {str(e)}", i, total_projects)
+                    progress_callback(project.key, f"error: {e!s}", i, total_projects)
 
         return results

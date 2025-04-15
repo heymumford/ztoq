@@ -10,26 +10,23 @@ import shutil
 import tempfile
 import time
 from unittest.mock import MagicMock, patch
+
 import pytest
 from sqlalchemy.exc import IntegrityError, OperationalError
+
 from ztoq.core.db_manager import DatabaseConfig, SQLDatabaseManager
-from ztoq.core.db_models import Folder, TestCase
+from ztoq.core.db_models import Folder, MigrationState, TestCase
 from ztoq.models import (
     Case as CaseModel,
-)
-from ztoq.models import (
     CycleInfo as CycleInfoModel,
-)
-from ztoq.models import (
     Project as ProjectModel,
 )
-from ztoq.core.db_models import MigrationState
 
 # Setup test logger
 logger = logging.getLogger(__name__)
 
 
-@pytest.mark.integration()
+@pytest.mark.integration
 class TestDatabaseErrorHandling:
     """Integration tests for database error handling and recovery."""
 
@@ -42,7 +39,7 @@ class TestDatabaseErrorHandling:
         # Cleanup
         shutil.rmtree(temp_dir)
 
-    @pytest.fixture()
+    @pytest.fixture
     def db_manager(self, temp_db_path):
         """Create a database manager for testing."""
         config = DatabaseConfig(db_type="sqlite", db_path=temp_db_path)
@@ -56,7 +53,7 @@ class TestDatabaseErrorHandling:
 
         return manager
 
-    @pytest.fixture()
+    @pytest.fixture
     def test_project(self, db_manager):
         """Create a test project in the database."""
         project = ProjectModel(
@@ -352,7 +349,7 @@ class TestDatabaseErrorHandling:
                     if "database is locked" in str(e) and retry_count < max_retries - 1:
                         retry_count += 1
                         logger.info(
-                            f"Deadlock detected, retrying ({retry_count}/{max_retries-1})..."
+                            f"Deadlock detected, retrying ({retry_count}/{max_retries-1})...",
                         )
                         time.sleep(0.1 * retry_count)  # Exponential backoff
                     else:
@@ -691,7 +688,7 @@ class TestDatabaseErrorHandling:
 
                 # Update migration state
                 db_manager.update_migration_state(
-                    test_project.key, metadata={"processed_items": i + 1, "total_items": 10}
+                    test_project.key, metadata={"processed_items": i + 1, "total_items": 10},
                 )
 
                 # Simulate failure in the middle
@@ -725,7 +722,7 @@ class TestDatabaseErrorHandling:
         try:
             # First, update state to in_progress again
             db_manager.update_migration_state(
-                test_project.key, extraction_status="in_progress", error_message=None
+                test_project.key, extraction_status="in_progress", error_message=None,
             )
 
             # Get current progress
@@ -753,7 +750,7 @@ class TestDatabaseErrorHandling:
 
                 # Update migration state
                 db_manager.update_migration_state(
-                    test_project.key, metadata={"processed_items": i + 1, "total_items": 10}
+                    test_project.key, metadata={"processed_items": i + 1, "total_items": 10},
                 )
 
             # Mark as completed
@@ -767,7 +764,7 @@ class TestDatabaseErrorHandling:
             db_manager.update_migration_state(
                 test_project.key,
                 extraction_status="failed",
-                error_message=f"Resume failed: {str(e)}",
+                error_message=f"Resume failed: {e!s}",
             )
             raise
 

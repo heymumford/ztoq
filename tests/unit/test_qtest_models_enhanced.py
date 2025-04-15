@@ -5,17 +5,17 @@ See LICENSE file for details.
 """
 
 import base64
-from datetime import datetime, timezone
-import uuid
+from datetime import UTC, datetime
+
 import pytest
 from pydantic import ValidationError
+
 from ztoq.qtest_models import (
     QTestAttachment,
     QTestConfig,
     QTestCustomField,
     QTestDataset,
     QTestDatasetRow,
-    QTestLink,
     QTestModule,
     QTestPaginatedResponse,
     QTestParameter,
@@ -25,7 +25,6 @@ from ztoq.qtest_models import (
     QTestPulseActionParameter,
     QTestPulseActionType,
     QTestPulseCondition,
-    QTestPulseConstant,
     QTestPulseEventType,
     QTestPulseRule,
     QTestPulseTrigger,
@@ -34,7 +33,6 @@ from ztoq.qtest_models import (
     QTestStep,
     QTestTestCase,
     QTestTestCycle,
-    QTestTestExecution,
     QTestTestLog,
     QTestTestRun,
 )
@@ -48,7 +46,7 @@ class TestQTestModelRelationships:
         """Test relationship between projects and modules."""
         # Create a project
         project = QTestProject(
-            id=12345, name="Test Project", description="Test Project Description", status="active"
+            id=12345, name="Test Project", description="Test Project Description", status="active",
         )
 
         # Create a module linked to the project
@@ -127,7 +125,7 @@ class TestQTestModelRelationships:
         """Test full hierarchy from project to test execution."""
         # Create a project
         project = QTestProject(
-            id=12345, name="Test Project", description="Test Project Description", status="active"
+            id=12345, name="Test Project", description="Test Project Description", status="active",
         )
 
         # Create a release
@@ -183,7 +181,7 @@ class TestQTestModelRelationships:
         test_log = QTestTestLog(
             id=701,
             status="passed",
-            executionDate=datetime.now(timezone.utc),
+            executionDate=datetime.now(UTC),
             testRunId=test_run.id,
             note="Test passed successfully",
         )
@@ -224,7 +222,7 @@ class TestQTestModelRelationships:
                     "fieldName": custom_field.fieldName,
                     "fieldType": custom_field.fieldType,
                     "fieldValue": "High",
-                }
+                },
             ],
         )
 
@@ -243,19 +241,19 @@ class TestQTestModelValidations:
         """Test validation rules for QTestConfig."""
         # Test valid URL
         valid_config = QTestConfig(
-            base_url="https://example.qtest.com", username="test_user", password="test_password"
+            base_url="https://example.qtest.com", username="test_user", password="test_password",
         )
         assert valid_config.base_url == "https://example.qtest.com"
 
         # Test URL normalization - adding trailing slash
         config_with_slash = QTestConfig(
-            base_url="https://example.qtest.com/", username="test_user", password="test_password"
+            base_url="https://example.qtest.com/", username="test_user", password="test_password",
         )
         assert config_with_slash.base_url == "https://example.qtest.com"  # Trailing slash removed
 
         # Test adding protocol if missing
         config_without_protocol = QTestConfig(
-            base_url="example.qtest.com", username="test_user", password="test_password"
+            base_url="example.qtest.com", username="test_user", password="test_password",
         )
         assert config_without_protocol.base_url.startswith("https://")
 
@@ -268,7 +266,7 @@ class TestQTestModelValidations:
         """Test validation rules for QTestProject."""
         # Test valid project
         valid_project = QTestProject(
-            id=12345, name="Test Project", description="Test Project Description", status="active"
+            id=12345, name="Test Project", description="Test Project Description", status="active",
         )
         assert valid_project.name == "Test Project"
 
@@ -302,7 +300,7 @@ class TestQTestModelValidations:
         # Test missing required field
         with pytest.raises(ValidationError) as excinfo:
             QTestTestCase(
-                id=201, description="Test Case Description", projectId=12345, moduleId=101
+                id=201, description="Test Case Description", projectId=12345, moduleId=101,
             )
         assert "name" in str(excinfo.value) and "field required" in str(excinfo.value)
 
@@ -316,14 +314,14 @@ class TestQTestModelValidations:
                 moduleId=101,
             )
         assert "name" in str(excinfo.value) and "ensure this value has at most" in str(
-            excinfo.value
+            excinfo.value,
         )
 
     def test_test_log_validation(self):
         """Test validation rules for QTestTestLog."""
         # Test valid test log
         valid_test_log = QTestTestLog(
-            id=701, status="Passed", executionDate=datetime.now(timezone.utc), testRunId=601
+            id=701, status="Passed", executionDate=datetime.now(UTC), testRunId=601,
         )
         assert valid_test_log.status == "Passed"
 
@@ -332,7 +330,7 @@ class TestQTestModelValidations:
             QTestTestLog(
                 id=701,
                 status="InvalidStatus",
-                executionDate=datetime.now(timezone.utc),
+                executionDate=datetime.now(UTC),
                 testRunId=601,
             )
         assert "status" in str(excinfo.value) and "Invalid status" in str(excinfo.value)
@@ -341,7 +339,7 @@ class TestQTestModelValidations:
         valid_test_log_with_steps = QTestTestLog(
             id=701,
             status="Passed",
-            executionDate=datetime.now(timezone.utc),
+            executionDate=datetime.now(UTC),
             testRunId=601,
             testStepLogs=[
                 {
@@ -369,7 +367,7 @@ class TestQTestModelValidations:
             QTestTestLog(
                 id=701,
                 status="Passed",
-                executionDate=datetime.now(timezone.utc),
+                executionDate=datetime.now(UTC),
                 testRunId=601,
                 testStepLogs=[
                     {
@@ -379,7 +377,7 @@ class TestQTestModelValidations:
                         "expectedResult": "Expected result 1",
                         "actualResult": "Actual result 1",
                         "order": 1,
-                    }
+                    },
                 ],
             )
         assert "testStepLogs" in str(excinfo.value) and "Invalid status" in str(excinfo.value)
@@ -387,7 +385,7 @@ class TestQTestModelValidations:
     def test_attachment_validation(self):
         """Test validation rules for QTestAttachment."""
         # Test valid attachment with content
-        test_content = "Test content".encode("utf-8")
+        test_content = b"Test content"
         base64_content = base64.b64encode(test_content).decode("utf-8")
 
         valid_attachment = QTestAttachment(
@@ -411,7 +409,7 @@ class TestQTestModelValidations:
                 size=len(test_content),
             )
         assert "name" in str(excinfo.value) and "ensure this value has at least" in str(
-            excinfo.value
+            excinfo.value,
         )
 
         # Test content type validation
@@ -434,7 +432,7 @@ class TestQTestPulseModels:
         """Test creating a complete Pulse rule with all components."""
         # Create a trigger condition
         condition = QTestPulseCondition(
-            id=1001, field="priority", operator="equals", value="High", valueType="STRING"
+            id=1001, field="priority", operator="equals", value="High", valueType="STRING",
         )
 
         # Create a trigger
@@ -758,7 +756,7 @@ class TestModelSerialization:
                     "expectedResult": "Expected result 1",
                     "actualResult": "Actual result 1",
                     "order": 1,
-                }
+                },
             ],
         }
 
@@ -781,8 +779,8 @@ class TestModelSerialization:
             description="First release",
             projectId=12345,
             status="active",
-            startDate=datetime(2025, 1, 1, tzinfo=timezone.utc),
-            endDate=datetime(2025, 12, 31, tzinfo=timezone.utc),
+            startDate=datetime(2025, 1, 1, tzinfo=UTC),
+            endDate=datetime(2025, 12, 31, tzinfo=UTC),
         )
 
         # Convert to JSON and verify
@@ -837,7 +835,7 @@ class TestPaginatedResponse:
         """Test navigation helpers in paginated responses."""
         # Create a paginated response with navigation info
         paginated_response = QTestPaginatedResponse(
-            page=2, pageSize=10, total=25, items=[]  # Items not important for this test
+            page=2, pageSize=10, total=25, items=[],  # Items not important for this test
         )
 
         # Verify navigation properties

@@ -4,11 +4,9 @@ Script to add pytest markers to test files based on their location in the test d
 This ensures all tests follow the test pyramid structure and can be properly categorized and filtered.
 """
 
-import os
 import re
 import sys
 from pathlib import Path
-from typing import List, Dict, Tuple
 
 # Constants
 TEST_DIR = Path(__file__).parent.parent / "tests"
@@ -17,7 +15,7 @@ INTEGRATION_DIR = TEST_DIR / "integration"
 SYSTEM_DIR = TEST_DIR / "system"
 
 
-def get_test_files(directory: Path) -> List[Path]:
+def get_test_files(directory: Path) -> list[Path]:
     """Get all Python test files in a directory."""
     if not directory.exists():
         print(f"Warning: Directory {directory} does not exist")
@@ -29,7 +27,7 @@ def get_test_files(directory: Path) -> List[Path]:
 
 def check_file_for_marker(file_path: Path, marker: str) -> bool:
     """Check if a file already has a specific pytest marker."""
-    with open(file_path, "r") as f:
+    with open(file_path) as f:
         content = f.read()
 
     # Check for the marker in the file
@@ -38,7 +36,7 @@ def check_file_for_marker(file_path: Path, marker: str) -> bool:
 
 def add_marker_to_file(file_path: Path, marker: str) -> bool:
     """Add a pytest marker to a test file if it doesn't already have it."""
-    with open(file_path, "r") as f:
+    with open(file_path) as f:
         content = f.read()
 
     # Check if pytest is already imported
@@ -50,17 +48,16 @@ def add_marker_to_file(file_path: Path, marker: str) -> bool:
         return False
 
     # Identify test class definitions and function definitions
-    class_pattern = r'class\s+Test[A-Za-z0-9_]+\(.*\):'
-    function_pattern = r'def\s+test_[A-Za-z0-9_]+\(.*\):'
+    class_pattern = r"class\s+Test[A-Za-z0-9_]+\(.*\):"
+    function_pattern = r"def\s+test_[A-Za-z0-9_]+\(.*\):"
 
     # Add import if needed
     if not has_pytest_import:
         # Find the right place to add import
         import_section_end = 0
-        for match in re.finditer(r'(?:^|\n)(?:import|from)\s+[A-Za-z0-9_.]+(?:\s+import|\s+as)?\s+.*?(?:\n|$)', content):
+        for match in re.finditer(r"(?:^|\n)(?:import|from)\s+[A-Za-z0-9_.]+(?:\s+import|\s+as)?\s+.*?(?:\n|$)", content):
             end = match.end()
-            if end > import_section_end:
-                import_section_end = end
+            import_section_end = max(import_section_end, end)
 
         # If we found imports, add after them
         if import_section_end > 0:
@@ -89,7 +86,7 @@ def add_marker_to_file(file_path: Path, marker: str) -> bool:
             line_start = content.rfind("\n", 0, pos) + 1
             if line_start > 0:
                 # Get indentation from the previous line
-                indent_match = re.match(r'^(\s*)', content[line_start:pos])
+                indent_match = re.match(r"^(\s*)", content[line_start:pos])
                 if indent_match:
                     indentation = indent_match.group(1)
 
@@ -105,7 +102,7 @@ def add_marker_to_file(file_path: Path, marker: str) -> bool:
             indentation = ""
             line_start = content.rfind("\n", 0, pos) + 1
             if line_start > 0:
-                indent_match = re.match(r'^(\s*)', content[line_start:pos])
+                indent_match = re.match(r"^(\s*)", content[line_start:pos])
                 if indent_match:
                     indentation = indent_match.group(1)
 
@@ -130,7 +127,7 @@ def add_marker_to_file(file_path: Path, marker: str) -> bool:
     return False
 
 
-def process_directory(directory: Path, marker: str) -> Tuple[int, int]:
+def process_directory(directory: Path, marker: str) -> tuple[int, int]:
     """Process all test files in a directory, adding the specified marker if needed."""
     test_files = get_test_files(directory)
     total = len(test_files)

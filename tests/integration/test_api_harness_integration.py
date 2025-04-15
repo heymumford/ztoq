@@ -12,24 +12,22 @@ to test the ZTOQ migration workflow between Zephyr Scale and qTest.
 """
 
 import json
-import pytest
-from typing import Dict, List, Any, Tuple
-from unittest.mock import patch
 
-from ztoq.qtest_client import QTestClient
-from ztoq.qtest_models import QTestConfig, QTestProject, QTestTestCase, QTestModule
-from ztoq.zephyr_client import ZephyrClient
-from ztoq.models import ZephyrConfig, Project, Case, Folder
+import pytest
+
+from tests.fixtures.mocks.api_harness import (
+    MockAPITestBase,
+    QTestAPIHarness,
+    ZephyrAPIHarness,
+)
 
 # Import the test migration function
 # (In a real scenario, this would be imported from a real module)
 from tests.fixtures.mocks.test_api_harness_examples import migrate_test_case
-
-from tests.fixtures.mocks.api_harness import (
-    ZephyrAPIHarness,
-    QTestAPIHarness,
-    MockAPITestBase,
-)
+from ztoq.models import Folder, ZephyrConfig
+from ztoq.qtest_client import QTestClient
+from ztoq.qtest_models import QTestConfig, QTestModule
+from ztoq.zephyr_client import ZephyrClient
 
 
 @pytest.mark.integration
@@ -45,7 +43,7 @@ class TestMigrationWorkflow(MockAPITestBase):
         """Set up mock Zephyr Scale data."""
         # Configure the project
         harness.add_response(
-            "GET", "/projects", {"values": [{"id": "1001", "key": "DEMO", "name": "Demo Project"}]}
+            "GET", "/projects", {"values": [{"id": "1001", "key": "DEMO", "name": "Demo Project"}]},
         )
 
         # Configure folders
@@ -256,7 +254,7 @@ class TestMigrationWorkflow(MockAPITestBase):
         assert len(zephyr_test_case_requests) == 4  # 1 for listing + 3 for individual lookups
 
         qtest_create_requests = qtest_harness.get_requests(
-            method="POST", path="/api/v3/projects/1/test-cases"
+            method="POST", path="/api/v3/projects/1/test-cases",
         )
         assert len(qtest_create_requests) == 3  # 3 test cases created
 
@@ -273,7 +271,7 @@ class TestMigrationWorkflow(MockAPITestBase):
 
         # Add an error for one specific test case
         qtest_harness.add_error_response(
-            "POST", "/api/v3/projects/1/test-cases", "Duplicate test case name", status_code=400
+            "POST", "/api/v3/projects/1/test-cases", "Duplicate test case name", status_code=400,
         )
 
         # Create a handler to return the error only for the second test case
@@ -283,10 +281,10 @@ class TestMigrationWorkflow(MockAPITestBase):
             if method == "POST" and path == "/api/v3/projects/1/test-cases":
                 # Check if this is the second test case create request
                 create_requests = qtest_harness.get_requests(
-                    method="POST", path="/api/v3/projects/1/test-cases"
+                    method="POST", path="/api/v3/projects/1/test-cases",
                 )
                 if len(create_requests) == 1 and "Login with invalid credentials" in json.dumps(
-                    data
+                    data,
                 ):
                     return {"error": "Duplicate test case name"}, 400
 
@@ -335,7 +333,7 @@ class TestMigrationWorkflow(MockAPITestBase):
 
         # Verify API calls
         qtest_create_requests = qtest_harness.get_requests(
-            method="POST", path="/api/v3/projects/1/test-cases"
+            method="POST", path="/api/v3/projects/1/test-cases",
         )
         assert len(qtest_create_requests) == 3  # 3 attempts (even though one failed)
 
@@ -392,7 +390,7 @@ class TestFolderStructureMigration:
 
         # Configure responses for creating modules
         for i, folder_name in enumerate(
-            ["System Tests", "Frontend", "Backend", "Login", "Registration"], start=1
+            ["System Tests", "Frontend", "Backend", "Login", "Registration"], start=1,
         ):
             qtest_harness.add_response(
                 "POST",
@@ -435,7 +433,7 @@ class TestFolderStructureMigration:
             for folder in zephyr_folders:
                 # Create module with parent if needed
                 module = QTestModule(
-                    name=folder.name, description=f"Migrated from Zephyr folder {folder.id}"
+                    name=folder.name, description=f"Migrated from Zephyr folder {folder.id}",
                 )
 
                 # Create in qTest
@@ -457,7 +455,7 @@ class TestFolderStructureMigration:
         assert len(zephyr_folder_requests) == 1
 
         qtest_module_requests = qtest_harness.get_requests(
-            method="POST", path="/api/v3/projects/1/modules"
+            method="POST", path="/api/v3/projects/1/modules",
         )
         assert len(qtest_module_requests) == 5  # 5 modules created
 
@@ -593,7 +591,7 @@ class TestMigrationWithCustomFields:
 
             # Get Zephyr test case
             zephyr_test_case_response = zephyr_client._make_request(
-                "GET", f"/testcases/{zephyr_key}"
+                "GET", f"/testcases/{zephyr_key}",
             )
 
             # Extract custom field values
@@ -608,7 +606,7 @@ class TestMigrationWithCustomFields:
             for field_name, field_value in custom_fields.items():
                 if field_name in qtest_custom_fields:
                     properties.append(
-                        {"field_id": qtest_custom_fields[field_name], "field_value": field_value}
+                        {"field_id": qtest_custom_fields[field_name], "field_value": field_value},
                     )
 
             # Create test case data
@@ -635,22 +633,22 @@ class TestMigrationWithCustomFields:
 
         # Verify API calls
         zephyr_custom_fields_request = zephyr_harness.get_requests(
-            method="GET", path="/customfields"
+            method="GET", path="/customfields",
         )
         assert len(zephyr_custom_fields_request) == 1
 
         qtest_custom_fields_request = qtest_harness.get_requests(
-            method="GET", path="/api/v3/projects/1/settings/test-cases/custom-fields"
+            method="GET", path="/api/v3/projects/1/settings/test-cases/custom-fields",
         )
         assert len(qtest_custom_fields_request) == 1
 
         zephyr_test_case_request = zephyr_harness.get_requests(
-            method="GET", path="/testcases/DEMO-T1"
+            method="GET", path="/testcases/DEMO-T1",
         )
         assert len(zephyr_test_case_request) == 1
 
         qtest_create_request = qtest_harness.get_requests(
-            method="POST", path="/api/v3/projects/1/test-cases"
+            method="POST", path="/api/v3/projects/1/test-cases",
         )
         assert len(qtest_create_request) == 1
 
@@ -661,7 +659,7 @@ class TestMigrationWithCustomFields:
 
         # Verify specific field values
         component_field = next(
-            (p for p in request_data["properties"] if p["field_id"] == 101), None
+            (p for p in request_data["properties"] if p["field_id"] == 101), None,
         )
         assert component_field is not None
         assert component_field["field_value"] == "UI"
@@ -671,7 +669,7 @@ class TestMigrationWithCustomFields:
         assert reviewer_field["field_value"] == "John Doe"
 
         automated_field = next(
-            (p for p in request_data["properties"] if p["field_id"] == 103), None
+            (p for p in request_data["properties"] if p["field_id"] == 103), None,
         )
         assert automated_field is not None
         assert automated_field["field_value"] is True

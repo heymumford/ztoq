@@ -10,10 +10,11 @@ Integration tests for custom field mapping during migration process.
 
 import unittest
 from unittest.mock import MagicMock, patch
-from ztoq.custom_field_mapping import CustomFieldMapper, get_default_field_mapper
+
+from ztoq.custom_field_mapping import get_default_field_mapper
 from ztoq.migration import ZephyrToQTestMigration
 from ztoq.models import CustomFieldType, ZephyrConfig
-from ztoq.qtest_models import QTestConfig, QTestCustomField
+from ztoq.qtest_models import QTestConfig
 
 
 class TestMigrationCustomFields(unittest.TestCase):
@@ -23,7 +24,7 @@ class TestMigrationCustomFields(unittest.TestCase):
         """Set up test fixtures."""
         # Mock configuration
         self.zephyr_config = ZephyrConfig(
-            base_url="https://zephyr.example.com", api_token="zephyr-token", project_key="TEST"
+            base_url="https://zephyr.example.com", api_token="zephyr-token", project_key="TEST",
         )
 
         self.qtest_config = QTestConfig(
@@ -140,7 +141,7 @@ class TestMigrationCustomFields(unittest.TestCase):
 
         # Check components field (hierarchical)
         components_field = next(
-            (f for f in mapped_fields if f.field_name.lower() == "components"), None
+            (f for f in mapped_fields if f.field_name.lower() == "components"), None,
         )
         self.assertIsNotNone(components_field)
         components_value = str(components_field.field_value)

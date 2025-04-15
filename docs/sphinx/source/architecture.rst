@@ -8,7 +8,7 @@ C4 Diagram
    :parser: myst_parser.sphinx_
 
 Components
----------
+----------
 
 ZTOQ is organized into several main components:
 
@@ -22,7 +22,7 @@ ZTOQ is organized into several main components:
 8. **Documentation**: Comprehensive documentation with Sphinx, ADRs, and C4 diagrams.
 
 Sequence Flow
-------------
+-------------
 
 .. code-block:: text
 
@@ -63,7 +63,7 @@ Sequence Flow
     └────────┘          └───────────┘          └───────────┘          └────────────┘
 
 Design Decisions
----------------
+----------------
 
 For detailed information about design decisions, please refer to the Architecture Decision Records (ADRs):
 
@@ -73,7 +73,7 @@ For detailed information about design decisions, please refer to the Architectur
    adrs/index
 
 Additional Architecture Documents
---------------------------------
+---------------------------------
 
 .. toctree::
    :maxdepth: 1

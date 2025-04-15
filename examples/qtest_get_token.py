@@ -11,17 +11,18 @@ This script demonstrates how to get a qTest access token using username and pass
 which can be used in other scripts that need to authenticate with the qTest API.
 """
 
-import os
-import sys
-import logging
 import argparse
 import json
+import logging
+import os
+import sys
+
 import requests
 
 # Set up logging
 logging.basicConfig(
     level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger("qtest_get_token")
 
@@ -38,7 +39,7 @@ def get_token(base_url, username, password):
         Dict with token information if successful, error message otherwise
     """
     # Validate base URL
-    if not base_url.startswith(('http://', 'https://')):
+    if not base_url.startswith(("http://", "https://")):
         return {"error": "base_url must start with http:// or https://"}
 
     # Prepare auth endpoint
@@ -46,18 +47,18 @@ def get_token(base_url, username, password):
 
     # Prepare headers
     import base64
-    client_name_encoded = base64.b64encode(b"ztoq-client:").decode('utf-8')
+    client_name_encoded = base64.b64encode(b"ztoq-client:").decode("utf-8")
     headers = {
         "Content-Type": "application/x-www-form-urlencoded",
         "Cache-Control": "no-cache",
-        "Authorization": f"Basic {client_name_encoded}"
+        "Authorization": f"Basic {client_name_encoded}",
     }
 
     # Prepare body
     data = {
         "grant_type": "password",
         "username": username,
-        "password": password
+        "password": password,
     }
 
     logger.info(f"Authenticating to {auth_endpoint}")
@@ -85,14 +86,14 @@ def get_token(base_url, username, password):
             "token": token,
             "token_type": token_type,
             "expires_in": expires_in,
-            "scope": scope
+            "scope": scope,
         }
 
     except requests.exceptions.RequestException as e:
-        error_msg = f"Failed to acquire token: {str(e)}"
+        error_msg = f"Failed to acquire token: {e!s}"
         logger.error(error_msg)
 
-        if hasattr(e, 'response') and e.response is not None:
+        if hasattr(e, "response") and e.response is not None:
             logger.error(f"Response status: {e.response.status_code}")
             try:
                 error_json = e.response.json()

@@ -10,7 +10,7 @@ import random
 import string
 import uuid
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Type, TypeVar, cast
+from typing import Any, TypeVar
 
 # Type variable for generic factory methods
 T = TypeVar("T")
@@ -80,7 +80,7 @@ class BaseFactory:
 
     @staticmethod
     def random_date(
-        start_date: Optional[datetime] = None, end_date: Optional[datetime] = None
+        start_date: datetime | None = None, end_date: datetime | None = None,
     ) -> datetime:
         """
         Generate a random date within the specified range.
@@ -102,7 +102,7 @@ class BaseFactory:
         return start_date + timedelta(days=random_days)
 
     @staticmethod
-    def random_choice(choices: List[Any]) -> Any:
+    def random_choice(choices: list[Any]) -> Any:
         """
         Select a random item from a list of choices.
 
@@ -116,8 +116,8 @@ class BaseFactory:
 
     @staticmethod
     def random_subset(
-        items: List[Any], min_size: int = 1, max_size: Optional[int] = None
-    ) -> List[Any]:
+        items: list[Any], min_size: int = 1, max_size: int | None = None,
+    ) -> list[Any]:
         """
         Select a random subset of items from a list.
 
@@ -161,7 +161,7 @@ class BaseFactory:
         raise NotImplementedError("Subclasses must implement create()")
 
     @classmethod
-    def create_batch(cls, size: int, **kwargs: Any) -> List[Any]:
+    def create_batch(cls, size: int, **kwargs: Any) -> list[Any]:
         """
         Create multiple instances of the factory's data type.
 
@@ -184,10 +184,10 @@ class DictFactory(BaseFactory):
     """
 
     # Default dictionary fields and their generation functions
-    DEFAULTS: Dict[str, callable] = {}
+    DEFAULTS: dict[str, callable] = {}
 
     @classmethod
-    def create(cls, **kwargs: Any) -> Dict[str, Any]:
+    def create(cls, **kwargs: Any) -> dict[str, Any]:
         """
         Create a dictionary with random test data.
 
@@ -220,10 +220,10 @@ class ModelFactory(BaseFactory):
     """
 
     # Model class to create instances of
-    MODEL_CLASS: Optional[Type[Any]] = None
+    MODEL_CLASS: type[Any] | None = None
 
     # Default model fields and their generation functions
-    DEFAULTS: Dict[str, callable] = {}
+    DEFAULTS: dict[str, callable] = {}
 
     @classmethod
     def create(cls, **kwargs: Any) -> Any:
@@ -280,7 +280,7 @@ class SQLAlchemyModelFactory(ModelFactory):
         return instance
 
     @classmethod
-    def create_batch_and_persist(cls, session: Any, size: int, **kwargs: Any) -> List[Any]:
+    def create_batch_and_persist(cls, session: Any, size: int, **kwargs: Any) -> list[Any]:
         """
         Create multiple model instances and persist them to the database.
 

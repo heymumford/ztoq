@@ -28,18 +28,18 @@ Environment variables:
   qtest_password - Password for username/password auth
 """
 
+import argparse
+import logging
 import os
 import sys
-import logging
-import argparse
-from pprint import pprint
+
 from ztoq.qtest_client import QTestClient
 from ztoq.qtest_models import QTestConfig
 
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger("qtest_project_list")
 
@@ -64,10 +64,10 @@ def list_projects(client):
 
         # Display projects
         print(f"\n{'ID':<10}{'Name':<40}{'Status':<15}")
-        print('-' * 65)
+        print("-" * 65)
 
         for project in projects:
-            status = project.status_name or 'Unknown'
+            status = project.status_name or "Unknown"
             print(f"{project.id:<10}{project.name:<40}{status:<15}")
 
         logger.info(f"Found {len(projects)} projects")
@@ -100,7 +100,7 @@ def get_client_health(client):
         print(f"  Healthy: {health['healthy']}")
         print(f"  Latency: {health['latency_ms']}ms")
 
-        if "error" in health and health["error"]:
+        if health.get("error"):
             print(f"  Error: {health['error']}")
 
         # Display token info if available
@@ -157,7 +157,7 @@ def main():
         # Create config based on available credentials
         config_params = {
             "base_url": base_url,
-            "project_id": args.project_id
+            "project_id": args.project_id,
         }
 
         if token:

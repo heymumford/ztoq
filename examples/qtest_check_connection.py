@@ -4,18 +4,18 @@ This file is part of ZTOQ, licensed under the MIT License.
 See LICENSE file for details.
 """
 
+import argparse
+import logging
 import os
 import sys
-import logging
-import argparse
+
 import requests
-from pathlib import Path
 
 # Set up logging
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    handlers=[logging.StreamHandler()]
+    handlers=[logging.StreamHandler()],
 )
 logger = logging.getLogger("qtest_check_connection")
 
@@ -68,14 +68,14 @@ def check_domain_format(domain, token, no_verify_ssl=False):
 
     headers = {
         "Authorization": f"Bearer {token}",
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
     }
 
     # Try each domain format
     working_formats = []
 
     for i, fmt in enumerate(formats_to_try):
-        if not fmt.startswith(('http://', 'https://')):
+        if not fmt.startswith(("http://", "https://")):
             fmt = f"https://{fmt}"
 
         logger.info(f"Trying format {i+1}/{len(formats_to_try)}: {fmt}")
@@ -90,7 +90,7 @@ def check_domain_format(domain, token, no_verify_ssl=False):
                 url=url,
                 headers=headers,
                 timeout=10,
-                verify=verify_ssl
+                verify=verify_ssl,
             )
 
             # If success, add to working formats
@@ -125,7 +125,7 @@ def check_domain_format(domain, token, no_verify_ssl=False):
         except requests.exceptions.Timeout:
             logger.info(f"❌ Connection timed out for {fmt}")
         except Exception as e:
-            logger.info(f"❌ Error: {str(e)}")
+            logger.info(f"❌ Error: {e!s}")
 
     return working_formats
 
@@ -164,17 +164,16 @@ def main():
         if working_formats:
             recommended = working_formats[0]
             logger.info("\nRecommended configuration:")
-            logger.info(f"export qtest_base_url=\"{recommended}\"")
-            logger.info(f"export qtest_bearer_token=\"{qtest_token}\"")
+            logger.info(f'export qtest_base_url="{recommended}"')
+            logger.info(f'export qtest_bearer_token="{qtest_token}"')
 
         return 0
-    else:
-        logger.error("\n❌ No working domain formats found")
-        logger.error("Please verify:")
-        logger.error("1. The qTest domain is correct")
-        logger.error("2. The bearer token is valid and not expired")
-        logger.error("3. Your network allows connections to the qTest server")
-        return 1
+    logger.error("\n❌ No working domain formats found")
+    logger.error("Please verify:")
+    logger.error("1. The qTest domain is correct")
+    logger.error("2. The bearer token is valid and not expired")
+    logger.error("3. Your network allows connections to the qTest server")
+    return 1
 
 
 if __name__ == "__main__":

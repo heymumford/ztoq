@@ -14,7 +14,8 @@ Each factory can generate individual entities or collections of entities.
 import random
 import uuid
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
+
 from pydantic import BaseModel
 
 from ztoq.models import (
@@ -66,12 +67,12 @@ class MockFactory:
         return random.choice(list(enum_class))
 
     @staticmethod
-    def random_list_item(items: List[Any]) -> Any:
+    def random_list_item(items: list[Any]) -> Any:
         """Choose a random item from a list."""
         return random.choice(items)
 
     @staticmethod
-    def dict_to_model(model_class: Any, data: Dict[str, Any]) -> BaseModel:
+    def dict_to_model(model_class: Any, data: dict[str, Any]) -> BaseModel:
         """Convert a dictionary to a Pydantic model instance."""
         return model_class(**data)
 
@@ -87,13 +88,13 @@ class ProjectFactory(MockFactory):
             "key": kwargs.get("key", cls.random_string("PROJ-")),
             "name": kwargs.get("name", cls.random_string("Project-")),
             "description": kwargs.get(
-                "description", f"Description for {kwargs.get('name', 'Project')}"
+                "description", f"Description for {kwargs.get('name', 'Project')}",
             ),
         }
         return Project(**project_data)
 
     @classmethod
-    def create_batch(cls, count: int = 5, **kwargs) -> List[Project]:
+    def create_batch(cls, count: int = 5, **kwargs) -> list[Project]:
         """Create multiple Zephyr Projects."""
         return [cls.create(**kwargs) for _ in range(count)]
 
@@ -114,7 +115,7 @@ class FolderFactory(MockFactory):
         return Folder(**folder_data)
 
     @classmethod
-    def create_batch(cls, count: int = 5, **kwargs) -> List[Folder]:
+    def create_batch(cls, count: int = 5, **kwargs) -> list[Folder]:
         """Create multiple Zephyr Folders."""
         return [cls.create(**kwargs) for _ in range(count)]
 
@@ -129,7 +130,7 @@ class PriorityFactory(MockFactory):
             "id": kwargs.get("id", cls.random_id()),
             "name": kwargs.get("name", random.choice(["High", "Medium", "Low"])),
             "description": kwargs.get(
-                "description", f"Description for {kwargs.get('name', 'Priority')}"
+                "description", f"Description for {kwargs.get('name', 'Priority')}",
             ),
             "color": kwargs.get("color", random.choice(["#ff0000", "#00ff00", "#0000ff"])),
             "rank": kwargs.get("rank", random.randint(1, 5)),
@@ -137,7 +138,7 @@ class PriorityFactory(MockFactory):
         return Priority(**priority_data)
 
     @classmethod
-    def create_batch(cls, count: int = 3, **kwargs) -> List[Priority]:
+    def create_batch(cls, count: int = 3, **kwargs) -> list[Priority]:
         """Create multiple Zephyr Priorities."""
         return [cls.create(**kwargs) for _ in range(count)]
 
@@ -152,17 +153,17 @@ class StatusFactory(MockFactory):
             "id": kwargs.get("id", cls.random_id()),
             "name": kwargs.get("name", random.choice(["Active", "Draft", "Deprecated"])),
             "description": kwargs.get(
-                "description", f"Description for {kwargs.get('name', 'Status')}"
+                "description", f"Description for {kwargs.get('name', 'Status')}",
             ),
             "color": kwargs.get("color", random.choice(["#ffff00", "#00ffff", "#ff00ff"])),
             "type": kwargs.get(
-                "type", random.choice(["TEST_CASE", "TEST_CYCLE", "TEST_EXECUTION"])
+                "type", random.choice(["TEST_CASE", "TEST_CYCLE", "TEST_EXECUTION"]),
             ),
         }
         return Status(**status_data)
 
     @classmethod
-    def create_batch(cls, count: int = 3, **kwargs) -> List[Status]:
+    def create_batch(cls, count: int = 3, **kwargs) -> list[Status]:
         """Create multiple Zephyr Statuses."""
         return [cls.create(**kwargs) for _ in range(count)]
 
@@ -177,13 +178,13 @@ class EnvironmentFactory(MockFactory):
             "id": kwargs.get("id", cls.random_id()),
             "name": kwargs.get("name", cls.random_string("Environment-")),
             "description": kwargs.get(
-                "description", f"Description for {kwargs.get('name', 'Environment')}"
+                "description", f"Description for {kwargs.get('name', 'Environment')}",
             ),
         }
         return Environment(**environment_data)
 
     @classmethod
-    def create_batch(cls, count: int = 3, **kwargs) -> List[Environment]:
+    def create_batch(cls, count: int = 3, **kwargs) -> list[Environment]:
         """Create multiple Zephyr Environments."""
         return [cls.create(**kwargs) for _ in range(count)]
 
@@ -199,25 +200,24 @@ class CustomFieldFactory(MockFactory):
         # Generate appropriate value based on type
         if "value" in kwargs:
             field_value = kwargs["value"]
+        elif field_type == CustomFieldType.TEXT:
+            field_value = cls.random_string("Text-")
+        elif field_type == CustomFieldType.PARAGRAPH:
+            field_value = cls.random_string("Paragraph-") * 3
+        elif field_type == CustomFieldType.CHECKBOX:
+            field_value = cls.random_bool()
+        elif field_type == CustomFieldType.NUMERIC:
+            field_value = random.randint(1, 100)
+        elif field_type == CustomFieldType.DATE:
+            field_value = cls.random_date().strftime("%Y-%m-%d")
+        elif field_type == CustomFieldType.DATETIME:
+            field_value = cls.random_date().isoformat()
+        elif field_type in [CustomFieldType.RADIO, CustomFieldType.DROPDOWN]:
+            field_value = cls.random_string("Option-")
+        elif field_type == CustomFieldType.MULTIPLE_SELECT:
+            field_value = [cls.random_string("Option-") for _ in range(random.randint(1, 3))]
         else:
-            if field_type == CustomFieldType.TEXT:
-                field_value = cls.random_string("Text-")
-            elif field_type == CustomFieldType.PARAGRAPH:
-                field_value = cls.random_string("Paragraph-") * 3
-            elif field_type == CustomFieldType.CHECKBOX:
-                field_value = cls.random_bool()
-            elif field_type == CustomFieldType.NUMERIC:
-                field_value = random.randint(1, 100)
-            elif field_type == CustomFieldType.DATE:
-                field_value = cls.random_date().strftime("%Y-%m-%d")
-            elif field_type == CustomFieldType.DATETIME:
-                field_value = cls.random_date().isoformat()
-            elif field_type in [CustomFieldType.RADIO, CustomFieldType.DROPDOWN]:
-                field_value = cls.random_string("Option-")
-            elif field_type == CustomFieldType.MULTIPLE_SELECT:
-                field_value = [cls.random_string("Option-") for _ in range(random.randint(1, 3))]
-            else:
-                field_value = cls.random_string("Value-")
+            field_value = cls.random_string("Value-")
 
         field_data = {
             "id": kwargs.get("id", cls.random_id()),
@@ -229,7 +229,7 @@ class CustomFieldFactory(MockFactory):
         return CustomField(**field_data)
 
     @classmethod
-    def create_batch(cls, count: int = 3, **kwargs) -> List[CustomField]:
+    def create_batch(cls, count: int = 3, **kwargs) -> list[CustomField]:
         """Create multiple Zephyr CustomFields."""
         return [cls.create(**kwargs) for _ in range(count)]
 
@@ -245,14 +245,14 @@ class LinkFactory(MockFactory):
             "name": kwargs.get("name", cls.random_string("Link-")),
             "url": kwargs.get("url", f"https://example.com/{cls.random_string()}"),
             "description": kwargs.get(
-                "description", f"Description for {kwargs.get('name', 'Link')}"
+                "description", f"Description for {kwargs.get('name', 'Link')}",
             ),
             "type": kwargs.get("type", random.choice(["issue", "web", "testCycle"])),
         }
         return Link(**link_data)
 
     @classmethod
-    def create_batch(cls, count: int = 3, **kwargs) -> List[Link]:
+    def create_batch(cls, count: int = 3, **kwargs) -> list[Link]:
         """Create multiple Zephyr Links."""
         return [cls.create(**kwargs) for _ in range(count)]
 
@@ -266,7 +266,7 @@ class AttachmentFactory(MockFactory):
         content_type = kwargs.get(
             "content_type",
             random.choice(
-                ["image/png", "image/jpeg", "application/pdf", "text/plain", "application/json"]
+                ["image/png", "image/jpeg", "application/pdf", "text/plain", "application/json"],
             ),
         )
 
@@ -286,7 +286,7 @@ class AttachmentFactory(MockFactory):
         return Attachment(**attachment_data)
 
     @classmethod
-    def create_batch(cls, count: int = 3, **kwargs) -> List[Attachment]:
+    def create_batch(cls, count: int = 3, **kwargs) -> list[Attachment]:
         """Create multiple Zephyr Attachments."""
         return [cls.create(**kwargs) for _ in range(count)]
 
@@ -301,10 +301,10 @@ class CaseStepFactory(MockFactory):
             "id": kwargs.get("id", cls.random_id()),
             "index": kwargs.get("index", random.randint(1, 10)),
             "description": kwargs.get(
-                "description", f"Step {kwargs.get('index', 1)}: {cls.random_string()}"
+                "description", f"Step {kwargs.get('index', 1)}: {cls.random_string()}",
             ),
             "expected_result": kwargs.get(
-                "expected_result", f"Expected result for step {kwargs.get('index', 1)}"
+                "expected_result", f"Expected result for step {kwargs.get('index', 1)}",
             ),
             "data": kwargs.get("data"),
             "actual_result": kwargs.get("actual_result"),
@@ -314,7 +314,7 @@ class CaseStepFactory(MockFactory):
         return CaseStep(**step_data)
 
     @classmethod
-    def create_batch(cls, count: int = 3, **kwargs) -> List[CaseStep]:
+    def create_batch(cls, count: int = 3, **kwargs) -> list[CaseStep]:
         """Create multiple Zephyr CaseSteps with sequential indexes."""
         return [cls.create(index=i + 1, **kwargs) for i in range(count)]
 
@@ -363,10 +363,10 @@ class CaseFactory(MockFactory):
             "updated_by": kwargs.get("updated_by", cls.random_id()),
             "version": kwargs.get("version", "1.0"),
             "estimated_time": kwargs.get(
-                "estimated_time", random.randint(15, 240) * 60
+                "estimated_time", random.randint(15, 240) * 60,
             ),  # 15-240 minutes in seconds
             "labels": kwargs.get(
-                "labels", [cls.random_string("Label-") for _ in range(random.randint(0, 3))]
+                "labels", [cls.random_string("Label-") for _ in range(random.randint(0, 3))],
             ),
             "steps": steps,
             "custom_fields": kwargs.get("custom_fields", []),
@@ -378,7 +378,7 @@ class CaseFactory(MockFactory):
         return Case(**case_data)
 
     @classmethod
-    def create_batch(cls, count: int = 5, **kwargs) -> List[Case]:
+    def create_batch(cls, count: int = 5, **kwargs) -> list[Case]:
         """Create multiple Zephyr Cases."""
         return [cls.create(**kwargs) for _ in range(count)]
 
@@ -393,6 +393,7 @@ class CaseFactory(MockFactory):
 
         Returns:
             Case: Created model instance with steps
+
         """
         # Create the steps
         steps = CaseStepFactory.create_batch(step_count)
@@ -438,7 +439,7 @@ class CycleInfoFactory(MockFactory):
         return CycleInfo(**cycle_data)
 
     @classmethod
-    def create_batch(cls, count: int = 3, **kwargs) -> List[CycleInfo]:
+    def create_batch(cls, count: int = 3, **kwargs) -> list[CycleInfo]:
         """Create multiple Zephyr CycleInfos."""
         return [cls.create(**kwargs) for _ in range(count)]
 
@@ -475,7 +476,7 @@ class PlanFactory(MockFactory):
         return Plan(**plan_data)
 
     @classmethod
-    def create_batch(cls, count: int = 3, **kwargs) -> List[Plan]:
+    def create_batch(cls, count: int = 3, **kwargs) -> list[Plan]:
         """Create multiple Zephyr Plans."""
         return [cls.create(**kwargs) for _ in range(count)]
 
@@ -517,7 +518,7 @@ class ExecutionFactory(MockFactory):
             "cycle_id": kwargs.get("cycle_id", cls.random_id()),
             "cycle_name": kwargs.get("cycle_name", cls.random_string("Cycle-")),
             "status": kwargs.get(
-                "status", random.choice(["Passed", "Failed", "Blocked", "Not Run"])
+                "status", random.choice(["Passed", "Failed", "Blocked", "Not Run"]),
             ),
             "status_name": kwargs.get("status_name"),
             "environment": kwargs.get("environment", cls.random_id()),
@@ -530,7 +531,7 @@ class ExecutionFactory(MockFactory):
             "updated_on": kwargs.get("updated_on", cls.random_date()),
             "updated_by": kwargs.get("updated_by", cls.random_id()),
             "actual_time": kwargs.get(
-                "actual_time", random.randint(300, 7200)
+                "actual_time", random.randint(300, 7200),
             ),  # 5-120 minutes in seconds
             "comment": kwargs.get("comment", f"Execution comments for {test_case_key}"),
             "steps": steps,
@@ -541,7 +542,7 @@ class ExecutionFactory(MockFactory):
         return Execution(**execution_data)
 
     @classmethod
-    def create_batch(cls, count: int = 3, **kwargs) -> List[Execution]:
+    def create_batch(cls, count: int = 3, **kwargs) -> list[Execution]:
         """Create multiple Zephyr Executions."""
         return [cls.create(**kwargs) for _ in range(count)]
 

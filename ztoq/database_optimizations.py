@@ -13,12 +13,13 @@ when working with large datasets and high-concurrency operations.
 
 import functools
 import logging
-import time
 import threading
+import time
 from collections import defaultdict
+from collections.abc import Callable, Iterable
 from contextlib import contextmanager
 from datetime import datetime, timedelta
-from typing import Any, Callable, Dict, Generic, Iterable, List, Optional, Tuple, TypeVar, Union
+from typing import Any, Generic, TypeVar
 
 from sqlalchemy import Column, text
 from sqlalchemy.exc import SQLAlchemyError
@@ -48,12 +49,13 @@ class QueryCache(Generic[K, V]):
 
         Args:
             ttl_seconds: Time-to-live in seconds for cache entries
+
         """
-        self._cache: Dict[K, Tuple[V, datetime]] = {}
+        self._cache: dict[K, tuple[V, datetime]] = {}
         self._ttl_seconds = ttl_seconds
         self._lock = threading.RLock()
 
-    def get(self, key: K) -> Optional[V]:
+    def get(self, key: K) -> V | None:
         """
         Get a value from the cache.
 
@@ -62,6 +64,7 @@ class QueryCache(Generic[K, V]):
 
         Returns:
             Cached value or None if not found or expired
+
         """
         with self._lock:
             if key not in self._cache:
@@ -81,6 +84,7 @@ class QueryCache(Generic[K, V]):
         Args:
             key: Cache key
             value: Value to cache
+
         """
         with self._lock:
             self._cache[key] = (value, datetime.now())
@@ -91,6 +95,7 @@ class QueryCache(Generic[K, V]):
 
         Args:
             key: Cache key to invalidate
+
         """
         with self._lock:
             if key in self._cache:
@@ -102,6 +107,7 @@ class QueryCache(Generic[K, V]):
 
         Args:
             pattern: Pattern to match against cache keys
+
         """
         with self._lock:
             keys_to_remove = []
@@ -144,6 +150,7 @@ def cached_query(ttl_seconds: int = 300) -> Callable:
 
     Returns:
         Decorator function
+
     """
 
     def decorator(func: Callable) -> Callable:
@@ -173,7 +180,7 @@ def cached_query(ttl_seconds: int = 300) -> Callable:
     return decorator
 
 
-def bulk_insert(session: Session, model_class: Any, items: List[Dict[str, Any]]) -> None:
+def bulk_insert(session: Session, model_class: Any, items: list[dict[str, Any]]) -> None:
     """
     Perform a bulk insert operation.
 
@@ -184,6 +191,7 @@ def bulk_insert(session: Session, model_class: Any, items: List[Dict[str, Any]])
         session: SQLAlchemy session
         model_class: Model class to insert
         items: List of dictionaries with item data
+
     """
     if not items:
         return
@@ -199,7 +207,7 @@ def bulk_insert(session: Session, model_class: Any, items: List[Dict[str, Any]])
 
 
 def bulk_update(
-    session: Session, model_class: Any, items: List[Dict[str, Any]], primary_key: str
+    session: Session, model_class: Any, items: list[dict[str, Any]], primary_key: str,
 ) -> None:
     """
     Perform a bulk update operation.
@@ -209,6 +217,7 @@ def bulk_update(
         model_class: Model class to update
         items: List of dictionaries with item data
         primary_key: Primary key column name
+
     """
     if not items:
         return
@@ -223,7 +232,7 @@ def bulk_update(
         raise
 
 
-def batch_process(items: List[T], batch_size: int, processor: Callable[[List[T]], None]) -> None:
+def batch_process(items: list[T], batch_size: int, processor: Callable[[list[T]], None]) -> None:
     """
     Process items in batches.
 
@@ -231,6 +240,7 @@ def batch_process(items: List[T], batch_size: int, processor: Callable[[List[T]]
         items: Items to process
         batch_size: Size of each batch
         processor: Function to process each batch
+
     """
     for i in range(0, len(items), batch_size):
         batch = items[i : i + batch_size]
@@ -252,6 +262,7 @@ def optimized_query(session: Session, model_class: Any) -> Query:
 
     Returns:
         Optimized SQLAlchemy query object
+
     """
     return session.query(model_class)
 
@@ -266,6 +277,7 @@ def chunked_fetch(query: Query, chunk_size: int = 1000) -> Iterable[Any]:
 
     Yields:
         Records from the query, one at a time
+
     """
     offset = 0
     while True:
@@ -282,9 +294,9 @@ def keyset_pagination(
     model_class: Any,
     key_column: Column,
     page_size: int = 100,
-    last_key: Optional[Any] = None,
-    filter_criteria: Optional[Any] = None,
-) -> List[Any]:
+    last_key: Any | None = None,
+    filter_criteria: Any | None = None,
+) -> list[Any]:
     """
     Implement keyset pagination for efficient paging through large datasets.
 
@@ -301,6 +313,7 @@ def keyset_pagination(
 
     Returns:
         List of records for the current page
+
     """
     query = session.query(model_class)
 
@@ -316,8 +329,8 @@ def keyset_pagination(
 
 
 def execute_with_timing(
-    session: Session, query: Union[str, Select], params: Optional[Dict[str, Any]] = None
-) -> Tuple[Any, float]:
+    session: Session, query: str | Select, params: dict[str, Any] | None = None,
+) -> tuple[Any, float]:
     """
     Execute a query and measure execution time.
 
@@ -328,6 +341,7 @@ def execute_with_timing(
 
     Returns:
         Tuple of (query result, execution time in seconds)
+
     """
     start_time = time.time()
 
@@ -346,8 +360,8 @@ def execute_with_timing(
 
 
 def analyze_query_performance(
-    session: Session, query: str, params: Optional[Dict[str, Any]] = None
-) -> Dict[str, Any]:
+    session: Session, query: str, params: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     """
     Analyze query performance using EXPLAIN.
 
@@ -358,6 +372,7 @@ def analyze_query_performance(
 
     Returns:
         Dictionary with performance analysis data
+
     """
     try:
         # Execute the query with EXPLAIN
@@ -376,7 +391,7 @@ def analyze_query_performance(
         return {"error": str(e), "execution_time": -1}
 
 
-def get_table_statistics(session: Session, table_name: str) -> Dict[str, Any]:
+def get_table_statistics(session: Session, table_name: str) -> dict[str, Any]:
     """
     Get statistics for a database table.
 
@@ -386,6 +401,7 @@ def get_table_statistics(session: Session, table_name: str) -> Dict[str, Any]:
 
     Returns:
         Dictionary with table statistics
+
     """
     try:
         # Get row count
@@ -416,6 +432,7 @@ def transaction_scope(session: Session, nested: bool = False):
     Args:
         session: SQLAlchemy session
         nested: Whether to use a nested transaction
+
     """
     if nested:
         transaction = session.begin_nested()
@@ -440,6 +457,7 @@ def with_retry(retries: int = 3, retry_delay: float = 0.1):
 
     Returns:
         Decorator function
+
     """
 
     def decorator(func: Callable) -> Callable:
@@ -454,7 +472,7 @@ def with_retry(retries: int = 3, retry_delay: float = 0.1):
                     last_error = e
                     if attempt < retries:
                         logger.warning(
-                            f"Retrying operation after error: {e} (attempt {attempt + 1}/{retries})"
+                            f"Retrying operation after error: {e} (attempt {attempt + 1}/{retries})",
                         )
                         time.sleep(retry_delay * (2**attempt))  # Exponential backoff
                     else:
@@ -480,7 +498,7 @@ class DatabaseStats:
                 "min_time": float("inf"),
                 "max_time": 0,
                 "errors": 0,
-            }
+            },
         )
         self._lock = threading.RLock()
 
@@ -492,6 +510,7 @@ class DatabaseStats:
             operation: Name of the operation
             execution_time: Execution time in seconds
             success: Whether the operation was successful
+
         """
         with self._lock:
             stats = self._stats[operation]
@@ -503,12 +522,13 @@ class DatabaseStats:
             if not success:
                 stats["errors"] += 1
 
-    def get_stats(self) -> Dict[str, Dict[str, Any]]:
+    def get_stats(self) -> dict[str, dict[str, Any]]:
         """
         Get current statistics.
 
         Returns:
             Dictionary with operation statistics
+
         """
         with self._lock:
             result = {}
@@ -544,6 +564,7 @@ def tracked_execution(operation: str) -> Callable:
 
     Returns:
         Decorator function
+
     """
 
     def decorator(func: Callable) -> Callable:

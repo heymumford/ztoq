@@ -21,7 +21,11 @@ SPHINX_CONF_PATH = ROOT_DIR / "docs" / "sphinx" / "source" / "conf.py"
 # Additional version files to check - add more as discovered
 ADDITIONAL_VERSION_PATHS = [
     # CLI file with version reference
-    {"path": ROOT_DIR / "ztoq" / "cli.py", "pattern": r'__version__\s*=\s*["\']([^"\']+)["\']', "replacement": r'__version__ = "{version}"'},
+    {
+        "path": ROOT_DIR / "ztoq" / "cli.py",
+        "pattern": r'__version__\s*=\s*["\']([^"\']+)["\']',
+        "replacement": r'__version__ = "{version}"',
+    },
 ]
 
 
@@ -41,7 +45,7 @@ def get_version_from_pyproject() -> str | None:
             return version_match.group(1)
         print(f"Warning: Version pattern not found in {PYPROJECT_PATH}")
     except Exception as e:
-        print(f"Error reading {PYPROJECT_PATH}: {str(e)}")
+        print(f"Error reading {PYPROJECT_PATH}: {e!s}")
     return None
 
 
@@ -61,7 +65,7 @@ def get_version_from_init() -> str | None:
             return version_match.group(1)
         print(f"Warning: Version pattern not found in {VERSION_PATH}")
     except Exception as e:
-        print(f"Error reading {VERSION_PATH}: {str(e)}")
+        print(f"Error reading {VERSION_PATH}: {e!s}")
     return None
 
 
@@ -81,7 +85,7 @@ def get_version_from_sphinx() -> str | None:
             return version_match.group(1)
         print(f"Warning: Version pattern not found in {SPHINX_CONF_PATH}")
     except Exception as e:
-        print(f"Error reading {SPHINX_CONF_PATH}: {str(e)}")
+        print(f"Error reading {SPHINX_CONF_PATH}: {e!s}")
     return None
 
 
@@ -140,7 +144,7 @@ def get_version_from_file(file_info: dict) -> str | None:
             return None
         print(f"Warning: Version pattern not found in {path}")
     except Exception as e:
-        print(f"Error reading {path}: {str(e)}")
+        print(f"Error reading {path}: {e!s}")
     return None
 
 
@@ -180,7 +184,7 @@ def find_potential_version_files() -> list:
                                 "path": location,
                                 "pattern": pattern,
                                 "replacement": pattern.replace(r'([^"\']+)', r"{version}"),
-                            }
+                            },
                         )
                 except Exception:
                     pass
@@ -197,7 +201,7 @@ def find_potential_version_files() -> list:
                                     "path": py_file,
                                     "pattern": pattern,
                                     "replacement": pattern.replace(r'([^"\']+)', r"{version}"),
-                                }
+                                },
                             )
                             break  # Only add the file once with the first matching pattern
                     except Exception:
@@ -226,11 +230,10 @@ def update_version_in_file(file_path: Path, pattern: str, replacement: str, vers
                 f.write(new_content)
             print(f"Updated version in {file_path} to {version}")
             return True
-        else:
-            print(f"Version in {file_path} already set to {version}")
-            return True
+        print(f"Version in {file_path} already set to {version}")
+        return True
     except Exception as e:
-        print(f"Error updating {file_path}: {str(e)}")
+        print(f"Error updating {file_path}: {e!s}")
         return False
 
 
@@ -286,7 +289,7 @@ def synchronize_versions(scan_for_version_files: bool = False, verbose: bool = F
         # Filter out files we already know about
         known_paths = set(
             [str(VERSION_PATH), str(PYPROJECT_PATH), str(SPHINX_CONF_PATH)]
-            + [str(file_info["path"]) for file_info in ADDITIONAL_VERSION_PATHS]
+            + [str(file_info["path"]) for file_info in ADDITIONAL_VERSION_PATHS],
         )
         new_files = [f for f in potential_files if str(f["path"]) not in known_paths]
 
@@ -346,7 +349,7 @@ def synchronize_versions(scan_for_version_files: bool = False, verbose: bool = F
             file_version = get_version_from_file(file_info)
             if file_version != canonical_version:
                 success = success and update_version_in_file(
-                    path, pattern, replacement, canonical_version
+                    path, pattern, replacement, canonical_version,
                 )
 
     return success
@@ -392,7 +395,7 @@ def print_versions(scan_for_version_files: bool = False, verbose: bool = False) 
         # Filter out files we already know about
         known_paths = set(
             [str(VERSION_PATH), str(PYPROJECT_PATH), str(SPHINX_CONF_PATH)]
-            + [str(file_info["path"]) for file_info in ADDITIONAL_VERSION_PATHS]
+            + [str(file_info["path"]) for file_info in ADDITIONAL_VERSION_PATHS],
         )
         new_files = [f for f in potential_files if str(f["path"]) not in known_paths]
 
@@ -404,7 +407,7 @@ def print_versions(scan_for_version_files: bool = False, verbose: bool = False) 
                 versions[path.name] = file_version
                 # Only show path relative to project root
                 rel_path = path.relative_to(ROOT_DIR)
-                print(f"  {str(rel_path):<30} {file_version or 'Not found'}")
+                print(f"  {rel_path!s:<30} {file_version or 'Not found'}")
         elif verbose:
             print("  No additional version files found")
 
@@ -454,7 +457,7 @@ def bump_version(current_version: str, bump_type: str = "patch") -> str:
 
         return new_version
     except Exception as e:
-        print(f"Error bumping version: {str(e)}")
+        print(f"Error bumping version: {e!s}")
         return current_version
 
 
@@ -472,11 +475,11 @@ def main() -> int:
             help="Only check version consistency without making changes",
         )
         parser.add_argument(
-            "--scan", action="store_true", help="Scan the project for additional version files"
+            "--scan", action="store_true", help="Scan the project for additional version files",
         )
         parser.add_argument("--verbose", action="store_true", help="Show more detailed output")
         parser.add_argument(
-            "--update", type=str, metavar="VERSION", help="Update to a specific version"
+            "--update", type=str, metavar="VERSION", help="Update to a specific version",
         )
         parser.add_argument(
             "--bump",
@@ -531,17 +534,16 @@ def main() -> int:
             if scan_mode:
                 print("\nSynchronizing additional files...")
                 success = success and synchronize_versions(
-                    scan_for_version_files=True, verbose=verbose_mode
+                    scan_for_version_files=True, verbose=verbose_mode,
                 )
 
             if success:
                 print(f"\nSuccessfully bumped version to {new_version}")
                 print_versions(scan_for_version_files=scan_mode, verbose=verbose_mode)
                 return 0
-            else:
-                print("\nVersion bump failed")
-                return 1
-        elif args.check:
+            print("\nVersion bump failed")
+            return 1
+        if args.check:
             # Print versions and check consistency
             versions = print_versions(scan_for_version_files=scan_mode, verbose=verbose_mode)
 
@@ -555,13 +557,10 @@ def main() -> int:
             if len(unique_versions) == 1:
                 print(f"\nAll versions are consistent! ({next(iter(unique_versions))})")
                 return 0
-            else:
-                print("\nWarning: Versions are inconsistent across files")
-                print(
-                    f"Found {len(unique_versions)} different versions: {', '.join(unique_versions)}"
-                )
-                return 1
-        elif args.update:
+            print("\nWarning: Versions are inconsistent across files")
+            print(f"Found {len(unique_versions)} different versions: {', '.join(unique_versions)}")
+            return 1
+        if args.update:
             # Update to a specific version
             print(f"Updating to version {args.update}")
 
@@ -600,29 +599,26 @@ def main() -> int:
                 print("\nSynchronizing additional files...")
                 # Additional synchronization is handled by the synchronize_versions function
                 success = success and synchronize_versions(
-                    scan_for_version_files=True, verbose=verbose_mode
+                    scan_for_version_files=True, verbose=verbose_mode,
                 )
 
             if success:
                 print("\nVersion update completed successfully")
                 print_versions(scan_for_version_files=scan_mode, verbose=verbose_mode)
                 return 0
-            else:
-                print("\nVersion update failed")
-                return 1
-        else:
-            # Default behavior: synchronize versions
+            print("\nVersion update failed")
+            return 1
+        # Default behavior: synchronize versions
+        print_versions(scan_for_version_files=scan_mode, verbose=verbose_mode)
+        print("\nSynchronizing versions...")
+        if synchronize_versions(scan_for_version_files=scan_mode, verbose=verbose_mode):
+            print("\nVersion synchronization completed successfully")
             print_versions(scan_for_version_files=scan_mode, verbose=verbose_mode)
-            print("\nSynchronizing versions...")
-            if synchronize_versions(scan_for_version_files=scan_mode, verbose=verbose_mode):
-                print("\nVersion synchronization completed successfully")
-                print_versions(scan_for_version_files=scan_mode, verbose=verbose_mode)
-                return 0
-            else:
-                print("\nVersion synchronization failed")
-                return 1
+            return 0
+        print("\nVersion synchronization failed")
+        return 1
     except Exception as e:
-        print(f"Error: An unexpected error occurred: {str(e)}")
+        print(f"Error: An unexpected error occurred: {e!s}")
         return 1
 
 

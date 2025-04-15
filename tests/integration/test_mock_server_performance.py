@@ -4,20 +4,20 @@ This file is part of ZTOQ, licensed under the MIT License.
 See LICENSE file for details.
 """
 
-import time
-import statistics
 import concurrent.futures
+import statistics
+import time
+
 import pytest
-from typing import Dict, List, Optional, Any, Tuple
 
 from ztoq.qtest_mock_server import QTestMockServer
 from ztoq.zephyr_mock_server import ZephyrMockServer
 
 
-@pytest.mark.integration()
-@pytest.mark.slow()
+@pytest.mark.integration
+@pytest.mark.slow
 class TestMockServerPerformance:
-    @pytest.fixture()
+    @pytest.fixture
     def qtest_mock_server(self):
         """Create a test qTest mock server instance."""
         server = QTestMockServer()
@@ -26,7 +26,7 @@ class TestMockServerPerformance:
         server.error_rate = 0.0
         return server
 
-    @pytest.fixture()
+    @pytest.fixture
     def zephyr_mock_server(self):
         """Create a test Zephyr mock server instance."""
         server = ZephyrMockServer()
@@ -53,8 +53,8 @@ class TestMockServerPerformance:
         return end_time - start_time
 
     def run_concurrent_requests(
-        self, func, args_list: List[Tuple], concurrency: int = 10, timeout: int = 30
-    ) -> List[float]:
+        self, func, args_list: list[tuple], concurrency: int = 10, timeout: int = 30,
+    ) -> list[float]:
         """
         Run concurrent requests and measure performance.
 
@@ -84,7 +84,7 @@ class TestMockServerPerformance:
 
         return execution_times
 
-    def analyze_performance(self, execution_times: List[float]) -> Dict[str, float]:
+    def analyze_performance(self, execution_times: list[float]) -> dict[str, float]:
         """
         Analyze performance metrics from execution times.
 
@@ -124,24 +124,24 @@ class TestMockServerPerformance:
         """Test qTest mock server performance for single requests."""
         # Test project listing performance
         project_listing_time = self.measure_execution_time(
-            qtest_mock_server._handle_get_projects, {}
+            qtest_mock_server._handle_get_projects, {},
         )
 
         # Test test case listing performance
         project_id = qtest_mock_server.data["manager"]["projects"][0]["id"]
         test_case_listing_time = self.measure_execution_time(
-            qtest_mock_server._handle_get_test_cases, project_id, {}
+            qtest_mock_server._handle_get_test_cases, project_id, {},
         )
 
         # Test test cycle listing performance
         test_cycle_listing_time = self.measure_execution_time(
-            qtest_mock_server._handle_get_test_cycles, project_id, {}
+            qtest_mock_server._handle_get_test_cycles, project_id, {},
         )
 
         # Test single test case retrieval performance
         first_tc_id = next(iter(qtest_mock_server.data["manager"]["test_cases"]))
         test_case_retrieval_time = self.measure_execution_time(
-            qtest_mock_server._handle_get_test_case, first_tc_id
+            qtest_mock_server._handle_get_test_case, first_tc_id,
         )
 
         # Maximum acceptable times in seconds (benchmarks)
@@ -172,7 +172,7 @@ class TestMockServerPerformance:
         # Test project listing performance
         project_id = list(zephyr_mock_server.data["projects"].keys())[0]
         project_retrieval_time = self.measure_execution_time(
-            zephyr_mock_server._handle_projects, "GET", f"/projects/{project_id}", {}, {}
+            zephyr_mock_server._handle_projects, "GET", f"/projects/{project_id}", {}, {},
         )
 
         # Test test case listing performance
@@ -196,7 +196,7 @@ class TestMockServerPerformance:
         # Test single test case retrieval performance
         test_case_id = list(zephyr_mock_server.data["test_cases"].keys())[0]
         test_case_retrieval_time = self.measure_execution_time(
-            zephyr_mock_server._handle_test_cases, "GET", f"/testcases/{test_case_id}", {}, {}
+            zephyr_mock_server._handle_test_cases, "GET", f"/testcases/{test_case_id}", {}, {},
         )
 
         # Maximum acceptable times in seconds (benchmarks)
@@ -235,11 +235,11 @@ class TestMockServerPerformance:
 
         # Run concurrent requests and measure performance
         project_times = self.run_concurrent_requests(
-            qtest_mock_server._handle_get_projects, project_requests, concurrency=10
+            qtest_mock_server._handle_get_projects, project_requests, concurrency=10,
         )
 
         test_case_times = self.run_concurrent_requests(
-            qtest_mock_server._handle_get_test_cases, test_case_requests, concurrency=10
+            qtest_mock_server._handle_get_test_cases, test_case_requests, concurrency=10,
         )
 
         # Analyze performance metrics
@@ -284,11 +284,11 @@ class TestMockServerPerformance:
         test_cycle_args_list = [("GET", "/testcycles", req, {}) for req in project_requests]
 
         test_case_times = self.run_concurrent_requests(
-            zephyr_mock_server._handle_test_cases, test_case_args_list, concurrency=10
+            zephyr_mock_server._handle_test_cases, test_case_args_list, concurrency=10,
         )
 
         test_cycle_times = self.run_concurrent_requests(
-            zephyr_mock_server._handle_test_cycles, test_cycle_args_list, concurrency=10
+            zephyr_mock_server._handle_test_cycles, test_cycle_args_list, concurrency=10,
         )
 
         # Analyze performance metrics

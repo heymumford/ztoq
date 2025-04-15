@@ -91,16 +91,17 @@ class LogRedactor:
 
         Sets up regex patterns to detect and redact sensitive information like
         API keys, passwords, tokens, credit card numbers, and email addresses.
+
         """
         self.patterns: dict[str, Pattern] = {
             "api_key": re.compile(
-                r'(api[_-]?key|token)["\']?\s*[:=]\s*["\']?([^"\'&\s]{8,})', re.IGNORECASE
+                r'(api[_-]?key|token)["\']?\s*[:=]\s*["\']?([^"\'&\s]{8,})', re.IGNORECASE,
             ),
             "password": re.compile(
-                r'(password|passwd|secret)["\']?\s*[:=]\s*["\']?([^"\'&\s]+)', re.IGNORECASE
+                r'(password|passwd|secret)["\']?\s*[:=]\s*["\']?([^"\'&\s]+)', re.IGNORECASE,
             ),
             "bearer_token": re.compile(
-                r'(Authorization|Bearer)["\']?\s*[:=]\s*["\']?([^"\'&\s]{8,})', re.IGNORECASE
+                r'(Authorization|Bearer)["\']?\s*[:=]\s*["\']?([^"\'&\s]{8,})', re.IGNORECASE,
             ),
             "credit_card": re.compile(r"\b(?:\d{4}[- ]?){3}\d{4}\b"),
             "email": re.compile(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b"),
@@ -363,7 +364,9 @@ class JSONFormatter(logging.Formatter):
         return json.dumps(log_data)
 
     def format(self, record: logging.LogRecord) -> str:
-        """Forward logging format calls to format_record."""
+        """
+        Forward logging format calls to format_record.
+        """
         return self.format_record(record)
 
 
@@ -400,7 +403,9 @@ class RichContextFormatter(logging.Formatter):
         return message
 
     def format(self, record: logging.LogRecord) -> str:
-        """Forward logging format calls to format_record."""
+        """
+        Forward logging format calls to format_record.
+        """
         return self.format_record(record)
 
 
@@ -517,7 +522,7 @@ class ErrorTracker:
         self.logger = logger or logging.getLogger("ztoq.error_tracker")
 
     def add_error(
-        self, error: Exception, context: dict[str, Any] | None = None, log: bool = True
+        self, error: Exception, context: dict[str, Any] | None = None, log: bool = True,
     ) -> None:
         """
         Add an error to the tracker.
@@ -547,7 +552,7 @@ class ErrorTracker:
 
     @contextmanager
     def track_errors(
-        self, context: dict[str, Any] | None = None, log: bool = True
+        self, context: dict[str, Any] | None = None, log: bool = True,
     ) -> Iterator["ErrorTracker"]:
         """
         Context manager to track errors that occur during execution.

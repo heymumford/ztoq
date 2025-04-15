@@ -6,14 +6,15 @@ See LICENSE file for details.
 
 import unittest
 from pathlib import Path
-from unittest.mock import patch, MagicMock, PropertyMock
-from ztoq.database_factory import DatabaseFactory, DatabaseType, get_database_manager
-from ztoq.database_manager import DatabaseManager
-from ztoq.pg_database_manager import PostgreSQLDatabaseManager
-from ztoq.core.db_manager import SQLDatabaseManager
-from ztoq.optimized_database_manager import OptimizedDatabaseManager
+from unittest.mock import MagicMock, PropertyMock, patch
 
 import pytest
+
+from ztoq.core.db_manager import SQLDatabaseManager
+from ztoq.database_factory import DatabaseFactory, DatabaseType, get_database_manager
+from ztoq.database_manager import DatabaseManager
+from ztoq.optimized_database_manager import OptimizedDatabaseManager
+from ztoq.pg_database_manager import PostgreSQLDatabaseManager
 
 
 @pytest.mark.unit
@@ -34,7 +35,7 @@ class TestDatabaseFactory(unittest.TestCase):
             mock_parent.return_value = Path("/tmp")
 
             manager = DatabaseFactory.create_database_manager(
-                db_type=DatabaseType.SQLITE, db_path=db_path
+                db_type=DatabaseType.SQLITE, db_path=db_path,
             )
 
             self.assertIsInstance(manager, DatabaseManager)
@@ -73,7 +74,7 @@ class TestDatabaseFactory(unittest.TestCase):
         """Test creating a SQLAlchemy database manager."""
         # Test with SQLite configuration
         manager = DatabaseFactory.create_database_manager(
-            db_type=DatabaseType.SQLALCHEMY, db_path="/tmp/test.db"
+            db_type=DatabaseType.SQLALCHEMY, db_path="/tmp/test.db",
         )
 
         self.assertIsInstance(manager, SQLDatabaseManager)
@@ -158,7 +159,7 @@ class TestDatabaseFactory(unittest.TestCase):
         ):
             # Mock DatabaseFactory.create_database_manager to avoid filesystem issues
             with patch(
-                "ztoq.database_factory.DatabaseFactory.create_database_manager"
+                "ztoq.database_factory.DatabaseFactory.create_database_manager",
             ) as mock_factory:
                 # Create mock instances for our return values
                 mock_sqlite_manager = MagicMock(spec=DatabaseManager)
@@ -186,7 +187,7 @@ class TestDatabaseFactory(unittest.TestCase):
 
             # Call with direct parameters
             manager = get_database_manager(
-                db_type=DatabaseType.SQLITE, db_path="/tmp/direct_test.db"
+                db_type=DatabaseType.SQLITE, db_path="/tmp/direct_test.db",
             )
 
             # Verify results
@@ -210,7 +211,7 @@ class TestDatabaseFactory(unittest.TestCase):
             clear=True,
         ):
             with patch(
-                "ztoq.database_factory.DatabaseFactory.create_database_manager"
+                "ztoq.database_factory.DatabaseFactory.create_database_manager",
             ) as mock_factory:
                 # Create mock for PostgreSQL test
                 mock_pg_manager = MagicMock(spec=PostgreSQLDatabaseManager)
@@ -240,12 +241,12 @@ class TestDatabaseFactory(unittest.TestCase):
 
         # Case 1: Test OPTIMIZED database type
         with patch.object(
-            DatabaseFactory, "create_database_manager", return_value=mock_optimized_instance
+            DatabaseFactory, "create_database_manager", return_value=mock_optimized_instance,
         ) as mock_create:
             # Call the function (this isn't actually used since we're patching the method itself)
             # But we need to make a call to verify the patching works
             result = DatabaseFactory.create_database_manager(
-                db_type=DatabaseType.OPTIMIZED, db_path="/tmp/test_db.db"
+                db_type=DatabaseType.OPTIMIZED, db_path="/tmp/test_db.db",
             )
 
             # Verify results
@@ -254,11 +255,11 @@ class TestDatabaseFactory(unittest.TestCase):
 
         # Case 2: Test with optimize=True flag
         with patch.object(
-            DatabaseFactory, "create_database_manager", return_value=mock_optimized_instance
+            DatabaseFactory, "create_database_manager", return_value=mock_optimized_instance,
         ) as mock_create:
             # Call the function with optimize=True
             result = DatabaseFactory.create_database_manager(
-                db_type=DatabaseType.SQLITE, db_path="/tmp/test_db.db", optimize=True
+                db_type=DatabaseType.SQLITE, db_path="/tmp/test_db.db", optimize=True,
             )
 
             # Verify results

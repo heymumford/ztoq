@@ -9,7 +9,9 @@ Unit tests for the data_fetcher module.
 """
 
 from unittest.mock import MagicMock, patch
+
 import pytest
+
 from ztoq.data_fetcher import (
     FetchResult,
     create_authenticated_client,
@@ -38,7 +40,7 @@ from ztoq.models import (
 from ztoq.zephyr_client import ZephyrClient
 
 
-@pytest.fixture()
+@pytest.fixture
 def config():
     """Create a test Zephyr configuration."""
     return ZephyrConfig(
@@ -48,13 +50,13 @@ def config():
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def mock_client():
     """Create a mock Zephyr client."""
     return MagicMock(spec=ZephyrClient)
 
 
-@pytest.mark.unit()
+@pytest.mark.unit
 class TestDataFetcher:
     """Test data fetcher functions."""
 
@@ -144,7 +146,7 @@ class TestDataFetcher:
         """Test fetching all test executions."""
         # Create mock test executions
         test_executions = [
-            Execution(id="ex1", test_case_key="TEST-1", cycle_id="cy1", status="Pass")
+            Execution(id="ex1", test_case_key="TEST-1", cycle_id="cy1", status="Pass"),
         ]
         mock_client.get_test_executions.return_value = test_executions
 
@@ -238,25 +240,25 @@ class TestDataFetcher:
         """Test fetching all project data."""
         # Create mock results
         mock_fetch_cases.return_value = FetchResult(
-            entity_type="test_cases", project_key="TEST", items=[], count=0, success=True
+            entity_type="test_cases", project_key="TEST", items=[], count=0, success=True,
         )
         mock_fetch_cycles.return_value = FetchResult(
-            entity_type="test_cycles", project_key="TEST", items=[], count=0, success=True
+            entity_type="test_cycles", project_key="TEST", items=[], count=0, success=True,
         )
         mock_fetch_executions.return_value = FetchResult(
-            entity_type="test_executions", project_key="TEST", items=[], count=0, success=True
+            entity_type="test_executions", project_key="TEST", items=[], count=0, success=True,
         )
         mock_fetch_folders.return_value = FetchResult(
-            entity_type="folders", project_key="TEST", items=[], count=0, success=True
+            entity_type="folders", project_key="TEST", items=[], count=0, success=True,
         )
         mock_fetch_statuses.return_value = FetchResult(
-            entity_type="statuses", project_key="TEST", items=[], count=0, success=True
+            entity_type="statuses", project_key="TEST", items=[], count=0, success=True,
         )
         mock_fetch_priorities.return_value = FetchResult(
-            entity_type="priorities", project_key="TEST", items=[], count=0, success=True
+            entity_type="priorities", project_key="TEST", items=[], count=0, success=True,
         )
         mock_fetch_environments.return_value = FetchResult(
-            entity_type="environments", project_key="TEST", items=[], count=0, success=True
+            entity_type="environments", project_key="TEST", items=[], count=0, success=True,
         )
 
         # Create mock callback
@@ -281,7 +283,7 @@ class TestDataFetcher:
     @patch("ztoq.data_fetcher.fetch_projects")
     @patch("ztoq.data_fetcher.fetch_all_project_data")
     def test_fetch_all_projects_data(
-        self, mock_fetch_all_project_data, mock_fetch_projects, mock_client
+        self, mock_fetch_all_project_data, mock_fetch_projects, mock_client,
     ):
         """Test fetching data for all projects."""
         # Create mock projects
@@ -294,8 +296,8 @@ class TestDataFetcher:
         # Create mock project data results
         mock_fetch_all_project_data.return_value = {
             "test_cases": FetchResult(
-                entity_type="test_cases", project_key="PROJ1", items=[], count=0, success=True
-            )
+                entity_type="test_cases", project_key="PROJ1", items=[], count=0, success=True,
+            ),
         }
 
         # Call function with no project keys (should fetch all)

@@ -6,13 +6,15 @@ See LICENSE file for details.
 
 from pathlib import Path
 from unittest.mock import MagicMock, patch
+
 import pytest
+
 from ztoq.core.services import get_openapi_spec
 from ztoq.domain.models import OpenAPISpec
 from ztoq.openapi_parser import load_openapi_spec
 
 
-@pytest.mark.unit()
+@pytest.mark.unit
 class TestOpenAPILoader:
     def test_load_openapi_spec_missing_file(self):
         """Test that loading a missing file raises FileNotFoundError."""
@@ -39,7 +41,7 @@ class TestOpenAPILoader:
         mock_yaml_load.assert_called_once()
 
 
-@pytest.mark.unit()
+@pytest.mark.unit
 class TestOpenAPIService:
     @patch("ztoq.core.services.load_openapi_spec")
     def test_get_openapi_spec(self, mock_load_spec):

@@ -8,9 +8,11 @@ import datetime
 import json
 import os
 import tempfile
+
 import pytest
 from sqlalchemy import create_engine, inspect
 from sqlalchemy.orm import sessionmaker
+
 from ztoq.core.db_models import (
     Attachment,
     Base,
@@ -36,7 +38,7 @@ from ztoq.core.db_models import (
 )
 
 
-@pytest.mark.unit()
+@pytest.mark.unit
 class TestDBModels:
     @pytest.fixture(scope="class")
     def db_path(self):
@@ -55,12 +57,12 @@ class TestDBModels:
         os.unlink(db_file)
         os.rmdir(temp_dir)
 
-    @pytest.fixture()
+    @pytest.fixture
     def engine(self, db_path):
         """Create a SQLite engine for testing."""
         return create_engine(f"sqlite:///{db_path}")
 
-    @pytest.fixture()
+    @pytest.fixture
     def session(self, engine):
         """Create a new session for testing."""
         Session = sessionmaker(bind=engine)
@@ -118,7 +120,7 @@ class TestDBModels:
         """Test Project model creation and relationships."""
         # Create a project
         project = Project(
-            id="PRJ-123", key="TEST", name="Test Project", description="A test project"
+            id="PRJ-123", key="TEST", name="Test Project", description="A test project",
         )
         session.add(project)
         session.commit()
@@ -140,11 +142,11 @@ class TestDBModels:
             project=project,
         )
         status = Status(
-            id="STAT-1", name="Active", type="TEST_CASE", project_key="TEST", project=project
+            id="STAT-1", name="Active", type="TEST_CASE", project_key="TEST", project=project,
         )
         priority = Priority(id="PRI-1", name="High", rank=1, project_key="TEST", project=project)
         environment = Environment(
-            id="ENV-1", name="Production", project_key="TEST", project=project
+            id="ENV-1", name="Production", project_key="TEST", project=project,
         )
 
         session.add_all([folder, status, priority, environment])
@@ -219,7 +221,7 @@ class TestDBModels:
 
         # Create a priority
         priority = Priority(
-            id="PRI-CASES", name="High", rank=1, project_key="TEST-CASES", project=project
+            id="PRI-CASES", name="High", rank=1, project_key="TEST-CASES", project=project,
         )
         session.add(priority)
         session.commit()
@@ -385,7 +387,7 @@ class TestDBModels:
 
         # Create an environment
         environment = Environment(
-            id="ENV-EXEC", name="Production Exec", project_key="TEST-EXEC", project=project
+            id="ENV-EXEC", name="Production Exec", project_key="TEST-EXEC", project=project,
         )
         session.add(environment)
         session.commit()
@@ -456,7 +458,7 @@ class TestDBModels:
 
         # Create custom field definition
         field_def = CustomFieldDefinition(
-            id="CF-TEST", name="Test Type", type="text", project_key="TEST-CF", project=project
+            id="CF-TEST", name="Test Type", type="text", project_key="TEST-CF", project=project,
         )
         session.add(field_def)
         session.commit()
@@ -540,7 +542,7 @@ class TestDBModels:
                     "extraction_complete_time": "2025-04-13T10:00:00",
                     "items_extracted": 150,
                     "items_transformed": 75,
-                }
+                },
             ),
         )
         session.add(migration_state)
@@ -646,7 +648,7 @@ class TestDBModels:
                 created_by="user1",
             ),
             CaseVersion(
-                id="VER-A2", name="v2.0-A", created_at=datetime.datetime.now(), created_by="user1"
+                id="VER-A2", name="v2.0-A", created_at=datetime.datetime.now(), created_by="user1",
             ),
         ]
         session.add_all(versions)

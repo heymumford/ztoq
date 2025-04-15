@@ -13,34 +13,13 @@ in the entity-mapping.md document. It includes mapping definitions for all major
 """
 
 import logging
-import re
-from datetime import datetime
-from enum import Enum, auto
-from typing import Any, Callable, Dict, List, Optional, Set, Union
+from collections.abc import Callable
+from enum import Enum
+from typing import Any
 
-from pydantic import BaseModel, Field, ValidationError, model_validator
+from pydantic import BaseModel
 
 from ztoq.custom_field_mapping import get_default_field_mapper
-from ztoq.models import (
-    CustomField,
-    CustomFieldType,
-    Folder,
-    Project,
-    Case as TestCase,
-    CycleInfo as TestCycle,
-    Execution as TestExecution,
-    CaseStep as TestStep,
-)
-from ztoq.qtest_models import (
-    QTestCustomField,
-    QTestModule,
-    QTestProject,
-    QTestStep,
-    QTestTestCase,
-    QTestTestCycle,
-    QTestTestLog,
-    QTestTestRun,
-)
 
 logger = logging.getLogger("ztoq.entity_mapping")
 
@@ -79,13 +58,13 @@ class FieldMapping(BaseModel):
     source_field: str
     target_field: str
     required: bool = False
-    transform_function: Optional[Callable] = None
-    validation_function: Optional[Callable] = None
+    transform_function: Callable | None = None
+    validation_function: Callable | None = None
     validation_action: ValidationAction = ValidationAction.WARNING
     default_value: Any = None
-    description: Optional[str] = None
+    description: str | None = None
 
-    def validate_and_transform(self, source_value: Any) -> tuple[bool, Any, Optional[str]]:
+    def validate_and_transform(self, source_value: Any) -> tuple[bool, Any, str | None]:
         """
         Validate and transform a source value according to mapping rules.
 
@@ -94,6 +73,7 @@ class FieldMapping(BaseModel):
 
         Returns:
             Tuple of (is_valid, transformed_value, error_message)
+
         """
         transformed_value = source_value
         is_valid = True
@@ -119,7 +99,7 @@ class FieldMapping(BaseModel):
                 try:
                     transformed_value = self.transform_function(None)
                     is_valid = True
-                except Exception as e:
+                except Exception:
                     # If transform fails on None, keep None value and stay valid
                     pass
 
@@ -131,11 +111,11 @@ class FieldMapping(BaseModel):
                 transformed_value = self.transform_function(source_value)
             except Exception as e:
                 is_valid = False
-                error_message = f"Transform failed for '{self.source_field}': {str(e)}"
+                error_message = f"Transform failed for '{self.source_field}': {e!s}"
                 # Handle transform error based on validation action
                 if self.validation_action == ValidationAction.ERROR:
                     raise ValueError(error_message)
-                elif self.validation_action == ValidationAction.DEFAULT:
+                if self.validation_action == ValidationAction.DEFAULT:
                     transformed_value = self.default_value
                     is_valid = True
                     error_message = None
@@ -150,18 +130,18 @@ class FieldMapping(BaseModel):
                     # Handle validation error based on validation action
                     if self.validation_action == ValidationAction.ERROR:
                         raise ValueError(error_message)
-                    elif self.validation_action == ValidationAction.DEFAULT:
+                    if self.validation_action == ValidationAction.DEFAULT:
                         transformed_value = self.default_value
                         is_valid = True
                         error_message = None
             except Exception as e:
                 is_valid = False
-                error_message = f"Validation error for '{self.source_field}': {str(e)}"
+                error_message = f"Validation error for '{self.source_field}': {e!s}"
 
                 # Handle validation exception based on validation action
                 if self.validation_action == ValidationAction.ERROR:
                     raise ValueError(error_message)
-                elif self.validation_action == ValidationAction.DEFAULT:
+                if self.validation_action == ValidationAction.DEFAULT:
                     transformed_value = self.default_value
                     is_valid = True
                     error_message = None
@@ -179,11 +159,11 @@ class EntityMapping(BaseModel):
 
     source_type: EntityType
     target_type: str  # The target qTest entity type
-    field_mappings: List[FieldMapping]
+    field_mappings: list[FieldMapping]
     custom_field_mapping_enabled: bool = True
-    description: Optional[str] = None
+    description: str | None = None
 
-    def map_entity(self, source_entity: Dict[str, Any], field_mapper=None) -> Dict[str, Any]:
+    def map_entity(self, source_entity: dict[str, Any], field_mapper=None) -> dict[str, Any]:
         """
         Map a source entity to a target entity based on the mapping definitions.
 
@@ -196,6 +176,7 @@ class EntityMapping(BaseModel):
 
         Raises:
             ValueError: If a required field is missing and validation action is ERROR
+
         """
         if field_mapper is None:
             field_mapper = get_default_field_mapper()
@@ -207,7 +188,7 @@ class EntityMapping(BaseModel):
         for mapping in self.field_mappings:
             source_value = source_entity.get(mapping.source_field)
             is_valid, transformed_value, error_message = mapping.validate_and_transform(
-                source_value
+                source_value,
             )
 
             # If field is not valid and action is ERROR, raise exception immediately
@@ -240,7 +221,7 @@ class EntityMapping(BaseModel):
             else:
                 # Generic custom field mapping
                 target_entity["properties"] = field_mapper.map_custom_fields(
-                    source_entity.get("customFields", [])
+                    source_entity.get("customFields", []),
                 )
 
         return target_entity
@@ -251,7 +232,7 @@ class MappingRegistry:
 
     def __init__(self):
         """Initialize the mapping registry."""
-        self.mappings: Dict[EntityType, EntityMapping] = {}
+        self.mappings: dict[EntityType, EntityMapping] = {}
         self.field_mapper = get_default_field_mapper()
         self._initialize_mappings()
 
@@ -287,10 +268,11 @@ class MappingRegistry:
 
         Args:
             mapping: The entity mapping to register
+
         """
         self.mappings[mapping.source_type] = mapping
 
-    def get_mapping(self, entity_type: EntityType) -> Optional[EntityMapping]:
+    def get_mapping(self, entity_type: EntityType) -> EntityMapping | None:
         """
         Get the entity mapping for a specific type.
 
@@ -299,10 +281,11 @@ class MappingRegistry:
 
         Returns:
             EntityMapping if found, None otherwise
+
         """
         return self.mappings.get(entity_type)
 
-    def map_entity(self, entity_type: EntityType, source_entity: Dict[str, Any]) -> Dict[str, Any]:
+    def map_entity(self, entity_type: EntityType, source_entity: dict[str, Any]) -> dict[str, Any]:
         """
         Map a source entity to a target entity.
 
@@ -315,6 +298,7 @@ class MappingRegistry:
 
         Raises:
             ValueError: If no mapping exists for the entity type
+
         """
         mapping = self.get_mapping(entity_type)
         if not mapping:
@@ -681,7 +665,7 @@ def get_mapping_registry() -> MappingRegistry:
     return _registry
 
 
-def map_entity(entity_type: EntityType, source_entity: Dict[str, Any]) -> Dict[str, Any]:
+def map_entity(entity_type: EntityType, source_entity: dict[str, Any]) -> dict[str, Any]:
     """
     Map a source entity to a target entity using the global registry.
 
@@ -691,31 +675,32 @@ def map_entity(entity_type: EntityType, source_entity: Dict[str, Any]) -> Dict[s
 
     Returns:
         Dict representing the mapped target entity
+
     """
     return _registry.map_entity(entity_type, source_entity)
 
 
 # Convenience functions for common mapping operations
-def map_project(project: Dict[str, Any]) -> Dict[str, Any]:
+def map_project(project: dict[str, Any]) -> dict[str, Any]:
     """Map a Zephyr project to a qTest project."""
     return map_entity(EntityType.PROJECT, project)
 
 
-def map_folder(folder: Dict[str, Any]) -> Dict[str, Any]:
+def map_folder(folder: dict[str, Any]) -> dict[str, Any]:
     """Map a Zephyr folder to a qTest module."""
     return map_entity(EntityType.FOLDER, folder)
 
 
-def map_test_case(test_case: Dict[str, Any]) -> Dict[str, Any]:
+def map_test_case(test_case: dict[str, Any]) -> dict[str, Any]:
     """Map a Zephyr test case to a qTest test case."""
     return map_entity(EntityType.TEST_CASE, test_case)
 
 
-def map_test_cycle(test_cycle: Dict[str, Any]) -> Dict[str, Any]:
+def map_test_cycle(test_cycle: dict[str, Any]) -> dict[str, Any]:
     """Map a Zephyr test cycle to a qTest test cycle."""
     return map_entity(EntityType.TEST_CYCLE, test_cycle)
 
 
-def map_test_execution(test_execution: Dict[str, Any]) -> Dict[str, Any]:
+def map_test_execution(test_execution: dict[str, Any]) -> dict[str, Any]:
     """Map a Zephyr test execution to a qTest test run."""
     return map_entity(EntityType.TEST_EXECUTION, test_execution)

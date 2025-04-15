@@ -5,12 +5,13 @@ See LICENSE file for details.
 """
 
 import pytest
+
 from ztoq.qtest_mock_server import QTestMockServer
 
 
-@pytest.mark.unit()
+@pytest.mark.unit
 class TestQTestMockServer:
-    @pytest.fixture()
+    @pytest.fixture
     def mock_server(self):
         """Create a test qTest mock server instance."""
         return QTestMockServer()
@@ -445,7 +446,7 @@ class TestQTestMockServer:
 
         # Test manager API request
         projects_result = mock_server.handle_request(
-            api_type="manager", method="GET", endpoint="/projects", params={}
+            api_type="manager", method="GET", endpoint="/projects", params={},
         )
         assert "items" in projects_result
         assert len(projects_result["items"]) > 0
@@ -461,7 +462,7 @@ class TestQTestMockServer:
 
         # Test pulse API request
         rules_result = mock_server.handle_request(
-            api_type="pulse", method="GET", endpoint="/rules", params={"projectId": project_id}
+            api_type="pulse", method="GET", endpoint="/rules", params={"projectId": project_id},
         )
         assert "data" in rules_result
 
@@ -476,7 +477,7 @@ class TestQTestMockServer:
 
         # Test unknown API type
         unknown_result = mock_server.handle_request(
-            api_type="unknown", method="GET", endpoint="/test", params={}
+            api_type="unknown", method="GET", endpoint="/test", params={},
         )
         assert "error" in unknown_result
 
@@ -534,7 +535,7 @@ class TestQTestMockServer:
                     "testCaseId": test_case_id,
                     "executionDate": "2023-03-15T10:15:00Z",
                 },
-            ]
+            ],
         }
 
         # Submit auto test logs
@@ -587,8 +588,8 @@ class TestQTestMockServer:
                         ],
                     },
                     "executionDate": "2023-03-15T11:00:00Z",
-                }
-            ]
+                },
+            ],
         }
 
         # Submit auto test logs
@@ -637,19 +638,19 @@ class TestQTestMockServer:
             "testLogs": [
                 {
                     # Missing name
-                    "status": "Passed"
+                    "status": "Passed",
                 },
                 {
-                    "name": "Test with missing status"
+                    "name": "Test with missing status",
                     # Missing status
                 },
                 {"name": "Test with invalid status", "status": "INVALID_STATUS"},  # Invalid status
                 {
                     "name": "Test with neither testCaseId nor testCase",
-                    "status": "Passed"
+                    "status": "Passed",
                     # Missing both testCaseId and testCase
                 },
-            ]
+            ],
         }
 
         result = mock_server._handle_submit_auto_test_logs(project_id, auto_test_logs_data)
@@ -680,7 +681,7 @@ class TestQTestMockServer:
 
         # Invalid data - missing required field
         invalid_data = {
-            "description": "Missing required name field"
+            "description": "Missing required name field",
             # Missing 'name' field which is required
         }
 
@@ -700,7 +701,7 @@ class TestQTestMockServer:
         }
 
         is_valid, validated_data, error = mock_server._validate_model(
-            invalid_type_data, QTestTestCase
+            invalid_type_data, QTestTestCase,
         )
         assert is_valid is False
         assert validated_data is None
@@ -721,7 +722,7 @@ class TestQTestMockServer:
         # Test with custom status code
         custom_status = 404
         custom_error_response = mock_server._format_error_response(
-            "Resource not found", custom_status
+            "Resource not found", custom_status,
         )
 
         assert "error" in custom_error_response
@@ -930,7 +931,7 @@ class TestQTestMockServer:
         }
 
         result_with_cycle = mock_server._handle_auto_test_log_with_test_case(
-            project_id, test_log_data_with_cycle
+            project_id, test_log_data_with_cycle,
         )
         assert result_with_cycle["testCycle"]["id"] == test_cycle_id
 
@@ -942,7 +943,7 @@ class TestQTestMockServer:
         }
 
         invalid_result = mock_server._handle_auto_test_log_with_test_case(
-            project_id, invalid_test_log_data
+            project_id, invalid_test_log_data,
         )
         assert "error" in invalid_result
         assert "Test case not found: 99999" in invalid_result["error"]
@@ -1011,7 +1012,7 @@ class TestQTestMockServer:
             mock_server.validation_mode = True
 
             invalid_result = mock_server._handle_auto_test_log_with_new_test_case(
-                project_id, invalid_test_log_data
+                project_id, invalid_test_log_data,
             )
             assert "error" in invalid_result
             assert "Failed to create test case" in invalid_result["error"]

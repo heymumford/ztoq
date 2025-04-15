@@ -4,24 +4,24 @@ This file is part of ZTOQ, licensed under the MIT License.
 See LICENSE file for details.
 """
 
+import argparse
+import logging
 import os
 import sys
-import logging
-import argparse
 from pathlib import Path
 
 # Add the project root to the Python path to enable imports
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from ztoq.qtest_models import QTestConfig
 from ztoq.qtest_client import QTestClient
+from ztoq.qtest_models import QTestConfig
 
 # Set up logging
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    handlers=[logging.StreamHandler()]
+    handlers=[logging.StreamHandler()],
 )
 logger = logging.getLogger("qtest_list_projects")
 
@@ -35,7 +35,7 @@ def list_projects(base_url, token, no_verify_ssl=False, debug=False):
 
     try:
         # Ensure URL has proper prefix
-        if not base_url.startswith(('http://', 'https://')):
+        if not base_url.startswith(("http://", "https://")):
             base_url = f"https://{base_url}"
             logger.debug(f"Added https:// prefix: {base_url}")
 
@@ -49,7 +49,7 @@ def list_projects(base_url, token, no_verify_ssl=False, debug=False):
         config = QTestConfig(
             base_url=base_url,
             bearer_token=token,
-            project_id=1  # Dummy value, not used for listing projects
+            project_id=1,  # Dummy value, not used for listing projects
         )
 
         # Create qTest client

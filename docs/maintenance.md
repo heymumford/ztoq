@@ -127,4 +127,4 @@ If you have questions or need assistance:
 - GitHub Issues: [ZTOQ Issues](https://github.com/username/ztoq/issues)
 
 ---
-*Copyright (c) 2025 Eric C. Mumford (@heymumford) - Licensed under [MIT License](../../LICENSE)*
+*Copyright (c) 2025 Eric C. Mumford (@heymumford) - Licensed under [MIT License](https://github.com/heymumford/ztoq/blob/main/LICENSE)*

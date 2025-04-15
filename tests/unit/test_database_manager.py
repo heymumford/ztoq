@@ -8,7 +8,9 @@ import json
 import sqlite3
 from datetime import datetime
 from unittest.mock import MagicMock, patch
+
 import pytest
+
 from ztoq.data_fetcher import FetchResult
 from ztoq.database_manager import DatabaseManager
 from ztoq.models import (
@@ -26,14 +28,14 @@ from ztoq.models import (
 )
 
 
-@pytest.mark.unit()
+@pytest.mark.unit
 class TestDatabaseManager:
-    @pytest.fixture()
+    @pytest.fixture
     def db_path(self, tmp_path):
         """Create a temporary database path."""
         return tmp_path / "test.db"
 
-    @pytest.fixture()
+    @pytest.fixture
     def db_manager(self, db_path):
         """Create a test database manager instance."""
         return DatabaseManager(db_path)
@@ -173,7 +175,7 @@ class TestDatabaseManager:
         db_manager.initialize_database()
 
         project = Project(
-            id="proj123", key="TEST", name="Test Project", description="This is a test project"
+            id="proj123", key="TEST", name="Test Project", description="This is a test project",
         )
 
         db_manager.save_project(project)
@@ -199,7 +201,7 @@ class TestDatabaseManager:
 
         # Create and save a folder
         folder = Folder(
-            id="folder123", name="Test Folder", folderType="TEST_CASE", projectKey="TEST"
+            id="folder123", name="Test Folder", folderType="TEST_CASE", projectKey="TEST",
         )
 
         db_manager.save_folder(folder, "TEST")
@@ -258,7 +260,7 @@ class TestDatabaseManager:
 
         # Create and save a priority
         priority = Priority(
-            id="priority123", name="High", description="High priority item", color="#FF0000", rank=1
+            id="priority123", name="High", description="High priority item", color="#FF0000", rank=1,
         )
 
         db_manager.save_priority(priority, "TEST")
@@ -286,7 +288,7 @@ class TestDatabaseManager:
 
         # Create and save an environment
         environment = Environment(
-            id="env123", name="Production", description="Production environment"
+            id="env123", name="Production", description="Production environment",
         )
 
         db_manager.save_environment(environment, "TEST")
@@ -315,7 +317,7 @@ class TestDatabaseManager:
         db_manager.save_priority(priority, "TEST")
 
         folder = Folder(
-            id="folder123", name="Test Cases", folderType="TEST_CASE", projectKey="TEST"
+            id="folder123", name="Test Cases", folderType="TEST_CASE", projectKey="TEST",
         )
         db_manager.save_folder(folder, "TEST")
 
@@ -348,7 +350,7 @@ class TestDatabaseManager:
                 ),
             ],
             custom_fields=[
-                CustomField(id="cf1", name="Test Type", type="text", value="Integration")
+                CustomField(id="cf1", name="Test Type", type="text", value="Integration"),
             ],
             links=[Link(name="Requirements", url="https://example.com/req1", type="web")],
         )
@@ -444,7 +446,7 @@ class TestDatabaseManager:
 
         # Create and save a folder for the cycle
         folder = Folder(
-            id="folder456", name="Test Cycles", folderType="TEST_CYCLE", projectKey="TEST"
+            id="folder456", name="Test Cycles", folderType="TEST_CYCLE", projectKey="TEST",
         )
         db_manager.save_folder(folder, "TEST")
 
@@ -507,7 +509,7 @@ class TestDatabaseManager:
         db_manager.save_test_case(test_case, "TEST")
 
         test_cycle = CycleInfo(
-            id="cycle123", key="TEST-C1", name="Sprint 1 Testing", project_key="TEST"
+            id="cycle123", key="TEST-C1", name="Sprint 1 Testing", project_key="TEST",
         )
         db_manager.save_test_cycle(test_cycle, "TEST")
 
@@ -625,7 +627,7 @@ class TestDatabaseManager:
                 name="Sprint 1 Testing",
                 project_key="TEST",
                 folder="folder2",
-            )
+            ),
         ]
 
         test_executions = [
@@ -635,13 +637,13 @@ class TestDatabaseManager:
                 cycleId="cycle1",
                 status="PASS",
                 environment="env1",
-            )
+            ),
         ]
 
         # Create fetch results
         fetch_results = {
             "project": FetchResult(
-                entity_type="project", project_key="TEST", items=[project], count=1, success=True
+                entity_type="project", project_key="TEST", items=[project], count=1, success=True,
             ),
             "folders": FetchResult(
                 entity_type="folders",
@@ -743,7 +745,7 @@ class TestDatabaseManager:
                 items=test_cases,
                 count=len(test_cases),
                 success=True,
-            )
+            ),
         }
 
         # Save project data
@@ -783,7 +785,7 @@ class TestDatabaseManager:
         # Create fetch results for each project
         project1_results = {
             "project": FetchResult(
-                entity_type="project", project_key="PROJ1", items=[project1], count=1, success=True
+                entity_type="project", project_key="PROJ1", items=[project1], count=1, success=True,
             ),
             "test_cases": FetchResult(
                 entity_type="test_cases",
@@ -796,7 +798,7 @@ class TestDatabaseManager:
 
         project2_results = {
             "project": FetchResult(
-                entity_type="project", project_key="PROJ2", items=[project2], count=1, success=True
+                entity_type="project", project_key="PROJ2", items=[project2], count=1, success=True,
             ),
             "test_cases": FetchResult(
                 entity_type="test_cases",
@@ -811,7 +813,7 @@ class TestDatabaseManager:
 
         # Mock initialize_database to verify it's called only once
         with patch.object(
-            db_manager, "initialize_database", wraps=db_manager.initialize_database
+            db_manager, "initialize_database", wraps=db_manager.initialize_database,
         ) as mock_init_db:
             results = db_manager.save_all_projects_data(all_projects_data)
 

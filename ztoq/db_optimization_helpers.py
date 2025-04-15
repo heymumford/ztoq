@@ -13,13 +13,12 @@ the optimized database manager for improved performance.
 
 import logging
 import os
-from typing import Any, Dict, Optional
+from typing import Any
 
 from ztoq.core.db_manager import SQLDatabaseManager
 from ztoq.database_factory import DatabaseFactory, DatabaseType
 from ztoq.database_optimizations import db_stats, query_cache
 from ztoq.optimized_database_manager import OptimizedDatabaseManager
-
 
 # Setup logging
 logger = logging.getLogger(__name__)
@@ -27,14 +26,14 @@ logger = logging.getLogger(__name__)
 
 def get_optimized_database_manager(
     db_type: str = os.environ.get("ZTOQ_DB_TYPE", DatabaseType.SQLITE),
-    db_path: Optional[str] = os.environ.get("ZTOQ_DB_PATH"),
-    host: Optional[str] = os.environ.get("ZTOQ_PG_HOST"),
-    port: Optional[int] = int(os.environ.get("ZTOQ_PG_PORT", "5432"))
+    db_path: str | None = os.environ.get("ZTOQ_DB_PATH"),
+    host: str | None = os.environ.get("ZTOQ_PG_HOST"),
+    port: int | None = int(os.environ.get("ZTOQ_PG_PORT", "5432"))
     if os.environ.get("ZTOQ_PG_PORT")
     else None,
-    username: Optional[str] = os.environ.get("ZTOQ_PG_USER"),
-    password: Optional[str] = os.environ.get("ZTOQ_PG_PASSWORD"),
-    database: Optional[str] = os.environ.get("ZTOQ_PG_DATABASE"),
+    username: str | None = os.environ.get("ZTOQ_PG_USER"),
+    password: str | None = os.environ.get("ZTOQ_PG_PASSWORD"),
+    database: str | None = os.environ.get("ZTOQ_PG_DATABASE"),
     cache_ttl: int = 300,
     pool_size: int = 10,
     max_overflow: int = 20,
@@ -56,6 +55,7 @@ def get_optimized_database_manager(
 
     Returns:
         Optimized database manager instance
+
     """
     # Configure cache TTL
     query_cache._ttl_seconds = cache_ttl
@@ -88,6 +88,7 @@ def migrate_to_optimized_manager(standard_manager: SQLDatabaseManager) -> Optimi
 
     Returns:
         Optimized database manager
+
     """
     # Create optimized manager wrapping the base manager
     optimized_manager = OptimizedDatabaseManager(base_manager=standard_manager)
@@ -96,12 +97,13 @@ def migrate_to_optimized_manager(standard_manager: SQLDatabaseManager) -> Optimi
     return optimized_manager
 
 
-def get_database_performance_report() -> Dict[str, Any]:
+def get_database_performance_report() -> dict[str, Any]:
     """
     Get a comprehensive database performance report.
 
     Returns:
         Dictionary with performance statistics and recommendations
+
     """
     # Get basic statistics
     stats = db_stats.get_stats()
@@ -116,7 +118,7 @@ def get_database_performance_report() -> Dict[str, Any]:
                     "avg_time": op_stats["avg_time"],
                     "count": op_stats["count"],
                     "max_time": op_stats["max_time"],
-                }
+                },
             )
 
     # Sort slow operations by average time (descending)
@@ -131,7 +133,7 @@ def get_database_performance_report() -> Dict[str, Any]:
                 "title": "Optimize slow database operations",
                 "description": "Consider optimizing the following slow operations",
                 "operations": slow_operations[:5],  # Top 5 slowest operations
-            }
+            },
         )
 
     if any(op_stats["error_rate"] > 0.01 for op_name, op_stats in stats.items()):
@@ -152,7 +154,7 @@ def get_database_performance_report() -> Dict[str, Any]:
                     "title": "Fix error-prone database operations",
                     "description": "The following operations have high error rates",
                     "operations": error_prone_ops,
-                }
+                },
             )
 
     # Check cache efficiency
@@ -174,7 +176,7 @@ def get_database_performance_report() -> Dict[str, Any]:
                     "title": "Improve cache efficiency",
                     "description": f"Current cache hit rate is only {cache_hit_rate:.1%}",
                     "suggestion": "Consider increasing cache TTL or optimizing cache keys",
-                }
+                },
             )
 
     # Build the final report

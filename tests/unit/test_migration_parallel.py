@@ -7,17 +7,19 @@ See LICENSE file for details.
 import time
 from concurrent.futures import ThreadPoolExecutor
 from unittest.mock import MagicMock, patch
+
 import pytest
+
 from ztoq.migration import EntityBatchTracker, ZephyrToQTestMigration
 from ztoq.models import ZephyrConfig
 from ztoq.qtest_models import QTestConfig, QTestModule, QTestTestCase
 
 
-@pytest.mark.unit()
+@pytest.mark.unit
 class TestMigrationParallel:
     """Test the parallel processing capabilities of the migration module."""
 
-    @pytest.fixture()
+    @pytest.fixture
     def zephyr_config(self):
         """Create a test Zephyr configuration."""
         return ZephyrConfig(
@@ -26,7 +28,7 @@ class TestMigrationParallel:
             project_key="DEMO",
         )
 
-    @pytest.fixture()
+    @pytest.fixture
     def qtest_config(self):
         """Create a test qTest configuration."""
         return QTestConfig(
@@ -36,7 +38,7 @@ class TestMigrationParallel:
             project_id=12345,
         )
 
-    @pytest.fixture()
+    @pytest.fixture
     def db_mock(self):
         """Create a mock database manager."""
         db = MagicMock()
@@ -55,7 +57,7 @@ class TestMigrationParallel:
                         "module_id": "module-1",
                         "priority_id": 2,
                     },
-                }
+                },
             )
         db.get_transformed_test_cases.return_value = test_cases
 
@@ -70,7 +72,7 @@ class TestMigrationParallel:
                         "description": f"Root module {i}",
                         "parent_id": None,
                     },
-                }
+                },
             )
 
         modules_level_1 = []
@@ -84,18 +86,18 @@ class TestMigrationParallel:
                             "description": f"Child module {j} of {i}",
                             "parent_id": f"qmodule-module-{i}",
                         },
-                    }
+                    },
                 )
 
         db.get_transformed_modules_by_level.return_value = [modules_level_0, modules_level_1]
 
         return db
 
-    @pytest.fixture()
+    @pytest.fixture
     def migration(self, zephyr_config, qtest_config, db_mock):
         """Create a test migration manager with mocked clients."""
         with patch("ztoq.migration.ZephyrClient") as mock_zephyr, patch(
-            "ztoq.migration.QTestClient"
+            "ztoq.migration.QTestClient",
         ) as mock_qtest:
             # Configure mocks
             mock_zephyr_client = MagicMock()
@@ -133,7 +135,7 @@ class TestMigrationParallel:
             migrations = {}
             for workers in [1, 5, 10]:
                 migrations[workers] = ZephyrToQTestMigration(
-                    zephyr_config, qtest_config, db_mock, batch_size=20, max_workers=workers
+                    zephyr_config, qtest_config, db_mock, batch_size=20, max_workers=workers,
                 )
                 migrations[workers].zephyr_client_mock = mock_zephyr_client
                 migrations[workers].qtest_client_mock = mock_qtest_client

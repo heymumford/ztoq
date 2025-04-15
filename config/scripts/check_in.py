@@ -37,8 +37,7 @@ def get_current_version() -> str:
         version_match = re.search(r'__version__\s*=\s*["\']([^"\']+)["\']', content)
         if version_match:
             return version_match.group(1)
-        else:
-            return "0.0.0"
+        return "0.0.0"
 
 
 def get_next_build_number() -> int:
@@ -64,7 +63,7 @@ def update_version(new_version: str) -> bool:
 
         # Replace version in __init__.py
         new_content = re.sub(
-            r'__version__\s*=\s*["\']([^"\']+)["\']', f'__version__ = "{new_version}"', content
+            r'__version__\s*=\s*["\']([^"\']+)["\']', f'__version__ = "{new_version}"', content,
         )
 
         if new_content != content:
@@ -84,7 +83,7 @@ def update_version(new_version: str) -> bool:
 
         # Replace version in pyproject.toml
         new_content = re.sub(
-            r'version\s*=\s*["\']([^"\']+)["\']', f'version = "{new_version}"', content
+            r'version\s*=\s*["\']([^"\']+)["\']', f'version = "{new_version}"', content,
         )
 
         if new_content != content:
@@ -104,7 +103,7 @@ def update_version(new_version: str) -> bool:
 
         # Replace version in Sphinx conf.py
         new_content = re.sub(
-            r'release\s*=\s*["\']([^"\']+)["\']', f'release = "{new_version}"', content
+            r'release\s*=\s*["\']([^"\']+)["\']', f'release = "{new_version}"', content,
         )
 
         if new_content != content:
@@ -241,7 +240,7 @@ def main() -> int:
         help="Version type to increment (default: patch)",
     )
     parser.add_argument(
-        "--skip-commit", action="store_true", help="Skip committing changes, just update version"
+        "--skip-commit", action="store_true", help="Skip committing changes, just update version",
     )
     args = parser.parse_args()
 

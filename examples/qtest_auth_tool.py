@@ -32,21 +32,21 @@ Usage examples:
   eval $(python qtest_auth_tool.py get-token --base-url https://example.qtest.com --username user@example.com --password P@ssw0rd --format env)
 """
 
+import argparse
+import base64
+import getpass
+import json
+import logging
 import os
 import sys
-import logging
-import argparse
-import json
-import getpass
-import base64
-import requests
-import time
 from datetime import datetime, timedelta
+
+import requests
 
 # Set up logging
 logging.basicConfig(
     level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger("qtest_auth_tool")
 
@@ -64,7 +64,7 @@ def get_token(base_url, username, password, api_type="manager"):
         Dict with token information if successful, error message otherwise
     """
     # Validate base URL
-    if not base_url.startswith(('http://', 'https://')):
+    if not base_url.startswith(("http://", "https://")):
         return {"error": "base_url must start with http:// or https://"}
 
     # Auth endpoints based on API type
@@ -82,11 +82,11 @@ def get_token(base_url, username, password, api_type="manager"):
     # Common headers for token request
     auth_headers = {
         "Content-Type": "application/x-www-form-urlencoded",
-        "Cache-Control": "no-cache"
+        "Cache-Control": "no-cache",
     }
 
     # Add basic auth header with client name
-    client_name_encoded = base64.b64encode(b"ztoq-client:").decode('utf-8')
+    client_name_encoded = base64.b64encode(b"ztoq-client:").decode("utf-8")
     auth_headers["Authorization"] = f"Basic {client_name_encoded}"
 
     # Prepare form data for token request
@@ -152,14 +152,14 @@ def get_token(base_url, username, password, api_type="manager"):
             "token_type": token_type,
             "expires_in": expires_in,
             "expires_at": expiration_str,
-            "scope": scope
+            "scope": scope,
         }
 
     except requests.exceptions.RequestException as e:
-        error_msg = f"Failed to acquire token: {str(e)}"
+        error_msg = f"Failed to acquire token: {e!s}"
         logger.error(error_msg)
 
-        if hasattr(e, 'response') and e.response is not None:
+        if hasattr(e, "response") and e.response is not None:
             status_code = e.response.status_code
             logger.error(f"Response status: {status_code}")
 
@@ -186,7 +186,7 @@ def verify_token(base_url, token, api_type="manager"):
         Dict with verification result
     """
     # Validate base URL
-    if not base_url.startswith(('http://', 'https://')):
+    if not base_url.startswith(("http://", "https://")):
         return {"valid": False, "error": "base_url must start with http:// or https://"}
 
     # API paths based on API type
@@ -208,7 +208,7 @@ def verify_token(base_url, token, api_type="manager"):
     headers = {
         "Authorization": f"bearer {token}",
         "Content-Type": "application/json",
-        "Accept": "application/json"
+        "Accept": "application/json",
     }
 
     logger.info(f"Verifying token by accessing {url}")
@@ -235,7 +235,7 @@ def verify_token(base_url, token, api_type="manager"):
                 return {
                     "valid": True,
                     "project_count": project_count,
-                    "rate_limit_remaining": rate_limit_remaining
+                    "rate_limit_remaining": rate_limit_remaining,
                 }
             except ValueError:
                 logger.info("Token is valid!")
@@ -265,7 +265,7 @@ def get_token_status(base_url, token):
         Dict with token status information
     """
     # Validate base URL
-    if not base_url.startswith(('http://', 'https://')):
+    if not base_url.startswith(("http://", "https://")):
         return {"error": "base_url must start with http:// or https://"}
 
     # Create endpoint for token status
@@ -275,7 +275,7 @@ def get_token_status(base_url, token):
     headers = {
         "Authorization": f"bearer {token}",
         "Content-Type": "application/json",
-        "Accept": "application/json"
+        "Accept": "application/json",
     }
 
     logger.info(f"Getting token status from {url}")
@@ -334,7 +334,7 @@ def revoke_token(base_url, token):
         Dict with revocation result
     """
     # Validate base URL
-    if not base_url.startswith(('http://', 'https://')):
+    if not base_url.startswith(("http://", "https://")):
         return {"success": False, "error": "base_url must start with http:// or https://"}
 
     # Create endpoint for token revocation
@@ -344,7 +344,7 @@ def revoke_token(base_url, token):
     headers = {
         "Authorization": f"bearer {token}",
         "Content-Type": "application/json",
-        "Accept": "application/json"
+        "Accept": "application/json",
     }
 
     logger.info(f"Revoking token at {url}")
@@ -358,9 +358,8 @@ def revoke_token(base_url, token):
             logger.info("Token successfully revoked")
             return {"success": True}
 
-        else:
-            logger.error(f"Failed to revoke token. Status code: {response.status_code}")
-            return {"success": False, "error": f"Unexpected status code: {response.status_code}"}
+        logger.error(f"Failed to revoke token. Status code: {response.status_code}")
+        return {"success": False, "error": f"Unexpected status code: {response.status_code}"}
 
     except requests.exceptions.RequestException as e:
         logger.error(f"Request failed: {e}")
@@ -421,12 +420,12 @@ def main():
     args = parser.parse_args()
 
     # Set debug logging if requested
-    if hasattr(args, 'debug') and args.debug:
+    if hasattr(args, "debug") and args.debug:
         logging.getLogger().setLevel(logging.DEBUG)
 
     # Normalize base URL
-    if hasattr(args, 'base_url'):
-        if not args.base_url.startswith(('http://', 'https://')):
+    if hasattr(args, "base_url"):
+        if not args.base_url.startswith(("http://", "https://")):
             args.base_url = f"https://{args.base_url}"
 
     # Execute command

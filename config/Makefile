@@ -50,16 +50,16 @@ format:
 security:
 	poetry run bandit -r ztoq -c pyproject.toml
 	poetry run safety check
-	
+
 docstring-check:
 	poetry run interrogate -v -c pyproject.toml ztoq
 
 pre-commit:
 	poetry run pre-commit run --all-files
-	
+
 hooks:
 	./bin/setup-hooks
-	
+
 bump-version:
 	./bin/bump-version
 

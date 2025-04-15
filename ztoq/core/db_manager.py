@@ -13,6 +13,7 @@ and includes features like connection pooling, transaction management, and futur
 compatibility with Snowflake.
 """
 
+import base64
 import json
 import logging
 import os
@@ -21,11 +22,13 @@ from contextlib import contextmanager
 from datetime import datetime
 from pathlib import Path
 from typing import Any, TypeVar
+
 import pandas as pd
 from sqlalchemy import Engine, create_engine, text
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session, scoped_session, sessionmaker
 from sqlalchemy.pool import QueuePool
+
 from ztoq.core.db_models import (
     Attachment,
     Base,
@@ -52,38 +55,17 @@ from ztoq.core.db_models import (
 from ztoq.data_fetcher import FetchResult
 from ztoq.models import (
     Attachment as AttachmentModel,
-)
-from ztoq.models import (
     Case as CaseModel,
-)
-from ztoq.models import (
     CustomField as CustomFieldModel,
-)
-from ztoq.models import (
     CycleInfo as CycleInfoModel,
-)
-from ztoq.models import (
     Environment as EnvironmentModel,
-)
-from ztoq.models import (
     Execution as ExecutionModel,
-)
-from ztoq.models import (
     Folder as FolderModel,
-)
-from ztoq.models import (
     Link as LinkModel,
-)
-from ztoq.models import (
     Priority as PriorityModel,
-)
-from ztoq.models import (
     Project as ProjectModel,
-)
-from ztoq.models import (
     Status as StatusModel,
 )
-import base64
 
 logger = logging.getLogger(__name__)
 
@@ -106,7 +88,7 @@ class DatabaseConfig:
         pool_size: int = 5,
         max_overflow: int = 10,
         echo: bool = False,
-    ):
+    ) -> None:
         """
         Initialize database configuration.
 
@@ -121,6 +103,7 @@ class DatabaseConfig:
             pool_size: Connection pool size
             max_overflow: Maximum number of connections to overflow
             echo: Whether to echo SQL statements
+
         """
         self.db_type = db_type.lower()
         self.db_path = db_path
@@ -143,21 +126,21 @@ class DatabaseConfig:
 
         Returns:
             Database connection string for SQLAlchemy
+
         """
         if self.db_type == "sqlite":
             db_path = Path(self.db_path) if self.db_path else Path("ztoq_data.db")
             # Ensure parent directory exists
             db_path.parent.mkdir(parents=True, exist_ok=True)
             return f"sqlite:///{db_path}"
-        elif self.db_type == "postgresql":
+        if self.db_type == "postgresql":
             # Validate required PostgreSQL parameters
             if not all([self.host, self.username, self.database]):
                 raise ValueError("Host, username, and database name are required for PostgreSQL")
             port = self.port or 5432
             password_part = f":{self.password}" if self.password else ""
             return f"postgresql://{self.username}{password_part}@{self.host}:{port}/{self.database}"
-        else:
-            raise ValueError(f"Unsupported database type: {self.db_type}")
+        raise ValueError(f"Unsupported database type: {self.db_type}")
 
 
 class SQLDatabaseManager:
@@ -168,12 +151,13 @@ class SQLDatabaseManager:
     using SQLAlchemy ORM. It supports both SQLite and PostgreSQL databases.
     """
 
-    def __init__(self, config: DatabaseConfig | None = None):
+    def __init__(self, config: DatabaseConfig | None = None) -> None:
         """
         Initialize the database manager.
 
         Args:
             config: Database configuration
+
         """
         self.config = config or DatabaseConfig()
         self._engine = self._create_engine()
@@ -186,6 +170,7 @@ class SQLDatabaseManager:
 
         Returns:
             SQLAlchemy engine
+
         """
         conn_str = self.config.get_connection_string()
         engine_kwargs = {
@@ -201,7 +186,7 @@ class SQLDatabaseManager:
                     "max_overflow": self.config.max_overflow,
                     "pool_pre_ping": True,  # Verify connections before using them
                     "pool_recycle": 3600,  # Recycle connections every hour
-                }
+                },
             )
 
         return create_engine(conn_str, **engine_kwargs)
@@ -216,6 +201,7 @@ class SQLDatabaseManager:
 
         Yields:
             SQLAlchemy session object
+
         """
         session = self._scoped_session()
         try:
@@ -257,7 +243,7 @@ class SQLDatabaseManager:
             raise
 
     def get_or_create(
-        self, session: Session, model: type[T], create_kwargs: dict[str, Any], **kwargs
+        self, session: Session, model: type[T], create_kwargs: dict[str, Any], **kwargs,
     ) -> tuple[T, bool]:
         """
         Get an existing database object or create if it doesn't exist.
@@ -270,24 +256,23 @@ class SQLDatabaseManager:
 
         Returns:
             Tuple of (instance, created) where created is True if a new instance was created
+
         """
         instance = session.query(model).filter_by(**kwargs).first()
         if instance:
             return instance, False
-        else:
-            instance = model(**create_kwargs)
-            try:
-                session.add(instance)
-                session.flush()  # Flush to get the ID
-                return instance, True
-            except IntegrityError:
-                session.rollback()
-                # Try again (race condition handling)
-                instance = session.query(model).filter_by(**kwargs).first()
-                if instance:
-                    return instance, False
-                else:
-                    raise
+        instance = model(**create_kwargs)
+        try:
+            session.add(instance)
+            session.flush()  # Flush to get the ID
+            return instance, True
+        except IntegrityError:
+            session.rollback()
+            # Try again (race condition handling)
+            instance = session.query(model).filter_by(**kwargs).first()
+            if instance:
+                return instance, False
+            raise
 
     def save_project(self, project_model: ProjectModel) -> None:
         """
@@ -295,6 +280,7 @@ class SQLDatabaseManager:
 
         Args:
             project_model: Project model instance
+
         """
         with self.get_session() as session:
             project = Project(
@@ -325,6 +311,7 @@ class SQLDatabaseManager:
         Args:
             folder_model: Folder model instance
             project_key: Project key the folder belongs to
+
         """
         with self.get_session() as session:
             # Map folderType to folder_type (convert camelCase to snake_case)
@@ -370,6 +357,7 @@ class SQLDatabaseManager:
         Args:
             status_model: Status model instance
             project_key: Project key the status belongs to
+
         """
         with self.get_session() as session:
             status = Status(
@@ -403,6 +391,7 @@ class SQLDatabaseManager:
         Args:
             priority_model: Priority model instance
             project_key: Project key the priority belongs to
+
         """
         with self.get_session() as session:
             priority = Priority(
@@ -436,6 +425,7 @@ class SQLDatabaseManager:
         Args:
             environment_model: Environment model instance
             project_key: Project key the environment belongs to
+
         """
         with self.get_session() as session:
             environment = Environment(
@@ -475,6 +465,7 @@ class SQLDatabaseManager:
             entity_type: Type of entity the custom fields belong to
             entity_id: ID of the entity
             project_key: Project key
+
         """
         for cf in custom_fields:
             # Get or create the custom field definition
@@ -558,7 +549,7 @@ class SQLDatabaseManager:
                 session.add(cf_value)
 
     def _save_links(
-        self, session: Session, links: list[LinkModel], entity_type: EntityType, entity_id: str
+        self, session: Session, links: list[LinkModel], entity_type: EntityType, entity_id: str,
     ) -> None:
         """
         Save links for an entity.
@@ -568,6 +559,7 @@ class SQLDatabaseManager:
             links: List of link models
             entity_type: Type of entity the links belong to
             entity_id: ID of the entity
+
         """
         # Delete existing links for this entity
         session.query(Link).filter_by(entity_type=entity_type, entity_id=entity_id).delete()
@@ -601,6 +593,7 @@ class SQLDatabaseManager:
             attachments: List of attachment models
             entity_type: Type of entity the attachments belong to
             entity_id: ID of the entity
+
         """
         for attachment in attachments:
             attachment_id = attachment.id or str(uuid.uuid4())
@@ -652,6 +645,7 @@ class SQLDatabaseManager:
 
         Returns:
             List of Label objects
+
         """
         result = []
         for label_name in labels:
@@ -671,6 +665,7 @@ class SQLDatabaseManager:
         Args:
             test_case_model: Test case model instance
             project_key: Project key the test case belongs to
+
         """
         with self.get_session() as session:
             # Handle priority reference
@@ -789,7 +784,7 @@ class SQLDatabaseManager:
 
                 # Add attachments
                 self._save_attachments(
-                    session, test_case_model.attachments, EntityType.TEST_CASE, test_case.id
+                    session, test_case_model.attachments, EntityType.TEST_CASE, test_case.id,
                 )
 
             except SQLAlchemyError as e:
@@ -803,6 +798,7 @@ class SQLDatabaseManager:
         Args:
             test_cycle_model: Test cycle model instance
             project_key: Project key the test cycle belongs to
+
         """
         with self.get_session() as session:
             # Create or update the test cycle
@@ -849,12 +845,12 @@ class SQLDatabaseManager:
 
                 # Add links
                 self._save_links(
-                    session, test_cycle_model.links, EntityType.TEST_CYCLE, test_cycle.id
+                    session, test_cycle_model.links, EntityType.TEST_CYCLE, test_cycle.id,
                 )
 
                 # Add attachments
                 self._save_attachments(
-                    session, test_cycle_model.attachments, EntityType.TEST_CYCLE, test_cycle.id
+                    session, test_cycle_model.attachments, EntityType.TEST_CYCLE, test_cycle.id,
                 )
 
             except SQLAlchemyError as e:
@@ -868,17 +864,18 @@ class SQLDatabaseManager:
         Args:
             test_execution_model: Test execution model instance
             project_key: Project key the test execution belongs to
+
         """
         with self.get_session() as session:
             # Handle camelCase to snake_case mapping for Pydantic model attributes
             test_case_key = getattr(test_execution_model, "testCaseKey", None) or getattr(
-                test_execution_model, "test_case_key", None
+                test_execution_model, "test_case_key", None,
             )
             cycle_id = getattr(test_execution_model, "cycleId", None) or getattr(
-                test_execution_model, "cycle_id", None
+                test_execution_model, "cycle_id", None,
             )
             environment_id = getattr(test_execution_model, "environment", None) or getattr(
-                test_execution_model, "environment_id", None
+                test_execution_model, "environment_id", None,
             )
 
             # Create or update the test execution
@@ -916,7 +913,7 @@ class SQLDatabaseManager:
 
                     # Clear existing steps to rebuild them
                     session.query(TestStep).filter_by(
-                        test_execution_id=existing_execution.id
+                        test_execution_id=existing_execution.id,
                     ).delete()
 
                     test_execution = existing_execution
@@ -968,7 +965,7 @@ class SQLDatabaseManager:
                 raise
 
     def save_project_data(
-        self, project_key: str, fetch_results: dict[str, FetchResult]
+        self, project_key: str, fetch_results: dict[str, FetchResult],
     ) -> dict[str, int]:
         """
         Save all fetched data for a project.
@@ -982,6 +979,7 @@ class SQLDatabaseManager:
 
         Returns:
             Dictionary with counts of inserted records by entity type
+
         """
         counts = {}
 
@@ -1074,7 +1072,7 @@ class SQLDatabaseManager:
         return counts
 
     def save_all_projects_data(
-        self, all_projects_data: dict[str, dict[str, FetchResult]]
+        self, all_projects_data: dict[str, dict[str, FetchResult]],
     ) -> dict[str, dict[str, int]]:
         """
         Save all fetched data for multiple projects.
@@ -1084,6 +1082,7 @@ class SQLDatabaseManager:
 
         Returns:
             Dictionary mapping project keys to counts of inserted records by entity type
+
         """
         # Initialize database first
         self.initialize_database()
@@ -1104,6 +1103,7 @@ class SQLDatabaseManager:
 
         Returns:
             Migration state object or None if not found
+
         """
         with self.get_session() as session:
             return session.query(MigrationState).filter_by(project_key=project_key).first()
@@ -1130,6 +1130,7 @@ class SQLDatabaseManager:
 
         Returns:
             Updated migration state object
+
         """
         with self.get_session() as session:
             state = session.query(MigrationState).filter_by(project_key=project_key).first()
@@ -1184,13 +1185,14 @@ class SQLDatabaseManager:
 
         Returns:
             Created entity batch state object
+
         """
         with self.get_session() as session:
             # Check if batch already exists
             batch = (
                 session.query(EntityBatchState)
                 .filter_by(
-                    project_key=project_key, entity_type=entity_type, batch_number=batch_number
+                    project_key=project_key, entity_type=entity_type, batch_number=batch_number,
                 )
                 .first()
             )
@@ -1242,12 +1244,13 @@ class SQLDatabaseManager:
 
         Returns:
             Updated entity batch state object or None if not found
+
         """
         with self.get_session() as session:
             batch = (
                 session.query(EntityBatchState)
                 .filter_by(
-                    project_key=project_key, entity_type=entity_type, batch_number=batch_number
+                    project_key=project_key, entity_type=entity_type, batch_number=batch_number,
                 )
                 .first()
             )
@@ -1270,7 +1273,7 @@ class SQLDatabaseManager:
             return batch
 
     def get_incomplete_batches(
-        self, project_key: str, entity_type: str | None = None
+        self, project_key: str, entity_type: str | None = None,
     ) -> list[EntityBatchState]:
         """
         Get all incomplete entity batches for a project.
@@ -1281,6 +1284,7 @@ class SQLDatabaseManager:
 
         Returns:
             List of incomplete entity batch state objects
+
         """
         with self.get_session() as session:
             query = session.query(EntityBatchState).filter(
@@ -1302,6 +1306,7 @@ class SQLDatabaseManager:
 
         Returns:
             Dictionary with counts of entities by type
+
         """
         with self.get_session() as session:
             stats = {}
@@ -1364,8 +1369,8 @@ class SQLDatabaseManager:
                         session.query(TestCase.id)
                         .filter_by(project_key=project_key)
                         .union(session.query(TestCycle.id).filter_by(project_key=project_key))
-                        .union(session.query(TestExecution.id).filter_by(project_key=project_key))
-                    )
+                        .union(session.query(TestExecution.id).filter_by(project_key=project_key)),
+                    ),
                 )
                 .count()
             )
@@ -1373,7 +1378,7 @@ class SQLDatabaseManager:
             return stats
 
     def execute_query(
-        self, query: str, params: dict[str, Any] | None = None
+        self, query: str, params: dict[str, Any] | None = None,
     ) -> list[dict[str, Any]]:
         """
         Execute a raw SQL query and return results.
@@ -1384,13 +1389,14 @@ class SQLDatabaseManager:
 
         Returns:
             List of dictionaries with query results
+
         """
         with self.get_session() as session:
             result = session.execute(text(query), params or {})
 
             # Convert result proxy to list of dictionaries
             columns = result.keys()
-            return [dict(zip(columns, row)) for row in result.fetchall()]
+            return [dict(zip(columns, row, strict=False)) for row in result.fetchall()]
 
     def query_to_dataframe(self, query: str, params: dict[str, Any] | None = None) -> pd.DataFrame:
         """
@@ -1404,6 +1410,7 @@ class SQLDatabaseManager:
 
         Returns:
             Pandas DataFrame with query results
+
         """
         with self.get_session() as session:
             result = session.execute(text(query), params or {})

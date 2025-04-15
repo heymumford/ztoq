@@ -15,24 +15,20 @@ connection pooling, transaction management, and schema migrations.
 
 import json
 import logging
-import time
 from contextlib import contextmanager
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple, Union
-import psycopg2
-import sqlalchemy
+from typing import Any
+
 from psycopg2 import pool
 from psycopg2.extras import RealDictCursor
 from sqlalchemy import create_engine, text
 from sqlalchemy.engine import Engine
-from sqlalchemy.exc import OperationalError, ProgrammingError, SQLAlchemyError
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.exc import OperationalError, ProgrammingError
+from sqlalchemy.orm import sessionmaker
+
 from ztoq.core.db_models import Base
 from ztoq.database_manager import DatabaseManager as SQLiteDatabaseManager
-from ztoq.data_fetcher import FetchResult
-from ztoq.models import Case, CycleInfo, Environment, Execution, Folder, Priority, Project, Status
-from ztoq.validation import ValidationIssue, ValidationLevel, ValidationPhase, ValidationScope
+from ztoq.validation import ValidationIssue
 
 logger = logging.getLogger(__name__)
 
@@ -67,6 +63,7 @@ class PostgreSQLDatabaseManager(SQLiteDatabaseManager):
             port: Database server port (default: 5432)
             min_connections: Minimum number of connections in the pool
             max_connections: Maximum number of connections in the pool
+
         """
         self.connection_params = {
             "host": host,
@@ -91,7 +88,7 @@ class PostgreSQLDatabaseManager(SQLiteDatabaseManager):
         logger.info(f"PostgreSQL database manager initialized for {database} on {host}:{port}")
 
     def _create_connection_pool(
-        self, min_connections: int, max_connections: int
+        self, min_connections: int, max_connections: int,
     ) -> pool.ThreadedConnectionPool:
         """
         Create a connection pool for PostgreSQL.
@@ -102,17 +99,18 @@ class PostgreSQLDatabaseManager(SQLiteDatabaseManager):
 
         Returns:
             ThreadedConnectionPool instance
+
         """
         try:
             connection_pool = pool.ThreadedConnectionPool(
-                minconn=min_connections, maxconn=max_connections, **self.connection_params
+                minconn=min_connections, maxconn=max_connections, **self.connection_params,
             )
             logger.info(
-                f"Created PostgreSQL connection pool with {min_connections}-{max_connections} connections"
+                f"Created PostgreSQL connection pool with {min_connections}-{max_connections} connections",
             )
             return connection_pool
         except Exception as e:
-            logger.error(f"Failed to create connection pool: {str(e)}")
+            logger.error(f"Failed to create connection pool: {e!s}")
             raise
 
     def _create_sqlalchemy_engine(self) -> Engine:
@@ -121,6 +119,7 @@ class PostgreSQLDatabaseManager(SQLiteDatabaseManager):
 
         Returns:
             SQLAlchemy Engine instance
+
         """
         try:
             # Create engine with connection pooling
@@ -134,7 +133,7 @@ class PostgreSQLDatabaseManager(SQLiteDatabaseManager):
             )
             return engine
         except Exception as e:
-            logger.error(f"Failed to create SQLAlchemy engine: {str(e)}")
+            logger.error(f"Failed to create SQLAlchemy engine: {e!s}")
             raise
 
     @contextmanager
@@ -147,6 +146,7 @@ class PostgreSQLDatabaseManager(SQLiteDatabaseManager):
 
         Yields:
             PostgreSQL connection object
+
         """
         conn = None
         try:
@@ -168,6 +168,7 @@ class PostgreSQLDatabaseManager(SQLiteDatabaseManager):
 
         Yields:
             SQLAlchemy Session object
+
         """
         session = self.Session()
         try:
@@ -199,8 +200,8 @@ class PostgreSQLDatabaseManager(SQLiteDatabaseManager):
                             """
                     CREATE INDEX IF NOT EXISTS idx_validation_issues_project
                     ON validation_issues (project_key)
-                    """
-                        )
+                    """,
+                        ),
                     )
 
                     session.execute(
@@ -208,8 +209,8 @@ class PostgreSQLDatabaseManager(SQLiteDatabaseManager):
                             """
                     CREATE INDEX IF NOT EXISTS idx_validation_issues_level
                     ON validation_issues (level)
-                    """
-                        )
+                    """,
+                        ),
                     )
 
                     session.execute(
@@ -217,8 +218,8 @@ class PostgreSQLDatabaseManager(SQLiteDatabaseManager):
                             """
                     CREATE INDEX IF NOT EXISTS idx_validation_issues_phase
                     ON validation_issues (phase)
-                    """
-                        )
+                    """,
+                        ),
                     )
 
                     session.execute(
@@ -226,8 +227,8 @@ class PostgreSQLDatabaseManager(SQLiteDatabaseManager):
                             """
                     CREATE INDEX IF NOT EXISTS idx_validation_issues_scope
                     ON validation_issues (scope)
-                    """
-                        )
+                    """,
+                        ),
                     )
 
                     session.execute(
@@ -235,32 +236,33 @@ class PostgreSQLDatabaseManager(SQLiteDatabaseManager):
                             """
                     CREATE INDEX IF NOT EXISTS idx_validation_issues_resolved
                     ON validation_issues (resolved)
-                    """
-                        )
+                    """,
+                        ),
                     )
                 except (ProgrammingError, OperationalError) as e:
                     # Table might not exist yet, which is okay during initial setup
-                    logger.warning(f"Couldn't create validation_issues indexes: {str(e)}")
+                    logger.warning(f"Couldn't create validation_issues indexes: {e!s}")
 
                 # Create additional indexes for performance as defined in ADR-013
                 try:
                     for index_stmt in self._get_performance_indexes():
                         session.execute(text(index_stmt))
                 except Exception as e:
-                    logger.warning(f"Couldn't create some indexes: {str(e)}")
+                    logger.warning(f"Couldn't create some indexes: {e!s}")
 
             logger.info("PostgreSQL database schema initialized successfully")
         except Exception as e:
-            logger.error(f"Failed to initialize database schema: {str(e)}")
+            logger.error(f"Failed to initialize database schema: {e!s}")
             raise
 
-    def _get_performance_indexes(self) -> List[str]:
+    def _get_performance_indexes(self) -> list[str]:
         """
         Get SQL statements for creating additional performance indexes
         as defined in ADR-013.
 
         Returns:
             List of SQL CREATE INDEX statements
+
         """
         return [
             "CREATE INDEX IF NOT EXISTS idx_project_key ON projects(key)",
@@ -278,6 +280,7 @@ class PostgreSQLDatabaseManager(SQLiteDatabaseManager):
 
         Returns:
             True if connection successful, False otherwise
+
         """
         try:
             with self.get_connection() as conn:
@@ -286,10 +289,10 @@ class PostgreSQLDatabaseManager(SQLiteDatabaseManager):
                     result = cursor.fetchone()
                     return result[0] == 1
         except Exception as e:
-            logger.error(f"Connection test failed: {str(e)}")
+            logger.error(f"Connection test failed: {e!s}")
             return False
 
-    def execute_transaction(self, statements: List[Tuple[str, Dict[str, Any]]]) -> bool:
+    def execute_transaction(self, statements: list[tuple[str, dict[str, Any]]]) -> bool:
         """
         Execute multiple SQL statements in a single transaction.
 
@@ -298,6 +301,7 @@ class PostgreSQLDatabaseManager(SQLiteDatabaseManager):
 
         Returns:
             True if transaction succeeded, False otherwise
+
         """
         try:
             with self.get_connection() as conn:
@@ -312,7 +316,7 @@ class PostgreSQLDatabaseManager(SQLiteDatabaseManager):
                 conn.commit()
                 return True
         except Exception as e:
-            logger.error(f"Transaction failed: {str(e)}")
+            logger.error(f"Transaction failed: {e!s}")
             return False
         finally:
             # Reset autocommit setting
@@ -329,6 +333,7 @@ class PostgreSQLDatabaseManager(SQLiteDatabaseManager):
 
         Returns:
             Count of entities
+
         """
         # Determine table name from entity type
         table_name = self._get_table_name(entity_type)
@@ -341,7 +346,7 @@ class PostgreSQLDatabaseManager(SQLiteDatabaseManager):
                 )
                 return result.scalar() or 0
         except Exception as e:
-            logger.error(f"Error counting {entity_type} entities: {str(e)}")
+            logger.error(f"Error counting {entity_type} entities: {e!s}")
             return 0
 
     def _get_table_name(self, entity_type: str) -> str:
@@ -353,6 +358,7 @@ class PostgreSQLDatabaseManager(SQLiteDatabaseManager):
 
         Returns:
             Database table name
+
         """
         # Mapping of entity types to table names
         mapping = {
@@ -381,6 +387,7 @@ class PostgreSQLDatabaseManager(SQLiteDatabaseManager):
 
         Returns:
             Count of mappings
+
         """
         try:
             with self.get_session() as session:
@@ -391,13 +398,13 @@ class PostgreSQLDatabaseManager(SQLiteDatabaseManager):
                     FROM entity_mappings
                     WHERE project_key = :project_key
                     AND mapping_type = :mapping_type
-                    """
+                    """,
                     ),
                     {"project_key": project_key, "mapping_type": mapping_type},
                 )
                 return result.scalar() or 0
         except Exception as e:
-            logger.error(f"Error counting {mapping_type} mappings: {str(e)}")
+            logger.error(f"Error counting {mapping_type} mappings: {e!s}")
             # Create the entity_mappings table if it doesn't exist
             try:
                 self._create_entity_mappings_table()
@@ -421,43 +428,43 @@ class PostgreSQLDatabaseManager(SQLiteDatabaseManager):
                         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                         UNIQUE(project_key, mapping_type, source_id)
                 )
-                """
-                    )
+                """,
+                    ),
                 )
 
                 session.execute(
                     text(
                         """
                 CREATE INDEX IF NOT EXISTS idx_entity_mappings_project ON entity_mappings(project_key)
-                """
-                    )
+                """,
+                    ),
                 )
 
                 session.execute(
                     text(
                         """
                 CREATE INDEX IF NOT EXISTS idx_entity_mappings_type ON entity_mappings(mapping_type)
-                """
-                    )
+                """,
+                    ),
                 )
 
                 session.execute(
                     text(
                         """
                 CREATE INDEX IF NOT EXISTS idx_entity_mappings_source ON entity_mappings(source_id)
-                """
-                    )
+                """,
+                    ),
                 )
 
                 session.execute(
                     text(
                         """
                 CREATE INDEX IF NOT EXISTS idx_entity_mappings_target ON entity_mappings(target_id)
-                """
-                    )
+                """,
+                    ),
                 )
         except Exception as e:
-            logger.error(f"Error creating entity_mappings table: {str(e)}")
+            logger.error(f"Error creating entity_mappings table: {e!s}")
 
     def find_invalid_references(
         self,
@@ -466,7 +473,7 @@ class PostgreSQLDatabaseManager(SQLiteDatabaseManager):
         reference_field: str,
         target_table: str,
         target_id_field: str,
-    ) -> List[str]:
+    ) -> list[str]:
         """
         Find invalid references in a table.
 
@@ -479,6 +486,7 @@ class PostgreSQLDatabaseManager(SQLiteDatabaseManager):
 
         Returns:
             List of entity IDs with invalid references
+
         """
         try:
             with self.get_session() as session:
@@ -492,13 +500,13 @@ class PostgreSQLDatabaseManager(SQLiteDatabaseManager):
                     WHERE a.project_key = :project_key
                       AND a.{reference_field} IS NOT NULL
                       AND b.{target_id_field} IS NULL
-                    """
+                    """,
                     ),
                     {"project_key": project_key},
                 )
                 return [row[0] for row in result]
         except Exception as e:
-            logger.error(f"Error finding invalid references: {str(e)}")
+            logger.error(f"Error finding invalid references: {e!s}")
             return []
 
     def entity_exists(self, entity_type: str, entity_id: str) -> bool:
@@ -511,17 +519,18 @@ class PostgreSQLDatabaseManager(SQLiteDatabaseManager):
 
         Returns:
             True if entity exists, False otherwise
+
         """
         table_name = self._get_table_name(entity_type)
 
         try:
             with self.get_session() as session:
                 result = session.execute(
-                    text(f"SELECT COUNT(*) FROM {table_name} WHERE id = :id"), {"id": entity_id}
+                    text(f"SELECT COUNT(*) FROM {table_name} WHERE id = :id"), {"id": entity_id},
                 )
                 return (result.scalar() or 0) > 0
         except Exception as e:
-            logger.error(f"Error checking entity existence: {str(e)}")
+            logger.error(f"Error checking entity existence: {e!s}")
             return False
 
     def is_entity_migrated(self, project_key: str, entity_type: str, entity_id: str) -> bool:
@@ -535,6 +544,7 @@ class PostgreSQLDatabaseManager(SQLiteDatabaseManager):
 
         Returns:
             True if entity has been migrated, False otherwise
+
         """
         # Determine mapping type from entity type
         mapping_type = self._get_mapping_type(entity_type)
@@ -549,7 +559,7 @@ class PostgreSQLDatabaseManager(SQLiteDatabaseManager):
                     WHERE project_key = :project_key
                     AND mapping_type = :mapping_type
                     AND source_id = :source_id
-                    """
+                    """,
                     ),
                     {
                         "project_key": project_key,
@@ -559,7 +569,7 @@ class PostgreSQLDatabaseManager(SQLiteDatabaseManager):
                 )
                 return (result.scalar() or 0) > 0
         except Exception as e:
-            logger.error(f"Error checking if entity is migrated: {str(e)}")
+            logger.error(f"Error checking if entity is migrated: {e!s}")
             return False
 
     def _get_mapping_type(self, entity_type: str) -> str:
@@ -571,6 +581,7 @@ class PostgreSQLDatabaseManager(SQLiteDatabaseManager):
 
         Returns:
             Mapping type
+
         """
         # Mapping of entity types to mapping types
         mapping = {
@@ -583,8 +594,8 @@ class PostgreSQLDatabaseManager(SQLiteDatabaseManager):
         return mapping.get(entity_type, f"{entity_type}_mapping")
 
     def get_mapped_entity_id(
-        self, project_key: str, mapping_type: str, source_id: str
-    ) -> Optional[str]:
+        self, project_key: str, mapping_type: str, source_id: str,
+    ) -> str | None:
         """
         Get the mapped target entity ID for a source entity.
 
@@ -595,6 +606,7 @@ class PostgreSQLDatabaseManager(SQLiteDatabaseManager):
 
         Returns:
             Target entity ID or None if not mapped
+
         """
         try:
             with self.get_session() as session:
@@ -606,7 +618,7 @@ class PostgreSQLDatabaseManager(SQLiteDatabaseManager):
                     WHERE project_key = :project_key
                     AND mapping_type = :mapping_type
                     AND source_id = :source_id
-                    """
+                    """,
                     ),
                     {
                         "project_key": project_key,
@@ -617,10 +629,10 @@ class PostgreSQLDatabaseManager(SQLiteDatabaseManager):
                 row = result.fetchone()
                 return row[0] if row else None
         except Exception as e:
-            logger.error(f"Error getting mapped entity ID: {str(e)}")
+            logger.error(f"Error getting mapped entity ID: {e!s}")
             return None
 
-    def get_high_priority_test_cases(self, project_key: str) -> List[Dict[str, Any]]:
+    def get_high_priority_test_cases(self, project_key: str) -> list[dict[str, Any]]:
         """
         Get high-priority test cases for a project.
 
@@ -629,6 +641,7 @@ class PostgreSQLDatabaseManager(SQLiteDatabaseManager):
 
         Returns:
             List of high-priority test cases
+
         """
         try:
             with self.get_session() as session:
@@ -641,13 +654,13 @@ class PostgreSQLDatabaseManager(SQLiteDatabaseManager):
                     WHERE tc.project_key = :project_key
                     AND p.rank <= 2
                     ORDER BY p.rank
-                    """
+                    """,
                     ),
                     {"project_key": project_key},
                 )
                 return [dict(row) for row in result]
         except Exception as e:
-            logger.error(f"Error getting high-priority test cases: {str(e)}")
+            logger.error(f"Error getting high-priority test cases: {e!s}")
             return []
 
     def save_validation_issue(self, issue: ValidationIssue, project_key: str) -> int:
@@ -660,6 +673,7 @@ class PostgreSQLDatabaseManager(SQLiteDatabaseManager):
 
         Returns:
             ID of the saved issue
+
         """
         # Create a more detailed context that includes entity type
         context_data = issue.details or {}
@@ -679,7 +693,7 @@ class PostgreSQLDatabaseManager(SQLiteDatabaseManager):
                     VALUES (:rule_id, :level, :message, :entity_id, :entity_type, :scope, :phase, :context,
                         :project_key, :created_on, :resolved)
                     RETURNING id
-                    """
+                    """,
                     ),
                     {
                         "rule_id": issue.id,
@@ -698,7 +712,7 @@ class PostgreSQLDatabaseManager(SQLiteDatabaseManager):
                 row = result.fetchone()
                 return row[0] if row else 0
         except Exception as e:
-            logger.error(f"Error saving validation issue: {str(e)}")
+            logger.error(f"Error saving validation issue: {e!s}")
             # Attempt to create the table if it doesn't exist
             try:
                 self._create_validation_tables()
@@ -724,8 +738,8 @@ class PostgreSQLDatabaseManager(SQLiteDatabaseManager):
                         enabled INTEGER DEFAULT 1,
                         created_on TEXT NOT NULL
                 )
-                """
-                    )
+                """,
+                    ),
                 )
 
                 # Create validation_issues table
@@ -748,8 +762,8 @@ class PostgreSQLDatabaseManager(SQLiteDatabaseManager):
                         resolved_on TEXT,
                         resolution_note TEXT
                 )
-                """
-                    )
+                """,
+                    ),
                 )
 
                 # Create validation_reports table
@@ -764,14 +778,14 @@ class PostgreSQLDatabaseManager(SQLiteDatabaseManager):
                         summary TEXT NOT NULL,
                         details TEXT
                 )
-                """
-                    )
+                """,
+                    ),
                 )
 
                 # Create indexes
                 self._create_validation_indexes(session)
         except Exception as e:
-            logger.error(f"Error creating validation tables: {str(e)}")
+            logger.error(f"Error creating validation tables: {e!s}")
 
     def _create_validation_indexes(self, session) -> None:
         """Create indexes for validation tables."""
@@ -781,8 +795,8 @@ class PostgreSQLDatabaseManager(SQLiteDatabaseManager):
                     """
             CREATE INDEX IF NOT EXISTS idx_validation_issues_project
             ON validation_issues (project_key)
-            """
-                )
+            """,
+                ),
             )
 
             session.execute(
@@ -790,8 +804,8 @@ class PostgreSQLDatabaseManager(SQLiteDatabaseManager):
                     """
             CREATE INDEX IF NOT EXISTS idx_validation_issues_level
             ON validation_issues (level)
-            """
-                )
+            """,
+                ),
             )
 
             session.execute(
@@ -799,8 +813,8 @@ class PostgreSQLDatabaseManager(SQLiteDatabaseManager):
                     """
             CREATE INDEX IF NOT EXISTS idx_validation_issues_phase
             ON validation_issues (phase)
-            """
-                )
+            """,
+                ),
             )
 
             session.execute(
@@ -808,8 +822,8 @@ class PostgreSQLDatabaseManager(SQLiteDatabaseManager):
                     """
             CREATE INDEX IF NOT EXISTS idx_validation_issues_scope
             ON validation_issues (scope)
-            """
-                )
+            """,
+                ),
             )
 
             session.execute(
@@ -817,8 +831,8 @@ class PostgreSQLDatabaseManager(SQLiteDatabaseManager):
                     """
             CREATE INDEX IF NOT EXISTS idx_validation_issues_resolved
             ON validation_issues (resolved)
-            """
-                )
+            """,
+                ),
             )
 
             session.execute(
@@ -826,13 +840,13 @@ class PostgreSQLDatabaseManager(SQLiteDatabaseManager):
                     """
             CREATE INDEX IF NOT EXISTS idx_validation_reports_project
             ON validation_reports (project_key)
-            """
-                )
+            """,
+                ),
             )
         except Exception as e:
-            logger.error(f"Error creating validation indexes: {str(e)}")
+            logger.error(f"Error creating validation indexes: {e!s}")
 
-    def get_qtest_module_for_testcase(self, qtest_testcase_id: str) -> Optional[str]:
+    def get_qtest_module_for_testcase(self, qtest_testcase_id: str) -> str | None:
         """
         Get the qTest module ID for a test case.
 
@@ -841,12 +855,13 @@ class PostgreSQLDatabaseManager(SQLiteDatabaseManager):
 
         Returns:
             qTest module ID or None if not found
+
         """
         # This would access the qTest table in a real implementation
         # For now, just return None as a placeholder
         return None
 
-    def get_qtest_testcase_for_run(self, qtest_run_id: str) -> Optional[str]:
+    def get_qtest_testcase_for_run(self, qtest_run_id: str) -> str | None:
         """
         Get the qTest test case ID for a test run.
 
@@ -855,12 +870,13 @@ class PostgreSQLDatabaseManager(SQLiteDatabaseManager):
 
         Returns:
             qTest test case ID or None if not found
+
         """
         # This would access the qTest table in a real implementation
         # For now, just return None as a placeholder
         return None
 
-    def get_qtest_cycle_for_run(self, qtest_run_id: str) -> Optional[str]:
+    def get_qtest_cycle_for_run(self, qtest_run_id: str) -> str | None:
         """
         Get the qTest test cycle ID for a test run.
 
@@ -869,12 +885,13 @@ class PostgreSQLDatabaseManager(SQLiteDatabaseManager):
 
         Returns:
             qTest test cycle ID or None if not found
+
         """
         # This would access the qTest table in a real implementation
         # For now, just return None as a placeholder
         return None
 
-    def get_test_cases_with_folders(self, project_key: str) -> List[Dict[str, Any]]:
+    def get_test_cases_with_folders(self, project_key: str) -> list[dict[str, Any]]:
         """
         Get test cases with their folder information.
 
@@ -883,6 +900,7 @@ class PostgreSQLDatabaseManager(SQLiteDatabaseManager):
 
         Returns:
             List of test cases with folder information
+
         """
         try:
             with self.get_session() as session:
@@ -893,16 +911,16 @@ class PostgreSQLDatabaseManager(SQLiteDatabaseManager):
                     FROM test_cases tc
                     LEFT JOIN folders f ON tc.folder_id = f.id
                     WHERE tc.project_key = :project_key
-                    """
+                    """,
                     ),
                     {"project_key": project_key},
                 )
                 return [dict(row) for row in result]
         except Exception as e:
-            logger.error(f"Error getting test cases with folders: {str(e)}")
+            logger.error(f"Error getting test cases with folders: {e!s}")
             return []
 
-    def get_test_executions_with_testcases(self, project_key: str) -> List[Dict[str, Any]]:
+    def get_test_executions_with_testcases(self, project_key: str) -> list[dict[str, Any]]:
         """
         Get test executions with their test case information.
 
@@ -911,6 +929,7 @@ class PostgreSQLDatabaseManager(SQLiteDatabaseManager):
 
         Returns:
             List of test executions with test case information
+
         """
         try:
             with self.get_session() as session:
@@ -921,16 +940,16 @@ class PostgreSQLDatabaseManager(SQLiteDatabaseManager):
                     FROM test_executions e
                     JOIN test_cases tc ON e.test_case_key = tc.key
                     WHERE e.project_key = :project_key
-                    """
+                    """,
                     ),
                     {"project_key": project_key},
                 )
                 return [dict(row) for row in result]
         except Exception as e:
-            logger.error(f"Error getting test executions with test cases: {str(e)}")
+            logger.error(f"Error getting test executions with test cases: {e!s}")
             return []
 
-    def get_test_executions_with_cycles(self, project_key: str) -> List[Dict[str, Any]]:
+    def get_test_executions_with_cycles(self, project_key: str) -> list[dict[str, Any]]:
         """
         Get test executions with their cycle information.
 
@@ -939,6 +958,7 @@ class PostgreSQLDatabaseManager(SQLiteDatabaseManager):
 
         Returns:
             List of test executions with cycle information
+
         """
         try:
             with self.get_session() as session:
@@ -949,16 +969,16 @@ class PostgreSQLDatabaseManager(SQLiteDatabaseManager):
                     FROM test_executions e
                     JOIN test_cycles c ON e.cycle_id = c.id
                     WHERE e.project_key = :project_key
-                    """
+                    """,
                     ),
                     {"project_key": project_key},
                 )
                 return [dict(row) for row in result]
         except Exception as e:
-            logger.error(f"Error getting test executions with cycles: {str(e)}")
+            logger.error(f"Error getting test executions with cycles: {e!s}")
             return []
 
-    def get_test_cases_with_custom_fields(self, project_key: str) -> List[Dict[str, Any]]:
+    def get_test_cases_with_custom_fields(self, project_key: str) -> list[dict[str, Any]]:
         """
         Get test cases with their custom fields.
 
@@ -967,6 +987,7 @@ class PostgreSQLDatabaseManager(SQLiteDatabaseManager):
 
         Returns:
             List of test cases with custom fields
+
         """
         try:
             with self.get_session() as session:
@@ -978,7 +999,7 @@ class PostgreSQLDatabaseManager(SQLiteDatabaseManager):
                     FROM test_cases
                     WHERE project_key = :project_key
                     AND custom_fields IS NOT NULL
-                    """
+                    """,
                     ),
                     {"project_key": project_key},
                 )
@@ -1006,10 +1027,10 @@ class PostgreSQLDatabaseManager(SQLiteDatabaseManager):
 
                 return test_cases
         except Exception as e:
-            logger.error(f"Error getting test cases with custom fields: {str(e)}")
+            logger.error(f"Error getting test cases with custom fields: {e!s}")
             return []
 
-    def get_qtest_custom_fields(self, qtest_testcase_id: str) -> Dict[str, Any]:
+    def get_qtest_custom_fields(self, qtest_testcase_id: str) -> dict[str, Any]:
         """
         Get custom fields for a qTest test case.
 
@@ -1018,12 +1039,13 @@ class PostgreSQLDatabaseManager(SQLiteDatabaseManager):
 
         Returns:
             Dictionary of custom field name-value pairs
+
         """
         # This would access the qTest table in a real implementation
         # For now, just return an empty dict as a placeholder
         return {}
 
-    def get_entities_with_attachments(self, project_key: str) -> List[Dict[str, Any]]:
+    def get_entities_with_attachments(self, project_key: str) -> list[dict[str, Any]]:
         """
         Get entities with their attachments.
 
@@ -1032,6 +1054,7 @@ class PostgreSQLDatabaseManager(SQLiteDatabaseManager):
 
         Returns:
             List of entities with attachment information
+
         """
         attachments_by_entity = {}
 
@@ -1045,7 +1068,7 @@ class PostgreSQLDatabaseManager(SQLiteDatabaseManager):
                     FROM test_cases
                     WHERE project_key = :project_key
                     AND attachments IS NOT NULL
-                    """
+                    """,
                     ),
                     {"project_key": project_key},
                 )
@@ -1074,7 +1097,7 @@ class PostgreSQLDatabaseManager(SQLiteDatabaseManager):
                     FROM test_executions
                     WHERE project_key = :project_key
                     AND attachments IS NOT NULL
-                    """
+                    """,
                     ),
                     {"project_key": project_key},
                 )
@@ -1103,7 +1126,7 @@ class PostgreSQLDatabaseManager(SQLiteDatabaseManager):
                     FROM test_cycles
                     WHERE project_key = :project_key
                     AND attachments IS NOT NULL
-                    """
+                    """,
                     ),
                     {"project_key": project_key},
                 )
@@ -1126,10 +1149,10 @@ class PostgreSQLDatabaseManager(SQLiteDatabaseManager):
 
                 return list(attachments_by_entity.values())
         except Exception as e:
-            logger.error(f"Error getting entities with attachments: {str(e)}")
+            logger.error(f"Error getting entities with attachments: {e!s}")
             return []
 
-    def get_qtest_attachments(self, entity_type: str, qtest_entity_id: str) -> List[Dict[str, Any]]:
+    def get_qtest_attachments(self, entity_type: str, qtest_entity_id: str) -> list[dict[str, Any]]:
         """
         Get attachments for a qTest entity.
 
@@ -1139,6 +1162,7 @@ class PostgreSQLDatabaseManager(SQLiteDatabaseManager):
 
         Returns:
             List of attachments
+
         """
         # This would access the qTest table in a real implementation
         # For now, just return an empty list as a placeholder

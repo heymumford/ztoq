@@ -12,23 +12,21 @@ import json
 import os
 import sys
 from datetime import datetime
-from pathlib import Path
-from typing import Dict, List, Optional, Any, Union, Tuple
+from typing import Any
 
 import matplotlib
 
 matplotlib.use("Agg")  # Use non-interactive backend for headless environments
 import matplotlib.pyplot as plt
 import pandas as pd
-import seaborn as sns
 from rich.console import Console
 from rich.panel import Panel
 from rich.progress import Progress
 from rich.table import Table
 from sqlalchemy import create_engine, text
-from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.orm import sessionmaker
 
-from ztoq.core.db_models import Base, EntityBatchState, MigrationState
+from ztoq.core.db_models import EntityBatchState, MigrationState
 
 # Configure rich console
 console = Console()
@@ -38,22 +36,26 @@ class MigrationReportGenerator:
     """Class for generating migration reports from the database."""
 
     def __init__(self, db_url: str, project_key: str):
-        """Initialize the report generator.
+        """
+        Initialize the report generator.
 
         Args:
             db_url: SQLAlchemy database URL (e.g., 'sqlite:///migration.db')
             project_key: The Zephyr project key to generate the report for
+
         """
         self.db_url = db_url
         self.project_key = project_key
         self.engine = create_engine(db_url)
         self.Session = sessionmaker(bind=self.engine)
 
-    def generate_report(self) -> Dict[str, Any]:
-        """Generate a comprehensive migration report.
+    def generate_report(self) -> dict[str, Any]:
+        """
+        Generate a comprehensive migration report.
 
         Returns:
             Dict containing the complete migration report data
+
         """
         report = {
             "project_key": self.project_key,
@@ -70,7 +72,7 @@ class MigrationReportGenerator:
 
         return report
 
-    def _get_migration_state(self) -> Optional[Dict[str, Any]]:
+    def _get_migration_state(self) -> dict[str, Any] | None:
         """Get the current migration state."""
         with self.Session() as session:
             state = session.query(MigrationState).filter_by(project_key=self.project_key).first()
@@ -85,7 +87,7 @@ class MigrationReportGenerator:
                 }
             return None
 
-    def _get_entity_counts(self) -> Dict[str, Dict[str, int]]:
+    def _get_entity_counts(self) -> dict[str, dict[str, int]]:
         """Get counts of migrated entities."""
         entity_counts = {}
 
@@ -108,7 +110,7 @@ class MigrationReportGenerator:
                     FROM entity_mappings
                     WHERE project_key = :project_key
                     AND mapping_type = :mapping_type
-                    """
+                    """,
                         ),
                         {"project_key": self.project_key, "mapping_type": mapping_type},
                     ).scalar()
@@ -197,7 +199,7 @@ class MigrationReportGenerator:
 
         return entity_counts
 
-    def _get_batch_statistics(self) -> Dict[str, Dict[str, Union[int, float]]]:
+    def _get_batch_statistics(self) -> dict[str, dict[str, int | float]]:
         """Get statistics about batch processing."""
         batch_stats = {}
 
@@ -210,7 +212,7 @@ class MigrationReportGenerator:
                 SELECT DISTINCT entity_type
                 FROM entity_batch_state
                 WHERE project_key = :project_key
-                """
+                """,
                 ),
                 {"project_key": self.project_key},
             )
@@ -255,7 +257,7 @@ class MigrationReportGenerator:
 
         return batch_stats
 
-    def _get_failure_details(self) -> Dict[str, List[Dict[str, Any]]]:
+    def _get_failure_details(self) -> dict[str, list[dict[str, Any]]]:
         """Get details about batch processing failures."""
         failure_details = {}
 
@@ -282,12 +284,12 @@ class MigrationReportGenerator:
                         "updated_at": batch.last_updated.isoformat()
                         if batch.last_updated
                         else None,
-                    }
+                    },
                 )
 
         return failure_details
 
-    def _get_timing_info(self) -> Dict[str, Union[float, str]]:
+    def _get_timing_info(self) -> dict[str, float | str]:
         """Get timing information about the migration."""
         timing_info = {}
 
@@ -301,7 +303,7 @@ class MigrationReportGenerator:
                     .filter(
                         EntityBatchState.project_key == self.project_key,
                         EntityBatchState.entity_type.in_(
-                            ["folders", "test_cases", "test_cycles", "test_executions"]
+                            ["folders", "test_cases", "test_cycles", "test_executions"],
                         ),
                     )
                     .all()
@@ -316,7 +318,7 @@ class MigrationReportGenerator:
                                 "transformed_test_cases",
                                 "transformed_test_cycles",
                                 "transformed_test_executions",
-                            ]
+                            ],
                         ),
                     )
                     .all()
@@ -327,7 +329,7 @@ class MigrationReportGenerator:
                     .filter(
                         EntityBatchState.project_key == self.project_key,
                         EntityBatchState.entity_type.in_(
-                            ["loaded_test_cases", "loaded_test_cycles", "loaded_test_executions"]
+                            ["loaded_test_cases", "loaded_test_cycles", "loaded_test_executions"],
                         ),
                     )
                     .all()
@@ -344,7 +346,7 @@ class MigrationReportGenerator:
                         extraction_seconds = (extraction_end - extraction_start).total_seconds()
                         timing_info["extraction_seconds"] = extraction_seconds
                         timing_info["extraction_formatted"] = self._format_duration(
-                            extraction_seconds
+                            extraction_seconds,
                         )
 
                 # Calculate transformation time
@@ -360,7 +362,7 @@ class MigrationReportGenerator:
                         transform_seconds = (transform_end - transform_start).total_seconds()
                         timing_info["transformation_seconds"] = transform_seconds
                         timing_info["transformation_formatted"] = self._format_duration(
-                            transform_seconds
+                            transform_seconds,
                         )
 
                 # Calculate loading time
@@ -387,16 +389,18 @@ class MigrationReportGenerator:
                         total_seconds = (total_end - total_start).total_seconds()
                         timing_info["total_elapsed_seconds"] = total_seconds
                         timing_info["total_elapsed_formatted"] = self._format_duration(
-                            total_seconds
+                            total_seconds,
                         )
 
         return timing_info
 
-    def _get_validation_statistics(self) -> Dict[str, Any]:
-        """Get statistics about validation issues.
+    def _get_validation_statistics(self) -> dict[str, Any]:
+        """
+        Get statistics about validation issues.
 
         Returns:
             Dictionary containing validation issue statistics
+
         """
         validation_stats = {
             "issues_by_level": {},
@@ -422,8 +426,8 @@ class MigrationReportGenerator:
                     UNION
                     SELECT tablename FROM pg_catalog.pg_tables
                     WHERE schemaname='public' AND tablename='validation_issues'
-                    """
-                    )
+                    """,
+                    ),
                 )
 
                 for row in result:
@@ -441,7 +445,7 @@ class MigrationReportGenerator:
                     SELECT COUNT(*)
                     FROM validation_issues
                     WHERE project_key = :project_key AND resolved = 0
-                    """
+                    """,
                         ),
                         {"project_key": self.project_key},
                     ).scalar()
@@ -458,7 +462,7 @@ class MigrationReportGenerator:
                     FROM validation_issues
                     WHERE project_key = :project_key AND resolved = 0
                     GROUP BY level
-                    """
+                    """,
                     ),
                     {"project_key": self.project_key},
                 ).fetchall()
@@ -487,7 +491,7 @@ class MigrationReportGenerator:
                     FROM validation_issues
                     WHERE project_key = :project_key AND resolved = 0
                     GROUP BY scope
-                    """
+                    """,
                     ),
                     {"project_key": self.project_key},
                 ).fetchall()
@@ -503,7 +507,7 @@ class MigrationReportGenerator:
                     FROM validation_issues
                     WHERE project_key = :project_key AND resolved = 0
                     GROUP BY phase
-                    """
+                    """,
                     ),
                     {"project_key": self.project_key},
                 ).fetchall()
@@ -513,19 +517,21 @@ class MigrationReportGenerator:
 
             except Exception as e:
                 console.print(
-                    f"[bold red]Error retrieving validation statistics:[/bold red] {str(e)}"
+                    f"[bold red]Error retrieving validation statistics:[/bold red] {e!s}",
                 )
 
         return validation_stats
 
-    def _get_recent_validation_issues(self, limit: int = 10) -> List[Dict[str, Any]]:
-        """Get recent validation issues.
+    def _get_recent_validation_issues(self, limit: int = 10) -> list[dict[str, Any]]:
+        """
+        Get recent validation issues.
 
         Args:
             limit: Maximum number of issues to return
 
         Returns:
             List of dictionaries containing validation issue details
+
         """
         issues = []
 
@@ -541,8 +547,8 @@ class MigrationReportGenerator:
                     UNION
                     SELECT tablename FROM pg_catalog.pg_tables
                     WHERE schemaname='public' AND tablename='validation_issues'
-                    """
-                    )
+                    """,
+                    ),
                 )
 
                 for row in result:
@@ -562,7 +568,7 @@ class MigrationReportGenerator:
                     AND resolved = 0
                     ORDER BY created_on DESC
                     LIMIT :limit
-                    """
+                    """,
                     ),
                     {"project_key": self.project_key, "limit": limit},
                 ).fetchall()
@@ -588,15 +594,15 @@ class MigrationReportGenerator:
                             if isinstance(issue.created_on, str)
                             else issue.created_on.isoformat(),
                             "context": context,
-                        }
+                        },
                     )
 
             except Exception as e:
-                console.print(f"[bold red]Error retrieving validation issues:[/bold red] {str(e)}")
+                console.print(f"[bold red]Error retrieving validation issues:[/bold red] {e!s}")
 
         return issues
 
-    def _get_performance_metrics(self) -> Dict[str, Dict[str, float]]:
+    def _get_performance_metrics(self) -> dict[str, dict[str, float]]:
         """Get performance metrics for different entity types."""
         performance_metrics = {}
         timing_info = self._get_timing_info()
@@ -657,16 +663,17 @@ class MigrationReportGenerator:
 
         if hours > 0:
             return f"{int(hours)}h {int(minutes)}m {int(seconds)}s"
-        elif minutes > 0:
+        if minutes > 0:
             return f"{int(minutes)}m {int(seconds)}s"
-        else:
-            return f"{int(seconds)}s"
+        return f"{int(seconds)}s"
 
-    def print_report(self, report: Optional[Dict[str, Any]] = None) -> None:
-        """Print a formatted report to the console.
+    def print_report(self, report: dict[str, Any] | None = None) -> None:
+        """
+        Print a formatted report to the console.
 
         Args:
             report: Optional report data. If not provided, it will be generated.
+
         """
         if report is None:
             report = self.generate_report()
@@ -683,7 +690,7 @@ class MigrationReportGenerator:
             state_table.add_column("Last Updated")
 
             state_table.add_row(
-                "Extraction", self._format_status(state["extraction_status"]), state["updated_at"]
+                "Extraction", self._format_status(state["extraction_status"]), state["updated_at"],
             )
             state_table.add_row(
                 "Transformation",
@@ -691,7 +698,7 @@ class MigrationReportGenerator:
                 state["updated_at"],
             )
             state_table.add_row(
-                "Loading", self._format_status(state["loading_status"]), state["updated_at"]
+                "Loading", self._format_status(state["loading_status"]), state["updated_at"],
             )
 
             console.print(state_table)
@@ -773,11 +780,11 @@ class MigrationReportGenerator:
 
             timing_table.add_row("Extraction", timing_info.get("extraction_formatted", "N/A"))
             timing_table.add_row(
-                "Transformation", timing_info.get("transformation_formatted", "N/A")
+                "Transformation", timing_info.get("transformation_formatted", "N/A"),
             )
             timing_table.add_row("Loading", timing_info.get("loading_formatted", "N/A"))
             timing_table.add_row(
-                "Total Migration", timing_info.get("total_elapsed_formatted", "N/A")
+                "Total Migration", timing_info.get("total_elapsed_formatted", "N/A"),
             )
 
             console.print(timing_table)
@@ -907,7 +914,7 @@ class MigrationReportGenerator:
             for entity_type, failures in failure_details.items():
                 if failures:
                     console.print(
-                        f"[bold]{entity_type.replace('_', ' ').title()}[/bold]: {len(failures)} failed batches"
+                        f"[bold]{entity_type.replace('_', ' ').title()}[/bold]: {len(failures)} failed batches",
                     )
 
                     for i, failure in enumerate(failures[:3]):  # Show only first 3 failures
@@ -936,29 +943,30 @@ class MigrationReportGenerator:
         # Show time taken
         if "total_elapsed_formatted" in timing_info:
             console.print(
-                f"Total Migration Time: [bold]{timing_info['total_elapsed_formatted']}[/bold]"
+                f"Total Migration Time: [bold]{timing_info['total_elapsed_formatted']}[/bold]",
             )
 
-    def _format_status(self, status: Optional[str]) -> str:
+    def _format_status(self, status: str | None) -> str:
         """Format the status with color."""
         if not status:
             return "[yellow]Not Started[/yellow]"
 
         if status == "completed":
             return "[green]Completed[/green]"
-        elif status == "in_progress":
+        if status == "in_progress":
             return "[blue]In Progress[/blue]"
-        elif status == "failed":
+        if status == "failed":
             return "[red]Failed[/red]"
-        else:
-            return status.replace("_", " ").title()
+        return status.replace("_", " ").title()
 
-    def save_report_html(self, filename: str, report: Optional[Dict[str, Any]] = None) -> None:
-        """Save the report as an HTML file with visualizations.
+    def save_report_html(self, filename: str, report: dict[str, Any] | None = None) -> None:
+        """
+        Save the report as an HTML file with visualizations.
 
         Args:
             filename: The path to save the HTML report
             report: Optional report data. If not provided, it will be generated.
+
         """
         if report is None:
             report = self.generate_report()
@@ -1380,8 +1388,9 @@ class MigrationReportGenerator:
 
         console.print(f"HTML report saved to [bold]{filename}[/bold]")
 
-    def _generate_visualizations(self, report: Dict[str, Any], output_dir: str) -> str:
-        """Generate data visualizations for the report.
+    def _generate_visualizations(self, report: dict[str, Any], output_dir: str) -> str:
+        """
+        Generate data visualizations for the report.
 
         Args:
             report: The report data
@@ -1389,6 +1398,7 @@ class MigrationReportGenerator:
 
         Returns:
             HTML fragment with embedded visualizations
+
         """
         # Create directory for charts if it doesn't exist
         charts_dir = os.path.join(output_dir, "charts")
@@ -1436,7 +1446,7 @@ class MigrationReportGenerator:
                     "Source": source_count,
                     "Transformed": transformed_count,
                     "Loaded": loaded_count,
-                }
+                },
             )
 
         if progress_data:
@@ -1455,12 +1465,12 @@ class MigrationReportGenerator:
 
             if "extraction_seconds" in timing_info:
                 timing_data.append(
-                    {"Phase": "Extraction", "Seconds": timing_info["extraction_seconds"]}
+                    {"Phase": "Extraction", "Seconds": timing_info["extraction_seconds"]},
                 )
 
             if "transformation_seconds" in timing_info:
                 timing_data.append(
-                    {"Phase": "Transformation", "Seconds": timing_info["transformation_seconds"]}
+                    {"Phase": "Transformation", "Seconds": timing_info["transformation_seconds"]},
                 )
 
             if "loading_seconds" in timing_info:
@@ -1489,7 +1499,7 @@ class MigrationReportGenerator:
                         "Completed": stats["completed_batches"],
                         "Failed": stats["failed_batches"],
                         "Pending": stats["pending_batches"],
-                    }
+                    },
                 )
 
             if batch_data:
@@ -1515,7 +1525,7 @@ class MigrationReportGenerator:
                             "Phase": phase.title(),
                             "Entities/Second": metrics["entities_per_second"],
                             "Entities/Minute": metrics["entities_per_minute"],
-                        }
+                        },
                     )
 
             if perf_data:
@@ -1530,8 +1540,9 @@ class MigrationReportGenerator:
         charts_html += "</div>"
         return charts_html
 
-    def _create_progress_chart(self, data: List[Dict[str, Any]], output_dir: str) -> str:
-        """Create a progress bar chart showing migration progress.
+    def _create_progress_chart(self, data: list[dict[str, Any]], output_dir: str) -> str:
+        """
+        Create a progress bar chart showing migration progress.
 
         Args:
             data: List of dictionaries with entity type and counts
@@ -1539,6 +1550,7 @@ class MigrationReportGenerator:
 
         Returns:
             Relative path to the chart image
+
         """
         df = pd.DataFrame(data)
 
@@ -1560,7 +1572,7 @@ class MigrationReportGenerator:
 
         ax.barh(x, df["Transformed %"], bar_width, label="Transformed", color="skyblue")
         ax.barh(
-            [i + bar_width for i in x], df["Loaded %"], bar_width, label="Loaded", color="orange"
+            [i + bar_width for i in x], df["Loaded %"], bar_width, label="Loaded", color="orange",
         )
 
         # Customize the chart
@@ -1587,8 +1599,9 @@ class MigrationReportGenerator:
 
         return os.path.join("charts", "progress_chart.png")
 
-    def _create_timing_chart(self, data: List[Dict[str, Any]], output_dir: str) -> str:
-        """Create a bar chart showing timing information.
+    def _create_timing_chart(self, data: list[dict[str, Any]], output_dir: str) -> str:
+        """
+        Create a bar chart showing timing information.
 
         Args:
             data: List of dictionaries with phase and timing data
@@ -1596,6 +1609,7 @@ class MigrationReportGenerator:
 
         Returns:
             Relative path to the chart image
+
         """
         df = pd.DataFrame(data)
 
@@ -1630,8 +1644,9 @@ class MigrationReportGenerator:
 
         return os.path.join("charts", "timing_chart.png")
 
-    def _create_batch_status_chart(self, data: List[Dict[str, Any]], output_dir: str) -> str:
-        """Create a stacked bar chart showing batch status.
+    def _create_batch_status_chart(self, data: list[dict[str, Any]], output_dir: str) -> str:
+        """
+        Create a stacked bar chart showing batch status.
 
         Args:
             data: List of dictionaries with process type and batch status counts
@@ -1639,6 +1654,7 @@ class MigrationReportGenerator:
 
         Returns:
             Relative path to the chart image
+
         """
         df = pd.DataFrame(data)
 
@@ -1661,7 +1677,7 @@ class MigrationReportGenerator:
         ax.legend(loc="best")
 
         # Add count labels
-        for i, (comp, fail, pend) in enumerate(zip(completed, failed, pending)):
+        for i, (comp, fail, pend) in enumerate(zip(completed, failed, pending, strict=False)):
             total = comp + fail + pend
             if total > 0:
                 ax.annotate(
@@ -1681,8 +1697,9 @@ class MigrationReportGenerator:
 
         return os.path.join("charts", "batch_status_chart.png")
 
-    def _create_validation_chart(self, validation_stats: Dict[str, Any], output_dir: str) -> str:
-        """Create a pie chart showing validation issues by level.
+    def _create_validation_chart(self, validation_stats: dict[str, Any], output_dir: str) -> str:
+        """
+        Create a pie chart showing validation issues by level.
 
         Args:
             validation_stats: Dictionary with validation statistics
@@ -1690,6 +1707,7 @@ class MigrationReportGenerator:
 
         Returns:
             Relative path to the chart image
+
         """
         # Prepare data
         levels = ["critical", "error", "warning", "info"]
@@ -1757,8 +1775,9 @@ class MigrationReportGenerator:
 
         return os.path.join("charts", "validation_chart.png")
 
-    def _create_performance_chart(self, data: List[Dict[str, Any]], output_dir: str) -> str:
-        """Create a bar chart showing performance metrics.
+    def _create_performance_chart(self, data: list[dict[str, Any]], output_dir: str) -> str:
+        """
+        Create a bar chart showing performance metrics.
 
         Args:
             data: List of dictionaries with performance metrics by phase
@@ -1766,6 +1785,7 @@ class MigrationReportGenerator:
 
         Returns:
             Relative path to the chart image
+
         """
         df = pd.DataFrame(data)
 
@@ -1800,12 +1820,14 @@ class MigrationReportGenerator:
 
         return os.path.join("charts", "performance_chart.png")
 
-    def save_report_json(self, filename: str, report: Optional[Dict[str, Any]] = None) -> None:
-        """Save the report as a JSON file.
+    def save_report_json(self, filename: str, report: dict[str, Any] | None = None) -> None:
+        """
+        Save the report as a JSON file.
 
         Args:
             filename: The path to save the JSON report
             report: Optional report data. If not provided, it will be generated.
+
         """
         if report is None:
             report = self.generate_report()
@@ -1820,12 +1842,14 @@ class MigrationReportGenerator:
 
         console.print(f"JSON report saved to [bold]{filename}[/bold]")
 
-    def save_report_csv(self, filename: str, report: Optional[Dict[str, Any]] = None) -> None:
-        """Save the entity counts and batch statistics as CSV files.
+    def save_report_csv(self, filename: str, report: dict[str, Any] | None = None) -> None:
+        """
+        Save the entity counts and batch statistics as CSV files.
 
         Args:
             filename: Base filename for CSV reports (without extension)
             report: Optional report data. If not provided, it will be generated.
+
         """
         if report is None:
             report = self.generate_report()
@@ -1871,7 +1895,7 @@ class MigrationReportGenerator:
                     "Transformed Count": transformed_count,
                     "Loaded Count": loaded_count,
                     "Success Rate (%)": success_rate,
-                }
+                },
             )
 
         # Save entity counts
@@ -1895,7 +1919,7 @@ class MigrationReportGenerator:
                     "Total Items": stats["total_items"],
                     "Processed Items": stats["processed_items"],
                     "Completion (%)": stats["completion_percentage"],
-                }
+                },
             )
 
         # Save batch statistics
@@ -1905,14 +1929,15 @@ class MigrationReportGenerator:
 
 def parse_db_url(
     db_type: str,
-    host: Optional[str] = None,
-    port: Optional[int] = None,
-    name: Optional[str] = None,
-    user: Optional[str] = None,
-    password: Optional[str] = None,
-    path: Optional[str] = None,
+    host: str | None = None,
+    port: int | None = None,
+    name: str | None = None,
+    user: str | None = None,
+    password: str | None = None,
+    path: str | None = None,
 ) -> str:
-    """Parse database connection parameters into a SQLAlchemy URL.
+    """
+    Parse database connection parameters into a SQLAlchemy URL.
 
     Args:
         db_type: Database type (sqlite or postgresql)
@@ -1925,18 +1950,18 @@ def parse_db_url(
 
     Returns:
         SQLAlchemy database URL
+
     """
     if db_type == "sqlite":
         if not path:
             path = "ztoq_data.db"
         return f"sqlite:///{path}"
-    elif db_type == "postgresql":
+    if db_type == "postgresql":
         if not all([host, name, user, password]):
             raise ValueError("PostgreSQL connection requires host, name, user, and password")
         port_str = f":{port}" if port else ""
         return f"postgresql://{user}:{password}@{host}{port_str}/{name}"
-    else:
-        raise ValueError(f"Unsupported database type: {db_type}")
+    raise ValueError(f"Unsupported database type: {db_type}")
 
 
 def main() -> None:
@@ -1966,7 +1991,7 @@ def main() -> None:
         help="Output format for the report",
     )
     parser.add_argument(
-        "--output-file", help="Output file path (required for html, json, csv formats)"
+        "--output-file", help="Output file path (required for html, json, csv formats)",
     )
 
     args = parser.parse_args()
@@ -1993,13 +2018,13 @@ def main() -> None:
             path=args.db_path,
         )
     except ValueError as e:
-        console.print(f"[bold red]Error:[/bold red] {str(e)}")
+        console.print(f"[bold red]Error:[/bold red] {e!s}")
         sys.exit(1)
 
     # Check output file is provided for file-based outputs
     if args.output_format in ["html", "json", "csv"] and not args.output_file:
         console.print(
-            "[bold red]Error:[/bold red] --output-file is required for html, json, and csv formats"
+            "[bold red]Error:[/bold red] --output-file is required for html, json, and csv formats",
         )
         sys.exit(1)
 
@@ -2035,7 +2060,7 @@ def main() -> None:
             report_generator.save_report_csv(csv_file, report)
 
     except Exception as e:
-        console.print(f"[bold red]Error generating report:[/bold red] {str(e)}")
+        console.print(f"[bold red]Error generating report:[/bold red] {e!s}")
         sys.exit(1)
 
 

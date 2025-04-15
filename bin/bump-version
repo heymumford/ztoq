@@ -91,7 +91,7 @@ git add pyproject.toml poetry.lock ztoq/__init__.py docs/sphinx/source/conf.py
 if [[ -n $(git status --porcelain | grep -v "^[AM] .*\(pyproject.toml\|poetry.lock\|ztoq/__init__.py\|docs/sphinx/source/conf.py\)") ]]; then
     echo "Additional files were modified by version synchronization."
     git status --porcelain
-    
+
     read -p "Do you want to stage these files too? [y/N] " -n 1 -r
     echo
     if [[ $REPLY =~ ^[Yy]$ ]]; then

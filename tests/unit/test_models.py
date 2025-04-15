@@ -6,8 +6,10 @@ See LICENSE file for details.
 
 import base64
 from datetime import datetime
+
 import pytest
 from pydantic import ValidationError
+
 from ztoq.models import (
     Attachment,
     Case,
@@ -20,7 +22,7 @@ from ztoq.models import (
 )
 
 
-@pytest.mark.unit()
+@pytest.mark.unit
 class TestModels:
     def test_zephyr_config_validation(self):
         """Test ZephyrConfig validation."""
@@ -109,7 +111,7 @@ class TestModels:
 
         # Create steps with attachments
         step_attachment = Attachment(
-            id="att1", filename="screenshot.png", contentType="image/png", size=1024
+            id="att1", filename="screenshot.png", contentType="image/png", size=1024,
         )
 
         steps = [
@@ -118,7 +120,7 @@ class TestModels:
                 description="Step 1",
                 expectedResult="Result 1",
                 attachments=[step_attachment],
-            )
+            ),
         ]
 
         # Create different types of custom fields
@@ -208,7 +210,7 @@ class TestModels:
         # Test binary data handling
         test_data = b"This is test binary data"
         binary_attachment = Attachment.from_binary(
-            filename="test.bin", content_type="application/octet-stream", binary_data=test_data
+            filename="test.bin", content_type="application/octet-stream", binary_data=test_data,
         )
 
         assert binary_attachment.filename == "test.bin"

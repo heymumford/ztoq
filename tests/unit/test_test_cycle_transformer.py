@@ -11,21 +11,17 @@ These tests verify the transformation of Zephyr test cycles to qTest test cycles
 field mappings, validation rules, error handling, and special case processing.
 """
 
-import pytest
 from datetime import datetime
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
-from ztoq.entity_mapping import EntityType, ValidationAction
+import pytest
+
+from ztoq.models import (
+    CustomFieldType,
+)
 from ztoq.test_cycle_transformer import (
     TestCycleTransformer,
-    TestCycleTransformError,
     TransformationResult,
-)
-from ztoq.models import (
-    CycleInfo as TestCycle,
-    Attachment,
-    CustomField,
-    CustomFieldType,
 )
 
 
@@ -208,7 +204,7 @@ class TestTestCycleTransformer:
                 "contentType": "application/pdf",
                 "size": 1024,
                 "content": b"fake-binary-content",
-            }
+            },
         ]
 
         # Act
@@ -395,7 +391,7 @@ class TestTestCycleTransformer:
         """Test handling of database errors during folder mapping."""
         # Setup - make the DB manager raise an exception
         custom_transformer.db_manager.get_entity_mapping.side_effect = Exception(
-            "Database connection error"
+            "Database connection error",
         )
 
         # Act

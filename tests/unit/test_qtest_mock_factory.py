@@ -4,8 +4,10 @@ This file is part of ZTOQ, licensed under the MIT License.
 See LICENSE file for details.
 """
 
-import pytest
 from datetime import datetime, timedelta
+
+import pytest
+
 from ztoq.qtest_mock_factory import (
     MockFactory,
     QTestAttachmentFactory,
@@ -36,24 +38,18 @@ from ztoq.qtest_mock_factory import (
     QTestTestRunFactory,
 )
 from ztoq.qtest_models import (
-    QTestTestRun,
-    QTestTestLog,
-    QTestPulseEventType,
-    QTestPulseActionType,
-    QTestParameter,
-    QTestParameterValue,
-    QTestField,
-    QTestAutomationSettings,
-    QTestCustomField,
-    QTestLink,
-    QTestPaginatedResponse,
     QTestConfig,
+    QTestField,
+    QTestPaginatedResponse,
+    QTestPulseActionType,
     QTestPulseCondition,
-    QTestPulseActionParameter,
+    QTestPulseEventType,
+    QTestTestLog,
+    QTestTestRun,
 )
 
 
-@pytest.mark.unit()
+@pytest.mark.unit
 class TestQTestMockFactory:
     """Test suite for the qTest mock factory implementations."""
 
@@ -364,7 +360,7 @@ class TestQTestMockFactory:
 
         # Test with specific event type
         specific_trigger = QTestPulseTriggerFactory.create(
-            event_type=QTestPulseEventType.TEST_CASE_CREATED
+            event_type=QTestPulseEventType.TEST_CASE_CREATED,
         )
         assert specific_trigger.event_type == QTestPulseEventType.TEST_CASE_CREATED
 
@@ -384,7 +380,7 @@ class TestQTestMockFactory:
 
         # Test single action creation with email action
         action = QTestPulseActionFactory.create(
-            action_type=QTestPulseActionType.SEND_MAIL, parameters=email_parameters
+            action_type=QTestPulseActionType.SEND_MAIL, parameters=email_parameters,
         )
         assert action.id is not None
         assert action.name is not None
@@ -398,14 +394,14 @@ class TestQTestMockFactory:
         # Webhook parameters
         webhook_parameters = [
             QTestPulseActionParameterFactory.create(
-                name="url", value="https://example.com/webhook"
+                name="url", value="https://example.com/webhook",
             ),
             QTestPulseActionParameterFactory.create(name="method", value="POST"),
         ]
 
         # Test webhook action
         webhook_action = QTestPulseActionFactory.create(
-            action_type=QTestPulseActionType.WEBHOOK, parameters=webhook_parameters
+            action_type=QTestPulseActionType.WEBHOOK, parameters=webhook_parameters,
         )
         assert webhook_action.action_type == QTestPulseActionType.WEBHOOK
         assert len(webhook_action.parameters) == 2
@@ -449,7 +445,7 @@ class TestQTestMockFactory:
     def test_pulse_rule_factory(self):
         """Test the QTestPulseRuleFactory."""
         # Create trigger and action for test
-        from ztoq.qtest_models import QTestPulseEventType, QTestPulseActionType
+        from ztoq.qtest_models import QTestPulseActionType, QTestPulseEventType
 
         trigger = QTestPulseTriggerFactory.create(event_type=QTestPulseEventType.TEST_CASE_CREATED)
         action = QTestPulseActionFactory.create(action_type=QTestPulseActionType.CREATE_DEFECT)
@@ -469,7 +465,7 @@ class TestQTestMockFactory:
         # Test batch creation with trigger_id and action_id
         project_id = QTestProjectFactory.create().id
         rules = QTestPulseRuleFactory.create_batch(
-            3, trigger_id=trigger.id, action_id=action.id, project_id=project_id
+            3, trigger_id=trigger.id, action_id=action.id, project_id=project_id,
         )
         assert len(rules) == 3
         assert all(r.id is not None for r in rules)
@@ -532,7 +528,7 @@ class TestQTestMockFactory:
         # Test creation with custom items and pagination
         custom_items = [{"id": 1, "name": "Item 1"}, {"id": 2, "name": "Item 2"}]
         custom_response = QTestPaginatedResponseFactory.create(
-            items=custom_items, page=2, page_size=10, total=25, is_last=False
+            items=custom_items, page=2, page_size=10, total=25, is_last=False,
         )
         assert custom_response.items == custom_items
         assert custom_response.page == 2
@@ -679,7 +675,7 @@ class TestQTestMockFactory:
 
         # Test custom condition creation
         custom_condition = QTestPulseConditionFactory.create(
-            field="status", operator="equals", value="Failed", value_type="string"
+            field="status", operator="equals", value="Failed", value_type="string",
         )
         assert custom_condition.field == "status"
         assert custom_condition.operator == "equals"
@@ -727,7 +723,7 @@ class TestQTestMockFactory:
 
         # Test custom parameter creation
         custom_param = QTestPulseActionParameterFactory.create(
-            name="custom_param", value={"key": "value"}, value_type="object"
+            name="custom_param", value={"key": "value"}, value_type="object",
         )
         assert custom_param.name == "custom_param"
         assert custom_param.value == {"key": "value"}
@@ -735,14 +731,14 @@ class TestQTestMockFactory:
 
         # Test parameter handling for webhook action
         webhook_param = QTestPulseActionParameterFactory.create(
-            name="url", value="https://example.com/webhook", value_type="string"
+            name="url", value="https://example.com/webhook", value_type="string",
         )
         assert webhook_param.name == "url"
         assert webhook_param.value == "https://example.com/webhook"
 
         # Test handling special characters in string values
         special_param = QTestPulseActionParameterFactory.create(
-            name="template", value="{{testCase.name}} - {{testRun.status}}", value_type="string"
+            name="template", value="{{testCase.name}} - {{testRun.status}}", value_type="string",
         )
         assert "{{testCase.name}}" in special_param.value
         assert "{{testRun.status}}" in special_param.value
@@ -765,7 +761,7 @@ class TestQTestMockFactory:
         # Test project with end date before start date should fail validation
         with pytest.raises(ValueError, match="start_date must be before end_date"):
             QTestProjectFactory.create(
-                start_date=datetime.now() + timedelta(days=10), end_date=datetime.now()
+                start_date=datetime.now() + timedelta(days=10), end_date=datetime.now(),
             )
 
         # Test test case factory with multiple steps but manual order
@@ -810,7 +806,7 @@ class TestQTestMockFactory:
 
         # Test equals condition with string value
         equals_condition = QTestPulseConditionFactory.create(
-            operator="equals", field="status", value="Passed"
+            operator="equals", field="status", value="Passed",
         )
         assert equals_condition.operator == "equals"
         assert equals_condition.field == "status"
@@ -818,7 +814,7 @@ class TestQTestMockFactory:
 
         # Test numeric comparison with correct value type
         number_condition = QTestPulseConditionFactory.create(
-            operator="greater_than", field="priority", value=2, value_type="number"
+            operator="greater_than", field="priority", value=2, value_type="number",
         )
         assert number_condition.operator == "greater_than"
         assert isinstance(number_condition.value, int)
@@ -864,7 +860,7 @@ class TestQTestMockFactory:
         # Create test runs in the cycle
         for i in range(3):
             run = QTestTestRunFactory.create(
-                test_cycle_id=test_cycle.id, test_case_id=test_case.id, project_id=project.id
+                test_cycle_id=test_cycle.id, test_case_id=test_case.id, project_id=project.id,
             )
             test_runs.append(run)
 
@@ -884,7 +880,7 @@ class TestQTestMockFactory:
         # Test pagination with custom items
         custom_items = [{"id": i, "name": f"Item {i}"} for i in range(5)]
         paginated = QTestPaginatedResponseFactory.create(
-            items=custom_items, page=2, page_size=5, total=20, is_last=False
+            items=custom_items, page=2, page_size=5, total=20, is_last=False,
         )
 
         assert isinstance(paginated, QTestPaginatedResponse)
@@ -897,7 +893,7 @@ class TestQTestMockFactory:
 
         # Test pagination for last page
         last_page = QTestPaginatedResponseFactory.create(
-            page=4, page_size=5, total=20, is_last=True
+            page=4, page_size=5, total=20, is_last=True,
         )
         assert last_page.is_last is True
         assert last_page.offset == 15
@@ -982,13 +978,13 @@ class TestQTestMockFactory:
         """Test the attachment factory."""
         # Test creation of attachment dictionaries (not models)
         png_attachment = QTestAttachmentFactory.create(
-            contentType="image/png", name="screenshot.png"
+            contentType="image/png", name="screenshot.png",
         )
         assert png_attachment["contentType"] == "image/png"
         assert png_attachment["name"] == "screenshot.png"
 
         pdf_attachment = QTestAttachmentFactory.create(
-            contentType="application/pdf", name="report.pdf"
+            contentType="application/pdf", name="report.pdf",
         )
         assert pdf_attachment["contentType"] == "application/pdf"
         assert pdf_attachment["name"] == "report.pdf"
@@ -1056,7 +1052,7 @@ class TestQTestMockFactory:
         for i in range(5):
             steps = QTestStepFactory.create_batch(3)
             test_case = QTestTestCaseFactory.create(
-                name=f"Test Case {i+1}", module_id=module.id, test_steps=steps
+                name=f"Test Case {i+1}", module_id=module.id, test_steps=steps,
             )
             test_cases.append(test_case)
 
@@ -1089,8 +1085,8 @@ class TestQTestMockFactory:
             event_type=QTestPulseEventType.SCHEDULED,
             conditions=[
                 QTestPulseConditionFactory.create(
-                    field="schedule", operator="equals", value="0 0 * * *"  # Daily at midnight
-                )
+                    field="schedule", operator="equals", value="0 0 * * *",  # Daily at midnight
+                ),
             ],
         )
 
@@ -1101,7 +1097,7 @@ class TestQTestMockFactory:
         # Test creating webhook action
         webhook_parameters = [
             QTestPulseActionParameterFactory.create(
-                name="url", value="https://example.com/webhook"
+                name="url", value="https://example.com/webhook",
             ),
             QTestPulseActionParameterFactory.create(name="method", value="POST"),
             QTestPulseActionParameterFactory.create(
@@ -1120,7 +1116,7 @@ class TestQTestMockFactory:
         ]
 
         webhook_action = QTestPulseActionFactory.create(
-            action_type=QTestPulseActionType.WEBHOOK, parameters=webhook_parameters
+            action_type=QTestPulseActionType.WEBHOOK, parameters=webhook_parameters,
         )
 
         assert webhook_action.action_type == QTestPulseActionType.WEBHOOK
@@ -1135,14 +1131,14 @@ class TestQTestMockFactory:
             name="Test Run Failed Trigger",
             event_type=QTestPulseEventType.TEST_LOG_CREATED,
             conditions=[
-                QTestPulseConditionFactory.create(field="status", operator="equals", value="Failed")
+                QTestPulseConditionFactory.create(field="status", operator="equals", value="Failed"),
             ],
         )
 
         email_parameters = [
             QTestPulseActionParameterFactory.create(name="recipients", value="team@example.com"),
             QTestPulseActionParameterFactory.create(
-                name="subject", value="Test Failed: {{testCase.name}}"
+                name="subject", value="Test Failed: {{testCase.name}}",
             ),
             QTestPulseActionParameterFactory.create(
                 name="body",
@@ -1187,7 +1183,7 @@ class TestQTestMockFactory:
         # Test feature has consistent project ID
         project_id = MockFactory.random_id()
         feature_with_project = QTestScenarioFeatureFactory.create(
-            project_id=project_id, name="Feature with Project ID"
+            project_id=project_id, name="Feature with Project ID",
         )
         assert feature_with_project.project_id == project_id
 

@@ -14,11 +14,10 @@ entity mapping framework design but uses dictionaries for simplicity and testing
 
 import logging
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Union, TypeVar, Generic
 from datetime import datetime
+from typing import Any, Generic, TypeVar
 
 from ztoq.custom_field_mapping import get_default_field_mapper
-from ztoq.models import CustomFieldType
 
 logger = logging.getLogger("ztoq.test_cycle_transformer")
 
@@ -26,7 +25,6 @@ logger = logging.getLogger("ztoq.test_cycle_transformer")
 class TestCycleTransformError(Exception):
     """Exception raised when test cycle transformation fails."""
 
-    pass
 
 
 T = TypeVar("T")
@@ -44,13 +42,14 @@ class TransformationResult(Generic[T, U]):
         original_entity: The original entity
         errors: List of errors that occurred during transformation
         warnings: List of warnings that occurred during transformation
+
     """
 
     success: bool = True
-    transformed_entity: Optional[U] = None
-    original_entity: Optional[T] = None
-    errors: List[str] = field(default_factory=list)
-    warnings: List[str] = field(default_factory=list)
+    transformed_entity: U | None = None
+    original_entity: T | None = None
+    errors: list[str] = field(default_factory=list)
+    warnings: list[str] = field(default_factory=list)
 
     def add_error(self, error: str) -> None:
         """Add an error to the result and set success to False."""
@@ -86,6 +85,7 @@ class TestCycleTransformer:
             field_mapper: Optional custom field mapper
             strict_mode: Whether to use strict validation (raises errors instead of warnings)
             with_attachments: Whether to include attachments in the transformation
+
         """
         self.db_manager = db_manager
         self.field_mapper = field_mapper or get_default_field_mapper()
@@ -93,8 +93,8 @@ class TestCycleTransformer:
         self.with_attachments = with_attachments
 
     def transform(
-        self, test_cycle: Dict[str, Any]
-    ) -> TransformationResult[Dict[str, Any], Dict[str, Any]]:
+        self, test_cycle: dict[str, Any],
+    ) -> TransformationResult[dict[str, Any], dict[str, Any]]:
         """
         Transform a Zephyr test cycle to a qTest test cycle.
 
@@ -103,8 +103,9 @@ class TestCycleTransformer:
 
         Returns:
             TransformationResult containing the transformed test cycle and any errors/warnings
+
         """
-        result = TransformationResult[Dict[str, Any], Dict[str, Any]]()
+        result = TransformationResult[dict[str, Any], dict[str, Any]]()
         result.original_entity = test_cycle
 
         # Initialize qTest test cycle dict
@@ -131,7 +132,7 @@ class TestCycleTransformer:
 
         except Exception as e:
             # Catch any uncaught exceptions and add to errors
-            error_msg = f"Unexpected error during test cycle transformation: {str(e)}"
+            error_msg = f"Unexpected error during test cycle transformation: {e!s}"
             logger.error(error_msg, exc_info=True)
             result.add_error(error_msg)
 
@@ -139,8 +140,8 @@ class TestCycleTransformer:
 
     def _map_basic_fields(
         self,
-        test_cycle: Dict[str, Any],
-        qtest_test_cycle: Dict[str, Any],
+        test_cycle: dict[str, Any],
+        qtest_test_cycle: dict[str, Any],
         result: TransformationResult,
     ) -> None:
         """
@@ -150,6 +151,7 @@ class TestCycleTransformer:
             test_cycle: The Zephyr test cycle
             qtest_test_cycle: The qTest test cycle being built
             result: The transformation result object for tracking errors/warnings
+
         """
         # Name is required
         name = test_cycle.get("name")
@@ -177,8 +179,8 @@ class TestCycleTransformer:
 
     def _map_date_fields(
         self,
-        test_cycle: Dict[str, Any],
-        qtest_test_cycle: Dict[str, Any],
+        test_cycle: dict[str, Any],
+        qtest_test_cycle: dict[str, Any],
         result: TransformationResult,
     ) -> None:
         """
@@ -188,6 +190,7 @@ class TestCycleTransformer:
             test_cycle: The Zephyr test cycle
             qtest_test_cycle: The qTest test cycle being built
             result: The transformation result object for tracking errors/warnings
+
         """
         # Map start date
         start_date = test_cycle.get("startDate")
@@ -207,7 +210,7 @@ class TestCycleTransformer:
                     result.add_warning(warning_msg)
                     qtest_test_cycle["start_date"] = None
             except Exception as e:
-                warning_msg = f"Error parsing start date '{start_date}': {str(e)}"
+                warning_msg = f"Error parsing start date '{start_date}': {e!s}"
                 logger.warning(warning_msg)
                 result.add_warning(warning_msg)
                 qtest_test_cycle["start_date"] = None
@@ -232,7 +235,7 @@ class TestCycleTransformer:
                     result.add_warning(warning_msg)
                     qtest_test_cycle["end_date"] = None
             except Exception as e:
-                warning_msg = f"Error parsing end date '{end_date}': {str(e)}"
+                warning_msg = f"Error parsing end date '{end_date}': {e!s}"
                 logger.warning(warning_msg)
                 result.add_warning(warning_msg)
                 qtest_test_cycle["end_date"] = None
@@ -248,8 +251,8 @@ class TestCycleTransformer:
 
     def _map_custom_fields(
         self,
-        test_cycle: Dict[str, Any],
-        qtest_test_cycle: Dict[str, Any],
+        test_cycle: dict[str, Any],
+        qtest_test_cycle: dict[str, Any],
         result: TransformationResult,
     ) -> None:
         """
@@ -259,6 +262,7 @@ class TestCycleTransformer:
             test_cycle: The Zephyr test cycle
             qtest_test_cycle: The qTest test cycle being built
             result: The transformation result object for tracking errors/warnings
+
         """
         try:
             # Map test cycle custom fields
@@ -267,7 +271,7 @@ class TestCycleTransformer:
                 if qtest_custom_fields is None:
                     qtest_custom_fields = []
             except Exception as e:
-                error_msg = f"Error calling field mapper: {str(e)}"
+                error_msg = f"Error calling field mapper: {e!s}"
                 logger.warning(error_msg)
 
                 # In test_error_boundaries_with_exception, use error instead of warning
@@ -294,7 +298,7 @@ class TestCycleTransformer:
             qtest_test_cycle["properties"] = qtest_custom_fields
 
         except Exception as e:
-            error_msg = f"Error mapping custom fields: {str(e)}"
+            error_msg = f"Error mapping custom fields: {e!s}"
             logger.error(error_msg)
             if self.strict_mode:
                 result.add_error(error_msg)
@@ -305,8 +309,8 @@ class TestCycleTransformer:
 
     def _map_attachments(
         self,
-        test_cycle: Dict[str, Any],
-        qtest_test_cycle: Dict[str, Any],
+        test_cycle: dict[str, Any],
+        qtest_test_cycle: dict[str, Any],
         result: TransformationResult,
     ) -> None:
         """
@@ -316,6 +320,7 @@ class TestCycleTransformer:
             test_cycle: The Zephyr test cycle
             qtest_test_cycle: The qTest test cycle being built
             result: The transformation result object for tracking errors/warnings
+
         """
         attachments = test_cycle.get("attachments", [])
         if not attachments:
@@ -342,7 +347,7 @@ class TestCycleTransformer:
                 qtest_attachments.append(qtest_attachment)
 
             except Exception as e:
-                error_msg = f"Error mapping attachment {attachment.get('id', 'unknown')}: {str(e)}"
+                error_msg = f"Error mapping attachment {attachment.get('id', 'unknown')}: {e!s}"
                 logger.error(error_msg)
                 if self.strict_mode:
                     result.add_error(error_msg)
@@ -353,8 +358,8 @@ class TestCycleTransformer:
 
     def _map_folder_id(
         self,
-        test_cycle: Dict[str, Any],
-        qtest_test_cycle: Dict[str, Any],
+        test_cycle: dict[str, Any],
+        qtest_test_cycle: dict[str, Any],
         result: TransformationResult,
     ) -> None:
         """
@@ -364,6 +369,7 @@ class TestCycleTransformer:
             test_cycle: The Zephyr test cycle
             qtest_test_cycle: The qTest test cycle being built
             result: The transformation result object for tracking errors/warnings
+
         """
         folder_id = test_cycle.get("folder") or test_cycle.get("folderId")
 
@@ -386,7 +392,7 @@ class TestCycleTransformer:
 
                 # Look up module ID from folder mapping
                 mapping = self.db_manager.get_entity_mapping(
-                    project_key, "folder_to_module", folder_id
+                    project_key, "folder_to_module", folder_id,
                 )
 
                 if mapping and "target_id" in mapping:
@@ -398,7 +404,7 @@ class TestCycleTransformer:
                     qtest_test_cycle["parent_id"] = None
 
             except Exception as e:
-                error_msg = f"Error looking up module mapping: {str(e)}"
+                error_msg = f"Error looking up module mapping: {e!s}"
                 logger.error(error_msg)
                 if self.strict_mode:
                     result.add_error(error_msg)

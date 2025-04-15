@@ -1,10 +1,10 @@
 """Integration tests for Docker-based migration functionality."""
 import os
 import subprocess
-import time
 from pathlib import Path
+from unittest.mock import MagicMock, patch
+
 import pytest
-from unittest.mock import patch, MagicMock
 
 # Mark all tests in this module as docker integration tests
 pytestmark = [pytest.mark.integration, pytest.mark.docker]
@@ -34,14 +34,14 @@ class TestDockerMigration:
             "QTEST_BASE_URL=https://qtest.example.com\n"
             "QTEST_USERNAME=test_user\n"
             "QTEST_PASSWORD=test_password\n"
-            "QTEST_PROJECT_ID=12345\n"
+            "QTEST_PROJECT_ID=12345\n",
         )
 
         # Copy necessary Docker files to temp directory
         original_dir = Path(__file__).parent.parent.parent
 
         # Return paths for use in tests
-        yield {"test_dir": test_dir, "env_file": env_file, "original_dir": original_dir}
+        return {"test_dir": test_dir, "env_file": env_file, "original_dir": original_dir}
 
     @pytest.fixture
     def mock_docker_compose(self):

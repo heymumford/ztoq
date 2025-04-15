@@ -4,28 +4,28 @@ This file is part of ZTOQ, licensed under the MIT License.
 See LICENSE file for details.
 """
 
-import os
-import sys
-import json
-import logging
 import argparse
-import requests
-import urllib.parse
+import logging
+import os
 import socket
+import sys
+import urllib.parse
 from pathlib import Path
+
+import requests
 
 # Add the project root to the Python path to enable imports
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from ztoq.qtest_models import QTestConfig
 from ztoq.qtest_client import QTestClient
+from ztoq.qtest_models import QTestConfig
 
 # Set up logging
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    handlers=[logging.StreamHandler()]
+    handlers=[logging.StreamHandler()],
 )
 logger = logging.getLogger("qtest_diagnostic")
 
@@ -45,20 +45,19 @@ def check_environment_variables():
         if not value:
             missing.append(var)
             logger.error(f"❌ Missing required environment variable: {var}")
+        # Mask token for logging
+        elif "token" in var.lower():
+            masked_value = f"{value[:4]}{'*' * (len(value) - 8)}{value[-4:]}" if len(value) > 8 else "****"
+            logger.info(f"✅ Found {var}: {masked_value}")
         else:
-            # Mask token for logging
-            if 'token' in var.lower():
-                masked_value = f"{value[:4]}{'*' * (len(value) - 8)}{value[-4:]}" if len(value) > 8 else "****"
-                logger.info(f"✅ Found {var}: {masked_value}")
-            else:
-                logger.info(f"✅ Found {var}: {value}")
+            logger.info(f"✅ Found {var}: {value}")
 
     # Check optional variables
     for var in optional_vars:
         value = os.environ.get(var)
         if value:
             # Mask password for logging
-            if 'password' in var.lower():
+            if "password" in var.lower():
                 logger.info(f"✅ Found optional {var}: ********")
             else:
                 logger.info(f"✅ Found optional {var}: {value}")
@@ -116,19 +115,19 @@ def analyze_qtest_url(url):
     """Analyze a qTest URL and suggest alternatives if needed."""
     logger.info(f"Analyzing qTest URL: {url}")
 
-    if not url.startswith(('http://', 'https://')):
+    if not url.startswith(("http://", "https://")):
         url = f"https://{url}"
         logger.info(f"Added https:// prefix: {url}")
 
     parsed = urllib.parse.urlparse(url)
     domain = parsed.netloc
-    domain_parts = domain.split('.')
+    domain_parts = domain.split(".")
 
     logger.info(f"Domain parts: {domain_parts}")
 
     # Check for common qTest domain patterns
     if len(domain_parts) >= 2:
-        if domain_parts[-2].lower() == 'qtest' and domain_parts[-1].lower() == 'net':
+        if domain_parts[-2].lower() == "qtest" and domain_parts[-1].lower() == "net":
             company = domain_parts[0] if len(domain_parts) > 2 else ""
             logger.warning(f"❌ Found incorrect domain format: '{domain}'")
             logger.warning("The 'qtest.net' domain appears to be incorrect")
@@ -136,7 +135,7 @@ def analyze_qtest_url(url):
             logger.info(f"✓ Suggested domain: {correct_domain}")
             return [f"https://{correct_domain}"]
 
-        elif domain_parts[-2].lower() == 'qtestnet' and domain_parts[-1].lower() == 'com':
+        if domain_parts[-2].lower() == "qtestnet" and domain_parts[-1].lower() == "com":
             logger.info(f"✅ Domain appears to be using the correct SaaS format: {domain}")
             return []
 
@@ -158,7 +157,7 @@ def test_qtest_authentication(url, token, verify_ssl=True):
     """Test qTest authentication with token."""
     logger.info(f"Testing qTest authentication with token against: {url}")
 
-    if not url.startswith(('http://', 'https://')):
+    if not url.startswith(("http://", "https://")):
         url = f"https://{url}"
 
     # Clean up token (in case it already has a bearer prefix)
@@ -168,7 +167,7 @@ def test_qtest_authentication(url, token, verify_ssl=True):
     # Create headers
     headers = {
         "Authorization": f"Bearer {token}",
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
     }
 
     # Test the projects endpoint
@@ -186,10 +185,9 @@ def test_qtest_authentication(url, token, verify_ssl=True):
             projects = response.json().get("items", [])
             logger.info(f"✅ Authentication successful! Found {len(projects)} projects")
             return True, projects
-        else:
-            logger.error(f"❌ API request failed with status code: {response.status_code}")
-            logger.error(f"Response body: {response.text}")
-            return False, None
+        logger.error(f"❌ API request failed with status code: {response.status_code}")
+        logger.error(f"Response body: {response.text}")
+        return False, None
     except Exception as e:
         logger.error(f"❌ API request failed with error: {e}")
         return False, None
@@ -199,7 +197,7 @@ def test_with_qtest_client(url, token, verify_ssl=True):
     """Test using the QTestClient."""
     logger.info(f"Testing with QTestClient against: {url}")
 
-    if not url.startswith(('http://', 'https://')):
+    if not url.startswith(("http://", "https://")):
         url = f"https://{url}"
 
     try:
@@ -207,7 +205,7 @@ def test_with_qtest_client(url, token, verify_ssl=True):
         config = QTestConfig(
             base_url=url,
             bearer_token=token,
-            project_id=1  # Dummy value for testing
+            project_id=1,  # Dummy value for testing
         )
 
         # Create client with debug logging
@@ -277,7 +275,7 @@ def main():
         return 1
 
     # Ensure URL has proper prefix
-    if not qtest_url.startswith(('http://', 'https://')):
+    if not qtest_url.startswith(("http://", "https://")):
         qtest_url = f"https://{qtest_url}"
 
     # Analyze URL
@@ -313,7 +311,7 @@ def main():
                 logger.info(f"Trying HTTP connectivity to alternative: {alt_url}")
                 if check_http_connectivity(alt_url, verify_ssl):
                     logger.info(f"✅ HTTP connectivity successful to {alt_url}!")
-                    logger.info(f"Consider using this URL instead")
+                    logger.info("Consider using this URL instead")
                     qtest_url = alt_url
                     http_ok = True
                     break

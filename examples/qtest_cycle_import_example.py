@@ -12,15 +12,14 @@ with associated test cases, how to manage hierarchical test cycles, and handle
 potential conflicts.
 """
 
+import logging
 import os
 import sys
-import logging
-from typing import List
 
 # Set up logging
 logging.basicConfig(
     level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger(__name__)
 
@@ -28,11 +27,13 @@ logger = logging.getLogger(__name__)
 if os.path.basename(os.getcwd()) == "examples":
     sys.path.insert(0, os.path.abspath(".."))
 
-from ztoq.qtest_client import QTestClient
+from ztoq.qtest_importer import ConflictResolution, ImportConfig, QTestImporter
 from ztoq.qtest_models import (
-    QTestConfig, QTestTestCycle, QTestTestCase, QTestCustomField
+    QTestConfig,
+    QTestCustomField,
+    QTestTestCase,
+    QTestTestCycle,
 )
-from ztoq.qtest_importer import QTestImporter, ImportConfig, ConflictResolution
 
 
 def get_config_from_env() -> QTestConfig:
@@ -45,11 +46,11 @@ def get_config_from_env() -> QTestConfig:
         # Create config using environment variables
         return QTestConfig.from_env(project_id=project_id)
     except Exception as e:
-        logger.error(f"Failed to get config from environment: {str(e)}")
+        logger.error(f"Failed to get config from environment: {e!s}")
         sys.exit(1)
 
 
-def create_sample_test_cycles() -> List[QTestTestCycle]:
+def create_sample_test_cycles() -> list[QTestTestCycle]:
     """Create sample test cycles for the example."""
     # Parent cycle
     parent_cycle = QTestTestCycle(
@@ -61,9 +62,9 @@ def create_sample_test_cycles() -> List[QTestTestCycle]:
                 field_id=1001,  # This should match a real field ID in your qTest instance
                 field_name="Priority",
                 field_type="STRING",
-                field_value="High"
-            )
-        ]
+                field_value="High",
+            ),
+        ],
     )
 
     # Child cycles
@@ -73,21 +74,21 @@ def create_sample_test_cycles() -> List[QTestTestCycle]:
             description="User interface tests for Sprint 12",
             parent_id=None,  # Will be set after parent creation
             release_id=50,
-            properties=[]
+            properties=[],
         ),
         QTestTestCycle(
             name="API Tests",
             description="API tests for Sprint 12",
             parent_id=None,  # Will be set after parent creation
             release_id=50,
-            properties=[]
-        )
+            properties=[],
+        ),
     ]
 
     return [parent_cycle] + child_cycles
 
 
-def create_sample_test_cases() -> List[QTestTestCase]:
+def create_sample_test_cases() -> list[QTestTestCase]:
     """Create sample test cases for the example."""
     return [
         QTestTestCase(
@@ -99,16 +100,16 @@ def create_sample_test_cases() -> List[QTestTestCase]:
                     field_id=2001,  # This should match a real field ID in your qTest instance
                     field_name="Automated",
                     field_type="CHECKBOX",
-                    field_value=True
-                )
-            ]
+                    field_value=True,
+                ),
+            ],
         ),
         QTestTestCase(
             name="User Registration Test",
             description="Verify new user registration flow",
             module_id=1000,
-            properties=[]
-        )
+            properties=[],
+        ),
     ]
 
 
@@ -124,7 +125,7 @@ def main():
         conflict_resolution=ConflictResolution.RENAME,
         concurrency=2,
         validate=True,
-        show_progress=True
+        show_progress=True,
     )
     importer = QTestImporter(config, import_config)
 

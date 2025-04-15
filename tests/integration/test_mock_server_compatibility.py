@@ -5,20 +5,19 @@ See LICENSE file for details.
 """
 
 import json
+from unittest.mock import MagicMock, patch
+
 import pytest
-import requests
-from typing import Dict, Any, List, Optional, Tuple
-from unittest.mock import patch, MagicMock
 
-from ztoq.qtest_mock_server import QTestMockServer
-from ztoq.zephyr_mock_server import ZephyrMockServer
-from ztoq.qtest_client import QTestClient
-from ztoq.zephyr_client import ZephyrClient
 from ztoq.models import Project as ZephyrProject, ZephyrConfig
-from ztoq.qtest_models import QTestProject, QTestConfig
+from ztoq.qtest_client import QTestClient
+from ztoq.qtest_mock_server import QTestMockServer
+from ztoq.qtest_models import QTestConfig, QTestProject
+from ztoq.zephyr_client import ZephyrClient
+from ztoq.zephyr_mock_server import ZephyrMockServer
 
 
-@pytest.mark.integration()
+@pytest.mark.integration
 @pytest.mark.skip("Compatibility tests need further implementation")
 class TestMockServerCompatibility:
     """
@@ -116,7 +115,7 @@ class TestMockServerCompatibility:
         """Create a Zephyr client configured to use the mock server."""
         # Create a client with mock config
         config = ZephyrConfig(
-            base_url="https://mock.zephyrscale.com/v2", api_token="mock_token", project_key="DEMO"
+            base_url="https://mock.zephyrscale.com/v2", api_token="mock_token", project_key="DEMO",
         )
         client = ZephyrClient(config)
 
@@ -134,7 +133,7 @@ class TestMockServerCompatibility:
 
             # Route the request to the appropriate handler
             response = zephyr_mock_server.handle_request(
-                method, endpoint, params=params, data=data, headers=headers
+                method, endpoint, params=params, data=data, headers=headers,
             )
 
             # Create a mock response
@@ -221,7 +220,7 @@ class TestMockServerCompatibility:
         # Test filtering test cases by module
         all_test_cases = list(qtest_client.get_test_cases(project_id=12345))
         filtered_test_cases = list(
-            qtest_client.get_test_cases(project_id=12345, params={"parentId": 102})
+            qtest_client.get_test_cases(project_id=12345, params={"parentId": 102}),
         )
 
         # Verify filtering works correctly
@@ -283,7 +282,7 @@ class TestMockServerCompatibility:
         """
         # Patch the client's request method to test endpoint availability
         with patch.object(
-            zephyr_client._session, "request", wraps=zephyr_client._session.request
+            zephyr_client._session, "request", wraps=zephyr_client._session.request,
         ) as mock_request:
             # Call an appropriate client method based on the endpoint
             try:
@@ -305,7 +304,7 @@ class TestMockServerCompatibility:
                     if projects:
                         zephyr_client.get_folders(project_key=projects[0].key)
             except Exception as e:
-                pytest.fail(f"Endpoint {endpoint_path} not properly implemented: {str(e)}")
+                pytest.fail(f"Endpoint {endpoint_path} not properly implemented: {e!s}")
 
             # Verify the request was made with the correct method and endpoint
             mock_request.assert_called()
@@ -326,7 +325,7 @@ class TestMockServerCompatibility:
         """
         # Patch the client's request method to test endpoint availability
         with patch.object(
-            qtest_client._session, "request", wraps=qtest_client._session.request
+            qtest_client._session, "request", wraps=qtest_client._session.request,
         ) as mock_request:
             # Call an appropriate client method based on the endpoint
             try:
@@ -339,7 +338,7 @@ class TestMockServerCompatibility:
                 elif endpoint_path == "/api/v3/projects/{project_id}/test-cycles":
                     qtest_client.get_test_cycles(project_id=12345)
             except Exception as e:
-                pytest.fail(f"Endpoint {endpoint_path} not properly implemented: {str(e)}")
+                pytest.fail(f"Endpoint {endpoint_path} not properly implemented: {e!s}")
 
             # Verify the request was made
             mock_request.assert_called()

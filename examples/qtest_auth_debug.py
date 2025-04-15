@@ -11,26 +11,27 @@ This script tests qTest authentication via both bearer token and username/passwo
 and provides detailed logging to identify any issues.
 """
 
-import os
-import sys
-import logging
 import argparse
 import base64
-import requests
 import json
+import logging
+import os
+import sys
 from pathlib import Path
+
+import requests
 
 # Add the project root to the Python path to enable imports
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
+from ztoq.qtest_client import QTestClient
 from ztoq.qtest_models import QTestConfig
-from ztoq.qtest_client import QTestClient, configure_logging
 
 # Configure logging with more detailed output
 logging.basicConfig(
     level=logging.DEBUG,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger("qtest_auth_debug")
 
@@ -64,11 +65,11 @@ def test_direct_auth(base_url, username, password, api_type="manager"):
     # Common headers for token request
     auth_headers = {
         "Content-Type": "application/x-www-form-urlencoded",
-        "Cache-Control": "no-cache"
+        "Cache-Control": "no-cache",
     }
 
     # Add basic auth header with client name
-    client_name_encoded = base64.b64encode(b"ztoq-client:").decode('utf-8')
+    client_name_encoded = base64.b64encode(b"ztoq-client:").decode("utf-8")
     auth_headers["Authorization"] = f"Basic {client_name_encoded}"
 
     # Prepare form data for token request
@@ -115,14 +116,12 @@ def test_direct_auth(base_url, username, password, api_type="manager"):
                     "success": True,
                     "token": token,
                     "token_type": response_data.get("token_type", "bearer"),
-                    "expires_in": response_data.get("expires_in")
+                    "expires_in": response_data.get("expires_in"),
                 }
-            else:
-                logger.error(f"❌ No access token in success response from {api_type} API")
-                return {"success": False, "error": "No access token in response", "data": response_data}
-        else:
-            logger.error(f"❌ Authentication failed with status {response.status_code}")
-            return {"success": False, "error": f"Status code {response.status_code}", "data": response_data}
+            logger.error(f"❌ No access token in success response from {api_type} API")
+            return {"success": False, "error": "No access token in response", "data": response_data}
+        logger.error(f"❌ Authentication failed with status {response.status_code}")
+        return {"success": False, "error": f"Status code {response.status_code}", "data": response_data}
 
     except requests.exceptions.RequestException as e:
         logger.error(f"❌ Request exception: {e}")
@@ -149,7 +148,7 @@ def test_client_auth_with_token(base_url, token, project_id=1, api_type="manager
         config = QTestConfig(
             base_url=base_url,
             bearer_token=token,
-            project_id=project_id
+            project_id=project_id,
         )
 
         # Create client
@@ -196,7 +195,7 @@ def test_client_auth_with_credentials(base_url, username, password, project_id=1
             base_url=base_url,
             username=username,
             password=password,
-            project_id=project_id
+            project_id=project_id,
         )
 
         # Create client

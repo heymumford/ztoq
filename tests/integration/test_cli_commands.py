@@ -6,20 +6,22 @@ See LICENSE file for details.
 
 import json
 from unittest.mock import MagicMock, patch
+
 import pytest
 from typer.testing import CliRunner
+
 from ztoq.cli import app
 from ztoq.models import Project, TestCase
 
 
-@pytest.mark.integration()
+@pytest.mark.integration
 class TestCLICommands:
-    @pytest.fixture()
+    @pytest.fixture
     def runner(self):
         """Create a CLI runner for testing."""
         return CliRunner()
 
-    @pytest.fixture()
+    @pytest.fixture
     def mock_openapi_spec(self):
         """Mock OpenAPI spec loading."""
         valid_spec = {
@@ -30,8 +32,8 @@ class TestCLICommands:
                     "get": {
                         "summary": "Get test cases",
                         "description": "Get all test cases",
-                    }
-                }
+                    },
+                },
             },
         }
         with patch("ztoq.cli.load_openapi_spec", return_value=valid_spec):
@@ -151,7 +153,7 @@ class TestCLICommands:
 
     @patch("ztoq.cli.ZephyrExportManager")
     def test_export_project_command(
-        self, mock_export_manager_class, runner, mock_openapi_spec, tmp_path
+        self, mock_export_manager_class, runner, mock_openapi_spec, tmp_path,
     ):
         """Test the export-project command."""
         # Setup mock export manager

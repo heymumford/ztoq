@@ -9,8 +9,10 @@ import os
 import tempfile
 from datetime import datetime
 from unittest.mock import MagicMock, patch
+
 import pytest
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
+
 from ztoq.core.db_manager import DatabaseConfig, SQLDatabaseManager
 from ztoq.core.db_models import (
     Attachment,
@@ -30,45 +32,23 @@ from ztoq.core.db_models import (
 from ztoq.data_fetcher import FetchResult
 from ztoq.models import (
     Attachment as AttachmentModel,
-)
-from ztoq.models import (
     Case as CaseModel,
-)
-from ztoq.models import (
     CaseStep as CaseStepModel,
-)
-from ztoq.models import (
     CustomField as CustomFieldModel,
-)
-from ztoq.models import (
     CycleInfo as CycleInfoModel,
-)
-from ztoq.models import (
     Environment as EnvironmentModel,
-)
-from ztoq.models import (
     Execution as ExecutionModel,
-)
-from ztoq.models import (
     Folder as FolderModel,
-)
-from ztoq.models import (
     Link as LinkModel,
-)
-from ztoq.models import (
     Priority as PriorityModel,
-)
-from ztoq.models import (
     Project as ProjectModel,
-)
-from ztoq.models import (
     Status as StatusModel,
 )
 
 
-@pytest.mark.unit()
+@pytest.mark.unit
 class TestSQLDatabaseManager:
-    @pytest.fixture()
+    @pytest.fixture
     def db_config(self):
         """Create a database configuration for testing with SQLite."""
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -76,28 +56,28 @@ class TestSQLDatabaseManager:
             config = DatabaseConfig(db_type="sqlite", db_path=db_path, echo=False)
             yield config
 
-    @pytest.fixture()
+    @pytest.fixture
     def db_manager(self, db_config):
         """Create a SQLDatabaseManager instance for testing."""
         manager = SQLDatabaseManager(config=db_config)
         manager.initialize_database()
         return manager
 
-    @pytest.fixture()
+    @pytest.fixture
     def test_project(self):
         """Create a test project model."""
         return ProjectModel(
-            id="PRJ-123", key="TEST", name="Test Project", description="This is a test project"
+            id="PRJ-123", key="TEST", name="Test Project", description="This is a test project",
         )
 
-    @pytest.fixture()
+    @pytest.fixture
     def test_folder(self):
         """Create a test folder model."""
         return FolderModel(
-            id="FOLD-123", name="Test Folder", folderType="TEST_CASE", projectKey="TEST"
+            id="FOLD-123", name="Test Folder", folderType="TEST_CASE", projectKey="TEST",
         )
 
-    @pytest.fixture()
+    @pytest.fixture
     def test_status(self):
         """Create a test status model."""
         return StatusModel(
@@ -108,18 +88,18 @@ class TestSQLDatabaseManager:
             type="TEST_CASE",
         )
 
-    @pytest.fixture()
+    @pytest.fixture
     def test_priority(self):
         """Create a test priority model."""
         return PriorityModel(
-            id="PRI-123", name="High", description="High priority", color="#FF0000", rank=1
+            id="PRI-123", name="High", description="High priority", color="#FF0000", rank=1,
         )
 
-    @pytest.fixture()
+    @pytest.fixture
     def test_environment(self):
         """Create a test environment model."""
         return EnvironmentModel(
-            id="ENV-123", name="Production", description="Production environment"
+            id="ENV-123", name="Production", description="Production environment",
         )
 
     def test_initialization(self, db_config):
@@ -416,7 +396,7 @@ class TestSQLDatabaseManager:
                 CustomFieldModel(id="CF-3", name="Is Automated", type="checkbox", value=True),
                 CustomFieldModel(id="CF-4", name="Due Date", type="date", value="2025-05-01"),
                 CustomFieldModel(
-                    id="CF-5", name="Tags", type="multipleSelect", value=["api", "regression"]
+                    id="CF-5", name="Tags", type="multipleSelect", value=["api", "regression"],
                 ),
             ]
 
@@ -470,7 +450,7 @@ class TestSQLDatabaseManager:
         with db_manager.get_session() as session:
             # Save links
             db_manager._save_links(
-                session=session, links=links, entity_type=EntityType.TEST_CASE, entity_id="TC-123"
+                session=session, links=links, entity_type=EntityType.TEST_CASE, entity_id="TC-123",
             )
 
             # Verify links were saved
@@ -486,7 +466,7 @@ class TestSQLDatabaseManager:
 
             # Test links are replaced when saving again
             new_links = [
-                LinkModel(id="LINK-3", name="New Link", url="https://example.com/new", type="web")
+                LinkModel(id="LINK-3", name="New Link", url="https://example.com/new", type="web"),
             ]
 
             db_manager._save_links(
@@ -517,7 +497,7 @@ class TestSQLDatabaseManager:
                 created_on=datetime.now(),
                 created_by="user1",
                 content="c2ltdWxhdGVkIGJpbmFyeSBkYXRh",  # base64 encoded "simulated binary data"
-            )
+            ),
         ]
 
         with db_manager.get_session() as session:
@@ -552,7 +532,7 @@ class TestSQLDatabaseManager:
                     created_on=datetime.now(),
                     created_by="user1",
                     content="dXBkYXRlZCBiaW5hcnkgZGF0YQ==",  # "updated binary data"
-                )
+                ),
             ]
 
             db_manager._save_attachments(
@@ -572,7 +552,7 @@ class TestSQLDatabaseManager:
         with db_manager.get_session() as session:
             # Test creating new labels
             labels = db_manager._get_or_create_labels(
-                session=session, labels=["Regression", "Smoke", "API"]
+                session=session, labels=["Regression", "Smoke", "API"],
             )
 
             assert len(labels) == 3
@@ -583,7 +563,7 @@ class TestSQLDatabaseManager:
 
             # Test getting existing labels
             same_labels = db_manager._get_or_create_labels(
-                session=session, labels=["Regression", "Smoke", "Performance"]
+                session=session, labels=["Regression", "Smoke", "Performance"],
             )
 
             assert len(same_labels) == 3
@@ -631,7 +611,7 @@ class TestSQLDatabaseManager:
                 ),
             ],
             custom_fields=[
-                CustomFieldModel(id="CF-1", name="Test Type", type="text", value="Integration")
+                CustomFieldModel(id="CF-1", name="Test Type", type="text", value="Integration"),
             ],
             links=[LinkModel(name="Requirements", url="https://example.com/req", type="web")],
             attachments=[],
@@ -686,7 +666,7 @@ class TestSQLDatabaseManager:
             test_case.name = "Updated Login Test"
             test_case.status = "Ready"
             test_case.steps = [
-                CaseStepModel(index=0, description="Updated step", expected_result="Updated result")
+                CaseStepModel(index=0, description="Updated step", expected_result="Updated result"),
             ]
 
             db_manager.save_test_case(test_case, test_project.key)
@@ -720,7 +700,7 @@ class TestSQLDatabaseManager:
             created_by="user1",
             project_key=test_project.key,
             custom_fields=[
-                CustomFieldModel(id="CF-1", name="Sprint", type="text", value="Sprint 1")
+                CustomFieldModel(id="CF-1", name="Sprint", type="text", value="Sprint 1"),
             ],
             links=[LinkModel(name="Sprint Board", url="https://example.com/sprint1", type="web")],
             attachments=[],
@@ -765,12 +745,12 @@ class TestSQLDatabaseManager:
 
         # Create test case, cycle, and environment
         test_case = CaseModel(
-            id="TC-123", key="TEST-1", name="Login Test", project_key=test_project.key
+            id="TC-123", key="TEST-1", name="Login Test", project_key=test_project.key,
         )
         db_manager.save_test_case(test_case, test_project.key)
 
         test_cycle = CycleInfoModel(
-            id="CYCLE-123", key="TEST-C1", name="Sprint 1 Testing", project_key=test_project.key
+            id="CYCLE-123", key="TEST-C1", name="Sprint 1 Testing", project_key=test_project.key,
         )
         db_manager.save_test_cycle(test_cycle, test_project.key)
 
@@ -800,10 +780,10 @@ class TestSQLDatabaseManager:
                     expected_result="Login page displayed",
                     actual_result="Login page displayed correctly",
                     status="PASS",
-                )
+                ),
             ],
             custom_fields=[
-                CustomFieldModel(id="CF-1", name="Browser", type="text", value="Chrome")
+                CustomFieldModel(id="CF-1", name="Browser", type="text", value="Chrome"),
             ],
             attachments=[],
             links=[],
@@ -844,7 +824,7 @@ class TestSQLDatabaseManager:
         folders = [
             FolderModel(id="FOLD-1", name="Test Cases", folderType="TEST_CASE", projectKey="TEST"),
             FolderModel(
-                id="FOLD-2", name="Test Cycles", folderType="TEST_CYCLE", projectKey="TEST"
+                id="FOLD-2", name="Test Cycles", folderType="TEST_CYCLE", projectKey="TEST",
             ),
         ]
 
@@ -875,7 +855,7 @@ class TestSQLDatabaseManager:
                 name="Sprint 1 Testing",
                 project_key="TEST",
                 folder="FOLD-2",
-            )
+            ),
         ]
 
         test_executions = [
@@ -885,7 +865,7 @@ class TestSQLDatabaseManager:
                 cycleId="CYCLE-1",
                 status="PASS",
                 environment="ENV-1",
-            )
+            ),
         ]
 
         # Create fetch results
@@ -982,7 +962,7 @@ class TestSQLDatabaseManager:
                 items=test_cases,
                 count=len(test_cases),
                 success=True,
-            )
+            ),
         }
 
         # Save project data
@@ -1014,7 +994,7 @@ class TestSQLDatabaseManager:
         # Create fetch results for each project
         project1_results = {
             "project": FetchResult(
-                entity_type="project", project_key="PROJ1", items=[project1], count=1, success=True
+                entity_type="project", project_key="PROJ1", items=[project1], count=1, success=True,
             ),
             "test_cases": FetchResult(
                 entity_type="test_cases",
@@ -1027,7 +1007,7 @@ class TestSQLDatabaseManager:
 
         project2_results = {
             "project": FetchResult(
-                entity_type="project", project_key="PROJ2", items=[project2], count=1, success=True
+                entity_type="project", project_key="PROJ2", items=[project2], count=1, success=True,
             ),
             "test_cases": FetchResult(
                 entity_type="test_cases",
@@ -1062,7 +1042,7 @@ class TestSQLDatabaseManager:
         """Test migration state methods."""
         # Create initial migration state
         state = db_manager.update_migration_state(
-            project_key="TEST", extraction_status="in_progress"
+            project_key="TEST", extraction_status="in_progress",
         )
 
         assert state is not None
@@ -1173,7 +1153,7 @@ class TestSQLDatabaseManager:
 
         # Create and save entities
         folder = FolderModel(
-            id="FOLD-1", name="Test Cases", folderType="TEST_CASE", projectKey="TEST"
+            id="FOLD-1", name="Test Cases", folderType="TEST_CASE", projectKey="TEST",
         )
         db_manager.save_folder(folder, "TEST")
 
@@ -1196,18 +1176,18 @@ class TestSQLDatabaseManager:
                 CaseStepModel(index=1, description="Step 2", expected_result="Result 2"),
             ],
             custom_fields=[
-                CustomFieldModel(id="CF-1", name="Test Type", type="text", value="Integration")
+                CustomFieldModel(id="CF-1", name="Test Type", type="text", value="Integration"),
             ],
         )
         db_manager.save_test_case(test_case, "TEST")
 
         test_cycle = CycleInfoModel(
-            id="CYCLE-1", key="TEST-C1", name="Sprint 1 Testing", project_key="TEST"
+            id="CYCLE-1", key="TEST-C1", name="Sprint 1 Testing", project_key="TEST",
         )
         db_manager.save_test_cycle(test_cycle, "TEST")
 
         test_execution = ExecutionModel(
-            id="EXEC-1", testCaseKey="TEST-1", cycleId="CYCLE-1", status="PASS", environment="ENV-1"
+            id="EXEC-1", testCaseKey="TEST-1", cycleId="CYCLE-1", status="PASS", environment="ENV-1",
         )
         db_manager.save_test_execution(test_execution, "TEST")
 
@@ -1233,7 +1213,7 @@ class TestSQLDatabaseManager:
 
         # Execute a simple query
         result = db_manager.execute_query(
-            "SELECT * FROM projects WHERE key = :key", {"key": "TEST"}
+            "SELECT * FROM projects WHERE key = :key", {"key": "TEST"},
         )
 
         # Verify result
@@ -1243,7 +1223,7 @@ class TestSQLDatabaseManager:
 
         # Execute a more complex query with joins
         folder = FolderModel(
-            id="FOLD-1", name="Test Cases", folderType="TEST_CASE", projectKey="TEST"
+            id="FOLD-1", name="Test Cases", folderType="TEST_CASE", projectKey="TEST",
         )
         db_manager.save_folder(folder, "TEST")
 

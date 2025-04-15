@@ -192,7 +192,7 @@ To run all quality checks before a PR:
 
 ```bash
 # In project root
-cd /home/emumford/NativeLinuxProjects/ztoq
+cd path/to/ztoq
 make validate-all
 ```
 

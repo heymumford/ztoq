@@ -11,23 +11,16 @@ These tests verify the transformation of Zephyr test cases to qTest test cases, 
 field mappings, validation rules, error handling, and special case processing.
 """
 
-import pytest
-from datetime import datetime
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
-from ztoq.entity_mapping import EntityType, ValidationAction
+import pytest
+
+from ztoq.models import (
+    CustomFieldType,
+)
 from ztoq.test_case_transformer import (
     TestCaseTransformer,
-    TestCaseTransformError,
     TransformationResult,
-    StepTransformationError,
-)
-from ztoq.models import (
-    Case as TestCase,
-    CaseStep as TestStep,
-    Attachment,
-    CustomField,
-    CustomFieldType,
 )
 
 # Removed qTest model imports since we now use dictionaries
@@ -235,7 +228,7 @@ class TestTestCaseTransformer:
                 "content_type": "image/png",
                 "size": 1024,
                 "content": b"fake-binary-content",
-            }
+            },
         ]
 
         # Act
@@ -258,7 +251,7 @@ class TestTestCaseTransformer:
                 "id": None,  # Missing ID will cause an error in strict mode
                 "index": 3,
                 "description": None,  # Missing description (required field)
-            }
+            },
         )
         transformer.strict_mode = True  # Enable strict mode
 
@@ -280,7 +273,7 @@ class TestTestCaseTransformer:
             "id": "1003",
             "objective": "This test should fail in strict mode",
             "folderId": None,  # Missing folder ID
-            "steps": []
+            "steps": [],
             # Name is missing - will cause strict validation error
         }
 
@@ -300,7 +293,7 @@ class TestTestCaseTransformer:
             "id": "1004",
             "objective": "This test should use defaults in non-strict mode",
             "folderId": None,  # Missing folder ID
-            "steps": []
+            "steps": [],
             # Name is missing - will be handled in non-strict mode
         }
         transformer.strict_mode = False
@@ -377,7 +370,7 @@ class TestTestCaseTransformer:
                 "name": "Max Users",
                 "type": CustomFieldType.NUMERIC,
                 "value": "not_a_number",  # Invalid numeric value
-            }
+            },
         )
 
         # Act
@@ -483,7 +476,7 @@ class TestTestCaseTransformer:
         """Test handling of database errors during module mapping."""
         # Setup - make the DB manager raise an exception
         custom_transformer.db_manager.get_entity_mapping.side_effect = Exception(
-            "Database connection error"
+            "Database connection error",
         )
 
         # Act

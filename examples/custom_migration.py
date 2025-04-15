@@ -18,15 +18,16 @@ import sys
 import time
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 # Add parent directory to path to import ztoq modules
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from rich.console import Console
+
 from ztoq.migration import ZephyrToQTestMigration
 from ztoq.models import ZephyrConfig
-from ztoq.qtest_models import QTestConfig, QTestModule, QTestTestCase, QTestTestCycle
+from ztoq.qtest_models import QTestConfig, QTestModule, QTestTestCase
 
 # Configure logging
 console = Console()
@@ -111,7 +112,7 @@ class CustomZephyrToQTestMigration(ZephyrToQTestMigration):
         # Use our expanded status mapping table
         return self.status_mapping.get(zephyr_status.lower(), "NOT_RUN")
 
-    def _transform_custom_fields(self, zephyr_custom_fields: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def _transform_custom_fields(self, zephyr_custom_fields: dict[str, Any]) -> list[dict[str, Any]]:
         """Transform Zephyr custom fields to qTest format with custom mapping."""
         qtest_fields = []
 
@@ -172,7 +173,7 @@ class CustomZephyrToQTestMigration(ZephyrToQTestMigration):
 
                     if folder_id:
                         module_mapping = self.db.get_entity_mapping(
-                            self.zephyr_config.project_key, "folder_to_module", folder_id
+                            self.zephyr_config.project_key, "folder_to_module", folder_id,
                         )
                         if module_mapping:
                             module_id = module_mapping.get("target_id")
@@ -191,7 +192,7 @@ class CustomZephyrToQTestMigration(ZephyrToQTestMigration):
 
                                 # Save mapping
                                 self.db.save_entity_mapping(
-                                    self.zephyr_config.project_key, "folder_to_module", folder_id, module_id
+                                    self.zephyr_config.project_key, "folder_to_module", folder_id, module_id,
                                 )
 
                     # Transform test steps - existing logic from parent class
@@ -222,7 +223,7 @@ class CustomZephyrToQTestMigration(ZephyrToQTestMigration):
 
                     # Save transformed test case
                     self.db.save_transformed_test_case(
-                        self.zephyr_config.project_key, test_case.get("id"), qtest_test_case
+                        self.zephyr_config.project_key, test_case.get("id"), qtest_test_case,
                     )
 
                     transformed_batch.append(qtest_test_case)
@@ -233,7 +234,7 @@ class CustomZephyrToQTestMigration(ZephyrToQTestMigration):
             except Exception as e:
                 # Update batch status with error
                 self._update_batch_status(test_case_tracker, batch_idx, 0, "failed", str(e))
-                logger.error(f"Failed to transform test case batch {batch_idx}: {str(e)}")
+                logger.error(f"Failed to transform test case batch {batch_idx}: {e!s}")
 
         logger.info(f"Transformed {len(test_cases)} test cases")
 
@@ -273,8 +274,8 @@ class CustomZephyrToQTestMigration(ZephyrToQTestMigration):
             except Exception as e:
                 retry_count += 1
                 logger.warning(
-                    f"Error creating test case for source {source_id}: {str(e)}. "
-                    f"Retry {retry_count}/{self.retry_attempts}"
+                    f"Error creating test case for source {source_id}: {e!s}. "
+                    f"Retry {retry_count}/{self.retry_attempts}",
                 )
 
                 if retry_count < self.retry_attempts:
@@ -285,7 +286,7 @@ class CustomZephyrToQTestMigration(ZephyrToQTestMigration):
                     logger.error(f"Failed to create test case after {self.retry_attempts} attempts")
                     raise
 
-    def _create_batches(self, items: List[Any]) -> List[List[Any]]:
+    def _create_batches(self, items: list[Any]) -> list[list[Any]]:
         """Split items into batches of the configured batch size."""
         batches = []
         for i in range(0, len(items), self.batch_size):

@@ -8,15 +8,17 @@ import os
 import tempfile
 from pathlib import Path
 from unittest.mock import MagicMock, call, patch
+
 import pytest
+
 from ztoq.migration import ZephyrToQTestMigration
 from ztoq.models import ZephyrConfig
 from ztoq.qtest_models import QTestConfig, QTestModule, QTestTestCase, QTestTestCycle, QTestTestRun
 
 
-@pytest.mark.unit()
+@pytest.mark.unit
 class TestMigrationETLProcess:
-    @pytest.fixture()
+    @pytest.fixture
     def zephyr_config(self):
         """Create a test Zephyr configuration."""
         return ZephyrConfig(
@@ -25,7 +27,7 @@ class TestMigrationETLProcess:
             project_key="DEMO",
         )
 
-    @pytest.fixture()
+    @pytest.fixture
     def qtest_config(self):
         """Create a test qTest configuration."""
         return QTestConfig(
@@ -35,7 +37,7 @@ class TestMigrationETLProcess:
             project_id=12345,
         )
 
-    @pytest.fixture()
+    @pytest.fixture
     def db_mock(self):
         """Create a mock database manager with test data."""
         db = MagicMock()
@@ -148,19 +150,19 @@ class TestMigrationETLProcess:
             if mapping_type == "folder_to_module":
                 if source_id == "folder-1":
                     return {"source_id": source_id, "target_id": "module-1"}
-                elif source_id == "folder-2":
+                if source_id == "folder-2":
                     return {"source_id": source_id, "target_id": "module-2"}
-                elif source_id == "folder-3":
+                if source_id == "folder-3":
                     return {"source_id": source_id, "target_id": "module-3"}
             elif mapping_type == "testcase_to_testcase":
                 if source_id == "tc-001":
                     return {"source_id": source_id, "target_id": "qtc-001"}
-                elif source_id == "tc-002":
+                if source_id == "tc-002":
                     return {"source_id": source_id, "target_id": "qtc-002"}
             elif mapping_type == "cycle_to_cycle":
                 if source_id == "cycle-1":
                     return {"source_id": source_id, "target_id": "qcycle-001"}
-                elif source_id == "cycle-2":
+                if source_id == "cycle-2":
                     return {"source_id": source_id, "target_id": "qcycle-002"}
             return None
 
@@ -173,7 +175,7 @@ class TestMigrationETLProcess:
                 {
                     "source_id": "folder-1",
                     "module": {"name": "Folder 1", "description": "Root folder", "parent_id": None},
-                }
+                },
             ],
             # Level 1 (child modules)
             [
@@ -224,7 +226,7 @@ class TestMigrationETLProcess:
                     "module_id": "module-3",
                     "priority_id": 3,
                     "test_steps": [
-                        {"description": "Step 3", "expected_result": "Result 3", "order": 1}
+                        {"description": "Step 3", "expected_result": "Result 3", "order": 1},
                     ],
                     "properties": [
                         {"field_name": "field1", "field_type": "STRING", "field_value": "value2"},
@@ -288,11 +290,11 @@ class TestMigrationETLProcess:
 
         return db
 
-    @pytest.fixture()
+    @pytest.fixture
     def migration(self, zephyr_config, qtest_config, db_mock):
         """Create a test migration manager with mocked clients."""
         with patch("ztoq.migration.ZephyrClient") as mock_zephyr, patch(
-            "ztoq.migration.QTestClient"
+            "ztoq.migration.QTestClient",
         ) as mock_qtest:
             # Configure mocks
             mock_zephyr_client = MagicMock()
@@ -514,13 +516,13 @@ class TestMigrationETLProcess:
             any_order=True,
         )
         db_mock.save_transformed_test_case.assert_has_calls(
-            [call("DEMO", "tc-001", ANY), call("DEMO", "tc-002", ANY)], any_order=True
+            [call("DEMO", "tc-001", ANY), call("DEMO", "tc-002", ANY)], any_order=True,
         )
         db_mock.save_transformed_test_cycle.assert_has_calls(
-            [call("DEMO", "cycle-1", ANY), call("DEMO", "cycle-2", ANY)], any_order=True
+            [call("DEMO", "cycle-1", ANY), call("DEMO", "cycle-2", ANY)], any_order=True,
         )
         db_mock.save_transformed_execution.assert_has_calls(
-            [call("DEMO", "exec-1", ANY, ANY), call("DEMO", "exec-2", ANY, ANY)], any_order=True
+            [call("DEMO", "exec-1", ANY, ANY), call("DEMO", "exec-2", ANY, ANY)], any_order=True,
         )
 
     def test_load_data(self, migration, db_mock):
@@ -551,7 +553,7 @@ class TestMigrationETLProcess:
             "id": "tc-001",
             "name": "Test Case with Attachments",
             "attachments": [
-                {"id": "att-1", "filename": "screenshot.png", "url": "http://example.com/att-1"}
+                {"id": "att-1", "filename": "screenshot.png", "url": "http://example.com/att-1"},
             ],
         }
 
@@ -569,7 +571,7 @@ class TestMigrationETLProcess:
         )
 
         # Verify attachment was saved to filesystem
-        attachment_path = migration.attachments_dir / f"tc_tc-001_screenshot.png"
+        attachment_path = migration.attachments_dir / "tc_tc-001_screenshot.png"
         assert os.path.exists(attachment_path)
 
     def test_handle_extraction_errors(self, migration, db_mock):
@@ -642,11 +644,11 @@ class TestMigrationETLProcess:
         assert migration._map_status("unknown") == "NOT_RUN"  # Default
 
 
-@pytest.mark.unit()
+@pytest.mark.unit
 class TestMigrationRestartability:
     """Test the ability to restart a migration from a specific point."""
 
-    @pytest.fixture()
+    @pytest.fixture
     def migration_with_progress(self):
         """Create a migration instance with some progress already made."""
         zephyr_config = ZephyrConfig(
@@ -677,7 +679,7 @@ class TestMigrationRestartability:
 
         with patch("ztoq.migration.ZephyrClient"), patch("ztoq.migration.QTestClient"):
             migration = ZephyrToQTestMigration(
-                zephyr_config, qtest_config, db_mock, batch_size=50, max_workers=5
+                zephyr_config, qtest_config, db_mock, batch_size=50, max_workers=5,
             )
 
             # Add mocks for the ETL methods

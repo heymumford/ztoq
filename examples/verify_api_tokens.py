@@ -4,23 +4,24 @@ This file is part of ZTOQ, licensed under the MIT License.
 See LICENSE file for details.
 """
 
-import os
-import sys
 import logging
-import time
+import os
 import signal
-import requests
+import sys
+import time
 from pathlib import Path
-from requests.exceptions import Timeout, ConnectionError, RequestException
+
+import requests
+from requests.exceptions import ConnectionError, RequestException, Timeout
 
 # Add the project root to the Python path to enable imports
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 from ztoq.models import ZephyrConfig
+from ztoq.qtest_client import QTestClient
 from ztoq.qtest_models import QTestConfig
 from ztoq.zephyr_client import ZephyrClient
-from ztoq.qtest_client import QTestClient
 
 # Set up logging
 # Get log level from environment variable or use INFO
@@ -79,7 +80,7 @@ def verify_zephyr_token(timeout_seconds=15):
         # Create client config from environment variables
         config = ZephyrConfig.from_env(
             base_url="https://api.zephyrscale.smartbear.com/v2",
-            project_key="DEMO"  # Update with your project key
+            project_key="DEMO",  # Update with your project key
         )
 
         # Create client with shorter connection timeouts
@@ -95,7 +96,7 @@ def verify_zephyr_token(timeout_seconds=15):
             if "401" in str(e) or "Unauthorized" in str(e):
                 logger.error("❌ Zephyr API token is expired or invalid.")
             else:
-                logger.error(f"❌ Error connecting to Zephyr API: {str(e)}")
+                logger.error(f"❌ Error connecting to Zephyr API: {e!s}")
             return False
 
     except TimeoutError:
@@ -149,19 +150,19 @@ def verify_qtest_token(timeout_seconds=15, no_verify_ssl=False):
         # Log available environment variables for debugging
         logger.debug("Environment variables:")
         for env_var, value in os.environ.items():
-            if 'token' in env_var.lower() or 'qtest' in env_var.lower() or 'zephyr' in env_var.lower():
-                masked_value = value[:4] + '***' + value[-4:] if len(value) > 10 else '***'
+            if "token" in env_var.lower() or "qtest" in env_var.lower() or "zephyr" in env_var.lower():
+                masked_value = value[:4] + "***" + value[-4:] if len(value) > 10 else "***"
                 logger.debug(f"  {env_var}: {masked_value}")
 
         # Ensure base URL has proper prefix
-        if not base_url.startswith(('http://', 'https://')):
+        if not base_url.startswith(("http://", "https://")):
             base_url = f"https://{base_url}"
             logger.debug(f"Added https:// prefix to base URL: {base_url}")
 
         # Handle common qTest domain variations
         # Extract the domain part for normalization
         import urllib.parse
-        domain_parts = urllib.parse.urlparse(base_url).netloc.split('.')
+        domain_parts = urllib.parse.urlparse(base_url).netloc.split(".")
 
         # Check if we need to try alternative domain formats
         try_alternative_domains = False
@@ -171,22 +172,22 @@ def verify_qtest_token(timeout_seconds=15, no_verify_ssl=False):
         logger.debug(f"Domain parts: {domain_parts}")
 
         # If domain doesn't contain 'qtest' or doesn't end with recognized TLD formats
-        if not any('qtest' in part.lower() for part in domain_parts) and \
-           not any(domain_parts[-1].lower() in ['com', 'net', 'org', 'io']) and \
-           not any(f"{domain_parts[-2]}.{domain_parts[-1]}".lower() in ['co.uk', 'com.au']):
+        if not any("qtest" in part.lower() for part in domain_parts) and \
+           not any(domain_parts[-1].lower() in ["com", "net", "org", "io"]) and \
+           not any(f"{domain_parts[-2]}.{domain_parts[-1]}".lower() in ["co.uk", "com.au"]):
             try_alternative_domains = True
             logger.debug("Domain format may not be standard, will try alternative formats")
 
         # Handle the specific qtest.net case (which should be qtestnet.com)
-        if len(domain_parts) >= 2 and domain_parts[-2].lower() == 'qtest' and domain_parts[-1].lower() == 'net':
+        if len(domain_parts) >= 2 and domain_parts[-2].lower() == "qtest" and domain_parts[-1].lower() == "net":
             try_alternative_domains = True
             logger.warning("Found 'qtest.net' domain which is likely incorrect. qTest SaaS typically uses 'qtestnet.com'")
             # Get the company name part
-            company_name = '.'.join(domain_parts[:-2]) if len(domain_parts) > 2 else domain_parts[0]
+            company_name = ".".join(domain_parts[:-2]) if len(domain_parts) > 2 else domain_parts[0]
             logger.info(f"Automatically trying {company_name}.qtestnet.com instead")
 
         # Special handling for company-specific subdomains
-        if len(domain_parts) >= 2 and 'qtest' not in domain_parts[0].lower():
+        if len(domain_parts) >= 2 and "qtest" not in domain_parts[0].lower():
             # This might be a company.qtestnet.com format or similar
             try_alternative_domains = True
             logger.debug("Domain may be using company-specific format, will try alternatives")
@@ -194,7 +195,7 @@ def verify_qtest_token(timeout_seconds=15, no_verify_ssl=False):
         # Create client config from environment variables
         config = QTestConfig.from_env(
             base_url=base_url,
-            project_id=1  # This is just for verification, actual ID doesn't matter
+            project_id=1,  # This is just for verification, actual ID doesn't matter
         )
 
         # Try two methods for verification:
@@ -206,7 +207,7 @@ def verify_qtest_token(timeout_seconds=15, no_verify_ssl=False):
             logger.debug("Verifying token using QTestClient")
 
             # Create client with our token explicitly set
-            if not hasattr(config, 'bearer_token') or not config.bearer_token:
+            if not hasattr(config, "bearer_token") or not config.bearer_token:
                 config.bearer_token = token
 
             # Override default timeout to ensure we don't hang
@@ -222,11 +223,11 @@ def verify_qtest_token(timeout_seconds=15, no_verify_ssl=False):
             original_request = requests.request
 
             def request_with_timeout(*args, **kwargs):
-                if 'timeout' not in kwargs:
-                    kwargs['timeout'] = (5.0, 10.0)
+                if "timeout" not in kwargs:
+                    kwargs["timeout"] = (5.0, 10.0)
                 # Add verify parameter if not already present
-                if 'verify' not in kwargs:
-                    kwargs['verify'] = not no_verify_ssl
+                if "verify" not in kwargs:
+                    kwargs["verify"] = not no_verify_ssl
                 return original_request(*args, **kwargs)
 
             # Monkey patch requests.request temporarily
@@ -238,60 +239,59 @@ def verify_qtest_token(timeout_seconds=15, no_verify_ssl=False):
                 if valid:
                     logger.info("✅ qTest API token is valid and working correctly.")
                     return True
-                else:
-                    # Check the error in the logs to provide more specific messages
-                    logger.error("❌ qTest API token verification failed.")
-                    # If we need to try alternative domains
-                    if try_alternative_domains:
-                        # Try alternative domain formats
-                        alternative_formats = []
-                        domain = urllib.parse.urlparse(base_url).netloc
+                # Check the error in the logs to provide more specific messages
+                logger.error("❌ qTest API token verification failed.")
+                # If we need to try alternative domains
+                if try_alternative_domains:
+                    # Try alternative domain formats
+                    alternative_formats = []
+                    domain = urllib.parse.urlparse(base_url).netloc
 
-                        # Handle the specific qtest.net case which should be qtestnet.com
-                        if len(domain_parts) >= 2 and domain_parts[-2].lower() == 'qtest' and domain_parts[-1].lower() == 'net':
-                            # Get the company name part
-                            company_name = '.'.join(domain_parts[:-2]) if len(domain_parts) > 2 else domain_parts[0]
-                            # This is likely the correct format for SaaS
-                            alt_url = f"https://{company_name}.qtestnet.com"
-                            logger.warning(f"The domain '{domain}' appears to be using an incorrect format.")
-                            logger.info(f"According to qTest documentation, SaaS instances use the format: <company>.qtestnet.com")
-                            logger.info(f"Trying the corrected URL: {alt_url}")
-                            alternative_formats.append(alt_url)
+                    # Handle the specific qtest.net case which should be qtestnet.com
+                    if len(domain_parts) >= 2 and domain_parts[-2].lower() == "qtest" and domain_parts[-1].lower() == "net":
+                        # Get the company name part
+                        company_name = ".".join(domain_parts[:-2]) if len(domain_parts) > 2 else domain_parts[0]
+                        # This is likely the correct format for SaaS
+                        alt_url = f"https://{company_name}.qtestnet.com"
+                        logger.warning(f"The domain '{domain}' appears to be using an incorrect format.")
+                        logger.info("According to qTest documentation, SaaS instances use the format: <company>.qtestnet.com")
+                        logger.info(f"Trying the corrected URL: {alt_url}")
+                        alternative_formats.append(alt_url)
 
-                        # If the domain has at least two parts (e.g., company.domain.tld)
-                        elif len(domain_parts) >= 2:
-                            # For SaaS, the correct format is "company.qtestnet.com"
-                            alternative_formats.append(f"https://{domain_parts[0]}.qtestnet.com")
+                    # If the domain has at least two parts (e.g., company.domain.tld)
+                    elif len(domain_parts) >= 2:
+                        # For SaaS, the correct format is "company.qtestnet.com"
+                        alternative_formats.append(f"https://{domain_parts[0]}.qtestnet.com")
 
-                            # For completeness, also try these alternatives
-                            alternative_formats.append(f"https://{domain_parts[0]}.qtest.com")
+                        # For completeness, also try these alternatives
+                        alternative_formats.append(f"https://{domain_parts[0]}.qtest.com")
 
-                            # Try direct qTest domain
-                            if 'qtest' not in domain.lower():
-                                alternative_formats.append(f"https://qtest.{domain}")
+                        # Try direct qTest domain
+                        if "qtest" not in domain.lower():
+                            alternative_formats.append(f"https://qtest.{domain}")
 
-                        logger.info("Attempting alternative domain formats:")
-                        for alt_url in alternative_formats:
-                            logger.info(f"  Trying alternative URL: {alt_url}")
-                            try:
-                                alt_config = QTestConfig.from_env(base_url=alt_url, project_id=1)
-                                alt_client = QTestClient(alt_config)
-                                if alt_client.verify_api_token(verify_ssl=not no_verify_ssl):
-                                    logger.info(f"✅ Connection successful with alternative URL: {alt_url}")
-                                    logger.info("Consider updating your qtest_base_url environment variable")
-                                    return True
-                            except Exception as alt_error:
-                                logger.debug(f"Alternative URL {alt_url} failed: {alt_error}")
+                    logger.info("Attempting alternative domain formats:")
+                    for alt_url in alternative_formats:
+                        logger.info(f"  Trying alternative URL: {alt_url}")
+                        try:
+                            alt_config = QTestConfig.from_env(base_url=alt_url, project_id=1)
+                            alt_client = QTestClient(alt_config)
+                            if alt_client.verify_api_token(verify_ssl=not no_verify_ssl):
+                                logger.info(f"✅ Connection successful with alternative URL: {alt_url}")
+                                logger.info("Consider updating your qtest_base_url environment variable")
+                                return True
+                        except Exception as alt_error:
+                            logger.debug(f"Alternative URL {alt_url} failed: {alt_error}")
 
-                    logger.info("Try checking:")
-                    logger.info("1. Network connectivity to the qTest server")
-                    logger.info("2. Correct URL format - according to qTest documentation:")
-                    logger.info("   - SaaS instances: https://company.qtestnet.com (NOT qtest.net)")
-                    logger.info("   - On-premises instances: Your custom URL as configured")
-                    logger.info("3. Check for DNS resolution issues (ping the domain)")
-                    logger.info("4. Token validity and permissions")
-                    logger.info("5. If SSL errors occur, try the --no-verify-ssl option (use with caution)")
-                    return False
+                logger.info("Try checking:")
+                logger.info("1. Network connectivity to the qTest server")
+                logger.info("2. Correct URL format - according to qTest documentation:")
+                logger.info("   - SaaS instances: https://company.qtestnet.com (NOT qtest.net)")
+                logger.info("   - On-premises instances: Your custom URL as configured")
+                logger.info("3. Check for DNS resolution issues (ping the domain)")
+                logger.info("4. Token validity and permissions")
+                logger.info("5. If SSL errors occur, try the --no-verify-ssl option (use with caution)")
+                return False
             finally:
                 # Restore original request function
                 requests.request = original_request
@@ -310,12 +310,12 @@ def verify_qtest_token(timeout_seconds=15, no_verify_ssl=False):
                 logger.debug(f"Verifying qTest token with direct request to: {url}")
                 # Mask the token for logging but show authorization type
                 safe_headers = headers.copy()
-                if 'Authorization' in safe_headers:
-                    auth_parts = safe_headers['Authorization'].split()
+                if "Authorization" in safe_headers:
+                    auth_parts = safe_headers["Authorization"].split()
                     if len(auth_parts) > 1:
-                        safe_headers['Authorization'] = f"{auth_parts[0]} {'*' * 8}"
+                        safe_headers["Authorization"] = f"{auth_parts[0]} {'*' * 8}"
                     else:
-                        safe_headers['Authorization'] = "****"
+                        safe_headers["Authorization"] = "****"
                 logger.debug(f"Headers: {safe_headers}")
 
                 # Check if SSL verification should be disabled
@@ -356,12 +356,11 @@ def verify_qtest_token(timeout_seconds=15, no_verify_ssl=False):
                 if response.status_code == 200:
                     logger.info("✅ qTest API token is valid and working correctly.")
                     return True
-                elif response.status_code == 401:
+                if response.status_code == 401:
                     logger.error("❌ qTest API token is expired or invalid.")
                     return False
-                else:
-                    logger.error(f"❌ qTest API returned unexpected status code: {response.status_code}")
-                    return False
+                logger.error(f"❌ qTest API returned unexpected status code: {response.status_code}")
+                return False
             except Timeout:
                 logger.error("❌ qTest API request timed out.")
                 return False
@@ -388,7 +387,7 @@ def verify_qtest_token(timeout_seconds=15, no_verify_ssl=False):
                 if "401" in str(e) or "Unauthorized" in str(e):
                     logger.error("❌ qTest API token is expired or invalid.")
                 else:
-                    logger.error(f"❌ Error connecting to qTest API: {str(e)}")
+                    logger.error(f"❌ Error connecting to qTest API: {e!s}")
                 return False
 
     except TimeoutError:
@@ -422,7 +421,7 @@ def check_domain_connectivity(domain):
 
     try:
         # Run ping command with timeout
-        if os.name == 'nt':  # Windows
+        if os.name == "nt":  # Windows
             ping_cmd = ["ping", "-n", "3", "-w", "1000", domain]
         else:  # Unix/Linux/MacOS
             ping_cmd = ["ping", "-c", "3", "-W", "1", domain]
@@ -432,18 +431,17 @@ def check_domain_connectivity(domain):
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
-            timeout=5
+            timeout=5, check=False,
         )
 
         if result.returncode == 0:
             return True, "Connectivity test successful"
-        else:
-            return False, f"Ping failed with return code {result.returncode}: {result.stderr}"
+        return False, f"Ping failed with return code {result.returncode}: {result.stderr}"
 
     except subprocess.TimeoutExpired:
         return False, "Ping command timed out"
     except Exception as e:
-        return False, f"Error running ping: {str(e)}"
+        return False, f"Error running ping: {e!s}"
 
 def main():
     """Main entry point for the script."""
@@ -494,7 +492,7 @@ def main():
         qtest_base_url = os.environ.get("qtest_base_url", "")
         if qtest_base_url:
             # Extract domain from URL
-            if not qtest_base_url.startswith(('http://', 'https://')):
+            if not qtest_base_url.startswith(("http://", "https://")):
                 qtest_base_url = f"https://{qtest_base_url}"
 
             import urllib.parse
@@ -511,17 +509,17 @@ def main():
                 logger.error("Check that the domain is accessible from your network.")
 
                 # Try alternative domain formats if needed
-                if not any('qtest' in part.lower() for part in domain.split('.')):
+                if not any("qtest" in part.lower() for part in domain.split(".")):
                     logger.info("Trying alternative domain formats...")
 
                     # Try common qTest domain variations
                     alt_domains = []
-                    domain_parts = domain.split('.')
+                    domain_parts = domain.split(".")
 
                     # Handle the specific qtest.net case which should be qtestnet.com
-                    if len(domain_parts) >= 2 and domain_parts[-2].lower() == 'qtest' and domain_parts[-1].lower() == 'net':
+                    if len(domain_parts) >= 2 and domain_parts[-2].lower() == "qtest" and domain_parts[-1].lower() == "net":
                         # Get the company name part
-                        company_name = '.'.join(domain_parts[:-2]) if len(domain_parts) > 2 else domain_parts[0]
+                        company_name = ".".join(domain_parts[:-2]) if len(domain_parts) > 2 else domain_parts[0]
                         logger.warning(f"The domain '{domain}' appears to be using an incorrect format.")
                         logger.info("According to qTest documentation:")
                         logger.info("- SaaS instances use format: <company>.qtestnet.com")
@@ -569,7 +567,7 @@ def main():
     if not args.skip_qtest:
         qtest_valid = verify_qtest_token(
             timeout_seconds=args.timeout,
-            no_verify_ssl=args.no_verify_ssl
+            no_verify_ssl=args.no_verify_ssl,
         )
     else:
         logger.info("⏩ Skipping qTest token verification")
@@ -578,9 +576,8 @@ def main():
     if zephyr_valid and qtest_valid:
         logger.info("\n✨ All API tokens are valid! ✨")
         return 0
-    else:
-        logger.error("\n❌ One or more API tokens are invalid. Please check the errors above.")
-        return 1
+    logger.error("\n❌ One or more API tokens are invalid. Please check the errors above.")
+    return 1
 
 if __name__ == "__main__":
     try:

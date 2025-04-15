@@ -11,19 +11,18 @@ This module provides fixtures that make it easy to use the API mocking harnesses
 in tests across the ZTOQ codebase.
 """
 
-import pytest
-from typing import Dict, List, Any, Tuple
 
+import pytest
+
+from tests.fixtures.mocks.api_harness import (
+    FastAPIHarness,
+    QTestAPIHarness,
+    ZephyrAPIHarness,
+)
+from ztoq.models import ZephyrConfig
 from ztoq.qtest_client import QTestClient
 from ztoq.qtest_models import QTestConfig
 from ztoq.zephyr_client import ZephyrClient
-from ztoq.models import ZephyrConfig
-
-from tests.fixtures.mocks.api_harness import (
-    ZephyrAPIHarness,
-    QTestAPIHarness,
-    FastAPIHarness,
-)
 
 
 @pytest.fixture
@@ -53,7 +52,7 @@ def mock_qtest_api() -> QTestAPIHarness:
 
 
 @pytest.fixture
-def mock_both_apis() -> Tuple[ZephyrAPIHarness, QTestAPIHarness]:
+def mock_both_apis() -> tuple[ZephyrAPIHarness, QTestAPIHarness]:
     """
     Fixture that provides both API harnesses with requests patching.
 
@@ -130,7 +129,7 @@ def mock_zephyr_client(mock_zephyr_api, zephyr_client_config) -> ZephyrClient:
     """
     # Add standard authentication response
     mock_zephyr_api.add_response(
-        "GET", "/projects", {"values": [{"id": "1001", "key": "DEMO", "name": "Demo Project"}]}
+        "GET", "/projects", {"values": [{"id": "1001", "key": "DEMO", "name": "Demo Project"}]},
     )
 
     return ZephyrClient(zephyr_client_config)
@@ -176,8 +175,8 @@ def mock_qtest_client(mock_qtest_api, qtest_client_config) -> QTestClient:
 
 @pytest.fixture
 def mock_both_clients(
-    mock_both_apis, zephyr_client_config, qtest_client_config
-) -> Tuple[ZephyrClient, QTestClient]:
+    mock_both_apis, zephyr_client_config, qtest_client_config,
+) -> tuple[ZephyrClient, QTestClient]:
     """
     Fixture that provides both clients with mocked APIs.
 
@@ -196,7 +195,7 @@ def mock_both_clients(
 
     # Add standard Zephyr responses
     zephyr_harness.add_response(
-        "GET", "/projects", {"values": [{"id": "1001", "key": "DEMO", "name": "Demo Project"}]}
+        "GET", "/projects", {"values": [{"id": "1001", "key": "DEMO", "name": "Demo Project"}]},
     )
 
     # Add standard qTest responses

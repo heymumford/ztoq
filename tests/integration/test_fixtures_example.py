@@ -5,32 +5,20 @@ This file demonstrates how to use the integration test fixtures,
 serving as a reference for implementing other integration tests.
 """
 
-import pytest
-import json
-from pathlib import Path
-from sqlalchemy import text
 
-# Import project models
-from ztoq.models import Project, Case as TestCase
-from ztoq.qtest_models import QTestProject, QTestTestCase
+import pytest
+from sqlalchemy import text
 
 # Import fixtures from the fixtures package
 from tests.fixtures import (
-    # Core fixtures
-    mock_env_vars,
-    temp_dir,
-    # Integration test fixtures
-    sqlite_memory_engine,
-    sqlite_memory_connection,
-    sqlite_file_engine,
-    mock_external_api,
-    test_data_dir,
     # Factories
     ProjectFactory,
-    TestCaseFactory,
     QTestProjectFactory,
     QTestTestCaseFactory,
+    TestCaseFactory,
 )
+
+# Import project models
 
 
 @pytest.mark.integration
@@ -46,8 +34,8 @@ def test_sqlite_memory_database(sqlite_memory_connection):
             id INTEGER PRIMARY KEY,
             name TEXT NOT NULL
         )
-    """
-        )
+    """,
+        ),
     )
 
     # Insert some data
@@ -58,8 +46,8 @@ def test_sqlite_memory_database(sqlite_memory_connection):
         ('Item 1'),
         ('Item 2'),
         ('Item 3')
-    """
-        )
+    """,
+        ),
     )
 
     # Query the data
@@ -87,8 +75,8 @@ def test_sqlite_file_database(sqlite_file_engine):
                 id INTEGER PRIMARY KEY,
                 name TEXT NOT NULL
             )
-        """
-            )
+        """,
+            ),
         )
 
         # Insert some data
@@ -99,8 +87,8 @@ def test_sqlite_file_database(sqlite_file_engine):
             ('Item 1'),
             ('Item 2'),
             ('Item 3')
-        """
-            )
+        """,
+            ),
         )
 
         # Commit the transaction

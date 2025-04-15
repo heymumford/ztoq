@@ -14,19 +14,15 @@ CRUD operations, batch processing, and transaction handling.
 import logging
 import os
 import random
-import time
-from typing import List, Optional
 
 import pytest
 import sqlalchemy as sa
 from sqlalchemy.orm import Session
 
+from tests.fixtures.model_factories import ProjectFactory, TestCaseFactory
+from tests.performance.base import PerformanceTest
 from ztoq.core.db_models import Base, Project, RecommendationHistory, TestCase
 from ztoq.database_factory import get_database_manager
-from ztoq.database_manager import DatabaseManager
-from tests.performance.base import PerformanceTest
-from tests.fixtures.model_factories import ProjectFactory, TestCaseFactory
-
 
 logger = logging.getLogger(__name__)
 
@@ -37,8 +33,8 @@ class DatabasePerformanceTest(PerformanceTest):
     def __init__(
         self,
         name: str,
-        db_url: Optional[str] = None,
-        output_dir: Optional[str] = None,
+        db_url: str | None = None,
+        output_dir: str | None = None,
     ):
         """Initialize database performance test.
 
@@ -49,7 +45,7 @@ class DatabasePerformanceTest(PerformanceTest):
         """
         super().__init__(name=name, output_dir=output_dir)
         self.db_url = db_url or os.environ.get(
-            "ZTOQ_TEST_DB_URL", "sqlite:///:memory:"
+            "ZTOQ_TEST_DB_URL", "sqlite:///:memory:",
         )
         self.db_manager = None
         self.engine = None
@@ -81,7 +77,7 @@ class DatabasePerformanceTest(PerformanceTest):
 
         super().teardown()
 
-    def _create_test_projects(self, count: int) -> List[Project]:
+    def _create_test_projects(self, count: int) -> list[Project]:
         """Create test project records.
 
         Args:
@@ -101,7 +97,7 @@ class DatabasePerformanceTest(PerformanceTest):
 
         return projects
 
-    def _create_test_cases(self, count: int, project_ids: List[str]) -> List[TestCase]:
+    def _create_test_cases(self, count: int, project_ids: list[str]) -> list[TestCase]:
         """Create test case records.
 
         Args:
@@ -129,8 +125,8 @@ class CrudPerformanceTest(DatabasePerformanceTest):
 
     def __init__(
         self,
-        db_url: Optional[str] = None,
-        output_dir: Optional[str] = None,
+        db_url: str | None = None,
+        output_dir: str | None = None,
         num_projects: int = 10,
         num_test_cases: int = 1000,
     ):
@@ -198,7 +194,7 @@ class CrudPerformanceTest(DatabasePerformanceTest):
         project_id = self.projects[0].project_id
         with Session(self.engine) as session:
             test_cases = session.query(TestCase).filter(
-                TestCase.project_id == project_id
+                TestCase.project_id == project_id,
             ).all()
             return test_cases
 
@@ -208,7 +204,7 @@ class CrudPerformanceTest(DatabasePerformanceTest):
         test_case_id = self.test_cases[0].test_case_id
         with Session(self.engine) as session:
             test_case = session.query(TestCase).filter(
-                TestCase.test_case_id == test_case_id
+                TestCase.test_case_id == test_case_id,
             ).first()
             return test_case
 
@@ -225,7 +221,7 @@ class CrudPerformanceTest(DatabasePerformanceTest):
         test_case_id = self.test_cases[0].test_case_id
         with Session(self.engine) as session:
             test_case = session.query(TestCase).filter(
-                TestCase.test_case_id == test_case_id
+                TestCase.test_case_id == test_case_id,
             ).first()
             test_case.name = f"Updated {test_case.name}"
             test_case.objective = f"Updated objective for {test_case.name}"
@@ -239,10 +235,10 @@ class CrudPerformanceTest(DatabasePerformanceTest):
 
         with Session(self.engine) as session:
             session.query(TestCase).filter(
-                TestCase.test_case_id.in_(test_case_ids)
+                TestCase.test_case_id.in_(test_case_ids),
             ).update(
                 {TestCase.status: "Updated"},
-                synchronize_session=False
+                synchronize_session=False,
             )
             session.commit()
 
@@ -257,7 +253,7 @@ class CrudPerformanceTest(DatabasePerformanceTest):
         test_case_id = self.test_cases[-1].test_case_id
         with Session(self.engine) as session:
             test_case = session.query(TestCase).filter(
-                TestCase.test_case_id == test_case_id
+                TestCase.test_case_id == test_case_id,
             ).first()
             session.delete(test_case)
             session.commit()
@@ -270,7 +266,7 @@ class CrudPerformanceTest(DatabasePerformanceTest):
 
         with Session(self.engine) as session:
             session.query(TestCase).filter(
-                TestCase.test_case_id.in_(test_case_ids)
+                TestCase.test_case_id.in_(test_case_ids),
             ).delete(synchronize_session=False)
             session.commit()
 
@@ -285,11 +281,11 @@ class BatchPerformanceTest(DatabasePerformanceTest):
 
     def __init__(
         self,
-        db_url: Optional[str] = None,
-        output_dir: Optional[str] = None,
+        db_url: str | None = None,
+        output_dir: str | None = None,
         num_projects: int = 5,
         num_records: int = 5000,
-        batch_sizes: Optional[List[int]] = None,
+        batch_sizes: list[int] | None = None,
     ):
         """Initialize batch operation performance test.
 
@@ -325,7 +321,7 @@ class BatchPerformanceTest(DatabasePerformanceTest):
             self._test_batch_delete(batch_size)
 
     @PerformanceTest.measure(operation="batch_insert")
-    def _test_batch_insert(self, batch_size: int, project_ids: List[str]) -> None:
+    def _test_batch_insert(self, batch_size: int, project_ids: list[str]) -> None:
         """Test performance of batch insert operations.
 
         Args:
@@ -385,10 +381,10 @@ class BatchPerformanceTest(DatabasePerformanceTest):
 
                 # Update batch
                 session.query(RecommendationHistory).filter(
-                    RecommendationHistory.id.in_(ids)
+                    RecommendationHistory.id.in_(ids),
                 ).update(
                     {RecommendationHistory.status: "updated"},
-                    synchronize_session=False
+                    synchronize_session=False,
                 )
                 session.commit()
 
@@ -417,7 +413,7 @@ class BatchPerformanceTest(DatabasePerformanceTest):
 
                 # Delete batch
                 session.query(RecommendationHistory).filter(
-                    RecommendationHistory.id.in_(ids)
+                    RecommendationHistory.id.in_(ids),
                 ).delete(synchronize_session=False)
                 session.commit()
 

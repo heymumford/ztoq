@@ -17,6 +17,7 @@ from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from typing import Any, TypeVar
+
 from ztoq.models import Project, ZephyrConfig
 from ztoq.zephyr_client import ZephyrClient
 
@@ -53,7 +54,7 @@ def fetch_projects(client: ZephyrClient) -> list[Project]:
         logger.info("Fetching all projects")
         return list(client.get_projects())
     except Exception as e:
-        logger.error(f"Failed to fetch projects: {str(e)}")
+        logger.error(f"Failed to fetch projects: {e!s}")
         return []
 
 def fetch_all_test_cases(client: ZephyrClient, project_key: str) -> FetchResult:
@@ -74,7 +75,7 @@ def fetch_all_test_cases(client: ZephyrClient, project_key: str) -> FetchResult:
             success=True,
         )
     except Exception as e:
-        error_message = f"Failed to fetch test cases for project {project_key}: {str(e)}"
+        error_message = f"Failed to fetch test cases for project {project_key}: {e!s}"
         logger.error(error_message)
         return FetchResult(
             entity_type="test_cases",
@@ -103,7 +104,7 @@ def fetch_all_test_cycles(client: ZephyrClient, project_key: str) -> FetchResult
             success=True,
         )
     except Exception as e:
-        error_message = f"Failed to fetch test cycles for project {project_key}: {str(e)}"
+        error_message = f"Failed to fetch test cycles for project {project_key}: {e!s}"
         logger.error(error_message)
         return FetchResult(
             entity_type="test_cycles",
@@ -132,7 +133,7 @@ def fetch_all_test_executions(client: ZephyrClient, project_key: str) -> FetchRe
             success=True,
         )
     except Exception as e:
-        error_message = f"Failed to fetch test executions for project {project_key}: {str(e)}"
+        error_message = f"Failed to fetch test executions for project {project_key}: {e!s}"
         logger.error(error_message)
         return FetchResult(
             entity_type="test_executions",
@@ -160,7 +161,7 @@ def fetch_folders(client: ZephyrClient, project_key: str) -> FetchResult:
             success=True,
         )
     except Exception as e:
-        error_message = f"Failed to fetch folders for project {project_key}: {str(e)}"
+        error_message = f"Failed to fetch folders for project {project_key}: {e!s}"
         logger.error(error_message)
         return FetchResult(
             entity_type="folders",
@@ -189,7 +190,7 @@ def fetch_statuses(client: ZephyrClient, project_key: str) -> FetchResult:
             success=True,
         )
     except Exception as e:
-        error_message = f"Failed to fetch statuses for project {project_key}: {str(e)}"
+        error_message = f"Failed to fetch statuses for project {project_key}: {e!s}"
         logger.error(error_message)
         return FetchResult(
             entity_type="statuses",
@@ -217,7 +218,7 @@ def fetch_priorities(client: ZephyrClient, project_key: str) -> FetchResult:
             success=True,
         )
     except Exception as e:
-        error_message = f"Failed to fetch priorities for project {project_key}: {str(e)}"
+        error_message = f"Failed to fetch priorities for project {project_key}: {e!s}"
         logger.error(error_message)
         return FetchResult(
             entity_type="priorities",
@@ -246,7 +247,7 @@ def fetch_environments(client: ZephyrClient, project_key: str) -> FetchResult:
             success=True,
         )
     except Exception as e:
-        error_message = f"Failed to fetch environments for project {project_key}: {str(e)}"
+        error_message = f"Failed to fetch environments for project {project_key}: {e!s}"
         logger.error(error_message)
         return FetchResult(
             entity_type="environments",
@@ -276,6 +277,7 @@ def fetch_all_project_data(
 
     Returns:
         Dictionary mapping entity types to their fetch results
+
     """
     fetch_functions = {
         "test_cases": lambda: fetch_all_test_cases(client, project_key),
@@ -306,7 +308,7 @@ def fetch_all_project_data(
                 if progress_callback:
                     progress_callback(entity_type, project_key, result.success)
             except Exception as e:
-                logger.error(f"Error in fetch operation for {entity_type}: {str(e)}")
+                logger.error(f"Error in fetch operation for {entity_type}: {e!s}")
                 if progress_callback:
                     progress_callback(entity_type, project_key, False)
 
@@ -330,6 +332,7 @@ def fetch_all_projects_data(
 
     Returns:
         Dictionary mapping project keys to their respective data results
+
     """
     # If no project keys provided, fetch all projects first
     if not project_keys:
@@ -351,7 +354,7 @@ def fetch_all_projects_data(
             # Count successful entities
             success_count = sum(1 for result in project_results.values() if result.success)
             progress_callback(
-                "project_complete", project_key, success_count == len(project_results)
+                "project_complete", project_key, success_count == len(project_results),
             )
 
     return results

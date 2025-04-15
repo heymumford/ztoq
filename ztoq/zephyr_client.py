@@ -12,9 +12,11 @@ import os
 import random
 import time
 from pathlib import Path
-from typing import Any, Callable, Dict, Generic, Optional, TypeVar, cast, Union
+from typing import Any, Generic, TypeVar, cast
+
 import requests
 from requests.exceptions import ConnectionError, HTTPError, RequestException, Timeout
+
 from ztoq.models import (
     Attachment,
     Case,
@@ -38,11 +40,13 @@ logger = logging.getLogger("ztoq.zephyr_client")
 
 
 def configure_logging(level=None):
-    """Configure logging for the Zephyr client.
+    """
+    Configure logging for the Zephyr client.
 
     Args:
         level: The logging level to use. If None, use the level from the ZTOQ_LOG_LEVEL
               environment variable, or INFO as a default.
+
     """
     # Use specified level, environment variable, or default to INFO
     if level is None:
@@ -71,7 +75,8 @@ configure_logging()
 
 
 class CircuitBreaker:
-    """Circuit breaker pattern implementation for API calls.
+    """
+    Circuit breaker pattern implementation for API calls.
 
     Implements a simple circuit breaker that tracks failures and prevents
     calls to failing endpoints for a cooling-off period.
@@ -83,6 +88,7 @@ class CircuitBreaker:
         failure_count: Current count of consecutive failures
         last_failure_time: Timestamp of last failure
         endpoint_circuits: Dictionary tracking circuits for different endpoints
+
     """
 
     # Circuit states
@@ -92,13 +98,17 @@ class CircuitBreaker:
 
     # Class level circuit tracking for different endpoints
     _endpoint_circuits = {}
+    _last_cleanup_time = 0
+    _cleanup_interval = 3600  # Clean up once per hour
 
     def __init__(self, failure_threshold=5, reset_timeout=60):
-        """Initialize circuit breaker.
+        """
+        Initialize circuit breaker.
 
         Args:
             failure_threshold: Number of failures before opening circuit
             reset_timeout: Seconds before attempting to close circuit again
+
         """
         self.failure_threshold = failure_threshold
         self.reset_timeout = reset_timeout
@@ -139,7 +149,7 @@ class CircuitBreaker:
                 # Success - reset circuit if it was half-open
                 if circuit.state == self.HALF_OPEN:
                     logger.info(
-                        f"Circuit for endpoint {endpoint} reset to CLOSED - service recovered"
+                        f"Circuit for endpoint {endpoint} reset to CLOSED - service recovered",
                     )
                     circuit.state = self.CLOSED
                     circuit.failure_count = 0
@@ -154,7 +164,7 @@ class CircuitBreaker:
                 # Log the failure
                 logger.warning(
                     f"Circuit failure for endpoint {endpoint}: {e} "
-                    f"(count: {circuit.failure_count}/{circuit.failure_threshold})"
+                    f"(count: {circuit.failure_count}/{circuit.failure_threshold})",
                 )
 
                 # Check if we need to open the circuit
@@ -172,7 +182,18 @@ class CircuitBreaker:
 
     @classmethod
     def _get_circuit(cls, endpoint):
-        """Get or create a circuit for an endpoint."""
+        """
+        Get or create a circuit for an endpoint.
+        
+        Also performs periodic cleanup of idle circuits to prevent memory leaks.
+        """
+        # Check if we need to do a periodic cleanup
+        current_time = time.time()
+        if current_time - cls._last_cleanup_time > cls._cleanup_interval:
+            cls.cleanup_idle_circuits()
+            cls._last_cleanup_time = current_time
+
+        # Get or create the circuit breaker for this endpoint
         if endpoint not in cls._endpoint_circuits:
             cls._endpoint_circuits[endpoint] = CircuitBreaker()
         return cls._endpoint_circuits[endpoint]
@@ -194,6 +215,40 @@ class CircuitBreaker:
             for endpoint, circuit in cls._endpoint_circuits.items()
         }
 
+    @classmethod
+    def cleanup_idle_circuits(cls, idle_timeout=3600):
+        """
+        Clean up circuits that haven't been used in a while to prevent memory leaks.
+        
+        Args:
+            idle_timeout: Time in seconds after which an idle circuit is removed
+        
+        Returns:
+            int: Number of circuits cleaned up
+
+        """
+        current_time = time.time()
+        circuits_to_remove = []
+
+        for endpoint, circuit in cls._endpoint_circuits.items():
+            # If the circuit has no failures and hasn't failed recently, or
+            # it's in CLOSED state and has been idle for longer than the timeout
+            if ((circuit.failure_count == 0 and
+                 current_time - circuit.last_failure_time > idle_timeout) or
+                (circuit.state == cls.CLOSED and
+                 current_time - circuit.last_failure_time > idle_timeout * 2)):
+                circuits_to_remove.append(endpoint)
+
+        # Remove the idle circuits
+        for endpoint in circuits_to_remove:
+            del cls._endpoint_circuits[endpoint]
+
+        # Log the cleanup only if circuits were removed
+        if circuits_to_remove:
+            logger.debug(f"Cleaned up {len(circuits_to_remove)} idle circuit breakers")
+
+        return len(circuits_to_remove)
+
 
 def retry(
     max_retries: int = 3,
@@ -203,7 +258,8 @@ def retry(
     backoff_factor: float = 2.0,
     jitter: bool = True,
 ):
-    """Retry decorator with exponential backoff for API calls.
+    """
+    Retry decorator with exponential backoff for API calls.
 
     Args:
         max_retries: Maximum number of retry attempts
@@ -215,6 +271,7 @@ def retry(
 
     Returns:
         Decorated function
+
     """
 
     def decorator(func):
@@ -241,7 +298,7 @@ def retry(
 
                     logger.warning(
                         f"Network error: {e}. Retrying in {current_delay:.2f}s "
-                        f"(attempt {retries}/{max_retries})"
+                        f"(attempt {retries}/{max_retries})",
                     )
                     time.sleep(current_delay)
                     delay *= backoff_factor
@@ -264,7 +321,7 @@ def retry(
 
                             logger.warning(
                                 f"HTTP error {status_code}: Retrying in {current_delay:.2f}s "
-                                f"(attempt {retries}/{max_retries})"
+                                f"(attempt {retries}/{max_retries})",
                             )
                             time.sleep(current_delay)
                             delay *= backoff_factor
@@ -298,7 +355,8 @@ class PaginatedIterator(Generic[T]):
         params: dict[str, Any] | None = None,
         page_size: int = 100,
     ):
-        """Initialize the paginated iterator.
+        """
+        Initialize the paginated iterator.
 
         Args:
             client: The ZephyrClient instance
@@ -306,6 +364,7 @@ class PaginatedIterator(Generic[T]):
             model_class: Model class for response items
             params: Additional query parameters
             page_size: Number of items per page
+
         """
         self.client = client
         self.endpoint = endpoint
@@ -318,7 +377,7 @@ class PaginatedIterator(Generic[T]):
 
         logger.debug(
             f"PaginatedIterator initialized for {endpoint} with page size {page_size}, "
-            f"model class {model_class.__name__}"
+            f"model class {model_class.__name__}",
         )
 
     def __iter__(self):
@@ -339,17 +398,17 @@ class PaginatedIterator(Generic[T]):
         if self.item_index >= len(self.current_page.values):
             if self.current_page.is_last:
                 logger.debug(
-                    f"Reached last page for {self.endpoint}, total items fetched: {self.total_fetched}"
+                    f"Reached last page for {self.endpoint}, total items fetched: {self.total_fetched}",
                 )
                 raise StopIteration
 
             logger.debug(
-                f"Fetching next page for {self.endpoint}, items so far: {self.total_fetched}"
+                f"Fetching next page for {self.endpoint}, items so far: {self.total_fetched}",
             )
             self._fetch_next_page()
 
         # Return the next item
-        item = cast(T, self.model_class(**self.current_page.values[self.item_index]))
+        item = cast("T", self.model_class(**self.current_page.values[self.item_index]))
         self.item_index += 1
         self.total_fetched += 1
 
@@ -369,7 +428,7 @@ class PaginatedIterator(Generic[T]):
             self.params["startAt"] = 0
 
         logger.debug(
-            f"Fetching page {page_number + 1} from {self.endpoint} (startAt={self.params['startAt']})"
+            f"Fetching page {page_number + 1} from {self.endpoint} (startAt={self.params['startAt']})",
         )
 
         response = self.client._make_request("GET", self.endpoint, params=self.params)
@@ -378,7 +437,7 @@ class PaginatedIterator(Generic[T]):
 
         logger.debug(
             f"Received page {page_number + 1} with {len(self.current_page.values)} items, "
-            f"total: {self.current_page.total_count}, isLast: {self.current_page.is_last}"
+            f"total: {self.current_page.total_count}, isLast: {self.current_page.is_last}",
         )
 
 
@@ -386,12 +445,14 @@ class ZephyrClient:
     """Client for interacting with the Zephyr Scale API."""
 
     def __init__(self, config: ZephyrConfig, log_level=None):
-        """Initialize the Zephyr client with configuration.
+        """
+        Initialize the Zephyr client with configuration.
 
         Args:
             config: The Zephyr Scale API configuration
             log_level: Optional logging level to use for this client instance
                       (e.g., "DEBUG", "INFO", "WARNING", "ERROR")
+
         """
         self.config = config
         self.headers = {
@@ -406,7 +467,7 @@ class ZephyrClient:
             configure_logging(log_level)
 
         logger.debug(
-            f"ZephyrClient initialized for project {config.project_key} with base URL {config.base_url}"
+            f"ZephyrClient initialized for project {config.project_key} with base URL {config.base_url}",
         )
 
     @CircuitBreaker(failure_threshold=5, reset_timeout=60)
@@ -423,7 +484,8 @@ class ZephyrClient:
         validate: bool = True,
         timeout: tuple[float, float] = (10.0, 30.0),  # Connect timeout, read timeout
     ) -> dict[str, Any]:
-        """Make a request to the Zephyr API.
+        """
+        Make a request to the Zephyr API.
 
         Args:
             method: HTTP method
@@ -438,6 +500,7 @@ class ZephyrClient:
 
         Returns:
             API response as dictionary
+
         """
         # Import the connection pool lazily to avoid circular imports
         from ztoq.connection_pool import connection_pool
@@ -476,7 +539,7 @@ class ZephyrClient:
 
             # Validate parameters
             valid_params, param_error = self.spec_wrapper.validate_parameters(
-                endpoint, method.lower(), params, path_params
+                endpoint, method.lower(), params, path_params,
             )
             if not valid_params:
                 logger.error(f"Parameter validation failed: {param_error}")
@@ -487,7 +550,7 @@ class ZephyrClient:
             # Validate request body if present
             if json_data and method.lower() in ["post", "put", "patch"]:
                 valid_body, body_error = self.spec_wrapper.validate_request(
-                    endpoint, method.lower(), json_data
+                    endpoint, method.lower(), json_data,
                 )
                 if not valid_body:
                     logger.error(f"Request body validation failed: {body_error}")
@@ -539,7 +602,7 @@ class ZephyrClient:
                 # Log response metadata
                 logger.debug(
                     f"Response [{request_id}] received in {duration:.2f}s - "
-                    f"Status: {response.status_code}"
+                    f"Status: {response.status_code}",
                 )
 
                 # Log headers at trace level (requires DEBUG or lower)
@@ -557,14 +620,14 @@ class ZephyrClient:
                     logger.error(f"Response Text [{request_id}]: {response.text[:500]}")
                     raise ValueError(
                         f"Could not parse JSON response: {e}. "
-                        f"Response text: {response.text[:100]}..."
+                        f"Response text: {response.text[:100]}...",
                     )
 
                 # Validate response against OpenAPI spec if available and validation is enabled
                 if validate and hasattr(self, "spec_wrapper"):
                     status_code = str(response.status_code)
                     valid_response, response_error = self.spec_wrapper.validate_response(
-                        endpoint, method.lower(), status_code, response_json
+                        endpoint, method.lower(), status_code, response_json,
                     )
                     if not valid_response:
                         logger.warning(f"Response validation failed [{request_id}]: {response_error}")
@@ -578,17 +641,17 @@ class ZephyrClient:
                                     log_response["values"].append("... truncated for logging")
                                     logger.debug(
                                         f"Invalid response body [{request_id}] (truncated): "
-                                        f"{json.dumps(log_response)}"
+                                        f"{json.dumps(log_response)}",
                                     )
                                 else:
                                     logger.debug(
                                         f"Invalid response body [{request_id}]: "
-                                        f"{json.dumps(response_json)}"
+                                        f"{json.dumps(response_json)}",
                                     )
                             else:
                                 logger.debug(
                                     f"Invalid response body [{request_id}]: "
-                                    f"{json.dumps(response_json)}"
+                                    f"{json.dumps(response_json)}",
                                 )
 
                 # Log response data at trace level
@@ -603,7 +666,7 @@ class ZephyrClient:
                             log_response["values"].append("... truncated for logging")
                             logger.debug(
                                 f"Response Body [{request_id}] (truncated): "
-                                f"{json.dumps(log_response)}"
+                                f"{json.dumps(log_response)}",
                             )
                         else:
                             logger.debug(f"Response Body [{request_id}]: {json.dumps(response_json)}")
@@ -629,7 +692,7 @@ class ZephyrClient:
 
         except requests.exceptions.Timeout as e:
             logger.error(
-                f"Timeout Error [{request_id}]: Request to {url} timed out after {timeout}s: {e}"
+                f"Timeout Error [{request_id}]: Request to {url} timed out after {timeout}s: {e}",
             )
             raise
 
@@ -662,10 +725,12 @@ class ZephyrClient:
         return result
 
     def get_projects(self) -> list[Project]:
-        """Get all projects.
+        """
+        Get all projects.
 
         Returns:
             List of projects
+
         """
         response = self._make_request("GET", "/projects")
         # Handle response which could be a list or dict with values
@@ -673,60 +738,67 @@ class ZephyrClient:
         return [Project(**project) for project in projects_data]
 
     def get_test_cases(self, project_key: str | None = None) -> PaginatedIterator[Case]:
-        """Get all test cases for a project.
+        """
+        Get all test cases for a project.
 
         Args:
             project_key: JIRA project key (defaults to config's project_key)
 
         Returns:
             Iterator of test cases
+
         """
         params = {}
         if project_key:
             params["projectKey"] = project_key
 
         return PaginatedIterator[Case](
-            client=self, endpoint="/testcases", model_class=Case, params=params
+            client=self, endpoint="/testcases", model_class=Case, params=params,
         )
 
     def get_test_cycles(self, project_key: str | None = None) -> PaginatedIterator[CycleInfo]:
-        """Get all test cycles for a project.
+        """
+        Get all test cycles for a project.
 
         Args:
             project_key: JIRA project key (defaults to config's project_key)
 
         Returns:
             Iterator of test cycles
+
         """
         params = {}
         if project_key:
             params["projectKey"] = project_key
 
         return PaginatedIterator[CycleInfo](
-            client=self, endpoint="/testcycles", model_class=CycleInfo, params=params
+            client=self, endpoint="/testcycles", model_class=CycleInfo, params=params,
         )
 
     def get_test_plans(self, project_key: str | None = None) -> PaginatedIterator[Plan]:
-        """Get all test plans for a project.
+        """
+        Get all test plans for a project.
 
         Args:
             project_key: JIRA project key (defaults to config's project_key)
 
         Returns:
             Iterator of test plans
+
         """
         params = {}
         if project_key:
             params["projectKey"] = project_key
 
         return PaginatedIterator[Plan](
-            client=self, endpoint="/testplans", model_class=Plan, params=params
+            client=self, endpoint="/testplans", model_class=Plan, params=params,
         )
 
     def get_test_executions(
-        self, cycle_id: str | None = None, project_key: str | None = None
+        self, cycle_id: str | None = None, project_key: str | None = None,
     ) -> PaginatedIterator[Execution]:
-        """Get all test executions for a test cycle.
+        """
+        Get all test executions for a test cycle.
 
         Args:
             cycle_id: ID of the test cycle
@@ -734,6 +806,7 @@ class ZephyrClient:
 
         Returns:
             Iterator of test executions
+
         """
         params = {}
         if cycle_id:
@@ -742,17 +815,19 @@ class ZephyrClient:
             params["projectKey"] = project_key
 
         return PaginatedIterator[Execution](
-            client=self, endpoint="/testexecutions", model_class=Execution, params=params
+            client=self, endpoint="/testexecutions", model_class=Execution, params=params,
         )
 
     def get_folders(self, project_key: str | None = None) -> list[Folder]:
-        """Get all folders for a project.
+        """
+        Get all folders for a project.
 
         Args:
             project_key: JIRA project key (defaults to config's project_key)
 
         Returns:
             List of folders
+
         """
         params = {}
         if project_key:
@@ -762,13 +837,15 @@ class ZephyrClient:
         return [Folder(**folder) for folder in response.get("values", [])]
 
     def get_statuses(self, project_key: str | None = None) -> list[Status]:
-        """Get all statuses for a project.
+        """
+        Get all statuses for a project.
 
         Args:
             project_key: JIRA project key (defaults to config's project_key)
 
         Returns:
             List of statuses
+
         """
         params = {}
         if project_key:
@@ -778,13 +855,15 @@ class ZephyrClient:
         return [Status(**status) for status in response.get("values", [])]
 
     def get_priorities(self, project_key: str | None = None) -> list[Priority]:
-        """Get all priorities for a project.
+        """
+        Get all priorities for a project.
 
         Args:
             project_key: JIRA project key (defaults to config's project_key)
 
         Returns:
             List of priorities
+
         """
         params = {}
         if project_key:
@@ -794,13 +873,15 @@ class ZephyrClient:
         return [Priority(**priority) for priority in response.get("values", [])]
 
     def get_environments(self, project_key: str | None = None) -> list[Environment]:
-        """Get all environments for a project.
+        """
+        Get all environments for a project.
 
         Args:
             project_key: JIRA project key (defaults to config's project_key)
 
         Returns:
             List of environments
+
         """
         params = {}
         if project_key:
@@ -810,9 +891,10 @@ class ZephyrClient:
         return [Environment(**env) for env in response.get("values", [])]
 
     def get_custom_fields(
-        self, entity_type: str = "testCase", project_key: str | None = None
+        self, entity_type: str = "testCase", project_key: str | None = None,
     ) -> list[dict[str, Any]]:
-        """Get available custom fields for a specific entity type.
+        """
+        Get available custom fields for a specific entity type.
 
         Args:
             entity_type: The entity type ("testCase", "testCycle", "testExecution", etc.)
@@ -820,6 +902,7 @@ class ZephyrClient:
 
         Returns:
             List of custom field definitions
+
         """
         params = {"entityType": entity_type}
         if project_key:
@@ -835,7 +918,8 @@ class ZephyrClient:
         file_path: str | Path,
         project_key: str | None = None,
     ) -> Attachment:
-        """Upload a file attachment to a test case, step, or execution.
+        """
+        Upload a file attachment to a test case, step, or execution.
 
         Args:
             entity_type: Type of entity to attach to ("testCase", "testStep", "testExecution")
@@ -845,6 +929,7 @@ class ZephyrClient:
 
         Returns:
             Attachment model with details
+
         """
         if isinstance(file_path, str):
             file_path = Path(file_path)
@@ -876,15 +961,16 @@ class ZephyrClient:
             params["projectKey"] = project_key
 
         response = self._make_request(
-            method="POST", endpoint=endpoint, params=params, headers=headers, files=files
+            method="POST", endpoint=endpoint, params=params, headers=headers, files=files,
         )
 
         return Attachment(**response)
 
     def get_attachments(
-        self, entity_type: str, entity_id: str, project_key: str | None = None
+        self, entity_type: str, entity_id: str, project_key: str | None = None,
     ) -> list[Attachment]:
-        """Get attachments for a test case, test step, or test execution.
+        """
+        Get attachments for a test case, test step, or test execution.
 
         Args:
             entity_type: Type of entity ("testCase", "testStep", "testExecution")
@@ -893,6 +979,7 @@ class ZephyrClient:
 
         Returns:
             List of attachments
+
         """
         params = {}
         if project_key:
@@ -906,9 +993,10 @@ class ZephyrClient:
     @CircuitBreaker(failure_threshold=3, reset_timeout=60)
     @retry(max_retries=5, initial_delay=1.0, backoff_factor=2.0, jitter=True)
     def download_attachment(
-        self, attachment_id: str, timeout: tuple[float, float] = (10.0, 120.0)
+        self, attachment_id: str, timeout: tuple[float, float] = (10.0, 120.0),
     ) -> bytes:
-        """Download an attachment by ID.
+        """
+        Download an attachment by ID.
 
         Args:
             attachment_id: ID of the attachment
@@ -923,6 +1011,7 @@ class ZephyrClient:
             ConnectionError: If connection to the server fails
             Timeout: If the download times out
             ValueError: If the attachment ID is invalid
+
         """
         if not attachment_id:
             raise ValueError("Invalid attachment ID: must not be empty")
@@ -962,7 +1051,7 @@ class ZephyrClient:
 
             logger.debug(
                 f"Attachment downloaded [{request_id}] in {duration:.2f}s "
-                f"({size_kb:.1f} KB, {download_speed:.1f} KB/s)"
+                f"({size_kb:.1f} KB, {download_speed:.1f} KB/s)",
             )
 
             return content
@@ -977,21 +1066,22 @@ class ZephyrClient:
             logger.error(f"Connection Error downloading attachment [{request_id}]: {e}")
             raise
 
-        except requests.exceptions.Timeout as e:
+        except requests.exceptions.Timeout:
             logger.error(
                 f"Timeout Error downloading attachment [{request_id}]: "
-                f"Download timed out after {timeout[1]}s"
+                f"Download timed out after {timeout[1]}s",
             )
             raise
 
         except Exception as e:
             logger.error(
-                f"Error downloading attachment [{request_id}]: {e.__class__.__name__}: {e}"
+                f"Error downloading attachment [{request_id}]: {e.__class__.__name__}: {e}",
             )
             raise
 
     def check_api_health(self) -> dict[str, Any]:
-        """Check the health of the Zephyr API.
+        """
+        Check the health of the Zephyr API.
 
         Performs a simple API call to check if the API is reachable and properly responding.
         Also returns information about current circuit breaker status.
@@ -999,7 +1089,8 @@ class ZephyrClient:
         Returns:
             Dictionary with health check information
 
-        Example:
+        Example::
+
             {
                 "healthy": True,
                 "latency_ms": 152,
@@ -1010,6 +1101,7 @@ class ZephyrClient:
                     "/testcases": {"state": "open", "failures": 5}
                 }
             }
+
         """
         health_info = {
             "healthy": False,
@@ -1036,7 +1128,7 @@ class ZephyrClient:
 
         except Exception as e:
             health_info["healthy"] = False
-            health_info["error"] = f"{e.__class__.__name__}: {str(e)}"
+            health_info["error"] = f"{e.__class__.__name__}: {e!s}"
             logger.warning(f"API health check failed: {health_info['error']}")
 
         return health_info
@@ -1050,6 +1142,7 @@ class ZephyrClient:
 
         Returns:
             bool: True if the token is valid, False otherwise
+
         """
         logger.info("Verifying Zephyr API token validity")
 
@@ -1059,11 +1152,12 @@ class ZephyrClient:
             logger.info("Zephyr API token verification successful")
             return True
         except Exception as e:
-            logger.error(f"Zephyr API token verification failed: {str(e)}")
+            logger.error(f"Zephyr API token verification failed: {e!s}")
             return False
 
     def reset_circuit_breakers(self) -> None:
-        """Reset all circuit breakers to their closed state.
+        """
+        Reset all circuit breakers to their closed state.
 
         This is useful when you want to force retry of previously failing endpoints,
         for example after fixing connectivity issues.
@@ -1071,11 +1165,32 @@ class ZephyrClient:
         CircuitBreaker.reset_all_circuits()
         logger.info("All circuit breakers have been reset")
 
+    def cleanup(self) -> None:
+        """
+        Clean up resources used by the client.
+        
+        This method:
+        1. Cleans up idle circuit breakers to prevent memory leaks
+        2. Closes any open connections
+        
+        You should call this method when you're done with the client
+        to ensure proper resource cleanup.
+        """
+        # Clean up circuit breakers
+        CircuitBreaker.cleanup_idle_circuits()
+
+        # Close connection pools
+        from ztoq.connection_pool import close_connection_pools
+        close_connection_pools()
+
+        logger.debug("ZephyrClient resources cleaned up")
+
     @classmethod
     def from_openapi_spec(
-        cls, spec_path: Path, config: ZephyrConfig, log_level=None
+        cls, spec_path: Path, config: ZephyrConfig, log_level=None,
     ) -> "ZephyrClient":
-        """Create a client from an OpenAPI spec file.
+        """
+        Create a client from an OpenAPI spec file.
 
         Args:
             spec_path: Path to the OpenAPI spec file
@@ -1084,6 +1199,7 @@ class ZephyrClient:
 
         Returns:
             Configured ZephyrClient instance
+
         """
         logger.info(f"Creating ZephyrClient from OpenAPI spec: {spec_path}")
 
@@ -1100,7 +1216,7 @@ class ZephyrClient:
                 endpoints = list(spec["paths"].keys())
                 logger.debug(
                     f"Available endpoints in spec: {', '.join(endpoints[:10])}"
-                    + (f" and {len(endpoints) - 10} more..." if len(endpoints) > 10 else "")
+                    + (f" and {len(endpoints) - 10} more..." if len(endpoints) > 10 else ""),
                 )
 
         # Create the client instance

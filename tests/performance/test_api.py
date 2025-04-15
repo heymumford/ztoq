@@ -11,25 +11,22 @@ This module contains performance tests for the Zephyr and qTest API clients,
 including connection pooling, batch operations, and concurrent requests.
 """
 
-import asyncio
 import logging
-import os
 import time
 from concurrent.futures import ThreadPoolExecutor
-from typing import Dict, List, Optional, Tuple, Any
-from unittest.mock import patch, MagicMock
+from typing import Any
+from unittest.mock import patch
 
 import pytest
 import requests
 import responses
 from responses import matchers
 
+from tests.performance.base import PerformanceTest
 from ztoq.connection_pool import ConnectionPool, connection_pool
 from ztoq.models import ZephyrConfig
 from ztoq.qtest_client import QTestClient, QTestConfig
 from ztoq.zephyr_client import ZephyrClient
-from tests.performance.base import PerformanceTest, format_duration
-
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +37,7 @@ class APIPerformanceTest(PerformanceTest):
     def __init__(
         self,
         name: str,
-        output_dir: Optional[str] = None,
+        output_dir: str | None = None,
     ):
         """Initialize API performance test.
 
@@ -65,10 +62,10 @@ class ConnectionPoolPerformanceTest(APIPerformanceTest):
 
     def __init__(
         self,
-        output_dir: Optional[str] = None,
+        output_dir: str | None = None,
         base_url: str = "https://api.example.com",
         request_count: int = 100,
-        pool_sizes: List[int] = None,
+        pool_sizes: list[int] = None,
     ):
         """Initialize connection pool performance test.
 
@@ -224,7 +221,7 @@ class ConnectionPoolPerformanceTest(APIPerformanceTest):
                 )
 
                 # Function to make requests
-                def make_requests(thread_id: int, num_requests: int) -> Dict[str, Any]:
+                def make_requests(thread_id: int, num_requests: int) -> dict[str, Any]:
                     start_time = time.time()
                     requests_per_thread = num_requests // num_threads
 
@@ -236,7 +233,7 @@ class ConnectionPoolPerformanceTest(APIPerformanceTest):
                     return {
                         "thread_id": thread_id,
                         "requests": requests_per_thread,
-                        "duration": time.time() - start_time
+                        "duration": time.time() - start_time,
                     }
 
                 # Run concurrent requests
@@ -266,7 +263,7 @@ class ZephyrClientPerformanceTest(APIPerformanceTest):
 
     def __init__(
         self,
-        output_dir: Optional[str] = None,
+        output_dir: str | None = None,
         base_url: str = "https://api.example.com",
         project_key: str = "TEST",
         api_token: str = "fake-token",
@@ -320,8 +317,8 @@ class ZephyrClientPerformanceTest(APIPerformanceTest):
                     content_type="application/json",
                     match=[
                         matchers.header_matcher(
-                            {"Authorization": f"Bearer {self.api_token}"}
-                        )
+                            {"Authorization": f"Bearer {self.api_token}"},
+                        ),
                     ],
                 )
 
@@ -368,8 +365,8 @@ class ZephyrClientPerformanceTest(APIPerformanceTest):
                     content_type="application/json",
                     match=[
                         matchers.query_param_matcher(
-                            {"projectKey": self.project_key, "maxResults": "100", "startAt": "0"}
-                        )
+                            {"projectKey": self.project_key, "maxResults": "100", "startAt": "0"},
+                        ),
                     ],
                 )
 
@@ -391,8 +388,8 @@ class ZephyrClientPerformanceTest(APIPerformanceTest):
                     content_type="application/json",
                     match=[
                         matchers.query_param_matcher(
-                            {"projectKey": self.project_key, "maxResults": "100", "startAt": "100"}
-                        )
+                            {"projectKey": self.project_key, "maxResults": "100", "startAt": "100"},
+                        ),
                     ],
                 )
 
@@ -414,8 +411,8 @@ class ZephyrClientPerformanceTest(APIPerformanceTest):
                     content_type="application/json",
                     match=[
                         matchers.query_param_matcher(
-                            {"projectKey": self.project_key, "maxResults": "100", "startAt": "200"}
-                        )
+                            {"projectKey": self.project_key, "maxResults": "100", "startAt": "200"},
+                        ),
                     ],
                 )
 
@@ -435,7 +432,7 @@ class ZephyrClientPerformanceTest(APIPerformanceTest):
 
         run_test()
 
-    def _test_pagination(self, total_items: int = 500, page_sizes: List[int] = None) -> None:
+    def _test_pagination(self, total_items: int = 500, page_sizes: list[int] = None) -> None:
         """Test performance of paginated requests with different page sizes.
 
         Args:
@@ -449,7 +446,7 @@ class ZephyrClientPerformanceTest(APIPerformanceTest):
             measure = self.measure(
                 operation="pagination",
                 dataset_size=total_items,
-                batch_size=page_size
+                batch_size=page_size,
             )
 
             @measure
@@ -488,8 +485,8 @@ class ZephyrClientPerformanceTest(APIPerformanceTest):
                                         "projectKey": self.project_key,
                                         "maxResults": str(page_size),
                                         "startAt": str(start_at),
-                                    }
-                                )
+                                    },
+                                ),
                             ],
                         )
 
@@ -519,7 +516,7 @@ class ZephyrClientPerformanceTest(APIPerformanceTest):
 
             run_test()
 
-    def _test_batch_sizes(self, batch_sizes: List[int] = None) -> None:
+    def _test_batch_sizes(self, batch_sizes: list[int] = None) -> None:
         """Test performance of batch operations.
 
         Args:
@@ -531,7 +528,7 @@ class ZephyrClientPerformanceTest(APIPerformanceTest):
             # Get measure decorator for this instance with specific metadata
             measure = self.measure(
                 operation="batch_operations",
-                batch_size=batch_size
+                batch_size=batch_size,
             )
 
             @measure
@@ -558,7 +555,7 @@ class ZephyrClientPerformanceTest(APIPerformanceTest):
                     client = ZephyrClient(config)
 
                     # Simulating batch operation
-                    with patch.object(client, '_make_request') as mock_request:
+                    with patch.object(client, "_make_request") as mock_request:
                         mock_request.return_value = {"status": "success", "created": batch_size}
 
                         # Simulate batch operation
@@ -578,7 +575,7 @@ class QTestClientPerformanceTest(APIPerformanceTest):
 
     def __init__(
         self,
-        output_dir: Optional[str] = None,
+        output_dir: str | None = None,
         base_url: str = "https://api.example.com",
         project_id: int = 1,
         bearer_token: str = "fake-token",
@@ -633,14 +630,14 @@ class QTestClientPerformanceTest(APIPerformanceTest):
                         ],
                         "page": 1,
                         "pageSize": 10,
-                        "total": 10
+                        "total": 10,
                     },
                     status=200,
                     content_type="application/json",
                     match=[
                         matchers.header_matcher(
-                            {"Authorization": f"Bearer {self.bearer_token}"}
-                        )
+                            {"Authorization": f"Bearer {self.bearer_token}"},
+                        ),
                     ],
                 )
 
@@ -680,14 +677,14 @@ class QTestClientPerformanceTest(APIPerformanceTest):
                         ],
                         "page": 1,
                         "pageSize": 100,
-                        "total": 250
+                        "total": 250,
                     },
                     status=200,
                     content_type="application/json",
                     match=[
                         matchers.query_param_matcher(
-                            {"pageSize": "50", "page": "1"}
-                        )
+                            {"pageSize": "50", "page": "1"},
+                        ),
                     ],
                 )
 
@@ -702,14 +699,14 @@ class QTestClientPerformanceTest(APIPerformanceTest):
                         ],
                         "page": 2,
                         "pageSize": 100,
-                        "total": 250
+                        "total": 250,
                     },
                     status=200,
                     content_type="application/json",
                     match=[
                         matchers.query_param_matcher(
-                            {"pageSize": "50", "page": "2"}
-                        )
+                            {"pageSize": "50", "page": "2"},
+                        ),
                     ],
                 )
 
@@ -724,14 +721,14 @@ class QTestClientPerformanceTest(APIPerformanceTest):
                         ],
                         "page": 3,
                         "pageSize": 100,
-                        "total": 250
+                        "total": 250,
                     },
                     status=200,
                     content_type="application/json",
                     match=[
                         matchers.query_param_matcher(
-                            {"pageSize": "50", "page": "3"}
-                        )
+                            {"pageSize": "50", "page": "3"},
+                        ),
                     ],
                 )
 
@@ -744,7 +741,7 @@ class QTestClientPerformanceTest(APIPerformanceTest):
                 client = QTestClient(config)
 
                 # Get test cases - adjust the QTestPaginatedIterator methods for testing
-                with patch('ztoq.qtest_client.QTestPaginatedIterator._fetch_next_page'):
+                with patch("ztoq.qtest_client.QTestPaginatedIterator._fetch_next_page"):
                     # Create a mock implementation that works with our test data
                     def mock_fetch(self):
                         if not self.current_page:
@@ -763,7 +760,7 @@ class QTestClientPerformanceTest(APIPerformanceTest):
                         response = client._make_request(
                             "GET",
                             f"/projects/{client.config.project_id}/test-cases",
-                            params={"pageSize": "50", "page": str(page)}
+                            params={"pageSize": "50", "page": str(page)},
                         )
 
                         from ztoq.qtest_client import QTestPaginatedResponse
@@ -774,7 +771,7 @@ class QTestClientPerformanceTest(APIPerformanceTest):
                             page=response.get("page", 0),
                             page_size=response.get("pageSize", 0),
                             total=response.get("total", 0),
-                            is_last=page >= 3  # Last page is page 3
+                            is_last=page >= 3,  # Last page is page 3
                         )
                         self.item_index = 0
 
@@ -799,11 +796,11 @@ class QTestClientPerformanceTest(APIPerformanceTest):
 
                     finally:
                         # Restore original method
-                        delattr(QTestPaginatedIterator, '_fetch_next_page')
+                        delattr(QTestPaginatedIterator, "_fetch_next_page")
 
         run_test()
 
-    def _test_pagination(self, total_items: int = 500, page_sizes: List[int] = None) -> None:
+    def _test_pagination(self, total_items: int = 500, page_sizes: list[int] = None) -> None:
         """Test performance of paginated requests with different page sizes.
 
         Args:
@@ -817,7 +814,7 @@ class QTestClientPerformanceTest(APIPerformanceTest):
             measure = self.measure(
                 operation="pagination",
                 dataset_size=total_items,
-                batch_size=page_size
+                batch_size=page_size,
             )
 
             @measure
@@ -837,7 +834,7 @@ class QTestClientPerformanceTest(APIPerformanceTest):
                 client = QTestClient(config)
 
                 # Mock _make_request to avoid actual HTTP requests
-                with patch.object(client, '_make_request') as mock_request:
+                with patch.object(client, "_make_request") as mock_request:
                     def make_mock_page(page):
                         start = (page - 1) * page_size
                         end = min(start + page_size, total_items)
@@ -848,11 +845,11 @@ class QTestClientPerformanceTest(APIPerformanceTest):
                             ],
                             "page": page,
                             "pageSize": page_size,
-                            "total": total_items
+                            "total": total_items,
                         }
 
                     mock_request.side_effect = lambda method, endpoint, **kwargs: make_mock_page(
-                        int(kwargs.get("params", {}).get("page", 1))
+                        int(kwargs.get("params", {}).get("page", 1)),
                     )
 
                     # Test paginated iteration
@@ -875,7 +872,7 @@ class QTestClientPerformanceTest(APIPerformanceTest):
                             response = client._make_request(
                                 "GET",
                                 "/test-cases",
-                                params={"pageSize": str(page_size), "page": str(page)}
+                                params={"pageSize": str(page_size), "page": str(page)},
                             )
 
                             self.current_page = QTestPaginatedResponse(
@@ -883,7 +880,7 @@ class QTestClientPerformanceTest(APIPerformanceTest):
                                 page=response.get("page", 0),
                                 page_size=response.get("pageSize", 0),
                                 total=response.get("total", 0),
-                                is_last=page >= num_pages
+                                is_last=page >= num_pages,
                             )
                             self.item_index = 0
 
@@ -896,7 +893,7 @@ class QTestClientPerformanceTest(APIPerformanceTest):
                             endpoint="/test-cases",
                             model_class=dict,
                             params={},
-                            page_size=page_size
+                            page_size=page_size,
                         )
 
                         # Process all pages
@@ -916,7 +913,7 @@ class QTestClientPerformanceTest(APIPerformanceTest):
 
             run_test()
 
-    def _test_batch_operations(self, batch_sizes: List[int] = None) -> None:
+    def _test_batch_operations(self, batch_sizes: list[int] = None) -> None:
         """Test performance of batch operations.
 
         Args:
@@ -928,7 +925,7 @@ class QTestClientPerformanceTest(APIPerformanceTest):
             # Get measure decorator for this instance with specific metadata
             measure = self.measure(
                 operation="batch_operations",
-                batch_size=batch_size
+                batch_size=batch_size,
             )
 
             @measure
@@ -945,7 +942,7 @@ class QTestClientPerformanceTest(APIPerformanceTest):
                 client = QTestClient(config)
 
                 # Mock bulk create endpoint
-                with patch.object(client, '_make_request') as mock_request:
+                with patch.object(client, "_make_request") as mock_request:
                     mock_request.return_value = [
                         {"id": i, "name": f"Test Case {i}"}
                         for i in range(1, batch_size + 1)
@@ -976,7 +973,7 @@ class QTestClientPerformanceTest(APIPerformanceTest):
         measure = self.measure(
             operation="concurrent_operations",
             concurrency=num_threads,
-            metadata={"operations_per_thread": operations_per_thread}
+            metadata={"operations_per_thread": operations_per_thread},
         )
 
         @measure
@@ -993,11 +990,11 @@ class QTestClientPerformanceTest(APIPerformanceTest):
             client = QTestClient(config)
 
             # Mock _make_request to avoid actual HTTP requests
-            with patch.object(client, '_make_request') as mock_request:
+            with patch.object(client, "_make_request") as mock_request:
                 mock_request.return_value = {"status": "success"}
 
                 # Function to perform operations in a thread
-                def perform_operations(thread_id: int) -> Dict[str, Any]:
+                def perform_operations(thread_id: int) -> dict[str, Any]:
                     start_time = time.time()
                     results = []
 
@@ -1019,7 +1016,7 @@ class QTestClientPerformanceTest(APIPerformanceTest):
                         "thread_id": thread_id,
                         "operations": operations_per_thread,
                         "successful": len(results),
-                        "duration": time.time() - start_time
+                        "duration": time.time() - start_time,
                     }
 
                 # Run concurrent operations
@@ -1038,7 +1035,7 @@ class QTestClientPerformanceTest(APIPerformanceTest):
 
                 logger.info(
                     f"Concurrent operations: {total_successful}/{total_operations} "
-                    f"operations in {avg_duration:.2f}s avg time per thread"
+                    f"operations in {avg_duration:.2f}s avg time per thread",
                 )
 
                 # Get connection pool metrics

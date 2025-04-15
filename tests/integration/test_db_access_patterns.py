@@ -15,28 +15,22 @@ batch loading, connection pooling, and more.
 import logging
 import os
 import shutil
-import tempfile
-import time
-import json
-from contextlib import contextmanager
-from datetime import datetime, timezone
-
-import pandas as pd
-from sqlalchemy import create_engine, text
-from sqlalchemy.orm import sessionmaker
 
 # Import project modules
 import sys
+import tempfile
+import time
+from contextlib import contextmanager
+from datetime import UTC, datetime
+
+from sqlalchemy import text
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 
 from ztoq.core.db_manager import DatabaseConfig, SQLDatabaseManager
 from ztoq.core.db_models import (
     EntityBatchState,
-    Folder,
-    Project,
     TestCase,
-    TestCycle,
     TestExecution,
 )
 from ztoq.models import (
@@ -119,10 +113,10 @@ class TestDatabaseAccessPatterns:
                 folder_name=folders[folder_index].name,
                 custom_fields=[
                     CustomFieldModel(
-                        id=f"CF-{i}-1", name="Priority", type="dropdown", value="High"
+                        id=f"CF-{i}-1", name="Priority", type="dropdown", value="High",
                     ),
                     CustomFieldModel(
-                        id=f"CF-{i}-2", name="Complexity", type="dropdown", value="Medium"
+                        id=f"CF-{i}-2", name="Complexity", type="dropdown", value="Medium",
                     ),
                 ],
                 attachments=[],
@@ -244,7 +238,7 @@ class TestDatabaseAccessPatterns:
         # Method 1: Individual inserts with separate sessions
         sample_cases_individual = new_test_cases[:20]  # Take a subset for comparison
         with self.measure_execution_time(
-            "Individual inserts with separate sessions"
+            "Individual inserts with separate sessions",
         ) as individual_duration:
             for test_case in sample_cases_individual:
                 self.db_manager.save_test_case(test_case, self.test_project.key)
@@ -308,7 +302,7 @@ class TestDatabaseAccessPatterns:
                 "items_count": 10,
                 "processed_count": 0,
                 "status": "not_started",
-                "last_updated": datetime.now(timezone.utc),
+                "last_updated": datetime.now(UTC),
             }
             data_to_insert.append(batch_state)
 
@@ -342,8 +336,8 @@ class TestDatabaseAccessPatterns:
                             "total_batches": 20,
                             "items_count": 10,
                             "status": "not_started",
-                            "last_updated": datetime.now(timezone.utc),
-                        }
+                            "last_updated": datetime.now(UTC),
+                        },
                     )
 
                 # Execute bulk insert using the insert() method
@@ -406,7 +400,7 @@ class TestDatabaseAccessPatterns:
             )
 
             # Convert to dictionary
-            status_counts_pandas = dict(zip(df["status"], df["count"]))
+            status_counts_pandas = dict(zip(df["status"], df["count"], strict=False))
 
             assert len(status_counts_pandas) > 0, "Should have counted executions by status"
 

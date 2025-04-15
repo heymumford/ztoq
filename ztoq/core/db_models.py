@@ -15,7 +15,9 @@ import enum
 import json
 from datetime import datetime
 from typing import Any
+
 from sqlalchemy import (
+    JSON,
     Boolean,
     Column,
     DateTime,
@@ -24,7 +26,6 @@ from sqlalchemy import (
     ForeignKey,
     Index,
     Integer,
-    JSON,
     LargeBinary,
     String,
     Table,
@@ -84,10 +85,10 @@ class Project(Base):
     statuses = relationship("Status", back_populates="project", cascade="all, delete-orphan")
     priorities = relationship("Priority", back_populates="project", cascade="all, delete-orphan")
     environments = relationship(
-        "Environment", back_populates="project", cascade="all, delete-orphan"
+        "Environment", back_populates="project", cascade="all, delete-orphan",
     )
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<Project(key='{self.key}', name='{self.name}')>"
 
 
@@ -115,7 +116,7 @@ class Folder(Base):
         Index("idx_folder_parent", "parent_id"),
     )
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<Folder(id='{self.id}', name='{self.name}', type='{self.folder_type}')>"
 
 
@@ -137,7 +138,7 @@ class Status(Base):
     # Indexes
     __table_args__ = (Index("idx_status_project", "project_key"), Index("idx_status_type", "type"))
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<Status(name='{self.name}', type='{self.type}')>"
 
 
@@ -163,7 +164,7 @@ class Priority(Base):
         Index("idx_priority_rank", "rank"),
     )
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<Priority(name='{self.name}', rank={self.rank})>"
 
 
@@ -184,7 +185,7 @@ class Environment(Base):
     # Indexes
     __table_args__ = (Index("idx_environment_project", "project_key"),)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<Environment(name='{self.name}')>"
 
 
@@ -199,7 +200,7 @@ class Label(Base):
     # Relationships - many-to-many with test cases
     test_cases = relationship("TestCase", secondary=case_label_association, back_populates="labels")
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<Label(name='{self.name}')>"
 
 
@@ -216,13 +217,13 @@ class CustomFieldDefinition(Base):
     # Relationships
     project = relationship("Project")
     values = relationship(
-        "CustomFieldValue", back_populates="field_definition", cascade="all, delete-orphan"
+        "CustomFieldValue", back_populates="field_definition", cascade="all, delete-orphan",
     )
 
     # Indexes
     __table_args__ = (Index("idx_custom_field_project", "project_key"),)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<CustomFieldDefinition(name='{self.name}', type='{self.type}')>"
 
 
@@ -233,7 +234,7 @@ class CustomFieldValue(Base):
 
     id = Column(String(50), primary_key=True)
     field_id = Column(
-        String(50), ForeignKey("custom_field_definitions.id", ondelete="CASCADE"), nullable=False
+        String(50), ForeignKey("custom_field_definitions.id", ondelete="CASCADE"), nullable=False,
     )
     entity_type = Column(Enum(EntityType), nullable=False)
     entity_id = Column(String(50), nullable=False)
@@ -252,7 +253,7 @@ class CustomFieldValue(Base):
         Index("idx_custom_field_value_field", "field_id"),
     )
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<CustomFieldValue(field_id='{self.field_id}', entity='{self.entity_type.value}:{self.entity_id}')>"
 
 
@@ -272,7 +273,7 @@ class Link(Base):
     # Indexes
     __table_args__ = (Index("idx_link_entity", "entity_type", "entity_id"),)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<Link(name='{self.name}', type='{self.type}')>"
 
 
@@ -295,7 +296,7 @@ class Attachment(Base):
     # Indexes
     __table_args__ = (Index("idx_attachment_entity", "entity_type", "entity_id"),)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<Attachment(filename='{self.filename}', entity='{self.entity_type.value}:{self.entity_id}')>"
 
 
@@ -309,7 +310,7 @@ class ScriptFile(Base):
     type = Column(String(50), nullable=False)  # cucumber, python, javascript, etc.
     content = Column(Text)
     test_case_id = Column(
-        String(50), ForeignKey("test_cases.id", ondelete="CASCADE"), nullable=False
+        String(50), ForeignKey("test_cases.id", ondelete="CASCADE"), nullable=False,
     )
 
     # Relationships
@@ -318,7 +319,7 @@ class ScriptFile(Base):
     # Indexes
     __table_args__ = (Index("idx_script_test_case", "test_case_id"),)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<ScriptFile(filename='{self.filename}', type='{self.type}')>"
 
 
@@ -336,10 +337,10 @@ class CaseVersion(Base):
 
     # Relationships - many-to-many with test cases
     test_cases = relationship(
-        "TestCase", secondary=case_version_association, back_populates="versions"
+        "TestCase", secondary=case_version_association, back_populates="versions",
     )
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<CaseVersion(name='{self.name}', created_at='{self.created_at}')>"
 
 
@@ -356,16 +357,16 @@ class TestStep(Base):
     actual_result = Column(Text)
     status = Column(String(50))
     test_case_id = Column(
-        String(50), ForeignKey("test_cases.id", ondelete="CASCADE"), nullable=True
+        String(50), ForeignKey("test_cases.id", ondelete="CASCADE"), nullable=True,
     )
     test_execution_id = Column(
-        String(50), ForeignKey("test_executions.id", ondelete="CASCADE"), nullable=True
+        String(50), ForeignKey("test_executions.id", ondelete="CASCADE"), nullable=True,
     )
 
     # Relationships
     test_case = relationship("TestCase", back_populates="steps", foreign_keys=[test_case_id])
     test_execution = relationship(
-        "TestExecution", back_populates="steps", foreign_keys=[test_execution_id]
+        "TestExecution", back_populates="steps", foreign_keys=[test_execution_id],
     )
 
     # Indexes
@@ -375,7 +376,7 @@ class TestStep(Base):
         Index("idx_step_index", "index"),
     )
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<TestStep(index={self.index}, description='{self.description[:20]}...')>"
 
 
@@ -421,7 +422,7 @@ class TestCase(Base):
     executions = relationship("TestExecution", back_populates="test_case")
     labels = relationship("Label", secondary=case_label_association, back_populates="test_cases")
     versions = relationship(
-        "CaseVersion", secondary=case_version_association, back_populates="test_cases"
+        "CaseVersion", secondary=case_version_association, back_populates="test_cases",
     )
 
     # Indexes
@@ -432,7 +433,7 @@ class TestCase(Base):
         Index("idx_test_case_status", "status"),
     )
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<TestCase(key='{self.key}', name='{self.name}')>"
 
     @property
@@ -481,7 +482,7 @@ class TestCycle(Base):
     project = relationship("Project", back_populates="test_cycles")
     folder = relationship("Folder", back_populates="test_cycles")
     executions = relationship(
-        "TestExecution", back_populates="test_cycle", cascade="all, delete-orphan"
+        "TestExecution", back_populates="test_cycle", cascade="all, delete-orphan",
     )
 
     # Indexes
@@ -491,7 +492,7 @@ class TestCycle(Base):
         Index("idx_test_cycle_status", "status"),
     )
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<TestCycle(key='{self.key}', name='{self.name}')>"
 
     @property
@@ -545,7 +546,7 @@ class TestPlan(Base):
         Index("idx_test_plan_status", "status"),
     )
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<TestPlan(key='{self.key}', name='{self.name}')>"
 
     @property
@@ -568,7 +569,7 @@ class TestExecution(Base):
 
     id = Column(String(50), primary_key=True)
     test_case_key = Column(
-        String(50), ForeignKey("test_cases.key", ondelete="CASCADE"), nullable=False
+        String(50), ForeignKey("test_cases.key", ondelete="CASCADE"), nullable=False,
     )
     cycle_id = Column(String(50), ForeignKey("test_cycles.id", ondelete="CASCADE"), nullable=False)
     cycle_name = Column(String(255))
@@ -608,7 +609,7 @@ class TestExecution(Base):
         Index("idx_test_execution_environment", "environment_id"),
     )
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return (
             f"<TestExecution(id='{self.id}', case='{self.test_case_key}', status='{self.status}')>"
         )
@@ -649,7 +650,7 @@ class MigrationState(Base):
     error_message = Column(Text)
     meta_data = Column(Text)  # JSON data for additional info - renamed from metadata
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<MigrationState(project='{self.project_key}', extraction='{self.extraction_status}', transformation='{self.transformation_status}', loading='{self.loading_status}')>"
 
     @property
@@ -669,7 +670,7 @@ class RecommendationHistory(Base):
     project_key = Column(String(50), nullable=False, index=True)
     timestamp = Column(DateTime, default=datetime.utcnow, index=True)
     recommendation_id = Column(
-        String(50), nullable=False, index=True
+        String(50), nullable=False, index=True,
     )  # Unique ID for each recommendation
     priority = Column(String(10), nullable=False)  # high, medium, low
     category = Column(String(50), nullable=False)
@@ -682,7 +683,7 @@ class RecommendationHistory(Base):
     entity_type = Column(String(50), nullable=True)  # Which entity type it relates to
     meta_data = Column(JSON, nullable=True)  # Additional context/details
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<RecommendationHistory(project='{self.project_key}', id='{self.recommendation_id}', priority='{self.priority}', status='{self.status}')>"
 
     @property
@@ -718,5 +719,76 @@ class EntityBatchState(Base):
         Index("idx_entity_batch_status", "status"),
     )
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<EntityBatchState(project='{self.project_key}', type='{self.entity_type}', batch={self.batch_number}, status='{self.status}')>"
+
+
+class MigrationPerformanceStats(Base):
+    """Track performance metrics during migration."""
+
+    __tablename__ = "migration_performance_stats"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    project_key = Column(String(50), nullable=False, index=True)
+    timestamp = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+    phase = Column(String(20), nullable=False)  # extraction, transformation, loading
+    operation = Column(String(50), nullable=False)  # specific operation being performed
+    entity_type = Column(String(50), nullable=True)  # type of entity being processed
+    entity_count = Column(Integer, nullable=True)  # number of entities processed
+    duration_ms = Column(Integer, nullable=False)  # operation duration in milliseconds
+    success_count = Column(Integer, nullable=True)  # number of successful operations
+    error_count = Column(Integer, nullable=True)  # number of failed operations
+    batch_size = Column(Integer, nullable=True)  # batch size used for processing
+    cpu_percent = Column(Float, nullable=True)  # CPU usage during operation
+    memory_mb = Column(Float, nullable=True)  # memory usage in MB
+    notes = Column(Text, nullable=True)  # additional context
+    meta_data = Column(JSON, nullable=True)  # structured metadata
+
+    # Indexes
+    __table_args__ = (
+        Index("idx_perf_stats_project_phase", "project_key", "phase"),
+        Index("idx_perf_stats_operation", "operation"),
+    )
+
+    def __repr__(self) -> str:
+        return f"<MigrationPerformanceStats(project='{self.project_key}', phase='{self.phase}', operation='{self.operation}')>"
+
+    @property
+    def metadata_dict(self) -> dict[str, Any]:
+        """Get metadata as a dictionary."""
+        if self.meta_data:
+            return self.meta_data if isinstance(self.meta_data, dict) else json.loads(self.meta_data)
+        return {}
+
+
+class MigrationCheckpoint(Base):
+    """Store checkpoint information for resumable migrations."""
+
+    __tablename__ = "migration_checkpoints"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    project_key = Column(String(50), nullable=False, index=True)
+    checkpoint_id = Column(String(50), nullable=False, unique=True, index=True)
+    timestamp = Column(DateTime, default=datetime.utcnow, nullable=False)
+    phase = Column(String(20), nullable=False)  # extraction, transformation, loading
+    entity_type = Column(String(50), nullable=True)  # type of entity being checkpointed
+    last_processed_id = Column(String(50), nullable=True)  # ID of last processed entity
+    processed_count = Column(Integer, nullable=True)  # number of entities processed so far
+    total_count = Column(Integer, nullable=True)  # total number of entities to process
+    status = Column(String(20), nullable=False)  # active, completed, abandoned
+    checkpoint_data = Column(JSON, nullable=True)  # detailed checkpoint state
+
+    # Indexes
+    __table_args__ = (
+        Index("idx_checkpoint_project_phase", "project_key", "phase"),
+    )
+
+    def __repr__(self) -> str:
+        return f"<MigrationCheckpoint(id='{self.checkpoint_id}', project='{self.project_key}', phase='{self.phase}')>"
+
+    @property
+    def checkpoint_data_dict(self) -> dict[str, Any]:
+        """Get checkpoint data as a dictionary."""
+        if self.checkpoint_data:
+            return self.checkpoint_data if isinstance(self.checkpoint_data, dict) else json.loads(self.checkpoint_data)
+        return {}

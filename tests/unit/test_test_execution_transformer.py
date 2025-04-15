@@ -11,22 +11,16 @@ These tests verify the transformation of Zephyr test executions to qTest test ru
 including field mappings, validation rules, error handling, and special case processing.
 """
 
-import pytest
 from datetime import datetime
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
-from ztoq.entity_mapping import EntityType, ValidationAction
+import pytest
+
+from ztoq.models import (
+    CustomFieldType,
+)
 from ztoq.test_execution_transformer import (
     TestExecutionTransformer,
-    TestExecutionTransformError,
-    TransformationResult,
-)
-from ztoq.models import (
-    Execution as TestExecution,
-    CaseStep as TestStep,
-    Attachment,
-    CustomField,
-    CustomFieldType,
 )
 
 
@@ -310,7 +304,7 @@ class TestTestExecutionTransformer:
                 "contentType": "text/plain",
                 "size": 1024,
                 "content": b"fake-binary-content",
-            }
+            },
         ]
 
         # Act
@@ -534,7 +528,7 @@ class TestTestExecutionTransformer:
         """Test handling of database errors during ID mapping."""
         # Setup - make the DB manager raise an exception
         custom_transformer.db_manager.get_entity_mapping.side_effect = Exception(
-            "Database connection error"
+            "Database connection error",
         )
 
         # Act

@@ -5,14 +5,14 @@ See LICENSE file for details.
 """
 
 import unittest
-from unittest.mock import MagicMock, patch
 from datetime import datetime
+from unittest.mock import MagicMock, patch
+
 from ztoq.workflow_orchestrator import (
-    WorkflowOrchestrator,
     WorkflowConfig,
     WorkflowEvent,
+    WorkflowOrchestrator,
     WorkflowPhase,
-    WorkflowStatus,
 )
 
 

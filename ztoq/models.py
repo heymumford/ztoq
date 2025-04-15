@@ -5,13 +5,12 @@ See LICENSE file for details.
 """
 
 import base64
+import os
 from datetime import datetime
 from enum import Enum
-from typing import Any
-from pydantic import BaseModel, Field, field_validator
+from typing import Any, ClassVar
 
-import os
-from typing import ClassVar
+from pydantic import BaseModel, Field, field_validator
 
 
 class ZephyrConfig(BaseModel):
@@ -35,7 +34,7 @@ class ZephyrConfig(BaseModel):
         if not v:
             raise ValueError(
                 f"API token cannot be empty. Please provide it directly or "
-                f"set the {cls.ENV_TOKEN_NAME} environment variable."
+                f"set the {cls.ENV_TOKEN_NAME} environment variable.",
             )
         return v
 
@@ -104,11 +103,11 @@ class CustomField(BaseModel):
         # Validate based on field type
         if field_type == CustomFieldType.CHECKBOX and not isinstance(v, bool):
             raise ValueError(f"Field type {field_type} requires a boolean value")
-        elif field_type == CustomFieldType.NUMERIC and not (isinstance(v, int | float)):
+        if field_type == CustomFieldType.NUMERIC and not (isinstance(v, int | float)):
             raise ValueError(f"Field type {field_type} requires a numeric value")
-        elif field_type == CustomFieldType.TABLE and not isinstance(v, list):
+        if field_type == CustomFieldType.TABLE and not isinstance(v, list):
             raise ValueError(f"Field type {field_type} requires a list of table rows")
-        elif field_type == CustomFieldType.MULTIPLE_SELECT and not isinstance(v, list):
+        if field_type == CustomFieldType.MULTIPLE_SELECT and not isinstance(v, list):
             raise ValueError(f"Field type {field_type} requires a list of selected values")
 
         return v

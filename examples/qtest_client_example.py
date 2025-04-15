@@ -15,10 +15,10 @@ Environment variables:
 - qtest_bearer_token: Bearer token for qTest authentication
 """
 
+import argparse
+import logging
 import os
 import sys
-import logging
-import argparse
 from pathlib import Path
 
 # Add the project root to the Python path to enable imports
@@ -31,7 +31,7 @@ from ztoq.qtest_models import QTestConfig
 # Set up logging
 logging.basicConfig(
     level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger("qtest_client_example")
 
@@ -51,8 +51,8 @@ def list_projects(client):
         projects = projects_data.get("items", [])
 
     for i, project in enumerate(projects):
-        project_id = project.get('id', 'Unknown')
-        project_name = project.get('name', 'Unnamed')
+        project_id = project.get("id", "Unknown")
+        project_name = project.get("name", "Unnamed")
         logger.info(f"{i+1}. Project {project_id}: {project_name}")
 
     return projects
@@ -65,7 +65,7 @@ def list_test_cases(client, project_id, limit=10):
     config = QTestConfig(
         base_url=os.environ.get("qtest_base_url", ""),
         bearer_token=os.environ.get("qtest_bearer_token", ""),
-        project_id=project_id
+        project_id=project_id,
     )
     project_client = QTestClient(config)
 
@@ -117,7 +117,7 @@ def get_user_permissions(client, project_id):
         config = QTestConfig(
             base_url=os.environ.get("qtest_base_url", ""),
             bearer_token=os.environ.get("qtest_bearer_token", ""),
-            project_id=project_id
+            project_id=project_id,
         )
         project_client = QTestClient(config)
 
@@ -130,7 +130,7 @@ def get_user_permissions(client, project_id):
         logger.info(f"Project ID: {permissions.get('project_id')}")
 
         # Display module permissions
-        module_perms = permissions.get('module', {})
+        module_perms = permissions.get("module", {})
         logger.info("Module permissions: " +
                    f"create={module_perms.get('create', False)}, " +
                    f"edit={module_perms.get('edit', False)}, " +
@@ -138,7 +138,7 @@ def get_user_permissions(client, project_id):
                    f"view={module_perms.get('view', False)}")
 
         # Display test case permissions
-        tc_perms = permissions.get('test_case', {})
+        tc_perms = permissions.get("test_case", {})
         logger.info("Test Case permissions: " +
                    f"create={tc_perms.get('create', False)}, " +
                    f"edit={tc_perms.get('edit', False)}, " +
@@ -184,8 +184,8 @@ def main():
     token = args.token or os.environ.get("qtest_bearer_token")
 
     # Make sure base URL has proper https:// prefix
-    if base_url and not base_url.startswith(('http://', 'https://')):
-        base_url = 'https://' + base_url
+    if base_url and not base_url.startswith(("http://", "https://")):
+        base_url = "https://" + base_url
         logger.info(f"Added https:// prefix to base URL: {base_url}")
 
     if not base_url:

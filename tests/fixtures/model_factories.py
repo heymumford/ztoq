@@ -6,29 +6,29 @@ of the project's domain models.
 """
 
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 # Import the base factory classes
-from tests.fixtures.factories import BaseFactory, ModelFactory, SQLAlchemyModelFactory
+from tests.fixtures.factories import BaseFactory, ModelFactory
 
 # Import the models we need to create factories for
 from ztoq.domain.models import OpenAPISpec
 from ztoq.models import (
-    Project,
+    Attachment,
     Case as TestCase,
-    CycleInfo as TestCycle,
-    Execution as TestExecution,
-    Priority,
-    Status,
     CaseStep,
     CustomField,
-    Link,
-    Attachment,
-    Folder,
+    CycleInfo as TestCycle,
     Environment,
+    Execution as TestExecution,
+    Folder,
+    Link,
+    Priority,
+    Project,
+    Status,
     ZephyrConfig,
 )
-from ztoq.qtest_models import QTestProject, QTestTestCase, QTestTestCycle, QTestTestRun, QTestConfig
+from ztoq.qtest_models import QTestConfig, QTestProject, QTestTestCase, QTestTestCycle, QTestTestRun
 
 
 class OpenAPISpecFactory(ModelFactory):
@@ -102,7 +102,7 @@ class CaseStepFactory(ModelFactory):
         "data": lambda: None,
         "actual_result": lambda: None,
         "status": lambda: None,
-        "attachments": lambda: [],
+        "attachments": list,
     }
 
 
@@ -145,7 +145,7 @@ class CustomFieldFactory(ModelFactory):
                 kwargs["value"] = BaseFactory.random_choice(["Option 1", "Option 2", "Option 3"])
             elif field_type == "multipleSelect":
                 kwargs["value"] = BaseFactory.random_subset(
-                    ["Option 1", "Option 2", "Option 3", "Option 4"], min_size=1, max_size=3
+                    ["Option 1", "Option 2", "Option 3", "Option 4"], min_size=1, max_size=3,
                 )
 
         # Create the custom field using the parent class method
@@ -245,13 +245,13 @@ class TestCaseFactory(ModelFactory):
         "updated_by": lambda: str(BaseFactory.random_int(1000, 9999)),
         "version": lambda: f"1.{BaseFactory.random_int(0, 9)}",
         "estimated_time": lambda: BaseFactory.random_int(60, 3600),
-        "labels": lambda: [],
-        "steps": lambda: [],
-        "custom_fields": lambda: [],
-        "links": lambda: [],
-        "scripts": lambda: [],
-        "versions": lambda: [],
-        "attachments": lambda: [],
+        "labels": list,
+        "steps": list,
+        "custom_fields": list,
+        "links": list,
+        "scripts": list,
+        "versions": list,
+        "attachments": list,
     }
 
     @classmethod
@@ -300,9 +300,9 @@ class TestCycleFactory(ModelFactory):
         "created_by": lambda: str(BaseFactory.random_int(1000, 9999)),
         "updated_on": lambda: BaseFactory.random_date(),
         "updated_by": lambda: str(BaseFactory.random_int(1000, 9999)),
-        "custom_fields": lambda: [],
-        "links": lambda: [],
-        "attachments": lambda: [],
+        "custom_fields": list,
+        "links": list,
+        "attachments": list,
     }
 
 
@@ -318,7 +318,7 @@ class TestExecutionFactory(ModelFactory):
         "cycle_name": lambda: f"Cycle-{BaseFactory.random_string(5)}",
         "status": lambda: BaseFactory.random_choice(["Passed", "Failed", "Blocked", "Not Run"]),
         "status_name": lambda: BaseFactory.random_choice(
-            ["Passed", "Failed", "Blocked", "Not Run"]
+            ["Passed", "Failed", "Blocked", "Not Run"],
         ),
         "environment": lambda: str(BaseFactory.random_int(1000, 9999)),
         "environment_name": lambda: f"Environment-{BaseFactory.random_string(5)}",
@@ -331,10 +331,10 @@ class TestExecutionFactory(ModelFactory):
         "updated_by": lambda: str(BaseFactory.random_int(1000, 9999)),
         "actual_time": lambda: BaseFactory.random_int(60, 3600),
         "comment": lambda: f"Execution comment {BaseFactory.random_string(20)}",
-        "steps": lambda: [],
-        "custom_fields": lambda: [],
-        "links": lambda: [],
-        "attachments": lambda: [],
+        "steps": list,
+        "custom_fields": list,
+        "links": list,
+        "attachments": list,
     }
 
     @classmethod
@@ -446,11 +446,11 @@ class QTestTestCaseFactory(ModelFactory):
         "description": lambda: f"qTest test case description {BaseFactory.random_string(15)}",
         "project_id": lambda: BaseFactory.random_int(1000, 9999),
         "module_id": lambda: BaseFactory.random_int(1000, 9999),
-        "test_steps": lambda: [],
-        "properties": lambda: [],
+        "test_steps": list,
+        "properties": list,
         "priority_id": lambda: BaseFactory.random_int(1, 5),
         "creator_id": lambda: BaseFactory.random_int(1000, 9999),
-        "attachments": lambda: [],
+        "attachments": list,
         "create_date": lambda: BaseFactory.random_date(),
         "last_modified_date": lambda: BaseFactory.random_date(),
         "shared": lambda: False,
@@ -471,7 +471,7 @@ class QTestTestCycleFactory(ModelFactory):
         "pid": lambda: f"CY-{BaseFactory.random_int(100, 999)}",
         "project_id": lambda: BaseFactory.random_int(1000, 9999),
         "release_id": lambda: BaseFactory.random_int(1000, 9999),
-        "properties": lambda: [],
+        "properties": list,
     }
 
     @classmethod
@@ -520,7 +520,7 @@ class QTestTestRunFactory(ModelFactory):
         "test_case_id": lambda: BaseFactory.random_int(1000, 9999),
         "test_cycle_id": lambda: BaseFactory.random_int(1000, 9999),
         "project_id": lambda: BaseFactory.random_int(1000, 9999),
-        "properties": lambda: [],
+        "properties": list,
         "status": lambda: BaseFactory.random_choice(["Not Run", "Passed", "Failed", "Blocked"]),
         "created_date": lambda: BaseFactory.random_date(),
     }

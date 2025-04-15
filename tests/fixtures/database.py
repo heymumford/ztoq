@@ -12,24 +12,23 @@ levels of the testing pyramid, from unit tests with mocked database connections
 to integration tests with real database access.
 """
 
-import os
-import pytest
 import sqlite3
+from collections.abc import Generator
 from pathlib import Path
-from typing import Dict, Any, Generator, Optional, List, Tuple
-from unittest.mock import MagicMock, patch
+from typing import Any
+from unittest.mock import MagicMock
 
-from sqlalchemy import create_engine, Table, MetaData, text, Column, Integer, String
+import pytest
+from sqlalchemy import Column, Integer, MetaData, String, Table, create_engine, text
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
 # Import the base fixtures
-from tests.fixtures.base import temp_db_path
 
 
 @pytest.fixture
-def schema_tables() -> List[str]:
+def schema_tables() -> list[str]:
     """
     Get a list of table definitions for creating test schema.
 
@@ -148,7 +147,7 @@ def schema_tables() -> List[str]:
 
 @pytest.fixture
 def sqlite_test_db(
-    temp_db_path: str, schema_tables: List[str]
+    temp_db_path: str, schema_tables: list[str],
 ) -> Generator[sqlite3.Connection, None, None]:
     """
     Create a SQLite test database with schema.
@@ -189,7 +188,7 @@ def sqlite_test_db(
 
 
 @pytest.fixture
-def sqlalchemy_memory_engine(schema_tables: List[str]) -> Generator[Engine, None, None]:
+def sqlalchemy_memory_engine(schema_tables: list[str]) -> Engine:
     """
     Create a SQLAlchemy in-memory database engine with schema.
 
@@ -205,7 +204,7 @@ def sqlalchemy_memory_engine(schema_tables: List[str]) -> Generator[Engine, None
     """
     # Create an in-memory SQLite database engine
     engine = create_engine(
-        "sqlite:///:memory:", connect_args={"check_same_thread": False}, poolclass=StaticPool
+        "sqlite:///:memory:", connect_args={"check_same_thread": False}, poolclass=StaticPool,
     )
 
     # Create schema tables
@@ -213,7 +212,7 @@ def sqlalchemy_memory_engine(schema_tables: List[str]) -> Generator[Engine, None
         for table_sql in schema_tables:
             conn.execute(text(table_sql))
 
-    yield engine
+    return engine
 
 
 @pytest.fixture
@@ -249,7 +248,7 @@ def sqlalchemy_memory_session(sqlalchemy_memory_engine: Engine) -> Generator[Ses
 
 @pytest.fixture
 def sqlalchemy_file_engine(
-    temp_db_path: str, schema_tables: List[str]
+    temp_db_path: str, schema_tables: list[str],
 ) -> Generator[Engine, None, None]:
     """
     Create a SQLAlchemy file database engine with schema.
@@ -328,7 +327,7 @@ def populate_test_db() -> callable:
     """
 
     def _populate(
-        session: Session, sample_data: Optional[Dict[str, List[Dict[str, Any]]]] = None
+        session: Session, sample_data: dict[str, list[dict[str, Any]]] | None = None,
     ) -> None:
         """
         Populate a test database with sample data.
@@ -491,7 +490,7 @@ def mock_sqlalchemy_session() -> MagicMock:
 @pytest.fixture
 def transaction_fixture(
     sqlalchemy_memory_session: Session,
-) -> Generator[Tuple[Session, callable], None, None]:
+) -> Generator[tuple[Session, callable], None, None]:
     """
     Create a fixture for testing database transactions.
 
@@ -518,7 +517,7 @@ def transaction_fixture(
 
 
 @pytest.fixture
-def concurrent_sessions(sqlalchemy_memory_engine: Engine) -> Generator[List[Session], None, None]:
+def concurrent_sessions(sqlalchemy_memory_engine: Engine) -> Generator[list[Session], None, None]:
     """
     Create multiple concurrent sessions for testing parallel operations.
 

@@ -12,7 +12,6 @@ It supports simulating various API responses, error conditions, and edge cases
 for both Zephyr Scale and qTest APIs.
 """
 
-import asyncio
 import json
 import logging
 import random
@@ -20,33 +19,21 @@ import re
 import threading
 import time
 from contextlib import asynccontextmanager, contextmanager
-from pathlib import Path
 from typing import (
     Any,
-    Callable,
-    Dict,
-    List,
-    Optional,
-    Tuple,
-    Union,
-    cast,
-    ContextManager,
     AsyncContextManager,
+    ContextManager,
 )
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 import requests
-from fastapi import Depends, FastAPI, HTTPException, Request, Response, status
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel, Field
 
 from ztoq.qtest_mock_factory import (
-    QTestAttachmentFactory,
-    QTestCustomFieldFactory,
     QTestModuleFactory,
-    QTestParameterFactory,
     QTestProjectFactory,
     QTestReleaseFactory,
     QTestTestCaseFactory,
@@ -55,7 +42,6 @@ from ztoq.qtest_mock_factory import (
     QTestTestRunFactory,
 )
 from ztoq.qtest_mock_server import QTestMockServer
-from ztoq.qtest_models import QTestConfig
 
 logger = logging.getLogger("ztoq.test.api_harness")
 
@@ -81,8 +67,8 @@ class APIHarness:
     def reset(self) -> None:
         """Reset the harness state to defaults."""
         # Response configurations
-        self.responses: Dict[str, Dict[str, Any]] = {}
-        self.default_response: Dict[str, Any] = {"success": True}
+        self.responses: dict[str, dict[str, Any]] = {}
+        self.default_response: dict[str, Any] = {"success": True}
 
         # Error simulation
         self.error_rate = 0.0  # Percentage (0.0 to 1.0) of requests that should fail
@@ -94,18 +80,18 @@ class APIHarness:
         self.max_delay = 0.1  # Maximum delay in seconds
 
         # Request tracking
-        self.request_history: List[Dict[str, Any]] = []
-        self.last_request: Optional[Dict[str, Any]] = None
+        self.request_history: list[dict[str, Any]] = []
+        self.last_request: dict[str, Any] | None = None
 
         # Token generation and validation
-        self.valid_tokens: List[str] = []
-        self.token_expiry: Dict[str, float] = {}
+        self.valid_tokens: list[str] = []
+        self.token_expiry: dict[str, float] = {}
 
         # Mock server patch
         self._patch = None
 
     def add_response(
-        self, method: str, path: str, response: Dict[str, Any], status_code: int = 200
+        self, method: str, path: str, response: dict[str, Any], status_code: int = 200,
     ) -> None:
         """
         Configure a specific response for a given API endpoint.
@@ -120,7 +106,7 @@ class APIHarness:
         self.responses[key] = {"data": response, "status_code": status_code}
 
     def add_error_response(
-        self, method: str, path: str, error: str, status_code: int = 400
+        self, method: str, path: str, error: str, status_code: int = 400,
     ) -> None:
         """
         Configure an error response for a given API endpoint.
@@ -206,7 +192,7 @@ class APIHarness:
         """Determine if a request should generate an error based on error rate."""
         return random.random() < self.error_rate
 
-    def _get_random_error(self) -> Tuple[int, str]:
+    def _get_random_error(self) -> tuple[int, str]:
         """
         Generate a random error response.
 
@@ -244,7 +230,7 @@ class APIHarness:
         return random.uniform(self.min_delay, self.max_delay)
 
     def _track_request(
-        self, method: str, path: str, params: Dict[str, Any], data: Dict[str, Any]
+        self, method: str, path: str, params: dict[str, Any], data: dict[str, Any],
     ) -> None:
         """
         Track a request for later inspection.
@@ -267,8 +253,8 @@ class APIHarness:
         self.last_request = request
 
     def get_requests(
-        self, method: Optional[str] = None, path: Optional[str] = None
-    ) -> List[Dict[str, Any]]:
+        self, method: str | None = None, path: str | None = None,
+    ) -> list[dict[str, Any]]:
         """
         Get a filtered list of tracked requests.
 
@@ -298,11 +284,11 @@ class APIHarness:
         self,
         method: str,
         path: str,
-        params: Optional[Dict[str, Any]] = None,
-        data: Optional[Dict[str, Any]] = None,
-        headers: Optional[Dict[str, Any]] = None,
-        files: Optional[Dict[str, Any]] = None,
-    ) -> Tuple[Dict[str, Any], int]:
+        params: dict[str, Any] | None = None,
+        data: dict[str, Any] | None = None,
+        headers: dict[str, Any] | None = None,
+        files: dict[str, Any] | None = None,
+    ) -> tuple[dict[str, Any], int]:
         """
         Process a request and generate an appropriate response.
 
@@ -387,11 +373,11 @@ class APIHarness:
         self,
         method: str,
         url: str,
-        params: Optional[Dict[str, Any]] = None,
-        data: Optional[Dict[str, Any]] = None,
-        headers: Optional[Dict[str, Any]] = None,
-        files: Optional[Dict[str, Any]] = None,
-        json: Optional[Dict[str, Any]] = None,
+        params: dict[str, Any] | None = None,
+        data: dict[str, Any] | None = None,
+        headers: dict[str, Any] | None = None,
+        files: dict[str, Any] | None = None,
+        json: dict[str, Any] | None = None,
         **kwargs: Any,
     ) -> "MockResponse":
         """
@@ -432,7 +418,7 @@ class APIHarness:
 
         # Handle the request
         response_data, status_code = self._handle_request(
-            method, path, params, request_data, headers, files
+            method, path, params, request_data, headers, files,
         )
 
         # Create a mock response
@@ -454,7 +440,7 @@ class MockResponse:
         content: bytes,
         status_code: int = 200,
         url: str = "",
-        headers: Optional[Dict[str, str]] = None,
+        headers: dict[str, str] | None = None,
     ):
         """
         Initialize a mock response.
@@ -479,7 +465,7 @@ class MockResponse:
             self._text = self.content.decode("utf-8")
         return self._text
 
-    def json(self) -> Dict[str, Any]:
+    def json(self) -> dict[str, Any]:
         """Parse the response content as JSON."""
         if self._json is None:
             self._json = json.loads(self.text)
@@ -515,7 +501,7 @@ def MockRequestsContext(harness: APIHarness):
                     with patch(
                         "requests.delete",
                         side_effect=lambda url, **kwargs: harness._mocked_request(
-                            "DELETE", url, **kwargs
+                            "DELETE", url, **kwargs,
                         ),
                     ):
                         yield
@@ -548,7 +534,7 @@ async def MockHttpxContext(harness: APIHarness):
                     with patch(
                         "httpx.delete",
                         side_effect=lambda url, **kwargs: harness._mocked_request(
-                            "DELETE", url, **kwargs
+                            "DELETE", url, **kwargs,
                         ),
                     ):
                         yield
@@ -672,7 +658,7 @@ class ZephyrAPIHarness(APIHarness):
             {"total": len(test_cases), "startAt": 0, "maxResults": 50, "values": test_cases},
         )
 
-    def _generate_test_steps(self, count: int) -> List[Dict[str, Any]]:
+    def _generate_test_steps(self, count: int) -> list[dict[str, Any]]:
         """
         Generate mock test steps.
 
@@ -763,7 +749,7 @@ class QTestAPIHarness(APIHarness):
         self._generate_test_cycles(project_id)
 
     def _generate_test_cases(
-        self, project_id: int, modules: List[Dict[str, Any]], count: int
+        self, project_id: int, modules: list[dict[str, Any]], count: int,
     ) -> None:
         """
         Generate mock test cases for a project.
@@ -777,13 +763,13 @@ class QTestAPIHarness(APIHarness):
         for i in range(count):
             module = random.choice(modules)
             test_case = QTestTestCaseFactory.create(
-                project_id=project_id, module_id=module["id"]
+                project_id=project_id, module_id=module["id"],
             ).model_dump()
             test_cases.append(test_case)
 
             # Add individual test case response
             self.add_response(
-                "GET", f"/api/v3/projects/{project_id}/test-cases/{test_case['id']}", test_case
+                "GET", f"/api/v3/projects/{project_id}/test-cases/{test_case['id']}", test_case,
             )
 
         # Add test cases response
@@ -815,7 +801,7 @@ class QTestAPIHarness(APIHarness):
         for release in releases:
             cycles = [
                 QTestTestCycleFactory.create(
-                    project_id=project_id, release_id=release["id"]
+                    project_id=project_id, release_id=release["id"],
                 ).model_dump()
                 for _ in range(2)
             ]
@@ -829,8 +815,8 @@ class QTestAPIHarness(APIHarness):
         )
 
     def create_test_run(
-        self, project_id: int, test_case_id: int, test_cycle_id: int
-    ) -> Dict[str, Any]:
+        self, project_id: int, test_case_id: int, test_cycle_id: int,
+    ) -> dict[str, Any]:
         """
         Create a mock test run and configure the appropriate response.
 
@@ -843,17 +829,17 @@ class QTestAPIHarness(APIHarness):
             The created test run dictionary
         """
         test_run = QTestTestRunFactory.create(
-            project_id=project_id, test_case_id=test_case_id, test_cycle_id=test_cycle_id
+            project_id=project_id, test_case_id=test_case_id, test_cycle_id=test_cycle_id,
         ).model_dump()
 
         # Add test run response
         self.add_response(
-            "GET", f"/api/v3/projects/{project_id}/test-runs/{test_run['id']}", test_run
+            "GET", f"/api/v3/projects/{project_id}/test-runs/{test_run['id']}", test_run,
         )
 
         return test_run
 
-    def submit_test_log(self, project_id: int, test_run_id: int, status: str) -> Dict[str, Any]:
+    def submit_test_log(self, project_id: int, test_run_id: int, status: str) -> dict[str, Any]:
         """
         Submit a mock test log and configure the appropriate response.
 
@@ -869,7 +855,7 @@ class QTestAPIHarness(APIHarness):
 
         # Add test log response
         self.add_response(
-            "POST", f"/api/v3/projects/{project_id}/test-runs/{test_run_id}/test-logs", test_log
+            "POST", f"/api/v3/projects/{project_id}/test-runs/{test_run_id}/test-logs", test_log,
         )
 
         return test_log
@@ -878,11 +864,11 @@ class QTestAPIHarness(APIHarness):
         self,
         method: str,
         endpoint: str,
-        params: Optional[Dict[str, Any]] = None,
-        data: Optional[Dict[str, Any]] = None,
-        headers: Optional[Dict[str, Any]] = None,
-        files: Optional[Dict[str, Any]] = None,
-    ) -> Tuple[Dict[str, Any], int]:
+        params: dict[str, Any] | None = None,
+        data: dict[str, Any] | None = None,
+        headers: dict[str, Any] | None = None,
+        files: dict[str, Any] | None = None,
+    ) -> tuple[dict[str, Any], int]:
         """
         Handle a request using the QTestMockServer.
 
@@ -921,7 +907,7 @@ class QTestAPIHarness(APIHarness):
         # Use the QTestMockServer to handle the request
         try:
             response = self.mock_server.handle_request(
-                api_type, method, endpoint, params, data, headers, files
+                api_type, method, endpoint, params, data, headers, files,
             )
             return response, 200
         except Exception as e:
@@ -961,7 +947,7 @@ class MockAPITestBase:
         self.qtest_harness.stop_patch()
 
     @pytest.fixture
-    def mock_both_apis(self) -> Tuple[ZephyrAPIHarness, QTestAPIHarness]:
+    def mock_both_apis(self) -> tuple[ZephyrAPIHarness, QTestAPIHarness]:
         """Fixture for both API harnesses with requests patching."""
         # Use context managers to ensure proper cleanup
         with self.zephyr_harness.mock_requests():
@@ -1061,24 +1047,23 @@ class FastAPIHarness:
                 if path.startswith("api/v3") or path.startswith("oauth"):
                     # qTest API
                     return self._handle_qtest_request(
-                        request.method, path, dict(request.query_params), body
+                        request.method, path, dict(request.query_params), body,
                     )
-                elif path.startswith("v2"):
+                if path.startswith("v2"):
                     # Zephyr API
                     return self._handle_zephyr_request(
-                        request.method, path, dict(request.query_params), body
+                        request.method, path, dict(request.query_params), body,
                     )
-                else:
-                    # Unknown API
-                    return JSONResponse(
-                        status_code=404, content={"error": f"Unknown API path: {path}"}
-                    )
+                # Unknown API
+                return JSONResponse(
+                    status_code=404, content={"error": f"Unknown API path: {path}"},
+                )
             except Exception as e:
                 logger.exception(f"Error handling request: {e}")
-                return JSONResponse(status_code=500, content={"error": f"Server error: {str(e)}"})
+                return JSONResponse(status_code=500, content={"error": f"Server error: {e!s}"})
 
     def _handle_qtest_request(
-        self, method: str, path: str, params: Dict[str, Any], data: Dict[str, Any]
+        self, method: str, path: str, params: dict[str, Any], data: dict[str, Any],
     ) -> JSONResponse:
         """
         Handle a qTest API request.
@@ -1092,27 +1077,25 @@ class FastAPIHarness:
         Returns:
             JSON response
         """
-        # TODO: Implement more sophisticated qTest API simulation logic
         if "projects" in path:
             if path.endswith("projects"):
                 # List projects
                 projects = [QTestProjectFactory.create().model_dump() for _ in range(3)]
                 return JSONResponse(
-                    content={"total": len(projects), "page": 1, "pageSize": 20, "items": projects}
+                    content={"total": len(projects), "page": 1, "pageSize": 20, "items": projects},
                 )
-            else:
-                # Single project - Extract project ID
-                project_id_match = re.search(r"projects/(\d+)", path)
-                if project_id_match:
-                    project_id = int(project_id_match.group(1))
-                    project = QTestProjectFactory.create(id=project_id).model_dump()
-                    return JSONResponse(content=project)
+            # Single project - Extract project ID
+            project_id_match = re.search(r"projects/(\d+)", path)
+            if project_id_match:
+                project_id = int(project_id_match.group(1))
+                project = QTestProjectFactory.create(id=project_id).model_dump()
+                return JSONResponse(content=project)
 
         # Default response
         return JSONResponse(content={"message": f"Unimplemented qTest endpoint: {method} {path}"})
 
     def _handle_zephyr_request(
-        self, method: str, path: str, params: Dict[str, Any], data: Dict[str, Any]
+        self, method: str, path: str, params: dict[str, Any], data: dict[str, Any],
     ) -> JSONResponse:
         """
         Handle a Zephyr API request.
@@ -1126,7 +1109,6 @@ class FastAPIHarness:
         Returns:
             JSON response
         """
-        # TODO: Implement more sophisticated Zephyr API simulation logic
         if "projects" in path:
             if path.endswith("projects"):
                 # List projects
@@ -1140,21 +1122,20 @@ class FastAPIHarness:
                             {"id": "10002", "key": "PROJ2", "name": "Project Two"},
                             {"id": "10003", "key": "PROJ3", "name": "Project Three"},
                         ],
-                    }
+                    },
                 )
-            else:
-                # Single project - Extract project key
-                project_key_match = re.search(r"projects/([A-Z0-9]+)", path)
-                if project_key_match:
-                    project_key = project_key_match.group(1)
-                    return JSONResponse(
-                        content={
-                            "id": f"1000{random.randint(1, 5)}",
-                            "key": project_key,
-                            "name": f"Project {project_key}",
-                            "description": f"Description for project {project_key}",
-                        }
-                    )
+            # Single project - Extract project key
+            project_key_match = re.search(r"projects/([A-Z0-9]+)", path)
+            if project_key_match:
+                project_key = project_key_match.group(1)
+                return JSONResponse(
+                    content={
+                        "id": f"1000{random.randint(1, 5)}",
+                        "key": project_key,
+                        "name": f"Project {project_key}",
+                        "description": f"Description for project {project_key}",
+                    },
+                )
 
         # Default response
         return JSONResponse(content={"message": f"Unimplemented Zephyr endpoint: {method} {path}"})
@@ -1228,7 +1209,7 @@ def mock_qtest_api() -> QTestAPIHarness:
 
 
 @pytest.fixture
-def mock_both_apis() -> Tuple[ZephyrAPIHarness, QTestAPIHarness]:
+def mock_both_apis() -> tuple[ZephyrAPIHarness, QTestAPIHarness]:
     """Fixture that provides both API harnesses with requests patching."""
     zephyr_harness = ZephyrAPIHarness()
     qtest_harness = QTestAPIHarness()

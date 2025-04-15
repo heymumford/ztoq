@@ -11,41 +11,17 @@ This module provides examples of how to use the various fixtures
 and factory classes provided by the ZTOQ testing framework.
 """
 
-import pytest
-from unittest.mock import MagicMock, patch
-from sqlalchemy.orm import Session
 
-from ztoq.zephyr_client import ZephyrClient
-from ztoq.qtest_client import QTestClient
-from ztoq.models import ZephyrConfig, Case
-from ztoq.qtest_models import QTestConfig, QTestTestCase
+import pytest
 
 from tests.fixtures import (
-    # Base fixtures
-    base_test_env,
-    mock_env_vars,
-    temp_dir,
-    temp_file,
-    # Database fixtures
-    sqlalchemy_memory_session,
-    populate_test_db,
-    mock_sqlalchemy_session,
-    # API client fixtures
-    zephyr_config,
-    qtest_config,
-    mock_zephyr_client,
-    mock_qtest_client,
-    zephyr_client_with_mock_api,
-    qtest_client_with_mock_api,
-    # API mocking fixtures
-    mock_zephyr_api,
-    mock_qtest_api,
-    mock_both_apis,
     # Factory classes
-    ProjectFactory,
     TestCaseFactory,
-    QTestTestCaseFactory,
 )
+from ztoq.models import Case, ZephyrConfig
+from ztoq.qtest_client import QTestClient
+from ztoq.qtest_models import QTestConfig
+from ztoq.zephyr_client import ZephyrClient
 
 
 # Example 1: Unit Test with Mocked Dependencies
@@ -80,7 +56,7 @@ def test_integration_with_api_mocking(mock_zephyr_api, sqlalchemy_memory_session
     """Example of an integration test with API mocking."""
     # Arrange: Configure the mock API
     mock_zephyr_api.add_response(
-        "GET", "/projects", {"values": [{"id": "1001", "key": "TEST", "name": "Test Project"}]}
+        "GET", "/projects", {"values": [{"id": "1001", "key": "TEST", "name": "Test Project"}]},
     )
 
     mock_zephyr_api.add_response(
@@ -161,7 +137,7 @@ def test_integration_with_multiple_apis(mock_both_apis):
 
     # Configure Zephyr API
     zephyr_harness.add_response(
-        "GET", "/projects", {"values": [{"id": "1001", "key": "TEST", "name": "Test Project"}]}
+        "GET", "/projects", {"values": [{"id": "1001", "key": "TEST", "name": "Test Project"}]},
     )
 
     # Configure qTest API

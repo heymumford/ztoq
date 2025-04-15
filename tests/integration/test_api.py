@@ -5,20 +5,22 @@ See LICENSE file for details.
 """
 
 from unittest.mock import patch
+
 import pytest
 from fastapi.testclient import TestClient
+
 from ztoq.api.app import create_app
 from ztoq.domain.models import OpenAPISpec
 
 
-@pytest.mark.integration()
+@pytest.mark.integration
 class TestAPIRoutes:
-    @pytest.fixture()
+    @pytest.fixture
     def client(self):
         """Create a test client for the FastAPI application."""
         return TestClient(create_app())
 
-    @pytest.fixture()
+    @pytest.fixture
     def mock_openapi_spec(self):
         """Mock the OpenAPI spec for testing."""
         with patch("ztoq.core.services.get_openapi_spec") as mock:

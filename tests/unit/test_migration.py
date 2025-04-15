@@ -5,22 +5,24 @@ See LICENSE file for details.
 """
 
 from unittest.mock import MagicMock, call, patch
+
 import pytest
+
 from ztoq.migration import EntityBatchTracker, MigrationState, ZephyrToQTestMigration
 from ztoq.models import ZephyrConfig
 from ztoq.qtest_models import QTestConfig
 
 
-@pytest.mark.unit()
+@pytest.mark.unit
 class TestMigrationState:
-    @pytest.fixture()
+    @pytest.fixture
     def db_mock(self):
         """Create a mock database manager."""
         db = MagicMock()
         db.get_migration_state.return_value = None
         return db
 
-    @pytest.fixture()
+    @pytest.fixture
     def state(self, db_mock):
         """Create a test migration state."""
         return MigrationState("DEMO", db_mock)
@@ -52,7 +54,7 @@ class TestMigrationState:
         state.update_extraction_status("in_progress")
         assert state.extraction_status == "in_progress"
         db_mock.update_migration_state.assert_called_once_with(
-            "DEMO", extraction_status="in_progress", error_message=None
+            "DEMO", extraction_status="in_progress", error_message=None,
         )
 
         # With error
@@ -78,14 +80,14 @@ class TestMigrationState:
         assert state.can_extract() is False
 
 
-@pytest.mark.unit()
+@pytest.mark.unit
 class TestEntityBatchTracker:
-    @pytest.fixture()
+    @pytest.fixture
     def db_mock(self):
         """Create a mock database manager."""
         return MagicMock()
 
-    @pytest.fixture()
+    @pytest.fixture
     def tracker(self, db_mock):
         """Create a test entity batch tracker."""
         return EntityBatchTracker("DEMO", "test_cases", db_mock)
@@ -112,9 +114,9 @@ class TestEntityBatchTracker:
         db_mock.create_entity_batch.assert_has_calls(calls)
 
 
-@pytest.mark.unit()
+@pytest.mark.unit
 class TestZephyrToQTestMigration:
-    @pytest.fixture()
+    @pytest.fixture
     def zephyr_config(self):
         """Create a test Zephyr configuration."""
         return ZephyrConfig(
@@ -123,7 +125,7 @@ class TestZephyrToQTestMigration:
             project_key="DEMO",
         )
 
-    @pytest.fixture()
+    @pytest.fixture
     def qtest_config(self):
         """Create a test qTest configuration."""
         return QTestConfig(
@@ -133,7 +135,7 @@ class TestZephyrToQTestMigration:
             project_id=12345,
         )
 
-    @pytest.fixture()
+    @pytest.fixture
     def db_mock(self):
         """Create a mock database manager."""
         db = MagicMock()
@@ -143,11 +145,11 @@ class TestZephyrToQTestMigration:
         db.get_entity_mappings.return_value = []
         return db
 
-    @pytest.fixture()
+    @pytest.fixture
     def migration(self, zephyr_config, qtest_config, db_mock):
         """Create a test migration manager with mocked clients."""
         with patch("ztoq.migration.ZephyrClient") as mock_zephyr, patch(
-            "ztoq.migration.QTestClient"
+            "ztoq.migration.QTestClient",
         ) as mock_qtest:
             # Configure mocks
             mock_zephyr_client = MagicMock()
@@ -157,7 +159,7 @@ class TestZephyrToQTestMigration:
             mock_qtest.return_value = mock_qtest_client
 
             migration = ZephyrToQTestMigration(
-                zephyr_config, qtest_config, db_mock, batch_size=50, max_workers=5
+                zephyr_config, qtest_config, db_mock, batch_size=50, max_workers=5,
             )
 
             # Store mocks in migration for test access

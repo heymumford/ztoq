@@ -15,9 +15,7 @@ You can run this with:
 import json
 import os
 import sys
-import time
 from datetime import datetime
-from pathlib import Path
 
 # Add parent directory to path to import ztoq modules
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -27,7 +25,7 @@ from rich.panel import Panel
 from rich.progress import Progress
 from rich.table import Table
 from sqlalchemy import create_engine, text
-from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.orm import sessionmaker
 
 from ztoq.core.db_models import Base, EntityBatchState, MigrationState
 
@@ -100,7 +98,7 @@ class MigrationReportGenerator:
                     FROM entity_mappings
                     WHERE project_key = :project_key
                     AND mapping_type = :mapping_type
-                    """
+                    """,
                 ), {"project_key": self.project_key, "mapping_type": mapping_type}).scalar() or 0
 
                 mapping_counts[mapping_type] = count
@@ -119,7 +117,7 @@ class MigrationReportGenerator:
             for entity_type in entity_types:
                 # Get batch info for this entity type
                 batches = session.query(EntityBatchState).filter_by(
-                    project_key=self.project_key, entity_type=entity_type
+                    project_key=self.project_key, entity_type=entity_type,
                 ).all()
 
                 if batches:
@@ -141,7 +139,7 @@ class MigrationReportGenerator:
 
             for entity_type in transformed_types:
                 batches = session.query(EntityBatchState).filter_by(
-                    project_key=self.project_key, entity_type=entity_type
+                    project_key=self.project_key, entity_type=entity_type,
                 ).all()
 
                 if batches:
@@ -162,7 +160,7 @@ class MigrationReportGenerator:
 
             for entity_type in loaded_types:
                 batches = session.query(EntityBatchState).filter_by(
-                    project_key=self.project_key, entity_type=entity_type
+                    project_key=self.project_key, entity_type=entity_type,
                 ).all()
 
                 if batches:
@@ -187,7 +185,7 @@ class MigrationReportGenerator:
                 SELECT DISTINCT entity_type
                 FROM entity_batch_state
                 WHERE project_key = :project_key
-                """
+                """,
             ), {"project_key": self.project_key})
 
             for row in result:
@@ -196,7 +194,7 @@ class MigrationReportGenerator:
             # Get stats for each entity type
             for entity_type in entity_types:
                 batches = session.query(EntityBatchState).filter_by(
-                    project_key=self.project_key, entity_type=entity_type
+                    project_key=self.project_key, entity_type=entity_type,
                 ).all()
 
                 if batches:
@@ -233,7 +231,7 @@ class MigrationReportGenerator:
         with self.Session() as session:
             # Find all failed batches
             failed_batches = session.query(EntityBatchState).filter_by(
-                project_key=self.project_key, status="failed"
+                project_key=self.project_key, status="failed",
             ).all()
 
             for batch in failed_batches:
@@ -263,19 +261,19 @@ class MigrationReportGenerator:
                 # Get batch timing information
                 extraction_batches = session.query(EntityBatchState).filter(
                     EntityBatchState.project_key == self.project_key,
-                    EntityBatchState.entity_type.in_(["folders", "test_cases", "test_cycles", "test_executions"])
+                    EntityBatchState.entity_type.in_(["folders", "test_cases", "test_cycles", "test_executions"]),
                 ).all()
 
                 transformation_batches = session.query(EntityBatchState).filter(
                     EntityBatchState.project_key == self.project_key,
                     EntityBatchState.entity_type.in_(["transformed_test_cases", "transformed_test_cycles",
-                                               "transformed_test_executions"])
+                                               "transformed_test_executions"]),
                 ).all()
 
                 loading_batches = session.query(EntityBatchState).filter(
                     EntityBatchState.project_key == self.project_key,
                     EntityBatchState.entity_type.in_(["loaded_test_cases", "loaded_test_cycles",
-                                               "loaded_test_executions"])
+                                               "loaded_test_executions"]),
                 ).all()
 
                 # Calculate extraction time
@@ -336,10 +334,9 @@ class MigrationReportGenerator:
 
         if hours > 0:
             return f"{int(hours)}h {int(minutes)}m {int(seconds)}s"
-        elif minutes > 0:
+        if minutes > 0:
             return f"{int(minutes)}m {int(seconds)}s"
-        else:
-            return f"{int(seconds)}s"
+        return f"{int(seconds)}s"
 
     def print_report(self, report=None):
         """Print a formatted report to the console."""
@@ -360,17 +357,17 @@ class MigrationReportGenerator:
             state_table.add_row(
                 "Extraction",
                 self._format_status(state["extraction_status"]),
-                state["updated_at"]
+                state["updated_at"],
             )
             state_table.add_row(
                 "Transformation",
                 self._format_status(state["transformation_status"]),
-                state["updated_at"]
+                state["updated_at"],
             )
             state_table.add_row(
                 "Loading",
                 self._format_status(state["loading_status"]),
-                state["updated_at"]
+                state["updated_at"],
             )
 
             console.print(state_table)
@@ -391,7 +388,7 @@ class MigrationReportGenerator:
             "folders": "Folders",
             "test_cases": "Test Cases",
             "test_cycles": "Test Cycles",
-            "test_executions": "Test Executions"
+            "test_executions": "Test Executions",
         }
 
         for entity_type, display_name in entity_types.items():
@@ -412,7 +409,7 @@ class MigrationReportGenerator:
                 str(source_count),
                 str(transformed_count),
                 str(loaded_count),
-                success_rate
+                success_rate,
             )
 
         console.print(counts_table)
@@ -438,7 +435,7 @@ class MigrationReportGenerator:
                     str(stats["completed_batches"]),
                     str(stats["failed_batches"]),
                     str(stats["pending_batches"]),
-                    completion
+                    completion,
                 )
 
             console.print(batch_table)
@@ -499,12 +496,11 @@ class MigrationReportGenerator:
 
         if status == "completed":
             return "[green]Completed[/green]"
-        elif status == "in_progress":
+        if status == "in_progress":
             return "[blue]In Progress[/blue]"
-        elif status == "failed":
+        if status == "failed":
             return "[red]Failed[/red]"
-        else:
-            return status.replace("_", " ").title()
+        return status.replace("_", " ").title()
 
     def save_report_html(self, filename, report=None):
         """Save the report as an HTML file."""
@@ -592,7 +588,7 @@ class MigrationReportGenerator:
             "folders": "Folders",
             "test_cases": "Test Cases",
             "test_cycles": "Test Cycles",
-            "test_executions": "Test Executions"
+            "test_executions": "Test Executions",
         }
 
         for entity_type, display_name in entity_types.items():
@@ -821,7 +817,7 @@ def create_example_database():
                     "project_key": "DEMO",
                     "mapping_type": mapping_type,
                     "source_id": f"src-{i}",
-                    "target_id": f"tgt-{i}"
+                    "target_id": f"tgt-{i}",
                 })
 
         # Create entity batches

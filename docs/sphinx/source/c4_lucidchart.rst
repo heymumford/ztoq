@@ -1,5 +1,5 @@
 C4 Diagrams with Lucidchart
-========================
+===========================
 
 C4 Model
 --------
@@ -23,7 +23,7 @@ Follow these steps to create C4 diagrams in Lucidchart:
 5. Use the shapes to create your diagrams
 
 C4 Model Templates
------------------
+-------------------
 
 Here are some Lucidchart templates to get you started:
 
@@ -32,11 +32,11 @@ Here are some Lucidchart templates to get you started:
 3. `C4 Component Diagram Template <https://lucid.app/lucidchart/templates/c4-component-diagram>`_
 
 Example C4 Diagram Code
-----------------------
+------------------------
 
 Here's an example of how you might structure a C4 diagram in code (using PlantUML):
 
-.. code-block:: plantuml
+.. code-block:: text
 
     @startuml C4_Context
     !include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml

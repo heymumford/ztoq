@@ -11,7 +11,7 @@ from ztoq.database_manager import DatabaseManager
 from ztoq.migration import create_migration
 from ztoq.models import ZephyrConfig
 from ztoq.qtest_models import QTestConfig
-from ztoq.validation import ValidationLevel, ValidationScope, ValidationPhase
+from ztoq.validation import ValidationScope
 from ztoq.validation_integration import (
     EnhancedMigration,
     MigrationValidationDecorators,

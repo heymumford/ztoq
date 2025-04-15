@@ -15,6 +15,7 @@ import json
 import logging
 from pathlib import Path
 from typing import Any
+
 from ztoq.openapi_parser import ZephyrApiSpecWrapper, load_openapi_spec
 
 # Set up module logger
@@ -25,23 +26,27 @@ class ZephyrTestGenerator:
     """Generator for test cases based on the Zephyr Scale OpenAPI spec."""
 
     def __init__(self, spec_wrapper: ZephyrApiSpecWrapper):
-        """Initialize the test generator.
+        """
+        Initialize the test generator.
 
         Args:
             spec_wrapper: An initialized ZephyrApiSpecWrapper
+
         """
         self.spec_wrapper = spec_wrapper
         logger.info("Initialized ZephyrTestGenerator")
 
     @classmethod
     def from_spec_path(cls, spec_path: Path) -> "ZephyrTestGenerator":
-        """Create a test generator from an OpenAPI spec file.
+        """
+        Create a test generator from an OpenAPI spec file.
 
         Args:
             spec_path: Path to the OpenAPI spec file
 
         Returns:
             Configured ZephyrTestGenerator
+
         """
         logger.info("Creating test generator from OpenAPI spec: {spec_path}")
         spec = load_openapi_spec(spec_path)
@@ -49,7 +54,8 @@ class ZephyrTestGenerator:
         return cls(spec_wrapper)
 
     def generate_endpoint_tests(self, path: str, method: str) -> list[dict[str, Any]]:
-        """Generate test cases for a specific endpoint.
+        """
+        Generate test cases for a specific endpoint.
 
         Args:
             path: The endpoint path
@@ -57,6 +63,7 @@ class ZephyrTestGenerator:
 
         Returns:
             List of test case definitions
+
         """
         logger.info(f"Generating tests for {method.upper()} {path}")
         tests = []
@@ -80,7 +87,7 @@ class ZephyrTestGenerator:
 
         # Generate schema validation tests
         if method.lower() in ["post", "put", "patch"] and self.spec_wrapper.get_request_schema(
-            path, method
+            path, method,
         ):
             schema_tests = self._generate_schema_validation_tests(path, method)
             tests.extend(schema_tests)
@@ -99,13 +106,15 @@ class ZephyrTestGenerator:
         return tests
 
     def _is_entity_endpoint(self, path: str) -> bool:
-        """Check if this endpoint returns a Zephyr entity that could have custom fields.
+        """
+        Check if this endpoint returns a Zephyr entity that could have custom fields.
 
         Args:
             path: The endpoint path
 
         Returns:
             True if endpoint likely returns a Zephyr entity
+
         """
         # These endpoints typically return entities with custom fields
         entity_patterns = [
@@ -123,13 +132,15 @@ class ZephyrTestGenerator:
         return any(pattern in path.lower() for pattern in entity_patterns)
 
     def _supports_attachments(self, path: str) -> bool:
-        """Check if this endpoint supports attachments.
+        """
+        Check if this endpoint supports attachments.
 
         Args:
             path: The endpoint path
 
         Returns:
             True if endpoint likely supports attachments
+
         """
         # These endpoints typically support attachments
         attachment_patterns = [
@@ -144,7 +155,8 @@ class ZephyrTestGenerator:
         return any(pattern in path.lower() for pattern in attachment_patterns)
 
     def _generate_custom_field_tests(self, path: str, method: str) -> list[dict[str, Any]]:
-        """Generate tests for custom field handling.
+        """
+        Generate tests for custom field handling.
 
         Args:
             path: The endpoint path
@@ -152,6 +164,7 @@ class ZephyrTestGenerator:
 
         Returns:
             List of custom field test definitions
+
         """
         tests = []
         endpoint_info = self.spec_wrapper.get_endpoint_info(path, method)
@@ -245,7 +258,8 @@ class ZephyrTestGenerator:
         return tests
 
     def _create_custom_field(self, field_type: str, valid: bool = True) -> dict[str, Any]:
-        """Create a custom field of the specified type.
+        """
+        Create a custom field of the specified type.
 
         Args:
             field_type: The custom field type
@@ -253,6 +267,7 @@ class ZephyrTestGenerator:
 
         Returns:
             Custom field dictionary
+
         """
         field = {
             "id": f"cf-{field_type}-1",
@@ -283,7 +298,8 @@ class ZephyrTestGenerator:
         return field
 
     def _generate_attachment_tests(self, path: str, method: str) -> list[dict[str, Any]]:
-        """Generate tests for attachment handling.
+        """
+        Generate tests for attachment handling.
 
         Args:
             path: The endpoint path
@@ -291,6 +307,7 @@ class ZephyrTestGenerator:
 
         Returns:
             List of attachment test definitions
+
         """
         tests = []
         endpoint_info = self.spec_wrapper.get_endpoint_info(path, method)
@@ -320,7 +337,7 @@ class ZephyrTestGenerator:
                     "filename": file_type["filename"],
                     "content_type": file_type["content_type"],
                     "content": base64.b64encode(
-                        f"Mock {file_type['name']} content".encode()
+                        f"Mock {file_type['name']} content".encode(),
                     ).decode("utf-8"),
                 },
                 "expected_status": 201 if method.lower() == "post" else 200,
@@ -377,7 +394,8 @@ class ZephyrTestGenerator:
         return tests
 
     def _generate_happy_path_test(self, path: str, method: str) -> dict[str, Any]:
-        """Generate a happy path test for an endpoint.
+        """
+        Generate a happy path test for an endpoint.
 
         Args:
             path: The endpoint path
@@ -385,6 +403,7 @@ class ZephyrTestGenerator:
 
         Returns:
             Test case definition
+
         """
         endpoint_info = self.spec_wrapper.get_endpoint_info(path, method)
         operation_id = endpoint_info.get("operation_id", "{method.lower()}_{path}")
@@ -420,7 +439,8 @@ class ZephyrTestGenerator:
         }
 
     def _generate_parameter_tests(self, path: str, method: str) -> list[dict[str, Any]]:
-        """Generate tests for endpoint parameters.
+        """
+        Generate tests for endpoint parameters.
 
         Args:
             path: The endpoint path
@@ -428,6 +448,7 @@ class ZephyrTestGenerator:
 
         Returns:
             List of parameter test definitions
+
         """
         tests = []
         endpoint_info = self.spec_wrapper.get_endpoint_info(path, method)
@@ -516,7 +537,8 @@ class ZephyrTestGenerator:
         return tests
 
     def _generate_response_tests(self, path: str, method: str) -> list[dict[str, Any]]:
-        """Generate tests for different response codes.
+        """
+        Generate tests for different response codes.
 
         Args:
             path: The endpoint path
@@ -524,6 +546,7 @@ class ZephyrTestGenerator:
 
         Returns:
             List of response test definitions
+
         """
         tests = []
         endpoint_info = self.spec_wrapper.get_endpoint_info(path, method)
@@ -562,7 +585,8 @@ class ZephyrTestGenerator:
         return tests
 
     def _generate_schema_validation_tests(self, path: str, method: str) -> list[dict[str, Any]]:
-        """Generate tests for request schema validation.
+        """
+        Generate tests for request schema validation.
 
         Args:
             path: The endpoint path
@@ -570,6 +594,7 @@ class ZephyrTestGenerator:
 
         Returns:
             List of schema validation test definitions
+
         """
         tests = []
         endpoint_info = self.spec_wrapper.get_endpoint_info(path, method)
@@ -640,13 +665,15 @@ class ZephyrTestGenerator:
         return tests
 
     def generate_test_suite(self, tag: str | None = None) -> dict[str, list[dict[str, Any]]]:
-        """Generate a complete test suite for all endpoints or filtered by tag.
+        """
+        Generate a complete test suite for all endpoints or filtered by tag.
 
         Args:
             tag: Optional tag to filter endpoints
 
         Returns:
             Dictionary mapping endpoint identifiers to test definitions
+
         """
         logger.info("Generating test suite" + (" for tag: {tag}" if tag else ""))
 
@@ -670,11 +697,13 @@ class ZephyrTestGenerator:
         return test_suite
 
     def export_test_suite_to_json(self, output_path: Path, tag: str | None = None) -> None:
-        """Generate and export a test suite to a JSON file.
+        """
+        Generate and export a test suite to a JSON file.
 
         Args:
             output_path: Path to save the test suite
             tag: Optional tag to filter endpoints
+
         """
         test_suite = self.generate_test_suite(tag)
 
@@ -684,13 +713,15 @@ class ZephyrTestGenerator:
         logger.info("Exported test suite to {output_path}")
 
     def generate_test_function(self, test: dict[str, Any]) -> str:
-        """Generate a pytest function for a test case.
+        """
+        Generate a pytest function for a test case.
 
         Args:
             test: Test case definition
 
         Returns:
             Python code for the test function
+
         """
         name = test["name"]
         path = test["path"]
@@ -703,14 +734,14 @@ class ZephyrTestGenerator:
         lines.append('    """')
 
         # Set up request parameters
-        if "params" in test and test["params"]:
+        if test.get("params"):
             params_str = json.dumps(test["params"], indent=4).replace("\n", "\n    ")
             lines.append(f"    params = {params_str}")
         else:
             lines.append("    params = {}")
 
         # Set up request data if needed
-        if "request_data" in test and test["request_data"]:
+        if test.get("request_data"):
             data_str = json.dumps(test["request_data"], indent=4).replace("\n", "\n    ")
             lines.append(f"    data = {data_str}")
 
@@ -760,13 +791,13 @@ class ZephyrTestGenerator:
             lines.append("            params=params,")
 
             # Add appropriate parameters based on what's in the test
-            if "request_data" in test and test["request_data"]:
+            if test.get("request_data"):
                 lines.append("            json_data=data,")
             if "file_upload" in test:
                 lines.append("            files=files,")
                 # For file uploads, use multipart header
                 lines.append(
-                    "            headers={'Authorization': zephyr_client.headers['Authorization']},"
+                    "            headers={'Authorization': zephyr_client.headers['Authorization']},",
                 )
 
             lines.append(f"            validate={test.get('validate_schema', True)}")
@@ -799,13 +830,13 @@ class ZephyrTestGenerator:
             lines.append("            params=params,")
 
             # Add appropriate parameters based on what's in the test
-            if "request_data" in test and test["request_data"]:
+            if test.get("request_data"):
                 lines.append("            json_data=data,")
             if "file_upload" in test:
                 lines.append("            files=files,")
                 # For file uploads, use multipart header
                 lines.append(
-                    "            headers={'Authorization': zephyr_client.headers['Authorization']},"
+                    "            headers={'Authorization': zephyr_client.headers['Authorization']},",
                 )
 
             lines.append(f"            validate={test.get('validate_schema', False)}")
@@ -821,11 +852,13 @@ class ZephyrTestGenerator:
         return "\n".join(lines)
 
     def generate_pytest_file(self, output_path: Path, tag: str | None = None) -> None:
-        """Generate a pytest file with test functions.
+        """
+        Generate a pytest file with test functions.
 
         Args:
             output_path: Path to save the pytest file
             tag: Optional tag to filter endpoints
+
         """
         logger.info("Generating pytest file for" + (" tag: {tag}" if tag else " all endpoints"))
 

@@ -27,16 +27,16 @@ logger = logging.getLogger("validation_example")
 
 
 def run_migration_with_validation(
-    zephyr_url, zephyr_api_key, zephyr_project_key, qtest_url, qtest_api_key, qtest_project_id
+    zephyr_url, zephyr_api_key, zephyr_project_key, qtest_url, qtest_api_key, qtest_project_id,
 ):
     """Run a migration with validation enabled."""
     # Create configurations
     zephyr_config = ZephyrConfig(
-        api_url=zephyr_url, api_key=zephyr_api_key, project_key=zephyr_project_key
+        api_url=zephyr_url, api_key=zephyr_api_key, project_key=zephyr_project_key,
     )
 
     qtest_config = QTestConfig(
-        api_url=qtest_url, api_key=qtest_api_key, project_id=qtest_project_id
+        api_url=qtest_url, api_key=qtest_api_key, project_id=qtest_project_id,
     )
 
     # Initialize database
@@ -60,7 +60,7 @@ def run_migration_with_validation(
         migration.run_migration()
         logger.info(f"Migration for project {zephyr_project_key} completed successfully")
     except Exception as e:
-        logger.error(f"Migration failed: {str(e)}")
+        logger.error(f"Migration failed: {e!s}")
 
     # Display validation results
     display_validation_results(db_manager, zephyr_project_key)
@@ -82,7 +82,7 @@ def display_validation_results(db_manager, project_key):
 
         # Get critical issues
         critical_issues = db_manager.get_validation_issues(
-            project_key, resolved=False, level=ValidationLevel.CRITICAL.value
+            project_key, resolved=False, level=ValidationLevel.CRITICAL.value,
         )
         if critical_issues:
             logger.warning(f"Found {len(critical_issues)} CRITICAL issues:")
@@ -91,7 +91,7 @@ def display_validation_results(db_manager, project_key):
 
         # Get error issues
         error_issues = db_manager.get_validation_issues(
-            project_key, resolved=False, level=ValidationLevel.ERROR.value
+            project_key, resolved=False, level=ValidationLevel.ERROR.value,
         )
         if error_issues:
             logger.error(f"Found {len(error_issues)} ERROR issues:")

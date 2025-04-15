@@ -43,7 +43,22 @@ ztoq/                 # Root Project Directory
 │
 ├── ztoq/             # Main package code
 │   ├── core/         # Core functionality
+│   │   ├── __init__.py        # Package initialization
+│   │   ├── config.py          # Configuration management
+│   │   ├── db_manager.py      # Database management
+│   │   ├── db_models.py       # Database models
+│   │   └── services.py        # Core services
+│   │
 │   ├── domain/       # Domain models and business logic
+│   │   ├── __init__.py        # Package initialization
+│   │   └── models.py          # Domain models
+│   │
+│   ├── utils/        # Utility modules
+│   │   ├── __init__.py        # Package initialization
+│   │   ├── package_info.py    # Package metadata
+│   │   ├── dependency_manager.py # Dependency management 
+│   │   └── version_utils.py   # Version management
+│   │
 │   ├── __init__.py   # Package initialization
 │   ├── cli.py        # Command-line interface
 │   └── *.py          # Feature-specific modules

@@ -5,19 +5,16 @@ This module provides fixtures specifically designed for integration tests,
 focusing on testing component interactions with real but isolated dependencies.
 """
 
-import os
-import pytest
-import sqlite3
-import tempfile
+from collections.abc import Generator
 from pathlib import Path
-from typing import Dict, Any, Generator, Optional
 from unittest.mock import MagicMock, patch
-from sqlalchemy import create_engine, text
+
+import pytest
+from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session, sessionmaker
 
 # Import the base fixtures
-from tests.fixtures.base import base_test_env, mock_env_vars, temp_dir, temp_file, temp_db_path
 
 
 @pytest.fixture
@@ -96,7 +93,7 @@ def sqlite_file_engine(temp_db_path: str) -> Generator[Engine, None, None]:
 
 
 @pytest.fixture
-def mock_external_api() -> Generator[Dict[str, MagicMock], None, None]:
+def mock_external_api() -> Generator[dict[str, MagicMock], None, None]:
     """
     Mock external API interactions for controlled integration testing.
 
@@ -108,7 +105,7 @@ def mock_external_api() -> Generator[Dict[str, MagicMock], None, None]:
         Dict[str, MagicMock]: Dictionary of mocked API clients
     """
     with patch("ztoq.zephyr_client.ZephyrClient") as mock_zephyr, patch(
-        "ztoq.qtest_client.QTestClient"
+        "ztoq.qtest_client.QTestClient",
     ) as mock_qtest:
         # Create instances for the mocks
         zephyr_instance = MagicMock()
@@ -125,7 +122,7 @@ def mock_external_api() -> Generator[Dict[str, MagicMock], None, None]:
 
 
 @pytest.fixture
-def test_data_dir(temp_dir: Path) -> Generator[Path, None, None]:
+def test_data_dir(temp_dir: Path) -> Path:
     """
     Create a directory with test data files for integration testing.
 
@@ -163,6 +160,6 @@ def test_data_dir(temp_dir: Path) -> Generator[Path, None, None]:
         file_path = data_dir / filename
         file_path.write_text(content)
 
-    yield data_dir
+    return data_dir
 
     # Clean up is handled by the temp_dir fixture

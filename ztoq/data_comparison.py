@@ -13,9 +13,9 @@ that the migration was successful and data integrity was maintained.
 
 import logging
 import time
-from datetime import datetime
-from typing import Any, Dict, List, Optional, Set, Tuple, Union
-from ztoq.validation import (
+from typing import Any
+
+from ztoq.validation_types import (
     ValidationIssue,
     ValidationLevel,
     ValidationPhase,
@@ -36,16 +36,18 @@ class DataComparisonValidator:
         Args:
             database_manager: The database manager instance
             project_key: The Zephyr project key
+
         """
         self.db = database_manager
         self.project_key = project_key
 
-    def validate_entity_counts(self) -> List[ValidationIssue]:
+    def validate_entity_counts(self) -> list[ValidationIssue]:
         """
         Compare entity counts between Zephyr and qTest.
 
         Returns:
             List of validation issues found
+
         """
         issues = []
 
@@ -89,12 +91,13 @@ class DataComparisonValidator:
 
         return issues
 
-    def validate_critical_entities(self) -> List[ValidationIssue]:
+    def validate_critical_entities(self) -> list[ValidationIssue]:
         """
         Verify all critical entities were migrated correctly.
 
         Returns:
             List of validation issues found
+
         """
         issues = []
 
@@ -117,25 +120,26 @@ class DataComparisonValidator:
                     )
                     issues.append(issue)
         except Exception as e:
-            logger.error(f"Error validating critical test cases: {str(e)}")
+            logger.error(f"Error validating critical test cases: {e!s}")
             issue = ValidationIssue(
                 id=f"critical_testcase_validation_error_{int(time.time())}",
                 level=ValidationLevel.ERROR,
                 scope=ValidationScope.SYSTEM,
                 phase=ValidationPhase.POST_MIGRATION,
-                message=f"Error validating critical test cases: {str(e)}",
+                message=f"Error validating critical test cases: {e!s}",
                 details={"error": str(e)},
             )
             issues.append(issue)
 
         return issues
 
-    def validate_relationship_integrity(self) -> List[ValidationIssue]:
+    def validate_relationship_integrity(self) -> list[ValidationIssue]:
         """
         Verify relationships between entities are preserved.
 
         Returns:
             List of validation issues found
+
         """
         issues = []
 
@@ -150,12 +154,13 @@ class DataComparisonValidator:
 
         return issues
 
-    def _validate_testcase_folder_relationships(self) -> List[ValidationIssue]:
+    def _validate_testcase_folder_relationships(self) -> list[ValidationIssue]:
         """
         Validate test case to folder relationships.
 
         Returns:
             List of validation issues found
+
         """
         issues = []
 
@@ -170,7 +175,7 @@ class DataComparisonValidator:
 
                 # Get the mapped qTest module ID
                 qtest_module_id = self.db.get_mapped_entity_id(
-                    self.project_key, "folder_to_module", zephyr_folder_id
+                    self.project_key, "folder_to_module", zephyr_folder_id,
                 )
 
                 if not qtest_module_id:
@@ -178,7 +183,7 @@ class DataComparisonValidator:
 
                 # Get the mapped qTest test case ID
                 qtest_testcase_id = self.db.get_mapped_entity_id(
-                    self.project_key, "testcase_to_testcase", test_case["id"]
+                    self.project_key, "testcase_to_testcase", test_case["id"],
                 )
 
                 if not qtest_testcase_id:
@@ -205,25 +210,26 @@ class DataComparisonValidator:
                     )
                     issues.append(issue)
         except Exception as e:
-            logger.error(f"Error validating test case folder relationships: {str(e)}")
+            logger.error(f"Error validating test case folder relationships: {e!s}")
             issue = ValidationIssue(
                 id=f"testcase_folder_validation_error_{int(time.time())}",
                 level=ValidationLevel.ERROR,
                 scope=ValidationScope.RELATIONSHIP,
                 phase=ValidationPhase.POST_MIGRATION,
-                message=f"Error validating test case folder relationships: {str(e)}",
+                message=f"Error validating test case folder relationships: {e!s}",
                 details={"error": str(e)},
             )
             issues.append(issue)
 
         return issues
 
-    def _validate_execution_testcase_relationships(self) -> List[ValidationIssue]:
+    def _validate_execution_testcase_relationships(self) -> list[ValidationIssue]:
         """
         Validate test execution to test case relationships.
 
         Returns:
             List of validation issues found
+
         """
         issues = []
 
@@ -238,7 +244,7 @@ class DataComparisonValidator:
 
                 # Get the mapped qTest test case ID
                 qtest_testcase_id = self.db.get_mapped_entity_id(
-                    self.project_key, "testcase_to_testcase", zephyr_testcase_id
+                    self.project_key, "testcase_to_testcase", zephyr_testcase_id,
                 )
 
                 if not qtest_testcase_id:
@@ -246,7 +252,7 @@ class DataComparisonValidator:
 
                 # Get the mapped qTest test run ID
                 qtest_run_id = self.db.get_mapped_entity_id(
-                    self.project_key, "execution_to_run", execution["id"]
+                    self.project_key, "execution_to_run", execution["id"],
                 )
 
                 if not qtest_run_id:
@@ -272,25 +278,26 @@ class DataComparisonValidator:
                     )
                     issues.append(issue)
         except Exception as e:
-            logger.error(f"Error validating test execution test case relationships: {str(e)}")
+            logger.error(f"Error validating test execution test case relationships: {e!s}")
             issue = ValidationIssue(
                 id=f"execution_testcase_validation_error_{int(time.time())}",
                 level=ValidationLevel.ERROR,
                 scope=ValidationScope.RELATIONSHIP,
                 phase=ValidationPhase.POST_MIGRATION,
-                message=f"Error validating test execution test case relationships: {str(e)}",
+                message=f"Error validating test execution test case relationships: {e!s}",
                 details={"error": str(e)},
             )
             issues.append(issue)
 
         return issues
 
-    def _validate_execution_cycle_relationships(self) -> List[ValidationIssue]:
+    def _validate_execution_cycle_relationships(self) -> list[ValidationIssue]:
         """
         Validate test execution to test cycle relationships.
 
         Returns:
             List of validation issues found
+
         """
         issues = []
 
@@ -305,7 +312,7 @@ class DataComparisonValidator:
 
                 # Get the mapped qTest test cycle ID
                 qtest_cycle_id = self.db.get_mapped_entity_id(
-                    self.project_key, "cycle_to_cycle", zephyr_cycle_id
+                    self.project_key, "cycle_to_cycle", zephyr_cycle_id,
                 )
 
                 if not qtest_cycle_id:
@@ -313,7 +320,7 @@ class DataComparisonValidator:
 
                 # Get the mapped qTest test run ID
                 qtest_run_id = self.db.get_mapped_entity_id(
-                    self.project_key, "execution_to_run", execution["id"]
+                    self.project_key, "execution_to_run", execution["id"],
                 )
 
                 if not qtest_run_id:
@@ -339,25 +346,26 @@ class DataComparisonValidator:
                     )
                     issues.append(issue)
         except Exception as e:
-            logger.error(f"Error validating test execution cycle relationships: {str(e)}")
+            logger.error(f"Error validating test execution cycle relationships: {e!s}")
             issue = ValidationIssue(
                 id=f"execution_cycle_validation_error_{int(time.time())}",
                 level=ValidationLevel.ERROR,
                 scope=ValidationScope.RELATIONSHIP,
                 phase=ValidationPhase.POST_MIGRATION,
-                message=f"Error validating test execution cycle relationships: {str(e)}",
+                message=f"Error validating test execution cycle relationships: {e!s}",
                 details={"error": str(e)},
             )
             issues.append(issue)
 
         return issues
 
-    def validate_custom_field_migration(self) -> List[ValidationIssue]:
+    def validate_custom_field_migration(self) -> list[ValidationIssue]:
         """
         Verify custom fields were migrated with correct types and values.
 
         Returns:
             List of validation issues found
+
         """
         issues = []
 
@@ -372,7 +380,7 @@ class DataComparisonValidator:
 
                 # Get the mapped qTest test case ID
                 qtest_testcase_id = self.db.get_mapped_entity_id(
-                    self.project_key, "testcase_to_testcase", test_case["id"]
+                    self.project_key, "testcase_to_testcase", test_case["id"],
                 )
 
                 if not qtest_testcase_id:
@@ -430,25 +438,26 @@ class DataComparisonValidator:
                         )
                         issues.append(issue)
         except Exception as e:
-            logger.error(f"Error validating custom field migration: {str(e)}")
+            logger.error(f"Error validating custom field migration: {e!s}")
             issue = ValidationIssue(
                 id=f"custom_field_validation_error_{int(time.time())}",
                 level=ValidationLevel.ERROR,
                 scope=ValidationScope.CUSTOM_FIELD,
                 phase=ValidationPhase.POST_MIGRATION,
-                message=f"Error validating custom field migration: {str(e)}",
+                message=f"Error validating custom field migration: {e!s}",
                 details={"error": str(e)},
             )
             issues.append(issue)
 
         return issues
 
-    def validate_attachment_migration(self) -> List[ValidationIssue]:
+    def validate_attachment_migration(self) -> list[ValidationIssue]:
         """
         Verify all attachments were migrated correctly.
 
         Returns:
             List of validation issues found
+
         """
         issues = []
 
@@ -464,7 +473,7 @@ class DataComparisonValidator:
                 # Get the mapped qTest entity ID
                 mapping_type = self._get_mapping_type_for_entity(entity_type)
                 qtest_entity_id = self.db.get_mapped_entity_id(
-                    self.project_key, mapping_type, entity_id
+                    self.project_key, mapping_type, entity_id,
                 )
 
                 if not qtest_entity_id:
@@ -492,25 +501,26 @@ class DataComparisonValidator:
                     )
                     issues.append(issue)
         except Exception as e:
-            logger.error(f"Error validating attachment migration: {str(e)}")
+            logger.error(f"Error validating attachment migration: {e!s}")
             issue = ValidationIssue(
                 id=f"attachment_validation_error_{int(time.time())}",
                 level=ValidationLevel.ERROR,
                 scope=ValidationScope.ATTACHMENT,
                 phase=ValidationPhase.POST_MIGRATION,
-                message=f"Error validating attachment migration: {str(e)}",
+                message=f"Error validating attachment migration: {e!s}",
                 details={"error": str(e)},
             )
             issues.append(issue)
 
         return issues
 
-    def _get_zephyr_entity_counts(self) -> Dict[str, int]:
+    def _get_zephyr_entity_counts(self) -> dict[str, int]:
         """
         Get counts of entities from Zephyr.
 
         Returns:
             Dictionary mapping entity types to counts
+
         """
         counts = {}
 
@@ -527,16 +537,17 @@ class DataComparisonValidator:
             # Count test executions
             counts["test_executions"] = self.db.count_entities(self.project_key, "test_executions")
         except Exception as e:
-            logger.error(f"Error getting Zephyr entity counts: {str(e)}")
+            logger.error(f"Error getting Zephyr entity counts: {e!s}")
 
         return counts
 
-    def _get_qtest_entity_counts(self) -> Dict[str, int]:
+    def _get_qtest_entity_counts(self) -> dict[str, int]:
         """
         Get counts of entities from qTest.
 
         Returns:
             Dictionary mapping entity types to counts
+
         """
         counts = {}
 
@@ -546,20 +557,20 @@ class DataComparisonValidator:
 
             # Count test cases
             counts["test_cases"] = self.db.count_entity_mappings(
-                self.project_key, "testcase_to_testcase"
+                self.project_key, "testcase_to_testcase",
             )
 
             # Count test cycles
             counts["test_cycles"] = self.db.count_entity_mappings(
-                self.project_key, "cycle_to_cycle"
+                self.project_key, "cycle_to_cycle",
             )
 
             # Count test runs (executions)
             counts["test_runs"] = self.db.count_entity_mappings(
-                self.project_key, "execution_to_run"
+                self.project_key, "execution_to_run",
             )
         except Exception as e:
-            logger.error(f"Error getting qTest entity counts: {str(e)}")
+            logger.error(f"Error getting qTest entity counts: {e!s}")
 
         return counts
 
@@ -572,6 +583,7 @@ class DataComparisonValidator:
 
         Returns:
             Corresponding qTest entity type
+
         """
         mapping = {
             "folders": "modules",
@@ -590,6 +602,7 @@ class DataComparisonValidator:
 
         Returns:
             Corresponding validation scope
+
         """
         mapping = {
             "folders": ValidationScope.FOLDER,
@@ -608,6 +621,7 @@ class DataComparisonValidator:
 
         Returns:
             Corresponding mapping type
+
         """
         mapping = {
             "folders": "folder_to_module",
@@ -626,6 +640,7 @@ class DataComparisonValidator:
 
         Returns:
             Corresponding qTest custom field name
+
         """
         # In a real implementation, this would use a mapping configuration
         # For now, we'll use a simple sanitization approach
@@ -640,6 +655,7 @@ class DataComparisonValidator:
 
         Returns:
             Normalized value as string
+
         """
         if value is None:
             return ""
@@ -652,12 +668,13 @@ class DataComparisonValidator:
 
         return str(value).strip().lower()
 
-    def run_all_validations(self) -> List[ValidationIssue]:
+    def run_all_validations(self) -> list[ValidationIssue]:
         """
         Run all data comparison validations.
 
         Returns:
             List of all validation issues found
+
         """
         issues = []
 
@@ -710,6 +727,7 @@ class DataComparisonRule(ValidationRule):
             description: Description of the rule
             comparison_method: Name of the method to call on DataComparisonValidator
             level: Validation level for issues found by this rule
+
         """
         super().__init__(
             id=id,
@@ -721,7 +739,7 @@ class DataComparisonRule(ValidationRule):
         )
         self.comparison_method = comparison_method
 
-    def validate(self, entity: Any, context: Dict[str, Any]) -> List[ValidationIssue]:
+    def validate(self, entity: Any, context: dict[str, Any]) -> list[ValidationIssue]:
         """
         Execute the data comparison validation.
 
@@ -731,6 +749,7 @@ class DataComparisonRule(ValidationRule):
 
         Returns:
             List of validation issues found
+
         """
         database = context.get("database")
         project_key = context.get("project_key")
@@ -750,12 +769,13 @@ class DataComparisonRule(ValidationRule):
         return []
 
 
-def get_data_comparison_rules() -> List[ValidationRule]:
+def get_data_comparison_rules() -> list[ValidationRule]:
     """
     Get a list of data comparison validation rules.
 
     Returns:
         List of validation rules
+
     """
     rules = []
 
@@ -767,7 +787,7 @@ def get_data_comparison_rules() -> List[ValidationRule]:
             description="Validates that all entities were migrated by comparing counts",
             comparison_method="validate_entity_counts",
             level=ValidationLevel.ERROR,
-        )
+        ),
     )
 
     # Critical entity validation
@@ -778,7 +798,7 @@ def get_data_comparison_rules() -> List[ValidationRule]:
             description="Validates that all critical entities were migrated correctly",
             comparison_method="validate_critical_entities",
             level=ValidationLevel.CRITICAL,
-        )
+        ),
     )
 
     # Relationship integrity validation
@@ -789,7 +809,7 @@ def get_data_comparison_rules() -> List[ValidationRule]:
             description="Validates that relationships between entities were preserved",
             comparison_method="validate_relationship_integrity",
             level=ValidationLevel.ERROR,
-        )
+        ),
     )
 
     # Custom field validation
@@ -800,7 +820,7 @@ def get_data_comparison_rules() -> List[ValidationRule]:
             description="Validates that custom fields were migrated correctly",
             comparison_method="validate_custom_field_migration",
             level=ValidationLevel.WARNING,
-        )
+        ),
     )
 
     # Attachment validation
@@ -811,7 +831,7 @@ def get_data_comparison_rules() -> List[ValidationRule]:
             description="Validates that attachments were migrated correctly",
             comparison_method="validate_attachment_migration",
             level=ValidationLevel.WARNING,
-        )
+        ),
     )
 
     return rules

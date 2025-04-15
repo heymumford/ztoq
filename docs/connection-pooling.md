@@ -25,9 +25,10 @@ The main `ConnectionPool` class manages connection pools for different base URLs
 - **Automatic Retries**: Built-in retry mechanisms with configurable backoff
 - **Resource Limits**: Controls maximum connections per pool
 - **Graceful Failover**: Handles connection failures with proper cleanup
-- **Automatic Cleanup**: Periodic cleanup of idle connections
+- **Automatic Cleanup**: Periodic cleanup of idle connections with daemon threads
 - **Performance Metrics**: Tracks connection statistics for monitoring
-- **Thread Safety**: Thread-safe implementation for concurrent usage
+- **Thread Safety**: Thread-safe implementation with optimized lock usage 
+- **Deadlock Prevention**: Non-blocking cleanup operations to prevent thread deadlocks
 
 ### Asynchronous Connection Pooling (optional)
 
@@ -37,6 +38,8 @@ The `AsyncConnectionPool` class provides similar functionality for asynchronous 
 - **Client Management**: Maintains stateful async clients per base URL
 - **Resource Management**: Controls max connections and timeouts
 - **Metrics Tracking**: Monitors client usage statistics
+- **Graceful Shutdown**: Proper cleanup of async connections during application shutdown
+- **Fallback Closure**: Non-async fallback for event loop shutdown scenarios
 
 ## Integration with Clients
 
@@ -116,14 +119,38 @@ metrics = connection_pool.get_metrics()
 
 ## Cleanup and Shutdown
 
-For applications with long-running processes, proper cleanup is important:
+For applications with long-running processes, proper cleanup is important. There are two ways to handle cleanup:
+
+### 1. Client-level Cleanup
+
+Each client class now provides a `cleanup()` method that handles proper resource cleanup:
 
 ```python
-from ztoq.connection_pool import connection_pool, close_connection_pools
+from ztoq.zephyr_client import ZephyrClient
+
+# Create a client
+client = ZephyrClient(config)
+
+try:
+    # Use the client...
+    projects = client.get_projects()
+finally:
+    # Clean up all resources including connections
+    client.cleanup()
+```
+
+### 2. Global Cleanup
+
+For global cleanup of all connection pools:
+
+```python
+from ztoq.connection_pool import close_connection_pools
 
 # At application shutdown
 close_connection_pools()
 ```
+
+This global cleanup is automatically called when using client.cleanup() but can also be used directly.
 
 ## Testing
 

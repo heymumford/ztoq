@@ -19,7 +19,7 @@ from ztoq.test_generator import ZephyrTestGenerator
 
 # Configure logging
 logging.basicConfig(
-    level=logging.DEBUG, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    level=logging.DEBUG, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 
 

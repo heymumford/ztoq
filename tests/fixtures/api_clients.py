@@ -13,22 +13,22 @@ to integration tests with real but isolated clients.
 """
 
 import json
-import pytest
-import requests
-from io import BytesIO
-from typing import Dict, Any, Generator, Optional, List, Union
+from collections.abc import Generator
+from typing import Any
 from unittest.mock import MagicMock, patch
 
-from ztoq.zephyr_client import ZephyrClient
-from ztoq.qtest_client import QTestClient
-from ztoq.models import ZephyrConfig
-from ztoq.qtest_models import QTestConfig
+import pytest
+import requests
 
 # Import the API mocking harness
 from tests.fixtures.mocks.api_harness import (
-    ZephyrAPIHarness,
     QTestAPIHarness,
+    ZephyrAPIHarness,
 )
+from ztoq.models import ZephyrConfig
+from ztoq.qtest_client import QTestClient
+from ztoq.qtest_models import QTestConfig
+from ztoq.zephyr_client import ZephyrClient
 
 
 @pytest.fixture
@@ -208,7 +208,7 @@ def zephyr_client_with_mock_api(zephyr_config: ZephyrConfig) -> Generator[Zephyr
             "values": [
                 {"id": "1001", "key": "TEST", "name": "Test Project"},
                 {"id": "1002", "key": "DEMO", "name": "Demo Project"},
-            ]
+            ],
         },
     )
 
@@ -234,7 +234,7 @@ def zephyr_client_with_mock_api(zephyr_config: ZephyrConfig) -> Generator[Zephyr
                             "index": 1,
                             "description": "Step 1",
                             "expectedResult": "Expected 1",
-                        }
+                        },
                     ],
                 },
                 {
@@ -308,7 +308,7 @@ def qtest_client_with_mock_api(qtest_config: QTestConfig) -> Generator[QTestClie
                     "description": "Test case description",
                     "module_id": 2001,
                     "test_steps": [
-                        {"description": "Step 1", "expectedResult": "Expected 1", "order": 1}
+                        {"description": "Step 1", "expectedResult": "Expected 1", "order": 1},
                     ],
                 },
                 {
@@ -345,9 +345,9 @@ def mock_response_factory() -> callable:
 
     def _create_response(
         status_code: int = 200,
-        json_data: Optional[Dict[str, Any]] = None,
-        headers: Optional[Dict[str, str]] = None,
-        content: Optional[Union[str, bytes]] = None,
+        json_data: dict[str, Any] | None = None,
+        headers: dict[str, str] | None = None,
+        content: str | bytes | None = None,
         raise_for_status: bool = True,
     ) -> MagicMock:
         """

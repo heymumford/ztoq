@@ -6,11 +6,13 @@ See LICENSE file for details.
 
 from pathlib import Path
 from unittest.mock import mock_open, patch
+
 import pytest
+
 from ztoq.openapi_parser import extract_api_endpoints, load_openapi_spec, validate_zephyr_spec
 
 
-@pytest.mark.unit()
+@pytest.mark.unit
 class TestOpenAPIParser:
     def test_load_openapi_spec_missing_file(self):
         """Test loading a missing file raises FileNotFoundError."""
@@ -118,7 +120,7 @@ class TestOpenAPIParser:
                                 "in": "path",
                                 "required": True,
                                 "schema": {"type": "string"},
-                            }
+                            },
                         ],
                         "responses": {},
                     },
@@ -144,7 +146,7 @@ class TestOpenAPIParser:
                         "responses": {},
                     },
                     "parameters": [  # This should be ignored
-                        {"name": "projectKey", "in": "query", "schema": {"type": "string"}}
+                        {"name": "projectKey", "in": "query", "schema": {"type": "string"}},
                     ],
                 },
             },

@@ -11,27 +11,27 @@ This module contains performance tests for the full migration workflow,
 benchmarking throughput for different phases and configurations.
 """
 
+import cProfile
+import io
 import logging
 import os
-import time
-import cProfile
 import pstats
-import io
+import time
+from collections.abc import Callable
 from functools import wraps
-from typing import Dict, List, Optional, Any, Tuple, Callable
-from unittest.mock import patch, MagicMock
+from typing import Any
+from unittest.mock import MagicMock, patch
 
-import pytest
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
+import pytest
 
+from tests.performance.base import DataGenerator, PerformanceTest
+from ztoq.batch_strategies import SizeBatchStrategy
 from ztoq.migration import Migration
-from ztoq.workflow_orchestrator import WorkflowOrchestrator
-from ztoq.batch_strategies import SizeBatchStrategy, AdaptiveBatchStrategy
 from ztoq.work_queue import WorkQueue
-from tests.performance.base import PerformanceTest, DataGenerator
-
+from ztoq.workflow_orchestrator import WorkflowOrchestrator
 
 logger = logging.getLogger(__name__)
 
@@ -42,8 +42,8 @@ class MigrationPerformanceTest(PerformanceTest):
     def __init__(
         self,
         name: str,
-        output_dir: Optional[str] = None,
-        db_url: Optional[str] = None,
+        output_dir: str | None = None,
+        db_url: str | None = None,
         zephyr_base_url: str = "https://api.example.com/zephyr",
         qtest_base_url: str = "https://api.example.com/qtest",
     ):
@@ -58,7 +58,7 @@ class MigrationPerformanceTest(PerformanceTest):
         """
         super().__init__(name=name, output_dir=output_dir)
         self.db_url = db_url or os.environ.get(
-            "ZTOQ_TEST_DB_URL", "sqlite:///:memory:"
+            "ZTOQ_TEST_DB_URL", "sqlite:///:memory:",
         )
         self.zephyr_base_url = zephyr_base_url
         self.qtest_base_url = qtest_base_url
@@ -92,7 +92,7 @@ class MigrationPerformanceTest(PerformanceTest):
         # Setup mock behavior
         mock_instance = self.mock_zephyr_client.return_value
         mock_instance.get_projects.return_value = [
-            {"project_id": "PROJ-1", "name": "Test Project 1"}
+            {"project_id": "PROJ-1", "name": "Test Project 1"},
         ]
         mock_instance.get_test_cases.return_value = [
             {"id": i, "key": f"TC-{i}", "name": f"Test Case {i}"}
@@ -108,7 +108,7 @@ class MigrationPerformanceTest(PerformanceTest):
         # Setup mock behavior
         mock_instance = self.mock_qtest_client.return_value
         mock_instance.get_projects.return_value = [
-            {"id": 1, "name": "Test Project 1"}
+            {"id": 1, "name": "Test Project 1"},
         ]
 
 
@@ -117,11 +117,11 @@ class EndToEndThroughputTest(MigrationPerformanceTest):
 
     def __init__(
         self,
-        output_dir: Optional[str] = None,
-        db_url: Optional[str] = None,
-        test_case_counts: List[int] = None,
-        batch_sizes: List[int] = None,
-        concurrency_levels: List[int] = None,
+        output_dir: str | None = None,
+        db_url: str | None = None,
+        test_case_counts: list[int] = None,
+        batch_sizes: list[int] = None,
+        concurrency_levels: list[int] = None,
     ):
         """Initialize end-to-end throughput test.
 
@@ -175,7 +175,7 @@ class EndToEndThroughputTest(MigrationPerformanceTest):
                         self._test_migration_throughput(
                             test_case_count=test_case_count,
                             batch_size=batch_size,
-                            concurrency=concurrency
+                            concurrency=concurrency,
                         )
 
         # Generate reports comparing different configurations
@@ -193,14 +193,14 @@ class EndToEndThroughputTest(MigrationPerformanceTest):
 
         # Set default return values for common methods
         mock_zephyr_instance.get_projects.return_value = [
-            {"id": 1, "key": "PROJ1", "name": "Test Project"}
+            {"id": 1, "key": "PROJ1", "name": "Test Project"},
         ]
 
         mock_qtest_instance.get_projects.return_value = [
-            {"id": 1, "name": "Test Project"}
+            {"id": 1, "name": "Test Project"},
         ]
 
-    def _generate_test_data(self, count: int) -> Dict[str, Any]:
+    def _generate_test_data(self, count: int) -> dict[str, Any]:
         """Generate test data for the specified count.
 
         Args:
@@ -213,7 +213,7 @@ class EndToEndThroughputTest(MigrationPerformanceTest):
         test_data = {
             "test_cases": DataGenerator.generate_test_cases(count),
             "test_cycles": DataGenerator.generate_test_cycles(max(1, count // 10)),
-            "test_executions": DataGenerator.generate_test_executions(count)
+            "test_executions": DataGenerator.generate_test_executions(count),
         }
 
         logger.info(f"Generated test data with {count} test cases, "
@@ -253,12 +253,12 @@ class EndToEndThroughputTest(MigrationPerformanceTest):
         mock_qtest_instance.create_test_case.side_effect = lambda tc: {
             "id": tc.get("id", 1000),
             "name": tc.get("name", "Test Case"),
-            "pid": "TC-1"
+            "pid": "TC-1",
         }
 
         mock_qtest_instance.create_test_cycle.side_effect = lambda tc: {
             "id": tc.get("id", 2000),
-            "name": tc.get("name", "Test Cycle")
+            "name": tc.get("name", "Test Cycle"),
         }
 
         mock_qtest_instance.bulk_create_test_cases.side_effect = lambda tcs: [
@@ -270,7 +270,7 @@ class EndToEndThroughputTest(MigrationPerformanceTest):
         self,
         test_case_count: int,
         batch_size: int,
-        concurrency: int
+        concurrency: int,
     ) -> None:
         """Test migration throughput with specific configuration.
 
@@ -284,7 +284,7 @@ class EndToEndThroughputTest(MigrationPerformanceTest):
             operation="migration_throughput",
             dataset_size=test_case_count,
             batch_size=batch_size,
-            concurrency=concurrency
+            concurrency=concurrency,
         )
 
         @measure
@@ -299,7 +299,7 @@ class EndToEndThroughputTest(MigrationPerformanceTest):
                     qtest_project_id=1,
                     zephyr_base_url=self.zephyr_base_url,
                     qtest_base_url=self.qtest_base_url,
-                    db_url=self.db_url
+                    db_url=self.db_url,
                 )
 
                 # Configure batch strategy
@@ -312,7 +312,7 @@ class EndToEndThroughputTest(MigrationPerformanceTest):
                 orchestrator = WorkflowOrchestrator(
                     migration=migration,
                     batch_strategy=batch_strategy,
-                    work_queue=work_queue
+                    work_queue=work_queue,
                 )
 
                 # Run the migration workflow
@@ -356,7 +356,7 @@ class EndToEndThroughputTest(MigrationPerformanceTest):
                         "throughput": throughput,
                         "extraction_throughput": extraction_tput,
                         "transform_throughput": transform_tput,
-                        "loading_throughput": loading_tput
+                        "loading_throughput": loading_tput,
                     })
 
                     # Log results
@@ -413,8 +413,8 @@ class EndToEndThroughputTest(MigrationPerformanceTest):
                     ax.plot(
                         subset["batch_size"],
                         subset["throughput"],
-                        marker='o',
-                        label=f"Test Cases: {test_case_count}, Concurrency: {concurrency}"
+                        marker="o",
+                        label=f"Test Cases: {test_case_count}, Concurrency: {concurrency}",
                     )
 
         # Add labels and title
@@ -453,8 +453,8 @@ class EndToEndThroughputTest(MigrationPerformanceTest):
                     ax.plot(
                         subset["concurrency"],
                         subset["throughput"],
-                        marker='o',
-                        label=f"Test Cases: {test_case_count}, Batch Size: {batch_size}"
+                        marker="o",
+                        label=f"Test Cases: {test_case_count}, Batch Size: {batch_size}",
                     )
 
         # Add labels and title
@@ -562,7 +562,7 @@ class EndToEndThroughputTest(MigrationPerformanceTest):
         small_subset = df[df["test_case_count"] == min(df["test_case_count"])]
         small_best = small_subset.loc[small_subset["throughput"].idxmax()]
 
-        report_lines.append(f"### Small Datasets (<500 test cases)")
+        report_lines.append("### Small Datasets (<500 test cases)")
         report_lines.append(f"- Recommended batch size: {small_best['batch_size']}")
         report_lines.append(f"- Recommended concurrency: {small_best['concurrency']}")
         report_lines.append("")
@@ -571,7 +571,7 @@ class EndToEndThroughputTest(MigrationPerformanceTest):
         large_subset = df[df["test_case_count"] == max(df["test_case_count"])]
         large_best = large_subset.loc[large_subset["throughput"].idxmax()]
 
-        report_lines.append(f"### Large Datasets (>500 test cases)")
+        report_lines.append("### Large Datasets (>500 test cases)")
         report_lines.append(f"- Recommended batch size: {large_best['batch_size']}")
         report_lines.append(f"- Recommended concurrency: {large_best['concurrency']}")
         report_lines.append("")
@@ -613,10 +613,10 @@ class PhasePerformanceTest(MigrationPerformanceTest):
 
     def __init__(
         self,
-        output_dir: Optional[str] = None,
-        db_url: Optional[str] = None,
+        output_dir: str | None = None,
+        db_url: str | None = None,
         test_case_count: int = 1000,
-        batch_sizes: List[int] = None,
+        batch_sizes: list[int] = None,
     ):
         """Initialize phase performance test.
 
@@ -650,18 +650,18 @@ class PhasePerformanceTest(MigrationPerformanceTest):
         # Test loading phase
         self._test_loading_phase(test_data)
 
-    def _generate_test_data(self, count: int) -> Dict[str, Any]:
+    def _generate_test_data(self, count: int) -> dict[str, Any]:
         """Generate test data for the specified count."""
         # Use DataGenerator to create consistent test data
         test_data = {
             "test_cases": DataGenerator.generate_test_cases(count),
             "test_cycles": DataGenerator.generate_test_cycles(max(1, count // 10)),
-            "test_executions": DataGenerator.generate_test_executions(count)
+            "test_executions": DataGenerator.generate_test_executions(count),
         }
 
         return test_data
 
-    def _test_extraction_phase(self, test_data: Dict[str, Any]):
+    def _test_extraction_phase(self, test_data: dict[str, Any]):
         """Test extraction phase performance.
 
         Args:
@@ -674,7 +674,7 @@ class PhasePerformanceTest(MigrationPerformanceTest):
             measure = self.measure(
                 operation="extraction_phase",
                 dataset_size=self.test_case_count,
-                batch_size=batch_size
+                batch_size=batch_size,
             )
 
             @measure
@@ -701,7 +701,7 @@ class PhasePerformanceTest(MigrationPerformanceTest):
                         migration = Migration(
                             zephyr_project_key="PROJ1",
                             qtest_project_id=1,
-                            db_url=self.db_url
+                            db_url=self.db_url,
                         )
 
                         # Extract test cases with batch processing
@@ -717,7 +717,7 @@ class PhasePerformanceTest(MigrationPerformanceTest):
                             migration.extract_test_cycles(batch_strategy=batch_strategy)
                             migration.extract_test_executions(batch_strategy=batch_strategy)
 
-    def _test_transformation_phase(self, test_data: Dict[str, Any]):
+    def _test_transformation_phase(self, test_data: dict[str, Any]):
         """Test transformation phase performance.
 
         Args:
@@ -730,7 +730,7 @@ class PhasePerformanceTest(MigrationPerformanceTest):
             measure = self.measure(
                 operation="transformation_phase",
                 dataset_size=self.test_case_count,
-                batch_size=batch_size
+                batch_size=batch_size,
             )
 
             @measure
@@ -768,7 +768,7 @@ class PhasePerformanceTest(MigrationPerformanceTest):
                         migration = Migration(
                             zephyr_project_key="PROJ1",
                             qtest_project_id=1,
-                            db_url=self.db_url
+                            db_url=self.db_url,
                         )
 
                         # Transform with batch processing
@@ -784,7 +784,7 @@ class PhasePerformanceTest(MigrationPerformanceTest):
                             migration.transform_test_cycles(batch_strategy=batch_strategy)
                             migration.transform_test_executions(batch_strategy=batch_strategy)
 
-    def _test_loading_phase(self, test_data: Dict[str, Any]):
+    def _test_loading_phase(self, test_data: dict[str, Any]):
         """Test loading phase performance.
 
         Args:
@@ -797,7 +797,7 @@ class PhasePerformanceTest(MigrationPerformanceTest):
             measure = self.measure(
                 operation="loading_phase",
                 dataset_size=self.test_case_count,
-                batch_size=batch_size
+                batch_size=batch_size,
             )
 
             @measure
@@ -828,12 +828,12 @@ class PhasePerformanceTest(MigrationPerformanceTest):
                     # Configure creation methods
                     mock_qtest.create_test_case.side_effect = lambda tc: {
                         "id": tc.get("id", 1000),
-                        "name": tc.get("name", "Test Case")
+                        "name": tc.get("name", "Test Case"),
                     }
 
                     mock_qtest.create_test_cycle.side_effect = lambda tc: {
                         "id": tc.get("id", 2000),
-                        "name": tc.get("name", "Test Cycle")
+                        "name": tc.get("name", "Test Cycle"),
                     }
 
                     mock_qtest.bulk_create_test_cases.side_effect = lambda tcs: [
@@ -846,7 +846,7 @@ class PhasePerformanceTest(MigrationPerformanceTest):
                         migration = Migration(
                             zephyr_project_key="PROJ1",
                             qtest_project_id=1,
-                            db_url=self.db_url
+                            db_url=self.db_url,
                         )
 
                         # Load with batch processing
@@ -865,7 +865,7 @@ def test_migration_throughput():
     test = EndToEndThroughputTest(
         test_case_counts=[50, 100],
         batch_sizes=[10, 20],
-        concurrency_levels=[1, 2]
+        concurrency_levels=[1, 2],
     )
     result = test.run()
     assert result is not None
@@ -885,12 +885,12 @@ class ProfiledMigrationTest(MigrationPerformanceTest):
 
     def __init__(
         self,
-        output_dir: Optional[str] = None,
-        db_url: Optional[str] = None,
+        output_dir: str | None = None,
+        db_url: str | None = None,
         test_case_count: int = 500,
-        batch_sizes: List[int] = None,
-        concurrency_levels: List[int] = None,
-        profile_sections: List[str] = None,
+        batch_sizes: list[int] = None,
+        concurrency_levels: list[int] = None,
+        profile_sections: list[str] = None,
     ):
         """Initialize profiled migration test.
 
@@ -936,13 +936,13 @@ class ProfiledMigrationTest(MigrationPerformanceTest):
 
             # Save profile stats
             s = io.StringIO()
-            ps = pstats.Stats(profiler, stream=s).sort_stats('cumtime')
+            ps = pstats.Stats(profiler, stream=s).sort_stats("cumtime")
             ps.print_stats(20)  # Top 20 functions by cumulative time
 
             # Store profile results
             self.profiles[profile_name] = {
-                'stats': ps,
-                'text': s.getvalue()
+                "stats": ps,
+                "text": s.getvalue(),
             }
 
             # Save profile to file
@@ -950,7 +950,7 @@ class ProfiledMigrationTest(MigrationPerformanceTest):
             ps.dump_stats(str(profile_path))
 
             # Also save readable text version
-            with open(self.output_path / f"{profile_name}.txt", 'w') as f:
+            with open(self.output_path / f"{profile_name}.txt", "w") as f:
                 f.write(s.getvalue())
 
             logger.info(f"Saved profile for {profile_name} to {profile_path}")
@@ -973,18 +973,18 @@ class ProfiledMigrationTest(MigrationPerformanceTest):
         # Generate critical path analysis
         self._generate_critical_path_report()
 
-    def _generate_test_data(self, count: int) -> Dict[str, Any]:
+    def _generate_test_data(self, count: int) -> dict[str, Any]:
         """Generate test data for the specified count."""
         # Use DataGenerator to create consistent test data
         test_data = {
             "test_cases": DataGenerator.generate_test_cases(count),
             "test_cycles": DataGenerator.generate_test_cycles(max(1, count // 10)),
-            "test_executions": DataGenerator.generate_test_executions(count)
+            "test_executions": DataGenerator.generate_test_executions(count),
         }
 
         return test_data
 
-    def _profile_migration(self, test_data: Dict[str, Any], batch_size: int, concurrency: int) -> None:
+    def _profile_migration(self, test_data: dict[str, Any], batch_size: int, concurrency: int) -> None:
         """Profile migration with specified batch size and concurrency.
 
         Args:
@@ -1006,7 +1006,7 @@ class ProfiledMigrationTest(MigrationPerformanceTest):
                 migration = Migration(
                     zephyr_project_key="PROJ1",
                     qtest_project_id=1,
-                    db_url=self.db_url
+                    db_url=self.db_url,
                 )
 
                 # Configure batch strategy
@@ -1019,7 +1019,7 @@ class ProfiledMigrationTest(MigrationPerformanceTest):
                 orchestrator = WorkflowOrchestrator(
                     migration=migration,
                     batch_strategy=batch_strategy,
-                    work_queue=work_queue
+                    work_queue=work_queue,
                 )
 
                 # Profile extraction if enabled
@@ -1027,7 +1027,7 @@ class ProfiledMigrationTest(MigrationPerformanceTest):
                     extraction_profile_name = f"extraction_{config_name}"
                     profile_func = self.profile_function(
                         orchestrator._run_extraction,
-                        extraction_profile_name
+                        extraction_profile_name,
                     )
                     profile_func()
 
@@ -1036,7 +1036,7 @@ class ProfiledMigrationTest(MigrationPerformanceTest):
                     transform_profile_name = f"transformation_{config_name}"
                     profile_func = self.profile_function(
                         orchestrator._run_transformation,
-                        transform_profile_name
+                        transform_profile_name,
                     )
                     profile_func()
 
@@ -1045,7 +1045,7 @@ class ProfiledMigrationTest(MigrationPerformanceTest):
                     loading_profile_name = f"loading_{config_name}"
                     profile_func = self.profile_function(
                         orchestrator._run_loading,
-                        loading_profile_name
+                        loading_profile_name,
                     )
                     profile_func()
 
@@ -1080,12 +1080,12 @@ class ProfiledMigrationTest(MigrationPerformanceTest):
         # Configure creation methods
         mock_qtest_instance.create_test_case.side_effect = lambda tc: {
             "id": tc.get("id", 1000),
-            "name": tc.get("name", "Test Case")
+            "name": tc.get("name", "Test Case"),
         }
 
         mock_qtest_instance.create_test_cycle.side_effect = lambda tc: {
             "id": tc.get("id", 2000),
-            "name": tc.get("name", "Test Cycle")
+            "name": tc.get("name", "Test Cycle"),
         }
 
         mock_qtest_instance.bulk_create_test_cases.side_effect = lambda tcs: [
@@ -1117,7 +1117,7 @@ class ProfiledMigrationTest(MigrationPerformanceTest):
             # Extract top functions from profile data
             report_lines.append("```")
             # Get just the top 10 functions from the profile text
-            profile_text = profile_data['text']
+            profile_text = profile_data["text"]
             for line in profile_text.splitlines()[:15]:  # Header + top 10 functions
                 report_lines.append(line)
             report_lines.append("```")
@@ -1164,7 +1164,7 @@ class ProfiledMigrationTest(MigrationPerformanceTest):
             ("ztoq.work_queue.WorkQueue.process",
              ["extraction_b50_c1", "transformation_b50_c1", "loading_b50_c1"]),
             ("ztoq.test_case_transformer.TestCaseTransformer.transform_test_case",
-             ["transformation_b50_c1", "transformation_b100_c2"])
+             ["transformation_b50_c1", "transformation_b100_c2"]),
         ]
 
 
@@ -1185,7 +1185,7 @@ if __name__ == "__main__":
     throughput_test = EndToEndThroughputTest(
         test_case_counts=[100, 500],
         batch_sizes=[20, 50, 100],
-        concurrency_levels=[1, 2, 4]
+        concurrency_levels=[1, 2, 4],
     )
     throughput_test.run()
 

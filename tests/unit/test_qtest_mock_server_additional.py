@@ -4,10 +4,10 @@ This file is part of ZTOQ, licensed under the MIT License.
 See LICENSE file for details.
 """
 
+
 import pytest
-import json
+
 from ztoq.qtest_mock_server import QTestMockServer
-from ztoq.qtest_models import QTestCustomField, QTestRelease, QTestTestCycle, QTestTestCase
 
 
 @pytest.mark.unit
@@ -462,7 +462,7 @@ class TestQTestMockServerValidationAndErrorHandling:
     def test_error_handling_for_invalid_api_type(self, mock_server):
         """Test error handling for invalid API type."""
         result = mock_server.handle_request(
-            api_type="invalid_api", method="GET", endpoint="/test", params={}
+            api_type="invalid_api", method="GET", endpoint="/test", params={},
         )
         assert "error" in result
         assert "Unknown API type" in result["error"]["message"]
@@ -473,7 +473,7 @@ class TestQTestMockServerValidationAndErrorHandling:
         project_id = mock_server.data["manager"]["projects"][0]["id"]
 
         result = mock_server.handle_request(
-            api_type="manager", method="INVALID", endpoint=f"/projects/{project_id}", params={}
+            api_type="manager", method="INVALID", endpoint=f"/projects/{project_id}", params={},
         )
         assert "error" in result
         assert "Unknown method" in result["error"]["message"]
@@ -481,7 +481,7 @@ class TestQTestMockServerValidationAndErrorHandling:
     def test_error_handling_for_unknown_endpoint(self, mock_server):
         """Test error handling for unknown endpoint."""
         result = mock_server.handle_request(
-            api_type="manager", method="GET", endpoint="/unknown/endpoint", params={}
+            api_type="manager", method="GET", endpoint="/unknown/endpoint", params={},
         )
         assert "error" in result
         assert "Unknown endpoint" in result["error"]["message"]
@@ -665,15 +665,15 @@ class TestQTestMockServerDatasetRows:
                     "cells": [
                         {"columnName": "Column 1", "value": "Value 1"},
                         {"columnName": "Column 2", "value": "true"},
-                    ]
+                    ],
                 },
                 {
                     "cells": [
                         {"columnName": "Column 1", "value": "Value 2"},
                         {"columnName": "Column 2", "value": "false"},
-                    ]
+                    ],
                 },
-            ]
+            ],
         }
         mock_server._handle_create_dataset_rows(dataset_id, rows_data)
 
@@ -712,15 +712,15 @@ class TestQTestMockServerDatasetRows:
                     "cells": [
                         {"columnName": "Column 1", "value": "Value 1"},
                         {"columnName": "Column 2", "value": "true"},
-                    ]
+                    ],
                 },
                 {
                     "cells": [
                         {"columnName": "Column 1", "value": "Value 2"},
                         {"columnName": "Column 2", "value": "false"},
-                    ]
+                    ],
                 },
-            ]
+            ],
         }
 
         # Create dataset rows
@@ -765,9 +765,9 @@ class TestQTestMockServerDatasetRows:
                     "cells": [
                         {"columnName": "Column 1", "value": "Value 1"},
                         {"columnName": "Column 2", "value": "true"},
-                    ]
-                }
-            ]
+                    ],
+                },
+            ],
         }
         created_rows = mock_server._handle_create_dataset_rows(dataset_id, rows_data)
         row_id = created_rows["data"][0]["id"]
@@ -777,7 +777,7 @@ class TestQTestMockServerDatasetRows:
             "cells": [
                 {"columnName": "Column 1", "value": "Updated Value"},
                 {"columnName": "Column 2", "value": "false"},
-            ]
+            ],
         }
 
         # Update the row
@@ -959,8 +959,8 @@ class TestQTestMockServerIntegrationWorkflows:
                             {"description": "Step 2", "expectedResult": "Result 2"},
                         ],
                     },
-                }
-            ]
+                },
+            ],
         }
 
         # Submit auto test logs

@@ -2,7 +2,7 @@ Development
 ===========
 
 Development Setup
-----------------
+-----------------
 
 1. Clone the repository:
 
@@ -25,7 +25,7 @@ Development Setup
        pip install -e ".[dev]"
 
 Project Management
------------------
+------------------
 
 The project is managed using a Kanban board approach, with tasks organized into different phases.
 
@@ -73,7 +73,7 @@ This project follows PEP 8 style guidelines. We use Black for formatting and fla
     flake8
 
 Documentation
-------------
+-------------
 
 To build the documentation:
 
@@ -85,7 +85,7 @@ To build the documentation:
 The built documentation will be available in the ``docs/sphinx/build/html`` directory.
 
 Documentation Standards
-~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
 
 All documentation follows these standards:
 
@@ -102,7 +102,7 @@ You can check documentation naming conventions with:
 For comprehensive documentation guidelines, see our `Documentation Contribution Guide <../../docs-contribution-guide.html>`_.
 
 Release Process
---------------
+---------------
 
 1. Update version in ``pyproject.toml``
 2. Update ``CHANGELOG.md``

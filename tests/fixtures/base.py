@@ -7,11 +7,12 @@ This module provides foundational fixtures that can be used across all test type
 
 import os
 import sys
-import pytest
 import tempfile
+from collections.abc import Generator
 from pathlib import Path
-from typing import Dict, Any, Generator, Optional
 from unittest.mock import MagicMock, patch
+
+import pytest
 
 # Add the project root to the path if not already there
 PROJECT_ROOT = Path(__file__).parent.parent.parent
@@ -20,7 +21,7 @@ if str(PROJECT_ROOT) not in sys.path:
 
 
 @pytest.fixture
-def base_test_env() -> Dict[str, str]:
+def base_test_env() -> dict[str, str]:
     """
     Provide a standardized set of environment variables for testing.
 
@@ -45,7 +46,7 @@ def base_test_env() -> Dict[str, str]:
 
 
 @pytest.fixture
-def mock_env_vars(base_test_env: Dict[str, str]) -> Generator[Dict[str, str], None, None]:
+def mock_env_vars(base_test_env: dict[str, str]) -> Generator[dict[str, str], None, None]:
     """
     Set and restore environment variables for tests.
 
@@ -88,7 +89,7 @@ def temp_dir() -> Generator[Path, None, None]:
 
 
 @pytest.fixture
-def temp_file(temp_dir: Path) -> Generator[Path, None, None]:
+def temp_file(temp_dir: Path) -> Path:
     """
     Create a temporary file for testing.
 
@@ -103,7 +104,7 @@ def temp_file(temp_dir: Path) -> Generator[Path, None, None]:
     """
     temp_file_path = temp_dir / "temp_test_file.txt"
     temp_file_path.touch()
-    yield temp_file_path
+    return temp_file_path
 
 
 @pytest.fixture

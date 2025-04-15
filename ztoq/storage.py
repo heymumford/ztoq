@@ -10,6 +10,7 @@ import sqlite3
 from datetime import datetime
 from pathlib import Path
 from typing import Any, TypeVar
+
 from ztoq.models import (
     Environment,
     Folder,
@@ -30,10 +31,12 @@ class SQLiteStorage:
     """Storage class for saving Zephyr Scale data to SQLite database."""
 
     def __init__(self, db_path: Path):
-        """Initialize SQLite storage.
+        """
+        Initialize SQLite storage.
 
         Args:
             db_path: Path to SQLite database file
+
         """
         self.db_path = db_path
         self.conn = None
@@ -70,7 +73,7 @@ class SQLiteStorage:
         """Serialize a value to a format suitable for SQLite."""
         if isinstance(value, dict | list):
             return json.dumps(value)
-        elif isinstance(value, datetime):
+        if isinstance(value, datetime):
             return value.isoformat()
         return value
 
@@ -85,7 +88,7 @@ class SQLiteStorage:
                     name TEXT NOT NULL,
                     description TEXT
         )
-        """
+        """,
         )
 
         # Folders table
@@ -99,7 +102,7 @@ class SQLiteStorage:
                     project_key TEXT NOT NULL,
                     FOREIGN KEY (parent_id) REFERENCES folders (id) ON DELETE CASCADE
         )
-        """
+        """,
         )
 
         # Statuses table
@@ -113,7 +116,7 @@ class SQLiteStorage:
                     type TEXT NOT NULL,
                     project_key TEXT NOT NULL
         )
-        """
+        """,
         )
 
         # Priorities table
@@ -127,7 +130,7 @@ class SQLiteStorage:
                     rank INTEGER NOT NULL,
                     project_key TEXT NOT NULL
         )
-        """
+        """,
         )
 
         # Environments table
@@ -139,7 +142,7 @@ class SQLiteStorage:
                     description TEXT,
                     project_key TEXT NOT NULL
         )
-        """
+        """,
         )
 
         # Test Cases table
@@ -175,7 +178,7 @@ class SQLiteStorage:
             test_versions TEXT,  -- JSON array
             project_key TEXT NOT NULL
         )
-        """
+        """,
         )
 
         # Test Cycles table
@@ -200,7 +203,7 @@ class SQLiteStorage:
                     custom_fields TEXT,  -- JSON array
             links TEXT   -- JSON array
         )
-        """
+        """,
         )
 
         # Test Plans table
@@ -225,7 +228,7 @@ class SQLiteStorage:
                     custom_fields TEXT,  -- JSON array
             links TEXT   -- JSON array
         )
-        """
+        """,
         )
 
         # Test Executions table
@@ -256,36 +259,36 @@ class SQLiteStorage:
                     FOREIGN KEY (test_case_key) REFERENCES test_cases (key) ON DELETE CASCADE,
                     FOREIGN KEY (cycle_id) REFERENCES test_cycles (id) ON DELETE CASCADE
         )
-        """
+        """,
         )
 
         # Create indexes
         self.cursor.execute(
-            "CREATE INDEX IF NOT EXISTS idx_folders_project ON folders (project_key)"
+            "CREATE INDEX IF NOT EXISTS idx_folders_project ON folders (project_key)",
         )
         self.cursor.execute(
-            "CREATE INDEX IF NOT EXISTS idx_statuses_project ON statuses (project_key)"
+            "CREATE INDEX IF NOT EXISTS idx_statuses_project ON statuses (project_key)",
         )
         self.cursor.execute(
-            "CREATE INDEX IF NOT EXISTS idx_priorities_project ON priorities (project_key)"
+            "CREATE INDEX IF NOT EXISTS idx_priorities_project ON priorities (project_key)",
         )
         self.cursor.execute(
-            "CREATE INDEX IF NOT EXISTS idx_environments_project ON environments (project_key)"
+            "CREATE INDEX IF NOT EXISTS idx_environments_project ON environments (project_key)",
         )
         self.cursor.execute(
-            "CREATE INDEX IF NOT EXISTS idx_test_cases_project ON test_cases (project_key)"
+            "CREATE INDEX IF NOT EXISTS idx_test_cases_project ON test_cases (project_key)",
         )
         self.cursor.execute(
-            "CREATE INDEX IF NOT EXISTS idx_test_cycles_project ON test_cycles (project_key)"
+            "CREATE INDEX IF NOT EXISTS idx_test_cycles_project ON test_cycles (project_key)",
         )
         self.cursor.execute(
-            "CREATE INDEX IF NOT EXISTS idx_test_plans_project ON test_plans (project_key)"
+            "CREATE INDEX IF NOT EXISTS idx_test_plans_project ON test_plans (project_key)",
         )
         self.cursor.execute(
-            "CREATE INDEX IF NOT EXISTS idx_test_executions_project ON test_executions (project_key)"
+            "CREATE INDEX IF NOT EXISTS idx_test_executions_project ON test_executions (project_key)",
         )
         self.cursor.execute(
-            "CREATE INDEX IF NOT EXISTS idx_test_executions_cycle ON test_executions (cycle_id)"
+            "CREATE INDEX IF NOT EXISTS idx_test_executions_cycle ON test_executions (cycle_id)",
         )
 
     def save_project(
@@ -295,17 +298,19 @@ class SQLiteStorage:
         project_id: str,
         description: str | None = None,
     ):
-        """Save project information.
+        """
+        Save project information.
 
         Args:
             project_key: Project key
             project_name: Project name
             project_id: Project ID
             description: Project description
+
         """
         if self.cursor is None:
             raise ValueError(
-                "Database connection not established. Use context manager or connect()."
+                "Database connection not established. Use context manager or connect().",
             )
         self.cursor.execute(
             "INSERT OR REPLACE INTO projects (id, key, name, description) VALUES (?, ?, ?, ?)",
@@ -313,15 +318,17 @@ class SQLiteStorage:
         )
 
     def save_folders(self, folders: list[Folder], project_key: str):
-        """Save folders for a project.
+        """
+        Save folders for a project.
 
         Args:
             folders: List of folders
             project_key: Project key
+
         """
         if self.cursor is None:
             raise ValueError(
-                "Database connection not established. Use context manager or connect()."
+                "Database connection not established. Use context manager or connect().",
             )
         for folder in folders:
             self.cursor.execute(
@@ -334,15 +341,17 @@ class SQLiteStorage:
             )
 
     def save_statuses(self, statuses: list[Status], project_key: str):
-        """Save statuses for a project.
+        """
+        Save statuses for a project.
 
         Args:
             statuses: List of statuses
             project_key: Project key
+
         """
         if self.cursor is None:
             raise ValueError(
-                "Database connection not established. Use context manager or connect()."
+                "Database connection not established. Use context manager or connect().",
             )
         for status in statuses:
             self.cursor.execute(
@@ -362,15 +371,17 @@ class SQLiteStorage:
             )
 
     def save_priorities(self, priorities: list[Priority], project_key: str):
-        """Save priorities for a project.
+        """
+        Save priorities for a project.
 
         Args:
             priorities: List of priorities
             project_key: Project key
+
         """
         if self.cursor is None:
             raise ValueError(
-                "Database connection not established. Use context manager or connect()."
+                "Database connection not established. Use context manager or connect().",
             )
         for priority in priorities:
             self.cursor.execute(
@@ -390,15 +401,17 @@ class SQLiteStorage:
             )
 
     def save_environments(self, environments: list[Environment], project_key: str):
-        """Save environments for a project.
+        """
+        Save environments for a project.
 
         Args:
             environments: List of environments
             project_key: Project key
+
         """
         if self.cursor is None:
             raise ValueError(
-                "Database connection not established. Use context manager or connect()."
+                "Database connection not established. Use context manager or connect().",
             )
         for env in environments:
             self.cursor.execute(
@@ -411,15 +424,17 @@ class SQLiteStorage:
             )
 
     def save_test_case(self, test_case: TestCase, project_key: str):
-        """Save a test case.
+        """
+        Save a test case.
 
         Args:
             test_case: Test case to save
             project_key: Project key
+
         """
         if self.cursor is None:
             raise ValueError(
-                "Database connection not established. Use context manager or connect()."
+                "Database connection not established. Use context manager or connect().",
             )
         # Convert lists to JSON, using appropriate serialization method
         # (supporting both Pydantic v1's .dict() and v2's .model_dump())
@@ -428,25 +443,25 @@ class SQLiteStorage:
             [
                 step.dict() if hasattr(step, "dict") else step.model_dump()
                 for step in test_case.steps
-            ]
+            ],
         )
         custom_fields_json = self._serialize_value(
             [
                 cf.dict() if hasattr(cf, "dict") else cf.model_dump()
                 for cf in test_case.custom_fields
-            ]
+            ],
         )
         links_json = self._serialize_value(
             [
                 link.dict() if hasattr(link, "dict") else link.model_dump()
                 for link in test_case.links
-            ]
+            ],
         )
         scripts_json = self._serialize_value(
             [
                 script.dict() if hasattr(script, "dict") else script.model_dump()
                 for script in test_case.scripts
-            ]
+            ],
         )
         # Handle both new 'versions' field and legacy 'test_versions' field
         versions_attr = "versions" if hasattr(test_case, "versions") else "test_versions"
@@ -455,7 +470,7 @@ class SQLiteStorage:
             [
                 version.dict() if hasattr(version, "dict") else version.model_dump()
                 for version in versions
-            ]
+            ],
         )
 
         # Handle the priority if it's an object
@@ -512,14 +527,16 @@ class SQLiteStorage:
         )
 
     def save_test_cycle(self, test_cycle: TestCycleInfo):
-        """Save a test cycle.
+        """
+        Save a test cycle.
 
         Args:
             test_cycle: Test cycle to save
+
         """
         if self.cursor is None:
             raise ValueError(
-                "Database connection not established. Use context manager or connect()."
+                "Database connection not established. Use context manager or connect().",
             )
         # Convert lists to JSON
         custom_fields_json = self._serialize_value([cf.dict() for cf in test_cycle.custom_fields])
@@ -557,14 +574,16 @@ class SQLiteStorage:
         )
 
     def save_test_plan(self, test_plan: TestPlan):
-        """Save a test plan.
+        """
+        Save a test plan.
 
         Args:
             test_plan: Test plan to save
+
         """
         if self.cursor is None:
             raise ValueError(
-                "Database connection not established. Use context manager or connect()."
+                "Database connection not established. Use context manager or connect().",
             )
         # Convert lists to JSON
         custom_fields_json = self._serialize_value([cf.dict() for cf in test_plan.custom_fields])
@@ -602,20 +621,22 @@ class SQLiteStorage:
         )
 
     def save_test_execution(self, test_execution: TestExecution, project_key: str):
-        """Save a test execution.
+        """
+        Save a test execution.
 
         Args:
             test_execution: Test execution to save
             project_key: Project key
+
         """
         if self.cursor is None:
             raise ValueError(
-                "Database connection not established. Use context manager or connect()."
+                "Database connection not established. Use context manager or connect().",
             )
         # Convert lists to JSON
         steps_json = self._serialize_value([step.dict() for step in test_execution.steps])
         custom_fields_json = self._serialize_value(
-            [cf.dict() for cf in test_execution.custom_fields]
+            [cf.dict() for cf in test_execution.custom_fields],
         )
         links_json = self._serialize_value([link.dict() for link in test_execution.links])
 
@@ -665,10 +686,12 @@ class JSONStorage:
     """Storage class for saving Zephyr Scale data to JSON files."""
 
     def __init__(self, output_dir: Path):
-        """Initialize JSON storage.
+        """
+        Initialize JSON storage.
 
         Args:
             output_dir: Directory to store JSON files
+
         """
         self.output_dir = output_dir
         self.output_dir.mkdir(parents=True, exist_ok=True)
@@ -679,23 +702,21 @@ class JSONStorage:
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         """Context manager exit."""
-        pass
 
     def initialize_database(self):
         """No-op for JSON storage to match SQLite interface."""
-        pass
 
     def _serialize_object(self, obj: Any) -> Any:
         """Serialize a Pydantic object to a dictionary or other serializable format."""
         if hasattr(obj, "model_dump"):
             return obj.model_dump()
-        elif hasattr(obj, "dict"):  # For backward compatibility
+        if hasattr(obj, "dict"):  # For backward compatibility
             return obj.dict()
-        elif isinstance(obj, datetime):
+        if isinstance(obj, datetime):
             return obj.isoformat()
-        elif isinstance(obj, list):
+        if isinstance(obj, list):
             return [self._serialize_object(item) for item in obj]
-        elif isinstance(obj, dict):
+        if isinstance(obj, dict):
             return {k: self._serialize_object(v) for k, v in obj.items()}
         return obj
 
@@ -706,13 +727,15 @@ class JSONStorage:
         project_id: str,
         description: str | None = None,
     ):
-        """Save project information.
+        """
+        Save project information.
 
         Args:
             project_key: Project key
             project_name: Project name
             project_id: Project ID
             description: Project description
+
         """
         project_data = {
             "id": project_id,
@@ -725,11 +748,13 @@ class JSONStorage:
             json.dump(project_data, f, indent=2)
 
     def save_data(self, data: list[T], filename: str):
-        """Save a list of objects to a JSON file.
+        """
+        Save a list of objects to a JSON file.
 
         Args:
             data: List of objects to save
             filename: Name of the JSON file
+
         """
         serialized_data = [self._serialize_object(item) for item in data]
 
@@ -737,56 +762,68 @@ class JSONStorage:
             json.dump(serialized_data, f, indent=2)
 
     def save_folders(self, folders: list[Folder], project_key: str):
-        """Save folders for a project.
+        """
+        Save folders for a project.
 
         Args:
             folders: List of folders
             project_key: Project key
+
         """
         self.save_data(folders, "folders.json")
 
     def save_statuses(self, statuses: list[Status], project_key: str):
-        """Save statuses for a project.
+        """
+        Save statuses for a project.
 
         Args:
             statuses: List of statuses
             project_key: Project key
+
         """
         self.save_data(statuses, "statuses.json")
 
     def save_priorities(self, priorities: list[Priority], project_key: str):
-        """Save priorities for a project.
+        """
+        Save priorities for a project.
 
         Args:
             priorities: List of priorities
             project_key: Project key
+
         """
         self.save_data(priorities, "priorities.json")
 
     def save_environments(self, environments: list[Environment], project_key: str):
-        """Save environments for a project.
+        """
+        Save environments for a project.
 
         Args:
             environments: List of environments
             project_key: Project key
+
         """
         self.save_data(environments, "environments.json")
 
     def save_test_cases(self, test_cases: list[TestCase], project_key: str):
-        """Save test cases.
+        """
+        Save test cases.
 
         Args:
             test_cases: List of test cases
             project_key: Project key
+
         """
         self.save_data(test_cases, "test_cases.json")
 
     def save_test_case(self, test_case: TestCase, project_key: str):
-        """Save a test case.
+        """
+        Save a test case.
 
         Args:
             test_case: Test case to save
             project_key: Project key
+
         """
         # In JSON storage, we append to an array rather than saving individually
         test_cases_file = self.output_dir / "test_cases.json"
@@ -811,19 +848,23 @@ class JSONStorage:
             json.dump(test_cases, f, indent=2)
 
     def save_test_cycles(self, test_cycles: list[TestCycleInfo], project_key: str):
-        """Save test cycles.
+        """
+        Save test cycles.
 
         Args:
             test_cycles: List of test cycles
             project_key: Project key
+
         """
         self.save_data(test_cycles, "test_cycles.json")
 
     def save_test_cycle(self, test_cycle: TestCycleInfo):
-        """Save a test cycle.
+        """
+        Save a test cycle.
 
         Args:
             test_cycle: Test cycle to save
+
         """
         # Similar to save_test_case but for cycles
         test_cycles_file = self.output_dir / "test_cycles.json"
@@ -845,19 +886,23 @@ class JSONStorage:
             json.dump(test_cycles, f, indent=2)
 
     def save_test_plans(self, test_plans: list[TestPlan], project_key: str):
-        """Save test plans.
+        """
+        Save test plans.
 
         Args:
             test_plans: List of test plans
             project_key: Project key
+
         """
         self.save_data(test_plans, "test_plans.json")
 
     def save_test_plan(self, test_plan: TestPlan):
-        """Save a test plan.
+        """
+        Save a test plan.
 
         Args:
             test_plan: Test plan to save
+
         """
         test_plans_file = self.output_dir / "test_plans.json"
 
@@ -878,20 +923,24 @@ class JSONStorage:
             json.dump(test_plans, f, indent=2)
 
     def save_test_executions(self, test_executions: list[TestExecution], project_key: str):
-        """Save test executions.
+        """
+        Save test executions.
 
         Args:
             test_executions: List of test executions
             project_key: Project key
+
         """
         self.save_data(test_executions, "test_executions.json")
 
     def save_test_execution(self, test_execution: TestExecution, project_key: str):
-        """Save a test execution.
+        """
+        Save a test execution.
 
         Args:
             test_execution: Test execution to save
             project_key: Project key
+
         """
         test_executions_file = self.output_dir / "test_executions.json"
 

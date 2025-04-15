@@ -5,33 +5,21 @@ This file demonstrates how to use the system test fixtures,
 serving as a reference for implementing other system tests.
 """
 
-import os
 import json
-import pytest
-import tempfile
-from pathlib import Path
 
-# Import project models
-from ztoq.models import Project, Case as TestCase, Execution
-from ztoq.qtest_models import QTestProject, QTestTestCase
+import pytest
 
 # Import fixtures from the fixtures package
 from tests.fixtures import (
     # Core fixtures
-    mock_env_vars,
-    temp_dir,
-    # System test fixtures
-    skip_if_no_docker,
-    docker_compose_env,
-    cli_runner,
-    run_cli_command,
-    # Factories for generating test data
     ProjectFactory,
-    TestCaseFactory,
-    TestExecutionFactory,
     QTestProjectFactory,
     QTestTestCaseFactory,
+    TestCaseFactory,
+    TestExecutionFactory,
 )
+
+# Import project models
 
 
 @pytest.mark.system
@@ -61,7 +49,7 @@ def main():
 
 if __name__ == "__main__":
     sys.exit(main())
-    """
+    """,
     )
 
     # Make the script executable
@@ -177,7 +165,7 @@ if __name__ == "__main__":
     count = process_files(data_dir, reports_dir)
     print(f"Processed {count} files")
     sys.exit(0)
-    """
+    """,
     )
 
     # Run the script using subprocess
@@ -226,7 +214,7 @@ def test_factories_with_json_files(temp_dir):
     for project in zephyr_projects:
         # Create 2 test cases per project
         zephyr_test_cases.extend(
-            TestCaseFactory.create_batch(2, folder=project.id, folder_name=f"Folder-{project.key}")
+            TestCaseFactory.create_batch(2, folder=project.id, folder_name=f"Folder-{project.key}"),
         )
 
     qtest_test_cases = []
@@ -264,20 +252,20 @@ def test_factories_with_json_files(temp_dir):
     assert (data_dir / "zephyr_executions.json").exists()
 
     # Read the files back in and verify the structure
-    with open(data_dir / "zephyr_projects.json", "r") as f:
+    with open(data_dir / "zephyr_projects.json") as f:
         loaded_projects = json.load(f)
         assert len(loaded_projects) == 3
         assert "key" in loaded_projects[0]
         assert "name" in loaded_projects[0]
 
-    with open(data_dir / "zephyr_test_cases.json", "r") as f:
+    with open(data_dir / "zephyr_test_cases.json") as f:
         loaded_test_cases = json.load(f)
         assert len(loaded_test_cases) == 6  # 2 test cases for each of 3 projects
         assert "key" in loaded_test_cases[0]
         assert "folder" in loaded_test_cases[0]
 
     # Demonstrate using test data from a file
-    with open(data_dir / "zephyr_executions.json", "r") as f:
+    with open(data_dir / "zephyr_executions.json") as f:
         loaded_executions = json.load(f)
         assert len(loaded_executions) == 6  # 1 execution for each test case
 

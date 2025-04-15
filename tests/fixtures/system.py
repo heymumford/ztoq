@@ -6,15 +6,14 @@ focusing on testing the complete application with real dependencies.
 """
 
 import os
-import sys
-import pytest
 import subprocess
+from collections.abc import Generator
 from pathlib import Path
-from typing import Dict, Any, Generator, Optional, List
-from unittest.mock import MagicMock, patch
+from typing import Any
+
+import pytest
 
 # Import the base fixtures
-from tests.fixtures.base import base_test_env, mock_env_vars, temp_dir, temp_file, temp_db_path
 
 
 @pytest.fixture
@@ -31,7 +30,7 @@ def skip_if_no_docker() -> None:
 
     try:
         result = subprocess.run(
-            ["docker", "--version"], capture_output=True, text=True, check=False
+            ["docker", "--version"], capture_output=True, text=True, check=False,
         )
         if result.returncode != 0:
             pytest.skip("Docker not available")
@@ -41,8 +40,8 @@ def skip_if_no_docker() -> None:
 
 @pytest.fixture
 def docker_compose_env(
-    temp_dir: Path, base_test_env: Dict[str, str]
-) -> Generator[Dict[str, Any], None, None]:
+    temp_dir: Path, base_test_env: dict[str, str],
+) -> dict[str, Any]:
     """
     Set up a Docker Compose environment for system testing.
 
@@ -86,15 +85,15 @@ def docker_compose_env(
         "env_vars": base_test_env,
     }
 
-    yield env_info
+    return env_info
 
     # Clean up is handled by the temp_dir fixture
 
 
 @pytest.fixture
 def cli_runner(
-    temp_dir: Path, base_test_env: Dict[str, str]
-) -> Generator[Dict[str, Any], None, None]:
+    temp_dir: Path, base_test_env: dict[str, str],
+) -> Generator[dict[str, Any], None, None]:
     """
     Set up an environment for testing the CLI application.
 
@@ -143,7 +142,7 @@ def cli_runner(
 
 
 @pytest.fixture
-def run_cli_command() -> Generator[callable, None, None]:
+def run_cli_command() -> callable:
     """
     Provide a function to run CLI commands for system testing.
 
@@ -154,7 +153,7 @@ def run_cli_command() -> Generator[callable, None, None]:
         callable: Function to run CLI commands
     """
 
-    def _run_command(command: List[str], cwd: Optional[Path] = None) -> Dict[str, Any]:
+    def _run_command(command: list[str], cwd: Path | None = None) -> dict[str, Any]:
         """
         Run a CLI command and return its results.
 
@@ -172,7 +171,7 @@ def run_cli_command() -> Generator[callable, None, None]:
 
             # Run the command
             process = subprocess.run(
-                command, capture_output=True, text=True, check=False, cwd=str(cwd) if cwd else None
+                command, capture_output=True, text=True, check=False, cwd=str(cwd) if cwd else None,
             )
 
             # Return results
@@ -192,4 +191,4 @@ def run_cli_command() -> Generator[callable, None, None]:
                 "error": e,
             }
 
-    yield _run_command
+    return _run_command

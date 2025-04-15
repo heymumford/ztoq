@@ -1,10 +1,9 @@
 """Integration tests for Docker images used in migration."""
-import os
 import subprocess
-import tempfile
 from pathlib import Path
+from unittest.mock import MagicMock, patch
+
 import pytest
-from unittest.mock import patch, MagicMock
 
 # Mark all tests in this module as docker integration tests
 pytestmark = [pytest.mark.integration, pytest.mark.docker]
@@ -33,7 +32,7 @@ class TestDockerImages:
 
     def test_main_dockerfile_content(self, dockerfile_path):
         """Test that the main Dockerfile contains expected configuration."""
-        with open(dockerfile_path, "r") as f:
+        with open(dockerfile_path) as f:
             content = f.read()
 
         # Check for Python base image
@@ -61,7 +60,7 @@ class TestDockerImages:
 
     def test_report_dockerfile_content(self, report_dockerfile_path):
         """Test that the migration-report Dockerfile contains expected configuration."""
-        with open(report_dockerfile_path, "r") as f:
+        with open(report_dockerfile_path) as f:
             content = f.read()
 
         # Check for Python base image
@@ -85,7 +84,7 @@ class TestDockerImages:
 
         # Test building the main Docker image
         result = subprocess.run(
-            ["docker", "build", "-t", "ztoq:test", "."], capture_output=True, text=True, check=False
+            ["docker", "build", "-t", "ztoq:test", "."], capture_output=True, text=True, check=False,
         )
 
         # Check docker build was called

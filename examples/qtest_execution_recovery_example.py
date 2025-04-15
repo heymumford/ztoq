@@ -13,24 +13,24 @@ This script shows how to:
 3. Implement batch recovery
 """
 
-import os
-import time
 import logging
-import tempfile
+import os
 import random
+import tempfile
+import time
 from datetime import datetime
-from typing import Dict, List, Any
+from typing import Any
 
 from ztoq.qtest_client import QTestClient
+from ztoq.qtest_importer import ConflictResolution, ImportConfig, QTestImporter
 from ztoq.qtest_models import QTestConfig
-from ztoq.qtest_importer import QTestImporter, ImportConfig, ConflictResolution
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-def create_test_executions(count: int = 20) -> List[Dict[str, Any]]:
+def create_test_executions(count: int = 20) -> list[dict[str, Any]]:
     """
     Create sample test executions for the import example.
 
@@ -64,7 +64,7 @@ def create_test_executions(count: int = 20) -> List[Dict[str, Any]]:
                     "description": "Login to the application",
                     "expected_result": "Login successful",
                     "actual_result": "Login was successful with test user credentials",
-                    "status": status
+                    "status": status,
                 },
                 {
                     "id": f"step-{i}-2",
@@ -72,16 +72,16 @@ def create_test_executions(count: int = 20) -> List[Dict[str, Any]]:
                     "description": "Navigate to dashboard",
                     "expected_result": "Dashboard displayed",
                     "actual_result": "Dashboard displayed with all widgets",
-                    "status": status
-                }
-            ]
+                    "status": status,
+                },
+            ],
         }
         executions.append(execution)
 
     return executions
 
 
-def simulate_import_with_failure(executions: List[Dict[str, Any]], checkpoint_dir: str) -> Dict[str, Any]:
+def simulate_import_with_failure(executions: list[dict[str, Any]], checkpoint_dir: str) -> dict[str, Any]:
     """
     Simulate an import process that fails partway through.
 
@@ -96,7 +96,7 @@ def simulate_import_with_failure(executions: List[Dict[str, Any]], checkpoint_di
     config = QTestConfig(
         base_url="https://example.qtest.com",
         bearer_token="sample_token",
-        project_id=12345
+        project_id=12345,
     )
 
     # Create import configuration with checkpointing
@@ -107,7 +107,7 @@ def simulate_import_with_failure(executions: List[Dict[str, Any]], checkpoint_di
         show_progress=True,
         max_retries=3,
         checkpoint_frequency=5,  # Create checkpoint every 5 operations
-        checkpoint_dir=checkpoint_dir
+        checkpoint_dir=checkpoint_dir,
     )
 
     # Create the QTest client and importer
@@ -131,7 +131,7 @@ def simulate_import_with_failure(executions: List[Dict[str, Any]], checkpoint_di
             name="Test Run",
             test_case_id=101,
             test_cycle_id=201,
-            status="Not Run"
+            status="Not Run",
         )
 
     def mock_create_test_log(*args, **kwargs):
@@ -150,7 +150,7 @@ def simulate_import_with_failure(executions: List[Dict[str, Any]], checkpoint_di
             id=random.randint(2000, 9999),
             test_run_id=101,
             status="Passed",
-            execution_date=datetime.now()
+            execution_date=datetime.now(),
         )
 
     # Set up the mock methods
@@ -170,12 +170,12 @@ def simulate_import_with_failure(executions: List[Dict[str, Any]], checkpoint_di
         logger.info(f"Import completed successfully: {result['successful']} successful, {result['failed']} failed")
         return result
     except Exception as e:
-        logger.error(f"Import failed: {str(e)}")
+        logger.error(f"Import failed: {e!s}")
         logger.info("A checkpoint should have been created before failure")
         return {"success": False, "error": str(e)}
 
 
-def resume_import_after_failure(executions: List[Dict[str, Any]], checkpoint_dir: str) -> Dict[str, Any]:
+def resume_import_after_failure(executions: list[dict[str, Any]], checkpoint_dir: str) -> dict[str, Any]:
     """
     Resume the import process from checkpoint after failure.
 
@@ -190,7 +190,7 @@ def resume_import_after_failure(executions: List[Dict[str, Any]], checkpoint_dir
     config = QTestConfig(
         base_url="https://example.qtest.com",
         bearer_token="sample_token",
-        project_id=12345
+        project_id=12345,
     )
 
     # Create import configuration with recovery mode enabled
@@ -202,7 +202,7 @@ def resume_import_after_failure(executions: List[Dict[str, Any]], checkpoint_dir
         max_retries=3,
         checkpoint_frequency=5,
         checkpoint_dir=checkpoint_dir,
-        recovery_mode=True  # Enable recovery mode
+        recovery_mode=True,  # Enable recovery mode
     )
 
     # Create the QTest client and importer
@@ -223,7 +223,7 @@ def resume_import_after_failure(executions: List[Dict[str, Any]], checkpoint_dir
             name="Test Run",
             test_case_id=101,
             test_cycle_id=201,
-            status="Not Run"
+            status="Not Run",
         )
 
     def mock_create_test_log(*args, **kwargs):
@@ -232,7 +232,7 @@ def resume_import_after_failure(executions: List[Dict[str, Any]], checkpoint_dir
             id=random.randint(2000, 9999),
             test_run_id=101,
             status="Passed",
-            execution_date=datetime.now()
+            execution_date=datetime.now(),
         )
 
     # Set up the mock methods (without failures this time)
@@ -277,13 +277,13 @@ def main():
         resume_result = resume_import_after_failure(executions, temp_dir)
 
         # Show final results
-        logger.info(f"Import recovery process completed")
+        logger.info("Import recovery process completed")
         logger.info(f"Total executions: {len(executions)}")
         logger.info(f"Successfully imported: {resume_result['stats']['runs_created'] + resume_result['stats']['recovered']}")
         logger.info(f"Failed: {resume_result['stats']['failed']}")
 
         # List checkpoint files
-        checkpoint_files = [f for f in os.listdir(temp_dir) if f.startswith('qtest_execution_checkpoint')]
+        checkpoint_files = [f for f in os.listdir(temp_dir) if f.startswith("qtest_execution_checkpoint")]
         logger.info(f"Checkpoint files created ({len(checkpoint_files)}):")
         for checkpoint_file in sorted(checkpoint_files):
             logger.info(f"  - {checkpoint_file}")

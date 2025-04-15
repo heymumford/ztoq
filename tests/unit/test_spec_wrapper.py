@@ -9,12 +9,14 @@ Unit tests for the ZephyrApiSpecWrapper class.
 """
 
 from typing import Any
+
 import pytest
+
 from ztoq.openapi_parser import ZephyrApiSpecWrapper
 
 
 # Sample OpenAPI specification for testing
-@pytest.fixture()
+@pytest.fixture
 def sample_spec() -> dict[str, Any]:
     """Create a sample OpenAPI spec for testing."""
     return {
@@ -49,8 +51,8 @@ def sample_spec() -> dict[str, Any]:
                             "description": "Successful response",
                             "content": {
                                 "application/json": {
-                                    "schema": {"$ref": "#/components/schemas/TestCasesResponse"}
-                                }
+                                    "schema": {"$ref": "#/components/schemas/TestCasesResponse"},
+                                },
                             },
                         },
                         "400": {"description": "Invalid parameters"},
@@ -64,8 +66,8 @@ def sample_spec() -> dict[str, Any]:
                     "requestBody": {
                         "content": {
                             "application/json": {
-                                "schema": {"$ref": "#/components/schemas/TestCaseInput"}
-                            }
+                                "schema": {"$ref": "#/components/schemas/TestCaseInput"},
+                            },
                         },
                         "required": True,
                     },
@@ -74,10 +76,10 @@ def sample_spec() -> dict[str, Any]:
                             "description": "Test case created",
                             "content": {
                                 "application/json": {
-                                    "schema": {"$ref": "#/components/schemas/TestCase"}
-                                }
+                                    "schema": {"$ref": "#/components/schemas/TestCase"},
+                                },
                             },
-                        }
+                        },
                     },
                 },
             },
@@ -87,20 +89,20 @@ def sample_spec() -> dict[str, Any]:
                     "operationId": "getTestCaseById",
                     "tags": ["test-cases"],
                     "parameters": [
-                        {"name": "id", "in": "path", "required": True, "schema": {"type": "string"}}
+                        {"name": "id", "in": "path", "required": True, "schema": {"type": "string"}},
                     ],
                     "responses": {
                         "200": {
                             "description": "Successful response",
                             "content": {
                                 "application/json": {
-                                    "schema": {"$ref": "#/components/schemas/TestCase"}
-                                }
+                                    "schema": {"$ref": "#/components/schemas/TestCase"},
+                                },
                             },
                         },
                         "404": {"description": "Test case not found"},
                     },
-                }
+                },
             },
         },
         "components": {
@@ -143,12 +145,12 @@ def sample_spec() -> dict[str, Any]:
                     },
                     "required": ["projectKey", "name"],
                 },
-            }
+            },
         },
     }
 
 
-@pytest.fixture()
+@pytest.fixture
 def spec_wrapper(sample_spec):
     """Create a spec wrapper for testing."""
     return ZephyrApiSpecWrapper(sample_spec)
@@ -262,7 +264,7 @@ def test_validate_response(spec_wrapper):
                 "id": "1",
                 "key": "TEST-1",
                 # missing 'name'
-            }
+            },
         ],
         "total": 1,
         "startAt": 0,

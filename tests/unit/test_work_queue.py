@@ -11,16 +11,16 @@ Unit tests for the work queue module.
 import asyncio
 import random
 import time
-from typing import Any, Dict, List
+
 import pytest
 
 from ztoq.work_queue import (
     WorkerType,
-    WorkStatus,
     WorkItem,
     WorkQueue,
-    run_in_thread_pool,
+    WorkStatus,
     run_in_process_pool,
+    run_in_thread_pool,
     run_with_asyncio,
 )
 
@@ -255,7 +255,7 @@ async def test_error_handling():
 @pytest.mark.asyncio
 async def test_retry_mechanism():
     """Test retry mechanism for failed work items."""
-    retry_count: Dict[str, int] = {}
+    retry_count: dict[str, int] = {}
 
     # Custom worker that fails on first attempt for odd numbers
     def flaky_worker(x: int) -> int:

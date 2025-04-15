@@ -9,8 +9,10 @@ import os
 import shutil
 import tempfile
 from pathlib import Path
+
 import pytest
 from sqlalchemy import create_engine, inspect, text
+
 from alembic import command
 from alembic.config import Config
 from ztoq.core.db_manager import DatabaseConfig, SQLDatabaseManager
@@ -21,7 +23,7 @@ from ztoq.models import Project as ProjectModel
 logger = logging.getLogger(__name__)
 
 
-@pytest.mark.integration()
+@pytest.mark.integration
 class TestDatabaseMigrations:
     """Integration tests for database migrations using Alembic."""
 
@@ -46,7 +48,7 @@ class TestDatabaseMigrations:
 
         return Config(alembic_ini_path)
 
-    @pytest.fixture()
+    @pytest.fixture
     def db_manager(self, temp_db_path):
         """Create a database manager for testing."""
         config = DatabaseConfig(db_type="sqlite", db_path=temp_db_path)
@@ -104,7 +106,7 @@ class TestDatabaseMigrations:
 
         # Set target metadata
         env_content = env_content.replace(
-            "target_metadata = None", "target_metadata = Base.metadata"
+            "target_metadata = None", "target_metadata = Base.metadata",
         )
 
         # Write the modified env.py
@@ -184,7 +186,7 @@ class TestDatabaseMigrations:
 
         # Set target metadata
         env_content = env_content.replace(
-            "target_metadata = None", "target_metadata = Base.metadata"
+            "target_metadata = None", "target_metadata = Base.metadata",
         )
 
         # Write the modified env.py
@@ -255,7 +257,7 @@ class TestDatabaseMigrations:
 
         # Set target metadata
         env_content = env_content.replace(
-            "target_metadata = None", "target_metadata = Base.metadata"
+            "target_metadata = None", "target_metadata = Base.metadata",
         )
 
         # Write the modified env.py
@@ -285,7 +287,7 @@ class TestDatabaseMigrations:
     op.execute("UPDATE projects SET is_active = 1")
 """
         migration_content = migration_content.replace(
-            "def upgrade() -> None:", f"def upgrade() -> None:\n{upgrade_insert}"
+            "def upgrade() -> None:", f"def upgrade() -> None:\n{upgrade_insert}",
         )
 
         # Add code to remove the column in the downgrade
@@ -293,7 +295,7 @@ class TestDatabaseMigrations:
     op.drop_column('projects', 'is_active')
 """
         migration_content = migration_content.replace(
-            "def downgrade() -> None:", f"def downgrade() -> None:\n{downgrade_insert}"
+            "def downgrade() -> None:", f"def downgrade() -> None:\n{downgrade_insert}",
         )
 
         # Write the modified migration
@@ -337,7 +339,7 @@ class TestDatabaseMigrations:
         # Add test data to the database
         for i in range(10):
             project = ProjectModel(
-                id=f"PROJ-{i}", key=f"PROJ{i}", name=f"Project {i}", description=f"Test project {i}"
+                id=f"PROJ-{i}", key=f"PROJ{i}", name=f"Project {i}", description=f"Test project {i}",
             )
             db_manager.save_project(project)
 
@@ -353,7 +355,7 @@ class TestDatabaseMigrations:
 
             # Populate some data in the table
             test_case = TestCase(
-                id="TC-1", key="TEST-CASE-1", name="Test Case 1", project_key="PROJ0"
+                id="TC-1", key="TEST-CASE-1", name="Test Case 1", project_key="PROJ0",
             )
             session.add(test_case)
             session.commit()
@@ -424,7 +426,7 @@ class TestDatabaseMigrations:
 
                 # Set values for the new column
                 session.execute(
-                    text("UPDATE projects SET recovery_test = 'recovered' WHERE key LIKE 'FAIL%'")
+                    text("UPDATE projects SET recovery_test = 'recovered' WHERE key LIKE 'FAIL%'"),
                 )
                 session.commit()
 

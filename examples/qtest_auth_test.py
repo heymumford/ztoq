@@ -15,16 +15,17 @@ Environment variables:
 - qtest_bearer_token: Bearer token for qTest authentication
 """
 
-import os
-import logging
 import argparse
+import logging
+import os
+
 from ztoq.qtest_client import QTestClient
 from ztoq.qtest_models import QTestConfig
 
 # Set up logging
 logging.basicConfig(
     level=logging.DEBUG,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger("qtest_auth_test")
 
@@ -60,7 +61,7 @@ def test_auth(base_url=None, token=None, project_id=1):
         config = QTestConfig(
             base_url=base_url,
             bearer_token=token,
-            project_id=project_id
+            project_id=project_id,
         )
 
         # Create client
@@ -107,9 +108,8 @@ def main():
                 return 1
 
         return 0
-    else:
-        print("Authentication test failed")
-        return 1
+    print("Authentication test failed")
+    return 1
 
 if __name__ == "__main__":
     exit(main())

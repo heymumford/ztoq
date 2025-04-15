@@ -1,11 +1,10 @@
 """Integration test for the end-to-end migration workflow using Docker."""
-import os
-import time
 import json
-import pytest
+import os
 import subprocess
-from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
+import pytest
 
 # Mark this test module as both integration and docker tests
 pytestmark = [pytest.mark.integration, pytest.mark.docker, pytest.mark.system]
@@ -17,7 +16,6 @@ class TestMigrationSystemWorkflow:
     @pytest.fixture(autouse=True)
     def require_docker(self, skip_if_no_docker):
         """Ensure Docker is available or skip the test."""
-        pass
 
     @pytest.fixture
     def docker_migration_setup(self, docker_test_env):
@@ -41,8 +39,8 @@ class TestMigrationSystemWorkflow:
                         {"id": 1, "description": "Step 1", "expected": "Expected 1"},
                         {"id": 2, "description": "Step 2", "expected": "Expected 2"},
                     ],
-                }
-            )
+                },
+            ),
         )
 
         # Create a sample attachment

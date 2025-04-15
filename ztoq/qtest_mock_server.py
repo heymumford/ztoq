@@ -19,15 +19,10 @@ Each API follows the qTest REST API conventions for endpoints, request formats,
 and response structures.
 """
 
-import copy
-import json
 import logging
-import random
-import re
-import time
 import uuid
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Union, Tuple
+from typing import Any
 
 # Global variable for test support
 DEBUG = False
@@ -35,31 +30,14 @@ DEBUG = False
 from pydantic import ValidationError
 
 from ztoq.qtest_models import (
-    QTestAttachment,
-    QTestConfig,
     QTestCustomField,
     QTestDataset,
     QTestDatasetRow,
-    QTestModule,
-    QTestParameter,
-    QTestParameterValue,
     QTestProject,
-    QTestPulseAction,
-    QTestPulseActionParameter,
-    QTestPulseActionType,
-    QTestPulseCondition,
-    QTestPulseConstant,
-    QTestPulseEventType,
-    QTestPulseRule,
-    QTestPulseTrigger,
     QTestRelease,
-    QTestScenarioFeature,
     QTestStep,
     QTestTestCase,
-    QTestTestCycle,
-    QTestTestExecution,
     QTestTestLog,
-    QTestTestRun,
 )
 
 logger = logging.getLogger("ztoq.qtest_mock_server")
@@ -107,8 +85,8 @@ class QTestMockServer:
         self._initialize_sample_data()
 
     def _validate_model(
-        self, data: dict, model_class, exclude_none: bool = True
-    ) -> Tuple[bool, Optional[dict], Optional[str]]:
+        self, data: dict, model_class, exclude_none: bool = True,
+    ) -> tuple[bool, dict | None, str | None]:
         """
         Validate data against a Pydantic model.
 
@@ -119,6 +97,7 @@ class QTestMockServer:
 
         Returns:
             A tuple (is_valid, validated_data, error_message)
+
         """
         try:
             # Create model instance and validate
@@ -129,11 +108,11 @@ class QTestMockServer:
 
             return True, validated_data, None
         except ValidationError as e:
-            logger.warning(f"Validation error: {str(e)}")
+            logger.warning(f"Validation error: {e!s}")
             return False, None, str(e)
         except Exception as e:
-            logger.error(f"Unexpected error during validation: {str(e)}")
-            return False, None, f"Internal server error: {str(e)}"
+            logger.error(f"Unexpected error during validation: {e!s}")
+            return False, None, f"Internal server error: {e!s}"
 
     def _format_error_response(self, message: str, status_code: int = 400) -> dict:
         """
@@ -145,13 +124,14 @@ class QTestMockServer:
 
         Returns:
             A standardized error response dictionary
+
         """
         return {
             "error": {
                 "message": message,
                 "code": status_code,
                 "timestamp": datetime.now().isoformat(),
-            }
+            },
         }
 
     def _initialize_sample_data(self):
@@ -252,7 +232,7 @@ class QTestMockServer:
                 "creatorId": 1,
                 "projectId": project_id,
                 "properties": [
-                    {"id": 1, "name": "Automation Status", "type": "STRING", "value": "Automated"}
+                    {"id": 1, "name": "Automation Status", "type": "STRING", "value": "Automated"},
                 ],
                 "steps": [
                     {
@@ -294,7 +274,7 @@ class QTestMockServer:
                         "name": "Automation Status",
                         "type": "STRING",
                         "value": "Not Automated",
-                    }
+                    },
                 ],
                 "steps": [
                     {
@@ -335,7 +315,7 @@ class QTestMockServer:
                 "creatorId": 1,
                 "projectId": project_id,
                 "properties": [
-                    {"id": 1, "name": "Automation Status", "type": "STRING", "value": "Automated"}
+                    {"id": 1, "name": "Automation Status", "type": "STRING", "value": "Automated"},
                 ],
                 "steps": [
                     {
@@ -366,7 +346,7 @@ class QTestMockServer:
                 "creatorId": 1,
                 "projectId": project_id,
                 "properties": [
-                    {"id": 1, "name": "Automation Status", "type": "STRING", "value": "Automated"}
+                    {"id": 1, "name": "Automation Status", "type": "STRING", "value": "Automated"},
                 ],
                 "steps": [
                     {
@@ -546,7 +526,7 @@ class QTestMockServer:
                         },
                     },
                 ],
-            }
+            },
         ]
 
         for dataset in datasets:
@@ -701,14 +681,14 @@ class QTestMockServer:
                     And I click the login button
                     Then I should see an error message
                 """,
-            }
+            },
         ]
 
         for feature in features:
             self.data["scenario"]["features"][feature["id"]] = feature
 
     # Custom field endpoints
-    def _handle_get_custom_fields(self, project_id: int, entity_type: str) -> List[Dict[str, Any]]:
+    def _handle_get_custom_fields(self, project_id: int, entity_type: str) -> list[dict[str, Any]]:
         """
         Handle GET /projects/{projectId}/custom-fields endpoint.
 
@@ -718,6 +698,7 @@ class QTestMockServer:
 
         Returns:
             List of custom fields
+
         """
         # Map entity_type path parameter to QTestCustomField.entityType
         entity_type_map = {
@@ -743,7 +724,7 @@ class QTestMockServer:
 
         return custom_fields
 
-    def _handle_create_custom_field(self, project_id: int, data: Dict[str, Any]) -> Dict[str, Any]:
+    def _handle_create_custom_field(self, project_id: int, data: dict[str, Any]) -> dict[str, Any]:
         """
         Handle POST /projects/{projectId}/custom-fields endpoint.
 
@@ -753,6 +734,7 @@ class QTestMockServer:
 
         Returns:
             The created custom field data
+
         """
         # Add project ID if not provided
         if "projectId" not in data:
@@ -789,7 +771,7 @@ class QTestMockServer:
 
         return custom_field
 
-    def _handle_get_custom_field(self, custom_field_id: int) -> Dict[str, Any]:
+    def _handle_get_custom_field(self, custom_field_id: int) -> dict[str, Any]:
         """
         Handle GET /projects/{projectId}/custom-fields/{customFieldId} endpoint.
 
@@ -798,15 +780,15 @@ class QTestMockServer:
 
         Returns:
             The custom field data or an error message if not found
+
         """
         if custom_field_id in self.data["manager"]["custom_fields"]:
             return self.data["manager"]["custom_fields"][custom_field_id]
-        else:
-            return self._format_error_response(f"Custom field not found: {custom_field_id}", 404)
+        return self._format_error_response(f"Custom field not found: {custom_field_id}", 404)
 
     def _handle_update_custom_field(
-        self, custom_field_id: int, data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, custom_field_id: int, data: dict[str, Any],
+    ) -> dict[str, Any]:
         """
         Handle PUT /projects/{projectId}/custom-fields/{customFieldId} endpoint.
 
@@ -816,6 +798,7 @@ class QTestMockServer:
 
         Returns:
             The updated custom field data or an error message if not found
+
         """
         if custom_field_id not in self.data["manager"]["custom_fields"]:
             return self._format_error_response(f"Custom field not found: {custom_field_id}", 404)
@@ -841,12 +824,12 @@ class QTestMockServer:
 
         # Log update
         logger.info(
-            f"Updated custom field: {custom_field_id} - {updated_field.get('fieldName', 'Unnamed')}"
+            f"Updated custom field: {custom_field_id} - {updated_field.get('fieldName', 'Unnamed')}",
         )
 
         return updated_field
 
-    def _handle_delete_custom_field(self, custom_field_id: int) -> Dict[str, Any]:
+    def _handle_delete_custom_field(self, custom_field_id: int) -> dict[str, Any]:
         """
         Handle DELETE /projects/{projectId}/custom-fields/{customFieldId} endpoint.
 
@@ -855,6 +838,7 @@ class QTestMockServer:
 
         Returns:
             Success message or an error message if not found
+
         """
         if custom_field_id not in self.data["manager"]["custom_fields"]:
             return self._format_error_response(f"Custom field not found: {custom_field_id}", 404)
@@ -864,13 +848,13 @@ class QTestMockServer:
 
         # Log deletion
         logger.info(
-            f"Deleted custom field: {custom_field_id} - {deleted_field.get('fieldName', 'Unnamed')}"
+            f"Deleted custom field: {custom_field_id} - {deleted_field.get('fieldName', 'Unnamed')}",
         )
 
         return {"success": True, "message": f"Custom field {custom_field_id} deleted successfully"}
 
     # Release management methods
-    def _handle_get_releases(self, project_id: int) -> Dict[str, Any]:
+    def _handle_get_releases(self, project_id: int) -> dict[str, Any]:
         """
         Handle GET /projects/{projectId}/releases endpoint.
 
@@ -879,6 +863,7 @@ class QTestMockServer:
 
         Returns:
             Paginated list of releases
+
         """
         # Filter by project ID
         releases = [
@@ -901,7 +886,7 @@ class QTestMockServer:
             "items": paginated_releases,
         }
 
-    def _handle_create_release(self, project_id: int, data: Dict[str, Any]) -> Dict[str, Any]:
+    def _handle_create_release(self, project_id: int, data: dict[str, Any]) -> dict[str, Any]:
         """
         Handle POST /projects/{projectId}/releases endpoint.
 
@@ -911,6 +896,7 @@ class QTestMockServer:
 
         Returns:
             The created release data
+
         """
         # Add project ID if not provided
         if "projectId" not in data:
@@ -947,7 +933,7 @@ class QTestMockServer:
 
         return release
 
-    def _handle_get_release(self, release_id: int) -> Dict[str, Any]:
+    def _handle_get_release(self, release_id: int) -> dict[str, Any]:
         """
         Handle GET /projects/{projectId}/releases/{releaseId} endpoint.
 
@@ -956,13 +942,13 @@ class QTestMockServer:
 
         Returns:
             The release data or an error message if not found
+
         """
         if release_id in self.data["manager"]["releases"]:
             return self.data["manager"]["releases"][release_id]
-        else:
-            return self._format_error_response(f"Release not found: {release_id}", 404)
+        return self._format_error_response(f"Release not found: {release_id}", 404)
 
-    def _handle_update_release(self, release_id: int, data: Dict[str, Any]) -> Dict[str, Any]:
+    def _handle_update_release(self, release_id: int, data: dict[str, Any]) -> dict[str, Any]:
         """
         Handle PUT /projects/{projectId}/releases/{releaseId} endpoint.
 
@@ -972,6 +958,7 @@ class QTestMockServer:
 
         Returns:
             The updated release data or an error message if not found
+
         """
         if release_id not in self.data["manager"]["releases"]:
             return self._format_error_response(f"Release not found: {release_id}", 404)
@@ -1000,7 +987,7 @@ class QTestMockServer:
 
         return updated_release
 
-    def _handle_delete_release(self, release_id: int) -> Dict[str, Any]:
+    def _handle_delete_release(self, release_id: int) -> dict[str, Any]:
         """
         Handle DELETE /projects/{projectId}/releases/{releaseId} endpoint.
 
@@ -1009,6 +996,7 @@ class QTestMockServer:
 
         Returns:
             Success message or an error message if not found
+
         """
         if release_id not in self.data["manager"]["releases"]:
             return self._format_error_response(f"Release not found: {release_id}", 404)
@@ -1035,7 +1023,7 @@ class QTestMockServer:
         return {"success": True, "message": f"Release {release_id} deleted successfully"}
 
     # Dataset methods
-    def _handle_get_datasets(self, project_id: int) -> Dict[str, Any]:
+    def _handle_get_datasets(self, project_id: int) -> dict[str, Any]:
         """
         Handle GET /data-sets (filtered by project ID) endpoint.
 
@@ -1044,6 +1032,7 @@ class QTestMockServer:
 
         Returns:
             Datasets matching the query
+
         """
         # Filter by project ID
         datasets = [
@@ -1054,7 +1043,7 @@ class QTestMockServer:
 
         return {"status": "SUCCESS", "data": datasets}
 
-    def _handle_update_dataset(self, dataset_id: int, data: Dict[str, Any]) -> Dict[str, Any]:
+    def _handle_update_dataset(self, dataset_id: int, data: dict[str, Any]) -> dict[str, Any]:
         """
         Handle PUT /data-sets/{datasetId} endpoint.
 
@@ -1064,6 +1053,7 @@ class QTestMockServer:
 
         Returns:
             The updated dataset data or an error message
+
         """
         if dataset_id not in self.data["parameters"]["datasets"]:
             return {"status": "ERROR", "message": f"Dataset not found: {dataset_id}"}
@@ -1092,7 +1082,7 @@ class QTestMockServer:
 
         return {"status": "SUCCESS", "data": updated_dataset}
 
-    def _handle_delete_dataset(self, dataset_id: int) -> Dict[str, Any]:
+    def _handle_delete_dataset(self, dataset_id: int) -> dict[str, Any]:
         """
         Handle DELETE /data-sets/{datasetId} endpoint.
 
@@ -1101,6 +1091,7 @@ class QTestMockServer:
 
         Returns:
             Success message or an error message
+
         """
         if dataset_id not in self.data["parameters"]["datasets"]:
             return {"status": "ERROR", "message": f"Dataset not found: {dataset_id}"}
@@ -1121,8 +1112,8 @@ class QTestMockServer:
         return {"status": "SUCCESS", "message": f"Dataset {dataset_id} deleted successfully"}
 
     def _handle_update_dataset_row(
-        self, dataset_id: int, row_id: int, data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, dataset_id: int, row_id: int, data: dict[str, Any],
+    ) -> dict[str, Any]:
         """
         Handle PUT /data-sets/{datasetId}/rows/{rowId} endpoint.
 
@@ -1133,6 +1124,7 @@ class QTestMockServer:
 
         Returns:
             The updated row data or an error message
+
         """
         if dataset_id not in self.data["parameters"]["datasets"]:
             return {"status": "ERROR", "message": f"Dataset not found: {dataset_id}"}
@@ -1169,7 +1161,7 @@ class QTestMockServer:
 
         return {"status": "SUCCESS", "data": updated_row}
 
-    def _handle_delete_dataset_row(self, dataset_id: int, row_id: int) -> Dict[str, Any]:
+    def _handle_delete_dataset_row(self, dataset_id: int, row_id: int) -> dict[str, Any]:
         """
         Handle DELETE /data-sets/{datasetId}/rows/{rowId} endpoint.
 
@@ -1179,6 +1171,7 @@ class QTestMockServer:
 
         Returns:
             Success message or an error message
+
         """
         if dataset_id not in self.data["parameters"]["datasets"]:
             return {"status": "ERROR", "message": f"Dataset not found: {dataset_id}"}
@@ -1230,6 +1223,7 @@ class QTestMockServer:
 
         Returns:
             A dictionary representing the API response
+
         """
         # Track request for debugging
         request_info = {
@@ -1287,17 +1281,16 @@ class QTestMockServer:
         try:
             if api_type == "manager":
                 return self._handle_manager_request(method, endpoint, params, data, files)
-            elif api_type == "parameters":
+            if api_type == "parameters":
                 return self._handle_parameters_request(method, endpoint, params, data)
-            elif api_type == "pulse":
+            if api_type == "pulse":
                 return self._handle_pulse_request(method, endpoint, params, data)
-            elif api_type == "scenario":
+            if api_type == "scenario":
                 return self._handle_scenario_request(method, endpoint, params, data)
-            else:
-                return self._format_error_response(f"Unknown API type: {api_type}", 404)
+            return self._format_error_response(f"Unknown API type: {api_type}", 404)
         except Exception as e:
-            logger.error(f"Error handling request: {str(e)}", exc_info=True)
-            return self._format_error_response(f"Internal server error: {str(e)}", 500)
+            logger.error(f"Error handling request: {e!s}", exc_info=True)
+            return self._format_error_response(f"Internal server error: {e!s}", 500)
 
     def _handle_auth(self, api_type: str) -> dict[str, Any]:
         """Handle authentication requests."""
@@ -1335,6 +1328,7 @@ class QTestMockServer:
 
         Returns:
             A dictionary representing the API response
+
         """
         params = params or {}
         data = data or {}
@@ -1349,16 +1343,16 @@ class QTestMockServer:
         if endpoint == "/projects":
             if method == "GET":
                 return self._handle_get_projects(params)
-            elif method == "POST":
+            if method == "POST":
                 return self._handle_create_project(data)
         elif endpoint.startswith("/projects/") and endpoint.count("/") == 2:
             # Specific project endpoint like /projects/123
             project_id = int(endpoint.split("/projects/")[1])
             if method == "GET":
                 return self._handle_get_project(project_id)
-            elif method == "PUT":
+            if method == "PUT":
                 return self._handle_update_project(project_id, data)
-            elif method == "DELETE":
+            if method == "DELETE":
                 return self._handle_delete_project(project_id)
 
         # Test cases endpoints
@@ -1368,10 +1362,9 @@ class QTestMockServer:
                     # Get single test case
                     test_case_id = int(endpoint.split("/test-cases/")[1].split("/")[0])
                     return self._handle_get_test_case(test_case_id)
-                else:
-                    # Get multiple test cases
-                    return self._handle_get_test_cases(project_id, params)
-            elif method == "POST" and endpoint.endswith("/test-cases"):
+                # Get multiple test cases
+                return self._handle_get_test_cases(project_id, params)
+            if method == "POST" and endpoint.endswith("/test-cases"):
                 # Create test case
                 return self._handle_create_test_case(project_id, data)
 
@@ -1382,10 +1375,9 @@ class QTestMockServer:
                     # Get single test cycle
                     test_cycle_id = int(endpoint.split("/test-cycles/")[1].split("/")[0])
                     return self._handle_get_test_cycle(test_cycle_id)
-                else:
-                    # Get multiple test cycles
-                    return self._handle_get_test_cycles(project_id, params)
-            elif method == "POST" and endpoint.endswith("/test-cycles"):
+                # Get multiple test cycles
+                return self._handle_get_test_cycles(project_id, params)
+            if method == "POST" and endpoint.endswith("/test-cycles"):
                 # Create test cycle
                 return self._handle_create_test_cycle(project_id, data)
 
@@ -1396,7 +1388,7 @@ class QTestMockServer:
                 if method == "POST":
                     # Submit test log
                     return self._handle_submit_test_log(test_run_id, data)
-                elif method == "GET":
+                if method == "GET":
                     # Get test logs
                     return self._handle_get_test_logs(test_run_id)
             elif (
@@ -1423,10 +1415,9 @@ class QTestMockServer:
                     # Get single module
                     module_id = int(endpoint.split("/modules/")[1].split("/")[0])
                     return self._handle_get_module(module_id)
-                else:
-                    # Get multiple modules
-                    return self._handle_get_modules(project_id, params)
-            elif method == "POST" and endpoint.endswith("/modules"):
+                # Get multiple modules
+                return self._handle_get_modules(project_id, params)
+            if method == "POST" and endpoint.endswith("/modules"):
                 # Create module
                 return self._handle_create_module(project_id, data)
 
@@ -1437,22 +1428,21 @@ class QTestMockServer:
                     # Get single custom field
                     custom_field_id = int(endpoint.split("/custom-fields/")[1].split("/")[0])
                     return self._handle_get_custom_field(custom_field_id)
-                else:
-                    # Get custom fields by entity type
-                    entity_type = endpoint.split("/")[
-                        -1
-                    ]  # Extract the last segment like "test-cases"
-                    if entity_type == "custom-fields":
-                        entity_type = params.get("entity_type", "test-cases")
-                    return self._handle_get_custom_fields(project_id, entity_type)
-            elif method == "POST" and endpoint.endswith("/custom-fields"):
+                # Get custom fields by entity type
+                entity_type = endpoint.split("/")[
+                    -1
+                ]  # Extract the last segment like "test-cases"
+                if entity_type == "custom-fields":
+                    entity_type = params.get("entity_type", "test-cases")
+                return self._handle_get_custom_fields(project_id, entity_type)
+            if method == "POST" and endpoint.endswith("/custom-fields"):
                 # Create custom field
                 return self._handle_create_custom_field(project_id, data)
-            elif method == "PUT" and "/custom-fields/" in endpoint:
+            if method == "PUT" and "/custom-fields/" in endpoint:
                 # Update custom field
                 custom_field_id = int(endpoint.split("/custom-fields/")[1].split("/")[0])
                 return self._handle_update_custom_field(custom_field_id, data)
-            elif method == "DELETE" and "/custom-fields/" in endpoint:
+            if method == "DELETE" and "/custom-fields/" in endpoint:
                 # Delete custom field
                 custom_field_id = int(endpoint.split("/custom-fields/")[1].split("/")[0])
                 return self._handle_delete_custom_field(custom_field_id)
@@ -1464,17 +1454,16 @@ class QTestMockServer:
                     # Get single release
                     release_id = int(endpoint.split("/releases/")[1].split("/")[0])
                     return self._handle_get_release(release_id)
-                else:
-                    # Get multiple releases
-                    return self._handle_get_releases(project_id)
-            elif method == "POST" and endpoint.endswith("/releases"):
+                # Get multiple releases
+                return self._handle_get_releases(project_id)
+            if method == "POST" and endpoint.endswith("/releases"):
                 # Create release
                 return self._handle_create_release(project_id, data)
-            elif method == "PUT" and "/releases/" in endpoint:
+            if method == "PUT" and "/releases/" in endpoint:
                 # Update release
                 release_id = int(endpoint.split("/releases/")[1].split("/")[0])
                 return self._handle_update_release(release_id, data)
-            elif method == "DELETE" and "/releases/" in endpoint:
+            if method == "DELETE" and "/releases/" in endpoint:
                 # Delete release
                 release_id = int(endpoint.split("/releases/")[1].split("/")[0])
                 return self._handle_delete_release(release_id)
@@ -1505,14 +1494,14 @@ class QTestMockServer:
         if "/parameters/" in endpoint:
             if endpoint.endswith("/parameters/query") and method == "POST":
                 return self._handle_query_parameters(project_id, data)
-            elif endpoint.endswith("/parameters/create") and method == "POST":
+            if endpoint.endswith("/parameters/create") and method == "POST":
                 return self._handle_create_parameter(data)
-            elif "/parameters/" in endpoint and "/values" in endpoint:
+            if "/parameters/" in endpoint and "/values" in endpoint:
                 parameter_id = int(endpoint.split("/parameters/")[1].split("/")[0])
                 if method == "POST" and endpoint.endswith("/values"):
                     # Create parameter value
                     return self._handle_create_parameter_value(parameter_id, data)
-                elif method == "POST" and endpoint.endswith("/values/query"):
+                if method == "POST" and endpoint.endswith("/values/query"):
                     # Query parameter values
                     return self._handle_query_parameter_values(parameter_id, data)
             elif "/parameters/" in endpoint and "/values" not in endpoint:
@@ -1525,14 +1514,14 @@ class QTestMockServer:
         elif "/data-sets/" in endpoint:
             if endpoint.endswith("/data-sets/query") and method == "POST":
                 return self._handle_query_datasets(project_id, data)
-            elif endpoint.endswith("/data-sets/create") and method == "POST":
+            if endpoint.endswith("/data-sets/create") and method == "POST":
                 return self._handle_create_dataset(data)
-            elif "/data-sets/" in endpoint and "/rows" in endpoint:
+            if "/data-sets/" in endpoint and "/rows" in endpoint:
                 dataset_id = int(endpoint.split("/data-sets/")[1].split("/")[0])
                 if method == "POST" and endpoint.endswith("/rows"):
                     # Create dataset row
                     return self._handle_create_dataset_row(dataset_id, data)
-                elif method == "GET" and endpoint.endswith("/rows"):
+                if method == "GET" and endpoint.endswith("/rows"):
                     # Get dataset rows
                     return self._handle_get_dataset_rows(dataset_id)
             elif "/data-sets/" in endpoint and "/rows" not in endpoint:
@@ -1560,9 +1549,9 @@ class QTestMockServer:
         if endpoint.startswith("/rules"):
             if method == "GET" and endpoint == "/rules":
                 return self._handle_get_rules(project_id)
-            elif method == "POST" and endpoint == "/rules":
+            if method == "POST" and endpoint == "/rules":
                 return self._handle_create_rule(data)
-            elif "/rules/" in endpoint:
+            if "/rules/" in endpoint:
                 if endpoint.endswith("/execute"):
                     rule_id = endpoint.split("/rules/")[1].split("/execute")[0]
                     if method == "POST":
@@ -1571,54 +1560,54 @@ class QTestMockServer:
                     rule_id = endpoint.split("/rules/")[1]
                     if method == "GET":
                         return self._handle_get_rule(rule_id)
-                    elif method == "PUT":
+                    if method == "PUT":
                         return self._handle_update_rule(rule_id, data)
-                    elif method == "DELETE":
+                    if method == "DELETE":
                         return self._handle_delete_rule(rule_id)
 
         # Triggers endpoints
         elif endpoint.startswith("/triggers"):
             if method == "GET" and endpoint == "/triggers":
                 return self._handle_get_triggers(project_id)
-            elif method == "POST" and endpoint == "/triggers":
+            if method == "POST" and endpoint == "/triggers":
                 return self._handle_create_trigger(data)
-            elif "/triggers/" in endpoint:
+            if "/triggers/" in endpoint:
                 trigger_id = endpoint.split("/triggers/")[1]
                 if method == "GET":
                     return self._handle_get_trigger(trigger_id)
-                elif method == "PUT":
+                if method == "PUT":
                     return self._handle_update_trigger(trigger_id, data)
-                elif method == "DELETE":
+                if method == "DELETE":
                     return self._handle_delete_trigger(trigger_id)
 
         # Actions endpoints
         elif endpoint.startswith("/actions"):
             if method == "GET" and endpoint == "/actions":
                 return self._handle_get_actions(project_id)
-            elif method == "POST" and endpoint == "/actions":
+            if method == "POST" and endpoint == "/actions":
                 return self._handle_create_action(data)
-            elif "/actions/" in endpoint:
+            if "/actions/" in endpoint:
                 action_id = endpoint.split("/actions/")[1]
                 if method == "GET":
                     return self._handle_get_action(action_id)
-                elif method == "PUT":
+                if method == "PUT":
                     return self._handle_update_action(action_id, data)
-                elif method == "DELETE":
+                if method == "DELETE":
                     return self._handle_delete_action(action_id)
 
         # Constants endpoints
         elif endpoint.startswith("/constants"):
             if method == "GET" and endpoint == "/constants":
                 return self._handle_get_constants(project_id)
-            elif method == "POST" and endpoint == "/constants":
+            if method == "POST" and endpoint == "/constants":
                 return self._handle_create_constant(data)
-            elif "/constants/" in endpoint:
+            if "/constants/" in endpoint:
                 constant_id = endpoint.split("/constants/")[1]
                 if method == "GET":
                     return self._handle_get_constant(constant_id)
-                elif method == "PUT":
+                if method == "PUT":
                     return self._handle_update_constant(constant_id, data)
-                elif method == "DELETE":
+                if method == "DELETE":
                     return self._handle_delete_constant(constant_id)
 
         # Default response for unimplemented endpoints
@@ -1640,7 +1629,7 @@ class QTestMockServer:
         if endpoint.startswith("/features"):
             if method == "GET" and endpoint == "/features":
                 return self._handle_get_features(project_id)
-            elif method == "POST" and endpoint == "/features":
+            if method == "POST" and endpoint == "/features":
                 return self._handle_create_feature(data)
 
         # Default response for unimplemented endpoints
@@ -1685,6 +1674,7 @@ class QTestMockServer:
 
         Returns:
             The project data or an error message if not found
+
         """
         for project in self.data["manager"]["projects"]:
             if project["id"] == project_id:
@@ -1701,6 +1691,7 @@ class QTestMockServer:
 
         Returns:
             The created project data
+
         """
         # Validate project data if validation is enabled
         if self.validation_mode:
@@ -1738,6 +1729,7 @@ class QTestMockServer:
 
         Returns:
             The updated project data or an error message if not found
+
         """
         # Find project to update
         project_index = None
@@ -1782,6 +1774,7 @@ class QTestMockServer:
 
         Returns:
             Success message or an error message if not found
+
         """
         # Find project to delete
         project_index = None
@@ -1810,6 +1803,7 @@ class QTestMockServer:
 
         Args:
             project_id: The ID of the project to delete data for
+
         """
         # Delete modules for project
         self.data["manager"]["modules"] = {
@@ -1927,8 +1921,7 @@ class QTestMockServer:
         """Handle GET /projects/{projectId}/test-cases/{testCaseId} request."""
         if test_case_id in self.data["manager"]["test_cases"]:
             return self.data["manager"]["test_cases"][test_case_id]
-        else:
-            return {"error": f"Test case not found: {test_case_id}"}
+        return {"error": f"Test case not found: {test_case_id}"}
 
     def _handle_create_test_case(self, project_id: int, data: dict[str, Any]) -> dict[str, Any]:
         """
@@ -1942,6 +1935,7 @@ class QTestMockServer:
 
         Returns:
             The created test case data
+
         """
         # Add project ID if not provided
         if "projectId" not in data:
@@ -2041,8 +2035,7 @@ class QTestMockServer:
         """Handle GET /projects/{projectId}/modules/{moduleId} request."""
         if module_id in self.data["manager"]["modules"]:
             return self.data["manager"]["modules"][module_id]
-        else:
-            return {"error": f"Module not found: {module_id}"}
+        return {"error": f"Module not found: {module_id}"}
 
     def _handle_create_module(self, project_id: int, data: dict[str, Any]) -> dict[str, Any]:
         """Handle POST /projects/{projectId}/modules request."""
@@ -2100,8 +2093,7 @@ class QTestMockServer:
         """Handle GET /projects/{projectId}/test-cycles/{testCycleId} request."""
         if test_cycle_id in self.data["manager"]["test_cycles"]:
             return self.data["manager"]["test_cycles"][test_cycle_id]
-        else:
-            return {"error": f"Test cycle not found: {test_cycle_id}"}
+        return {"error": f"Test cycle not found: {test_cycle_id}"}
 
     def _handle_create_test_cycle(self, project_id: int, data: dict[str, Any]) -> dict[str, Any]:
         """Handle POST /projects/{projectId}/test-cycles request."""
@@ -2139,6 +2131,7 @@ class QTestMockServer:
 
         Returns:
             The created test log data
+
         """
         # Verify test run exists
         if test_run_id not in self.data["manager"]["test_runs"]:
@@ -2173,17 +2166,17 @@ class QTestMockServer:
                     for step_log in data["testStepLogs"]:
                         if "stepId" not in step_log:
                             return self._format_error_response(
-                                "Missing stepId in test step log", 400
+                                "Missing stepId in test step log", 400,
                             )
 
                         if step_log["stepId"] not in valid_step_ids:
                             return self._format_error_response(
-                                f"Invalid stepId: {step_log['stepId']}", 400
+                                f"Invalid stepId: {step_log['stepId']}", 400,
                             )
 
                         if "status" not in step_log:
                             return self._format_error_response(
-                                "Missing status in test step log", 400
+                                "Missing status in test step log", 400,
                             )
 
                         if step_log["status"] not in QTestTestLog.VALID_STATUSES:
@@ -2220,7 +2213,7 @@ class QTestMockServer:
 
         # Log creation
         logger.info(
-            f"Created test log: {test_log_id} for test run: {test_run_id} with status: {test_log['status']}"
+            f"Created test log: {test_log_id} for test run: {test_run_id} with status: {test_log['status']}",
         )
 
         return test_log
@@ -2234,11 +2227,11 @@ class QTestMockServer:
 
         Returns:
             The test run data or an error message if not found
+
         """
         if test_run_id in self.data["manager"]["test_runs"]:
             return self.data["manager"]["test_runs"][test_run_id]
-        else:
-            return self._format_error_response(f"Test run not found: {test_run_id}", 404)
+        return self._format_error_response(f"Test run not found: {test_run_id}", 404)
 
     def _handle_get_test_runs(self, project_id: int, params: dict[str, Any]) -> dict[str, Any]:
         """
@@ -2250,6 +2243,7 @@ class QTestMockServer:
 
         Returns:
             Paginated list of test runs for the project
+
         """
         # Filter by project ID
         test_runs = [
@@ -2289,6 +2283,7 @@ class QTestMockServer:
 
         Returns:
             The created test run data
+
         """
         # Add project ID if not provided
         if "projectId" not in data:
@@ -2339,6 +2334,7 @@ class QTestMockServer:
 
         Returns:
             List of test logs for the test run
+
         """
         # Filter test logs by test run ID
         test_logs = [
@@ -2350,7 +2346,7 @@ class QTestMockServer:
         return {"items": test_logs, "total": len(test_logs)}
 
     def _handle_upload_attachment(
-        self, project_id: int, object_type: str, object_id: int, files: dict[str, Any]
+        self, project_id: int, object_type: str, object_id: int, files: dict[str, Any],
     ) -> dict[str, Any]:
         """Handle POST /projects/{projectId}/{objectType}/{objectId}/blob-handles request."""
         # Generate attachment ID
@@ -2463,11 +2459,10 @@ class QTestMockServer:
             parameter["values"] = parameter_values
 
             return {"status": "SUCCESS", "data": parameter}
-        else:
-            return {"status": "ERROR", "message": f"Parameter not found: {parameter_id}"}
+        return {"status": "ERROR", "message": f"Parameter not found: {parameter_id}"}
 
     def _handle_create_parameter_value(
-        self, parameter_id: int, data: dict[str, Any]
+        self, parameter_id: int, data: dict[str, Any],
     ) -> dict[str, Any]:
         """Handle POST /parameters/{pid}/values request."""
         # Verify parameter exists
@@ -2490,7 +2485,7 @@ class QTestMockServer:
         return {"status": "SUCCESS", "data": value}
 
     def _handle_query_parameter_values(
-        self, parameter_id: int, data: dict[str, Any]
+        self, parameter_id: int, data: dict[str, Any],
     ) -> dict[str, Any]:
         """Handle POST /parameters/{pid}/values/query request."""
         # Filter values by parameter ID
@@ -2578,8 +2573,7 @@ class QTestMockServer:
             dataset["rows"] = dataset_rows
 
             return {"status": "SUCCESS", "data": dataset}
-        else:
-            return {"status": "ERROR", "message": f"Dataset not found: {dataset_id}"}
+        return {"status": "ERROR", "message": f"Dataset not found: {dataset_id}"}
 
     def _handle_create_dataset_row(self, dataset_id: int, data: dict[str, Any]) -> dict[str, Any]:
         """Handle POST /data-sets/{dsId}/rows request."""
@@ -2647,8 +2641,7 @@ class QTestMockServer:
         """Handle GET /rules/{id} request."""
         if rule_id in self.data["pulse"]["rules"]:
             return {"data": self.data["pulse"]["rules"][rule_id]}
-        else:
-            return {"error": f"Rule not found: {rule_id}"}
+        return {"error": f"Rule not found: {rule_id}"}
 
     def _handle_update_rule(self, rule_id: str, data: dict[str, Any]) -> dict[str, Any]:
         """Handle PUT /rules/{id} request."""
@@ -2660,8 +2653,7 @@ class QTestMockServer:
             rule["updatedDate"] = datetime.now().isoformat()
             rule["updatedBy"] = {"id": 1, "name": "Admin"}
             return {"data": rule}
-        else:
-            return {"error": f"Rule not found: {rule_id}"}
+        return {"error": f"Rule not found: {rule_id}"}
 
     def _handle_delete_rule(self, rule_id: str) -> dict[str, Any]:
         """Handle DELETE /rules/{id} request."""
@@ -2669,16 +2661,14 @@ class QTestMockServer:
             # Delete the rule
             del self.data["pulse"]["rules"][rule_id]
             return {"success": True}
-        else:
-            return {"error": f"Rule not found: {rule_id}"}
+        return {"error": f"Rule not found: {rule_id}"}
 
     def _handle_execute_rule(self, rule_id: str) -> dict[str, Any]:
         """Handle POST /rules/{id}/execute request."""
         if rule_id in self.data["pulse"]["rules"]:
             # Return a success message
             return {"data": {"message": f"Rule {rule_id} executed successfully"}}
-        else:
-            return {"error": f"Rule not found: {rule_id}"}
+        return {"error": f"Rule not found: {rule_id}"}
 
     def _handle_get_triggers(self, project_id: int) -> dict[str, Any]:
         """Handle GET /triggers request."""
@@ -2695,8 +2685,7 @@ class QTestMockServer:
             trigger_id = int(trigger_id)
             if trigger_id in self.data["pulse"]["triggers"]:
                 return {"data": self.data["pulse"]["triggers"][trigger_id]}
-            else:
-                return {"error": f"Trigger not found: {trigger_id}"}
+            return {"error": f"Trigger not found: {trigger_id}"}
         except ValueError:
             return {"error": f"Invalid trigger ID: {trigger_id}"}
 
@@ -2736,8 +2725,7 @@ class QTestMockServer:
                 trigger["updatedDate"] = datetime.now().isoformat()
                 trigger["updatedBy"] = {"id": 1, "name": "Admin"}
                 return {"data": trigger}
-            else:
-                return {"error": f"Trigger not found: {trigger_id}"}
+            return {"error": f"Trigger not found: {trigger_id}"}
         except ValueError:
             return {"error": f"Invalid trigger ID: {trigger_id}"}
 
@@ -2749,8 +2737,7 @@ class QTestMockServer:
                 # Delete the trigger
                 del self.data["pulse"]["triggers"][trigger_id]
                 return {"success": True}
-            else:
-                return {"error": f"Trigger not found: {trigger_id}"}
+            return {"error": f"Trigger not found: {trigger_id}"}
         except ValueError:
             return {"error": f"Invalid trigger ID: {trigger_id}"}
 
@@ -2769,8 +2756,7 @@ class QTestMockServer:
             action_id = int(action_id)
             if action_id in self.data["pulse"]["actions"]:
                 return {"data": self.data["pulse"]["actions"][action_id]}
-            else:
-                return {"error": f"Action not found: {action_id}"}
+            return {"error": f"Action not found: {action_id}"}
         except ValueError:
             return {"error": f"Invalid action ID: {action_id}"}
 
@@ -2810,8 +2796,7 @@ class QTestMockServer:
                 action["updatedDate"] = datetime.now().isoformat()
                 action["updatedBy"] = {"id": 1, "name": "Admin"}
                 return {"data": action}
-            else:
-                return {"error": f"Action not found: {action_id}"}
+            return {"error": f"Action not found: {action_id}"}
         except ValueError:
             return {"error": f"Invalid action ID: {action_id}"}
 
@@ -2823,8 +2808,7 @@ class QTestMockServer:
                 # Delete the action
                 del self.data["pulse"]["actions"][action_id]
                 return {"success": True}
-            else:
-                return {"error": f"Action not found: {action_id}"}
+            return {"error": f"Action not found: {action_id}"}
         except ValueError:
             return {"error": f"Invalid action ID: {action_id}"}
 
@@ -2843,8 +2827,7 @@ class QTestMockServer:
             constant_id = int(constant_id)
             if constant_id in self.data["pulse"]["constants"]:
                 return {"data": self.data["pulse"]["constants"][constant_id]}
-            else:
-                return {"error": f"Constant not found: {constant_id}"}
+            return {"error": f"Constant not found: {constant_id}"}
         except ValueError:
             return {"error": f"Invalid constant ID: {constant_id}"}
 
@@ -2884,8 +2867,7 @@ class QTestMockServer:
                 constant["updatedDate"] = datetime.now().isoformat()
                 constant["updatedBy"] = {"id": 1, "name": "Admin"}
                 return {"data": constant}
-            else:
-                return {"error": f"Constant not found: {constant_id}"}
+            return {"error": f"Constant not found: {constant_id}"}
         except ValueError:
             return {"error": f"Invalid constant ID: {constant_id}"}
 
@@ -2897,8 +2879,7 @@ class QTestMockServer:
                 # Delete the constant
                 del self.data["pulse"]["constants"][constant_id]
                 return {"success": True}
-            else:
-                return {"error": f"Constant not found: {constant_id}"}
+            return {"error": f"Constant not found: {constant_id}"}
         except ValueError:
             return {"error": f"Invalid constant ID: {constant_id}"}
 
@@ -2933,7 +2914,7 @@ class QTestMockServer:
         return {"data": feature}
 
     def _handle_submit_auto_test_logs(
-        self, project_id: int, data: dict[str, Any]
+        self, project_id: int, data: dict[str, Any],
     ) -> dict[str, Any]:
         """
         Handle POST /projects/{projectId}/auto-test-logs request.
@@ -2947,6 +2928,7 @@ class QTestMockServer:
 
         Returns:
             A dictionary with the results of the bulk operation
+
         """
         # Verify required fields
         if not data.get("testLogs"):
@@ -3006,12 +2988,12 @@ class QTestMockServer:
 
         # Return results
         logger.info(
-            f"Processed {results['total']} auto test logs: {results['successful']} successful, {results['failed']} failed"
+            f"Processed {results['total']} auto test logs: {results['successful']} successful, {results['failed']} failed",
         )
         return results
 
     def _handle_auto_test_log_with_test_case(
-        self, project_id: int, data: dict[str, Any]
+        self, project_id: int, data: dict[str, Any],
     ) -> dict[str, Any]:
         """
         Handle auto test log submission for an existing test case.
@@ -3022,6 +3004,7 @@ class QTestMockServer:
 
         Returns:
             The created test log data or error information
+
         """
         test_case_id = data.get("testCaseId")
 
@@ -3112,7 +3095,7 @@ class QTestMockServer:
         }
 
     def _handle_auto_test_log_with_new_test_case(
-        self, project_id: int, data: dict[str, Any]
+        self, project_id: int, data: dict[str, Any],
     ) -> dict[str, Any]:
         """
         Handle auto test log submission that includes a new test case.
@@ -3123,6 +3106,7 @@ class QTestMockServer:
 
         Returns:
             The created test case, test run, and test log data or error information
+
         """
         # Save validation setting and temporarily disable it for test cases
         original_validation = self.validation_mode
@@ -3195,7 +3179,7 @@ class QTestMockServer:
             # Combine the results
             if "error" in log_result:
                 return {
-                    "error": f"Created test case but failed to create log: {log_result['error']}"
+                    "error": f"Created test case but failed to create log: {log_result['error']}",
                 }
 
             return {

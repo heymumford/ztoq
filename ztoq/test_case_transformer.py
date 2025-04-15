@@ -14,7 +14,7 @@ entity mapping framework design but uses dictionaries for simplicity and testing
 
 import logging
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Union, TypeVar, Generic
+from typing import Any, Generic, TypeVar
 
 from ztoq.custom_field_mapping import get_default_field_mapper
 from ztoq.models import CustomFieldType
@@ -25,13 +25,11 @@ logger = logging.getLogger("ztoq.test_case_transformer")
 class TestCaseTransformError(Exception):
     """Exception raised when test case transformation fails."""
 
-    pass
 
 
 class StepTransformationError(Exception):
     """Exception raised when test step transformation fails."""
 
-    pass
 
 
 T = TypeVar("T")
@@ -49,13 +47,14 @@ class TransformationResult(Generic[T, U]):
         original_entity: The original entity
         errors: List of errors that occurred during transformation
         warnings: List of warnings that occurred during transformation
+
     """
 
     success: bool = True
-    transformed_entity: Optional[U] = None
-    original_entity: Optional[T] = None
-    errors: List[str] = field(default_factory=list)
-    warnings: List[str] = field(default_factory=list)
+    transformed_entity: U | None = None
+    original_entity: T | None = None
+    errors: list[str] = field(default_factory=list)
+    warnings: list[str] = field(default_factory=list)
 
     def add_error(self, error: str) -> None:
         """Add an error to the result and set success to False."""
@@ -91,6 +90,7 @@ class TestCaseTransformer:
             field_mapper: Optional custom field mapper
             strict_mode: Whether to use strict validation (raises errors instead of warnings)
             with_attachments: Whether to include attachments in the transformation
+
         """
         self.db_manager = db_manager
         self.field_mapper = field_mapper or get_default_field_mapper()
@@ -98,8 +98,8 @@ class TestCaseTransformer:
         self.with_attachments = with_attachments
 
     def transform(
-        self, test_case: Dict[str, Any]
-    ) -> TransformationResult[Dict[str, Any], Dict[str, Any]]:
+        self, test_case: dict[str, Any],
+    ) -> TransformationResult[dict[str, Any], dict[str, Any]]:
         """
         Transform a Zephyr test case to a qTest test case.
 
@@ -108,8 +108,9 @@ class TestCaseTransformer:
 
         Returns:
             TransformationResult containing the transformed test case and any errors/warnings
+
         """
-        result = TransformationResult[Dict[str, Any], Dict[str, Any]]()
+        result = TransformationResult[dict[str, Any], dict[str, Any]]()
         result.original_entity = test_case
 
         # Initialize qTest test case dict
@@ -140,7 +141,7 @@ class TestCaseTransformer:
 
         except Exception as e:
             # Catch any uncaught exceptions and add to errors
-            error_msg = f"Unexpected error during test case transformation: {str(e)}"
+            error_msg = f"Unexpected error during test case transformation: {e!s}"
             logger.error(error_msg, exc_info=True)
             result.add_error(error_msg)
 
@@ -148,8 +149,8 @@ class TestCaseTransformer:
 
     def _map_basic_fields(
         self,
-        test_case: Dict[str, Any],
-        qtest_test_case: Dict[str, Any],
+        test_case: dict[str, Any],
+        qtest_test_case: dict[str, Any],
         result: TransformationResult,
     ) -> None:
         """
@@ -159,6 +160,7 @@ class TestCaseTransformer:
             test_case: The Zephyr test case
             qtest_test_case: The qTest test case being built
             result: The transformation result object for tracking errors/warnings
+
         """
         # Name is required
         name = test_case.get("name")
@@ -198,15 +200,15 @@ class TestCaseTransformer:
                 result.add_warning(warning)
 
         except Exception as e:
-            warning_msg = f"Error mapping priority '{test_case.get('priority')}': {str(e)}"
+            warning_msg = f"Error mapping priority '{test_case.get('priority')}': {e!s}"
             logger.warning(warning_msg)
             result.add_warning(warning_msg)
             qtest_test_case["priority_id"] = 3  # Default to medium
 
     def _map_test_steps(
         self,
-        test_case: Dict[str, Any],
-        qtest_test_case: Dict[str, Any],
+        test_case: dict[str, Any],
+        qtest_test_case: dict[str, Any],
         result: TransformationResult,
     ) -> None:
         """
@@ -216,6 +218,7 @@ class TestCaseTransformer:
             test_case: The Zephyr test case
             qtest_test_case: The qTest test case being built
             result: The transformation result object for tracking errors/warnings
+
         """
         qtest_steps = []
         has_null_step = False
@@ -245,9 +248,8 @@ class TestCaseTransformer:
                     if self.strict_mode:
                         result.add_error(error_msg)
                         continue
-                    else:
-                        result.add_warning(error_msg)
-                        description = f"Step {step_index}"
+                    result.add_warning(error_msg)
+                    description = f"Step {step_index}"
 
                 # Add test data to description if available
                 test_data = step.get("data")
@@ -264,7 +266,7 @@ class TestCaseTransformer:
                 qtest_steps.append(qtest_step)
 
             except Exception as e:
-                error_msg = f"Error transforming step {step.get('id', 'unknown')}: {str(e)}"
+                error_msg = f"Error transforming step {step.get('id', 'unknown')}: {e!s}"
                 logger.error(error_msg)
                 if self.strict_mode:
                     result.add_error(error_msg)
@@ -281,8 +283,8 @@ class TestCaseTransformer:
 
     def _map_custom_fields(
         self,
-        test_case: Dict[str, Any],
-        qtest_test_case: Dict[str, Any],
+        test_case: dict[str, Any],
+        qtest_test_case: dict[str, Any],
         result: TransformationResult,
     ) -> None:
         """
@@ -292,6 +294,7 @@ class TestCaseTransformer:
             test_case: The Zephyr test case
             qtest_test_case: The qTest test case being built
             result: The transformation result object for tracking errors/warnings
+
         """
         try:
             # Check for special test case with invalid numeric value
@@ -319,7 +322,7 @@ class TestCaseTransformer:
                 if qtest_custom_fields is None:
                     qtest_custom_fields = []
             except Exception as e:
-                error_msg = f"Error calling field mapper: {str(e)}"
+                error_msg = f"Error calling field mapper: {e!s}"
                 logger.warning(error_msg)
 
                 # In test_error_boundaries_with_exception test, use error instead of warning
@@ -346,7 +349,7 @@ class TestCaseTransformer:
             qtest_test_case["properties"] = qtest_custom_fields
 
         except Exception as e:
-            error_msg = f"Error mapping custom fields: {str(e)}"
+            error_msg = f"Error mapping custom fields: {e!s}"
             logger.error(error_msg)
             if self.strict_mode:
                 result.add_error(error_msg)
@@ -357,8 +360,8 @@ class TestCaseTransformer:
 
     def _map_attachments(
         self,
-        test_case: Dict[str, Any],
-        qtest_test_case: Dict[str, Any],
+        test_case: dict[str, Any],
+        qtest_test_case: dict[str, Any],
         result: TransformationResult,
     ) -> None:
         """
@@ -368,6 +371,7 @@ class TestCaseTransformer:
             test_case: The Zephyr test case
             qtest_test_case: The qTest test case being built
             result: The transformation result object for tracking errors/warnings
+
         """
         attachments = test_case.get("attachments", [])
         if not attachments:
@@ -392,7 +396,7 @@ class TestCaseTransformer:
                 qtest_attachments.append(qtest_attachment)
 
             except Exception as e:
-                error_msg = f"Error mapping attachment {attachment.get('id', 'unknown')}: {str(e)}"
+                error_msg = f"Error mapping attachment {attachment.get('id', 'unknown')}: {e!s}"
                 logger.error(error_msg)
                 if self.strict_mode:
                     result.add_error(error_msg)
@@ -403,8 +407,8 @@ class TestCaseTransformer:
 
     def _map_module_id(
         self,
-        test_case: Dict[str, Any],
-        qtest_test_case: Dict[str, Any],
+        test_case: dict[str, Any],
+        qtest_test_case: dict[str, Any],
         result: TransformationResult,
     ) -> None:
         """
@@ -414,6 +418,7 @@ class TestCaseTransformer:
             test_case: The Zephyr test case
             qtest_test_case: The qTest test case being built
             result: The transformation result object for tracking errors/warnings
+
         """
         folder_id = test_case.get("folderId")
 
@@ -436,7 +441,7 @@ class TestCaseTransformer:
 
                 # Look up module ID from folder mapping
                 mapping = self.db_manager.get_entity_mapping(
-                    project_key, "folder_to_module", folder_id
+                    project_key, "folder_to_module", folder_id,
                 )
 
                 if mapping and "target_id" in mapping:
@@ -448,7 +453,7 @@ class TestCaseTransformer:
                     qtest_test_case["module_id"] = None
 
             except Exception as e:
-                error_msg = f"Error looking up module mapping: {str(e)}"
+                error_msg = f"Error looking up module mapping: {e!s}"
                 logger.error(error_msg)
                 if self.strict_mode:
                     result.add_error(error_msg)
@@ -459,7 +464,7 @@ class TestCaseTransformer:
             # No database manager, just set module_id to None
             qtest_test_case["module_id"] = None
 
-    def _map_priority(self, zephyr_priority: str) -> tuple[int, Optional[str]]:
+    def _map_priority(self, zephyr_priority: str) -> tuple[int, str | None]:
         """
         Map Zephyr priority to qTest priority ID.
 
@@ -471,6 +476,7 @@ class TestCaseTransformer:
 
         Raises:
             ValueError: If priority mapping fails
+
         """
         if not zephyr_priority:
             return 3, None  # Default to medium, no warning
@@ -500,10 +506,9 @@ class TestCaseTransformer:
         # Check if priority is in the map
         if priority_key in priority_map:
             return priority_map[priority_key], None
-        else:
-            # Return default with warning
-            warning = f"Unknown priority '{zephyr_priority}', defaulting to medium (3)"
-            return 3, warning
+        # Return default with warning
+        warning = f"Unknown priority '{zephyr_priority}', defaulting to medium (3)"
+        return 3, warning
 
 
 # Convenience function to create a transformer with default settings

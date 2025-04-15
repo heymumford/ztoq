@@ -4,26 +4,10 @@ This file is part of ZTOQ, licensed under the MIT License.
 See LICENSE file for details.
 """
 
+from datetime import datetime
+
 import pytest
-from datetime import datetime, timedelta
-from ztoq.zephyr_mock_factory import (
-    MockFactory,
-    AttachmentFactory,
-    CaseFactory,
-    CaseStepFactory,
-    CustomFieldFactory,
-    CycleInfoFactory,
-    EnvironmentFactory,
-    ExecutionFactory,
-    FolderFactory,
-    LinkFactory,
-    PaginatedResponseFactory,
-    PlanFactory,
-    PriorityFactory,
-    ProjectFactory,
-    StatusFactory,
-    ZephyrConfigFactory,
-)
+
 from ztoq.models import (
     Attachment,
     Case,
@@ -42,9 +26,27 @@ from ztoq.models import (
     Status,
     ZephyrConfig,
 )
+from ztoq.zephyr_mock_factory import (
+    AttachmentFactory,
+    CaseFactory,
+    CaseStepFactory,
+    CustomFieldFactory,
+    CycleInfoFactory,
+    EnvironmentFactory,
+    ExecutionFactory,
+    FolderFactory,
+    LinkFactory,
+    MockFactory,
+    PaginatedResponseFactory,
+    PlanFactory,
+    PriorityFactory,
+    ProjectFactory,
+    StatusFactory,
+    ZephyrConfigFactory,
+)
 
 
-@pytest.mark.unit()
+@pytest.mark.unit
 class TestZephyrMockFactory:
     """Test suite for the Zephyr mock factory implementations."""
 
@@ -86,7 +88,7 @@ class TestZephyrMockFactory:
 
         # Test project creation with custom attributes
         custom_project = ProjectFactory.create(
-            id="12345", key="CUSTOM", name="Custom Project", description="Custom description"
+            id="12345", key="CUSTOM", name="Custom Project", description="Custom description",
         )
         assert custom_project.id == "12345"
         assert custom_project.key == "CUSTOM"
@@ -395,7 +397,7 @@ class TestZephyrMockFactory:
         # Test execution creation based on test case
         test_case = CaseFactory.create_with_steps(3)
         execution_with_test_case = ExecutionFactory.create(
-            test_case=test_case, test_case_key=test_case.key
+            test_case=test_case, test_case_key=test_case.key,
         )
         assert execution_with_test_case.test_case_key == test_case.key
         assert len(execution_with_test_case.steps) == 3
@@ -440,7 +442,7 @@ class TestZephyrMockFactory:
         # Test creation with custom values
         values = [{"id": "1", "name": "Item 1"}, {"id": "2", "name": "Item 2"}]
         custom_response = PaginatedResponseFactory.create(
-            values=values, start_at=20, max_results=10, total_count=50, is_last=False
+            values=values, start_at=20, max_results=10, total_count=50, is_last=False,
         )
         assert custom_response.values == values
         assert custom_response.start_at == 20

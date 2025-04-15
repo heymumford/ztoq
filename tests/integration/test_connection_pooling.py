@@ -4,10 +4,8 @@ This file is part of ZTOQ, licensed under the MIT License.
 See LICENSE file for details.
 """
 
-import time
 import unittest
 from concurrent.futures import ThreadPoolExecutor
-from unittest.mock import patch, MagicMock, call
 
 import pytest
 import requests
@@ -17,8 +15,9 @@ from ztoq.connection_pool import ConnectionPool, get_session, make_request
 
 # Check if httpx is available for async tests
 try:
-    import httpx
     import asyncio
+
+    import httpx
     HTTPX_AVAILABLE = True
 except ImportError:
     HTTPX_AVAILABLE = False
@@ -35,7 +34,7 @@ class TestConnectionPooling(unittest.TestCase):
             connection_timeout=1.0,
             read_timeout=2.0,
             max_retries=2,
-            retry_backoff_factor=0.1
+            retry_backoff_factor=0.1,
         )
         # Reset metrics
         self.pool.metrics = {
@@ -43,7 +42,7 @@ class TestConnectionPooling(unittest.TestCase):
             "reused_connections": 0,
             "failed_connections": 0,
             "active_pools": 0,
-            "last_cleanup": 0
+            "last_cleanup": 0,
         }
         # Clear existing pools
         self.pool.pools = {}
@@ -59,13 +58,13 @@ class TestConnectionPooling(unittest.TestCase):
             responses.GET,
             "https://example.com/test1",
             json={"result": "test1"},
-            status=200
+            status=200,
         )
         responses.add(
             responses.GET,
             "https://example.com/test2",
             json={"result": "test2"},
-            status=200
+            status=200,
         )
 
         # Make requests to the same host
@@ -90,13 +89,13 @@ class TestConnectionPooling(unittest.TestCase):
             responses.GET,
             "https://example1.com/api",
             json={"result": "example1"},
-            status=200
+            status=200,
         )
         responses.add(
             responses.GET,
             "https://example2.com/api",
             json={"result": "example2"},
-            status=200
+            status=200,
         )
 
         # Make requests to different hosts
@@ -122,7 +121,7 @@ class TestConnectionPooling(unittest.TestCase):
             responses.GET,
             "https://example.com/api",
             json={"result": "test"},
-            status=200
+            status=200,
         )
 
         # Create more connections than the pool size
@@ -141,7 +140,7 @@ class TestConnectionPooling(unittest.TestCase):
         # Total of created and reused should be 10 (the number of requests)
         self.assertEqual(
             self.pool.metrics["created_connections"] + self.pool.metrics["reused_connections"],
-            10
+            10,
         )
 
     @responses.activate
@@ -152,7 +151,7 @@ class TestConnectionPooling(unittest.TestCase):
             responses.GET,
             "https://example.com/api",
             json={"result": "test"},
-            status=200
+            status=200,
         )
 
         # Make concurrent requests
@@ -179,7 +178,7 @@ class TestConnectionPooling(unittest.TestCase):
             responses.GET,
             "https://example.com/api",
             json={"result": "test"},
-            status=200
+            status=200,
         )
 
         # Make request through the pool
@@ -198,7 +197,7 @@ class TestConnectionPooling(unittest.TestCase):
             responses.GET,
             "https://example.com/api",
             json={"result": "success"},
-            status=200
+            status=200,
         )
 
         # Make a request
@@ -213,7 +212,7 @@ class TestConnectionPooling(unittest.TestCase):
             responses.GET,
             "https://example.com/api",
             json={"result": "test"},
-            status=200
+            status=200,
         )
 
         # Make requests to fill the pool
@@ -242,7 +241,7 @@ class TestConnectionPooling(unittest.TestCase):
             responses.GET,
             "https://example.com/api",
             json={"result": "test"},
-            status=200
+            status=200,
         )
 
         # Test get_session
@@ -262,7 +261,7 @@ class TestConnectionPooling(unittest.TestCase):
             responses.GET,
             "https://example.com/api",
             json={"error": "client error"},
-            status=404
+            status=404,
         )
 
         # Make request that will raise an error
@@ -281,13 +280,13 @@ class TestConnectionPooling(unittest.TestCase):
             responses.GET,
             "https://example.com/api",
             json={"result": "test"},
-            status=200
+            status=200,
         )
         responses.add(
             responses.GET,
             "https://example2.com/api",
             json={"result": "test2"},
-            status=200
+            status=200,
         )
 
         # Make multiple requests
@@ -317,8 +316,8 @@ class TestConnectionPooling(unittest.TestCase):
             status=200,
             match=[
                 responses.matchers.query_param_matcher({"param1": "value1"}),
-                responses.matchers.json_params_matcher({"data": "test"})
-            ]
+                responses.matchers.json_params_matcher({"data": "test"}),
+            ],
         )
 
         # Make request with parameters
@@ -331,7 +330,7 @@ class TestConnectionPooling(unittest.TestCase):
             "https://example.com/api",
             headers=headers,
             params=params,
-            json=json_data
+            json=json_data,
         )
 
         # Check that the response is as expected
@@ -351,7 +350,7 @@ class TestAsyncConnectionPooling(unittest.TestCase):
             max_connections=5,
             connection_timeout=1.0,
             read_timeout=2.0,
-            max_retries=2
+            max_retries=2,
         )
         # Reset metrics
         self.pool.metrics = {
@@ -364,7 +363,7 @@ class TestAsyncConnectionPooling(unittest.TestCase):
 
     def tearDown(self):
         # Close async clients
-        if hasattr(self, 'pool'):
+        if hasattr(self, "pool"):
             loop = asyncio.get_event_loop()
             loop.run_until_complete(self.pool.close_all())
 

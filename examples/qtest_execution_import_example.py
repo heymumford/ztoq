@@ -11,21 +11,20 @@ This example demonstrates importing test executions into qTest,
 including handling test steps, attachments, and validation.
 """
 
-import os
 import logging
+import os
 from datetime import datetime
-from typing import Dict, Any, List
+from typing import Any
 
-from ztoq.qtest_client import QTestClient
+from ztoq.qtest_importer import ConflictResolution, ImportConfig, QTestImporter
 from ztoq.qtest_models import QTestConfig
-from ztoq.qtest_importer import ImportConfig, ConflictResolution, QTestImporter
 
 # Configure logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger("qtest_execution_import_example")
 
 
-def create_test_executions() -> List[Dict[str, Any]]:
+def create_test_executions() -> list[dict[str, Any]]:
     """
     Create sample test executions for the import example.
 
@@ -40,7 +39,7 @@ def create_test_executions() -> List[Dict[str, Any]]:
         "executedBy": "testuser",
         "executedOn": datetime.now(),
         "comment": "Test executed successfully through QTestExecutionImporter",
-        "environment": "Production"
+        "environment": "Production",
     }
 
     # Add test steps
@@ -51,7 +50,7 @@ def create_test_executions() -> List[Dict[str, Any]]:
             "description": "Login to the application",
             "expected_result": "Login successful",
             "actual_result": "Login was successful with test user credentials",
-            "status": "PASS"
+            "status": "PASS",
         },
         {
             "id": "step-2",
@@ -59,7 +58,7 @@ def create_test_executions() -> List[Dict[str, Any]]:
             "description": "Navigate to dashboard",
             "expected_result": "Dashboard displayed with widgets",
             "actual_result": "Dashboard displayed correctly with all expected widgets",
-            "status": "PASS"
+            "status": "PASS",
         },
         {
             "id": "step-3",
@@ -67,8 +66,8 @@ def create_test_executions() -> List[Dict[str, Any]]:
             "description": "Check reports section",
             "expected_result": "Reports available",
             "actual_result": "All reports were accessible",
-            "status": "PASS"
-        }
+            "status": "PASS",
+        },
     ]
 
     # Add custom fields
@@ -76,13 +75,13 @@ def create_test_executions() -> List[Dict[str, Any]]:
         {
             "name": "Browser",
             "type": "TEXT",
-            "value": "Chrome"
+            "value": "Chrome",
         },
         {
             "name": "Build",
             "type": "TEXT",
-            "value": "v2.3.1"
-        }
+            "value": "v2.3.1",
+        },
     ]
 
     # Create variations for multiple executions
@@ -104,7 +103,7 @@ def create_test_executions() -> List[Dict[str, Any]]:
                     "description": "Login to the application",
                     "expected_result": "Login successful",
                     "actual_result": "Login was successful",
-                    "status": "PASS"
+                    "status": "PASS",
                 },
                 {
                     "id": "step-2",
@@ -112,9 +111,9 @@ def create_test_executions() -> List[Dict[str, Any]]:
                     "description": "Navigate to dashboard",
                     "expected_result": "Dashboard displayed with widgets",
                     "actual_result": "Dashboard failed to load within timeout period",
-                    "status": "FAIL"
-                }
-            ]
+                    "status": "FAIL",
+                },
+            ],
         },
 
         # Third execution (blocked)
@@ -131,10 +130,10 @@ def create_test_executions() -> List[Dict[str, Any]]:
                     "description": "Login to the application",
                     "expected_result": "Login successful",
                     "actual_result": "Unable to connect to authentication service",
-                    "status": "BLOCKED"
-                }
-            ]
-        }
+                    "status": "BLOCKED",
+                },
+            ],
+        },
     ]
 
     return executions
@@ -151,7 +150,7 @@ def main():
     config = QTestConfig(
         base_url=qtest_url,
         bearer_token=qtest_token,
-        project_id=project_id
+        project_id=project_id,
     )
 
     # Create import configuration
@@ -159,7 +158,7 @@ def main():
         conflict_resolution=ConflictResolution.UPDATE,
         concurrency=2,
         show_progress=True,
-        validate=True
+        validate=True,
     )
 
     # Create qTest importer
@@ -195,7 +194,7 @@ def main():
         batch_result = importer.import_test_executions(executions)
 
         # Log summary of batch import
-        logger.info(f"Batch import completed:")
+        logger.info("Batch import completed:")
         logger.info(f"  Total: {batch_result['total']}")
         logger.info(f"  Successful: {batch_result['successful']}")
         logger.info(f"  Failed: {batch_result['failed']}")
@@ -211,7 +210,7 @@ def main():
                     logger.warning(f"  - Errors: {result['errors']}")
 
     except Exception as e:
-        logger.error(f"Error during import: {str(e)}", exc_info=True)
+        logger.error(f"Error during import: {e!s}", exc_info=True)
 
 
 if __name__ == "__main__":

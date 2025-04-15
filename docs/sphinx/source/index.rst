@@ -1,5 +1,5 @@
 Welcome to ZTOQ Documentation
-===========================
+=============================
 
 ZTOQ is a tool for extracting test data from Zephyr Scale and migrating it to qTest or other storage formats.
 
@@ -19,8 +19,12 @@ Features
    :maxdepth: 2
    :caption: Contents:
 
+   getting-started
    installation
    usage
+   cli-reference
+   migration-workflow
+   troubleshooting
    api/modules
    architecture
    openapi-integration
@@ -31,11 +35,14 @@ Features
    development
    docs-contribution
    test-strategy
+   database-configuration
+   scheduled-migrations
    kanban
    maintenance
    open-source-decisions
    adrs/index
    c4_lucidchart
+   license
 
 Indices and tables
 ==================

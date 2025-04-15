@@ -18,10 +18,11 @@ import logging
 import time
 import uuid
 from asyncio import Queue, QueueEmpty
-from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor, Future, as_completed
+from collections.abc import Callable
+from concurrent.futures import Future, ProcessPoolExecutor, ThreadPoolExecutor
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable, Dict, Generic, List, Optional, Set, Tuple, TypeVar, Union, cast
+from typing import Any, Generic, TypeVar, cast
 
 logger = logging.getLogger("ztoq.work_queue")
 
@@ -67,21 +68,22 @@ class WorkItem(Generic[T, R]):
         attempt: Number of attempts made to process this work item
         max_attempts: Maximum number of attempts allowed
         metadata: Additional metadata for the work item
+
     """
 
     id: str = field(default_factory=lambda: str(uuid.uuid4()))
     input_data: T = field(default=None)
     status: WorkStatus = WorkStatus.PENDING
-    result: Optional[R] = None
-    error: Optional[Exception] = None
+    result: R | None = None
+    error: Exception | None = None
     priority: int = 0
-    dependencies: Set[str] = field(default_factory=set)
+    dependencies: set[str] = field(default_factory=set)
     created_at: float = field(default_factory=time.time)
-    started_at: Optional[float] = None
-    completed_at: Optional[float] = None
+    started_at: float | None = None
+    completed_at: float | None = None
     attempt: int = 0
     max_attempts: int = 3
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
     def mark_running(self) -> None:
         """Mark this work item as running."""
@@ -95,6 +97,7 @@ class WorkItem(Generic[T, R]):
 
         Args:
             result: The result of the work function
+
         """
         self.status = WorkStatus.COMPLETED
         self.result = result
@@ -106,6 +109,7 @@ class WorkItem(Generic[T, R]):
 
         Args:
             error: The exception that caused the failure
+
         """
         self.status = WorkStatus.FAILED
         self.error = error
@@ -122,40 +126,44 @@ class WorkItem(Generic[T, R]):
 
         Returns:
             True if the work item can be retried, False otherwise
+
         """
         return self.status == WorkStatus.FAILED and self.attempt < self.max_attempts
 
     @property
-    def processing_time(self) -> Optional[float]:
+    def processing_time(self) -> float | None:
         """
         Calculate the processing time for this work item.
 
         Returns:
             Processing time in seconds or None if not started or completed
+
         """
         if self.started_at and self.completed_at:
             return self.completed_at - self.started_at
         return None
 
     @property
-    def waiting_time(self) -> Optional[float]:
+    def waiting_time(self) -> float | None:
         """
         Calculate the waiting time for this work item.
 
         Returns:
             Waiting time in seconds or None if not started
+
         """
         if self.started_at:
             return self.started_at - self.created_at
         return None
 
     @property
-    def total_time(self) -> Optional[float]:
+    def total_time(self) -> float | None:
         """
         Calculate the total time for this work item.
 
         Returns:
             Total time in seconds or None if not completed
+
         """
         if self.completed_at:
             return self.completed_at - self.created_at
@@ -171,9 +179,9 @@ class PriorityQueue(Queue):
 
     def _init(self, maxsize: int) -> None:
         """Initialize with an empty list."""
-        self._queue: List[Tuple[int, Any]] = []
+        self._queue: list[tuple[int, Any]] = []
 
-    def _put(self, item: Tuple[int, T]) -> None:
+    def _put(self, item: tuple[int, T]) -> None:
         """Put an item into the queue with priority."""
         # Insert item maintaining sort by priority (highest first)
         # Python's heapq is min-heap but we want max-heap for priorities
@@ -205,10 +213,10 @@ class WorkQueue(Generic[T, R]):
         worker_type: WorkerType = WorkerType.THREAD,
         max_workers: int = 5,
         max_queue_size: int = 0,  # 0 means unlimited
-        worker_function: Optional[Callable[[T], R]] = None,
-        async_worker_function: Optional[Callable[[T], asyncio.Future[R]]] = None,
-        on_complete: Optional[Callable[[WorkItem[T, R]], None]] = None,
-        on_error: Optional[Callable[[WorkItem[T, R]], None]] = None,
+        worker_function: Callable[[T], R] | None = None,
+        async_worker_function: Callable[[T], asyncio.Future[R]] | None = None,
+        on_complete: Callable[[WorkItem[T, R]], None] | None = None,
+        on_error: Callable[[WorkItem[T, R]], None] | None = None,
     ):
         """
         Initialize the work queue.
@@ -221,6 +229,7 @@ class WorkQueue(Generic[T, R]):
             async_worker_function: Async function to process work items for asyncio workers
             on_complete: Callback function called when a work item completes
             on_error: Callback function called when a work item fails
+
         """
         self.worker_type = worker_type
         self.max_workers = max_workers
@@ -246,12 +255,16 @@ class WorkQueue(Generic[T, R]):
             self.queue = []
 
         # Tracking collections
-        self.work_items: Dict[str, WorkItem[T, R]] = {}
-        self.pending_work_ids: Set[str] = set()
-        self.running_work_ids: Set[str] = set()
-        self.completed_work_ids: Set[str] = set()
-        self.failed_work_ids: Set[str] = set()
-        self.futures: Dict[str, Future] = {}
+        self.work_items: dict[str, WorkItem[T, R]] = {}
+        self.pending_work_ids: set[str] = set()
+        self.running_work_ids: set[str] = set()
+        self.completed_work_ids: set[str] = set()
+        self.failed_work_ids: set[str] = set()
+        self.futures: dict[str, Future] = {}
+
+        # Configuration for memory management
+        self.max_completed_items: int = 1000  # Maximum number of completed items to keep
+        self.cleanup_interval: int = 100  # Perform cleanup every N completions
 
         # State tracking
         self.is_running = False
@@ -281,6 +294,7 @@ class WorkQueue(Generic[T, R]):
 
         Args:
             wait_for_completion: If True, wait for all items to complete before stopping
+
         """
         if not self.is_running:
             return
@@ -316,12 +330,40 @@ class WorkQueue(Generic[T, R]):
         self.is_running = False
         logger.info("Work queue stopped")
 
+    def _cleanup_old_completed_items(self):
+        """
+        Clean up old completed items to prevent memory leaks.
+        
+        This method removes the oldest completed work items from memory
+        when the number of completed items exceeds the maximum limit.
+        """
+        # Only clean up if we have more completed items than our maximum
+        if len(self.completed_work_ids) <= self.max_completed_items:
+            return
+
+        # Calculate how many items to remove
+        items_to_remove = len(self.completed_work_ids) - self.max_completed_items
+
+        # Sort completed work IDs by completion time and get the oldest ones
+        oldest_items = sorted(
+            [wid for wid in self.completed_work_ids if wid in self.work_items],
+            key=lambda wid: self.work_items[wid].completed_at or 0,
+        )[:items_to_remove]
+
+        # Remove the oldest items from tracking collections
+        for work_id in oldest_items:
+            if work_id in self.work_items:
+                del self.work_items[work_id]
+            self.completed_work_ids.discard(work_id)
+
+        logger.debug(f"Cleaned up {len(oldest_items)} old completed work items")
+
     async def add_work(
         self,
         input_data: T,
         priority: int = 0,
-        dependencies: Optional[List[str]] = None,
-        metadata: Optional[Dict[str, Any]] = None,
+        dependencies: list[str] | None = None,
+        metadata: dict[str, Any] | None = None,
         max_attempts: int = 3,
     ) -> str:
         """
@@ -336,6 +378,7 @@ class WorkQueue(Generic[T, R]):
 
         Returns:
             ID of the created work item
+
         """
         # Create work item
         work_item = WorkItem[T, R](
@@ -365,11 +408,11 @@ class WorkQueue(Generic[T, R]):
 
     async def add_batch(
         self,
-        batch_items: List[T],
+        batch_items: list[T],
         priority: int = 0,
-        metadata: Optional[Dict[str, Any]] = None,
+        metadata: dict[str, Any] | None = None,
         max_attempts: int = 3,
-    ) -> List[str]:
+    ) -> list[str]:
         """
         Add a batch of work items to the queue.
 
@@ -381,6 +424,7 @@ class WorkQueue(Generic[T, R]):
 
         Returns:
             List of work item IDs
+
         """
         work_ids = []
         for input_data in batch_items:
@@ -399,11 +443,11 @@ class WorkQueue(Generic[T, R]):
 
     async def add_with_dependencies(
         self,
-        dependency_graph: Dict[T, List[T]],
+        dependency_graph: dict[T, list[T]],
         priority: int = 0,
-        metadata: Optional[Dict[str, Any]] = None,
+        metadata: dict[str, Any] | None = None,
         max_attempts: int = 3,
-    ) -> Dict[T, str]:
+    ) -> dict[T, str]:
         """
         Add work items with dependencies to the queue.
 
@@ -415,6 +459,7 @@ class WorkQueue(Generic[T, R]):
 
         Returns:
             Dictionary mapping input data to work item IDs
+
         """
         # First pass: create all work items without dependencies
         data_to_work_id = {}
@@ -443,7 +488,7 @@ class WorkQueue(Generic[T, R]):
         logger.debug(f"Added {len(dependency_graph)} work items with dependencies to queue")
         return data_to_work_id
 
-    async def get_result(self, work_id: str, timeout: Optional[float] = None) -> R:
+    async def get_result(self, work_id: str, timeout: float | None = None) -> R:
         """
         Get the result of a work item, waiting if necessary.
 
@@ -458,6 +503,7 @@ class WorkQueue(Generic[T, R]):
             KeyError: If the work item is not found
             asyncio.TimeoutError: If the timeout is reached
             Exception: If the work item failed with an exception
+
         """
         work_item = self.work_items.get(work_id)
         if not work_item:
@@ -475,19 +521,19 @@ class WorkQueue(Generic[T, R]):
 
             # Check timeout
             if timeout is not None and time.time() - start_time > timeout:
-                raise asyncio.TimeoutError(f"Timeout waiting for work item {work_id}")
+                raise TimeoutError(f"Timeout waiting for work item {work_id}")
 
             # Wait a bit before checking again
             await asyncio.sleep(0.1)
 
-        return cast(R, work_item.result)
+        return cast("R", work_item.result)
 
     async def get_batch_results(
         self,
-        work_ids: List[str],
-        timeout: Optional[float] = None,
+        work_ids: list[str],
+        timeout: float | None = None,
         raise_on_error: bool = True,
-    ) -> Dict[str, Union[R, Exception]]:
+    ) -> dict[str, R | Exception]:
         """
         Get the results of multiple work items, waiting if necessary.
 
@@ -502,6 +548,7 @@ class WorkQueue(Generic[T, R]):
         Raises:
             asyncio.TimeoutError: If the timeout is reached
             Exception: If any work item failed and raise_on_error is True
+
         """
         results = {}
         start_time = time.time()
@@ -547,7 +594,7 @@ class WorkQueue(Generic[T, R]):
 
             # Check timeout
             if timeout is not None and time.time() - start_time > timeout:
-                raise asyncio.TimeoutError(f"Timeout waiting for {len(pending_ids)} work items")
+                raise TimeoutError(f"Timeout waiting for {len(pending_ids)} work items")
 
             # If we still have pending items, wait a bit before checking again
             if pending_ids:
@@ -564,6 +611,7 @@ class WorkQueue(Generic[T, R]):
 
         Returns:
             True if the work item was cancelled, False otherwise
+
         """
         work_item = self.work_items.get(work_id)
         if not work_item:
@@ -605,6 +653,7 @@ class WorkQueue(Generic[T, R]):
 
         Returns:
             True if the work item was queued for retry, False otherwise
+
         """
         work_item = self.work_items.get(work_id)
         if not work_item:
@@ -634,7 +683,7 @@ class WorkQueue(Generic[T, R]):
         logger.debug(f"Retrying work item {work_id} (attempt {work_item.attempt + 1})")
         return True
 
-    def get_work_item(self, work_id: str) -> Optional[WorkItem[T, R]]:
+    def get_work_item(self, work_id: str) -> WorkItem[T, R] | None:
         """
         Get a work item by ID.
 
@@ -643,15 +692,17 @@ class WorkQueue(Generic[T, R]):
 
         Returns:
             The work item or None if not found
+
         """
         return self.work_items.get(work_id)
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """
         Get statistics about the work queue.
 
         Returns:
             Dictionary with queue statistics
+
         """
         completed_items = [
             item for item in self.work_items.values() if item.status == WorkStatus.COMPLETED
@@ -702,7 +753,7 @@ class WorkQueue(Generic[T, R]):
             return
 
         # Track active tasks
-        active_tasks: Set[asyncio.Task] = set()
+        active_tasks: set[asyncio.Task] = set()
 
         while not self.should_stop:
             try:
@@ -772,7 +823,7 @@ class WorkQueue(Generic[T, R]):
 
             except Exception as e:
                 # Log error but keep running
-                logger.error(f"Error in asyncio worker: {str(e)}", exc_info=True)
+                logger.error(f"Error in asyncio worker: {e!s}", exc_info=True)
                 await asyncio.sleep(1)  # Wait a bit to avoid tight loop
 
         # Wait for all active tasks to complete
@@ -785,23 +836,37 @@ class WorkQueue(Generic[T, R]):
 
         Args:
             work_item: Work item to process
+
         """
         work_id = work_item.id
         try:
-            # Process the item
-            result = await self.async_worker_function(work_item.input_data)
+            # Process the item with a timeout
+            # Get the timeout value from metadata or use a default
+            timeout = work_item.metadata.get("timeout", 300)  # Default 5 minutes
+            try:
+                # Create a task for the worker function with a timeout
+                result = await asyncio.wait_for(
+                    self.async_worker_function(work_item.input_data),
+                    timeout=timeout,
+                )
+            except TimeoutError:
+                raise TimeoutError(f"Work item {work_id} timed out after {timeout} seconds")
 
             # Mark as completed
             work_item.mark_completed(result)
             self.running_work_ids.remove(work_id)
             self.completed_work_ids.add(work_id)
 
+            # Check if we need to clean up completed items
+            if len(self.completed_work_ids) % self.cleanup_interval == 0:
+                self._cleanup_old_completed_items()
+
             # Call completion callback
             if self.on_complete:
                 try:
                     self.on_complete(work_item)
                 except Exception as e:
-                    logger.error(f"Error in completion callback: {str(e)}", exc_info=True)
+                    logger.error(f"Error in completion callback: {e!s}", exc_info=True)
 
         except Exception as e:
             # Mark as failed
@@ -814,7 +879,7 @@ class WorkQueue(Generic[T, R]):
                 try:
                     self.on_error(work_item)
                 except Exception as e:
-                    logger.error(f"Error in error callback: {str(e)}", exc_info=True)
+                    logger.error(f"Error in error callback: {e!s}", exc_info=True)
 
             # If retriable, add back to queue
             if work_item.is_retriable():
@@ -830,7 +895,7 @@ class WorkQueue(Generic[T, R]):
             return
 
         # Dictionary of futures by work_id
-        futures: Dict[str, Future] = {}
+        futures: dict[str, Future] = {}
 
         while not self.should_stop:
             try:
@@ -900,7 +965,7 @@ class WorkQueue(Generic[T, R]):
 
             except Exception as e:
                 # Log error but keep running
-                logger.error(f"Error in executor manager: {str(e)}", exc_info=True)
+                logger.error(f"Error in executor manager: {e!s}", exc_info=True)
                 await asyncio.sleep(1)  # Wait a bit to avoid tight loop
 
         # Cancel all pending futures
@@ -913,6 +978,7 @@ class WorkQueue(Generic[T, R]):
 
         Args:
             work_id: ID of the work item to process
+
         """
         # Get the work item
         work_item = self.work_items.get(work_id)
@@ -937,6 +1003,7 @@ class WorkQueue(Generic[T, R]):
         Args:
             work_id: ID of the work item
             future: Completed future
+
         """
         # Get the work item
         work_item = self.work_items.get(work_id)
@@ -950,12 +1017,16 @@ class WorkQueue(Generic[T, R]):
             # Work completed successfully
             self.completed_work_ids.add(work_id)
 
+            # Check if we need to clean up completed items
+            if len(self.completed_work_ids) % self.cleanup_interval == 0:
+                self._cleanup_old_completed_items()
+
             # Call completion callback
             if self.on_complete:
                 try:
                     self.on_complete(work_item)
                 except Exception as e:
-                    logger.error(f"Error in completion callback: {str(e)}", exc_info=True)
+                    logger.error(f"Error in completion callback: {e!s}", exc_info=True)
 
         elif work_item.status == WorkStatus.FAILED:
             # Work failed
@@ -966,7 +1037,7 @@ class WorkQueue(Generic[T, R]):
                 try:
                     self.on_error(work_item)
                 except Exception as e:
-                    logger.error(f"Error in error callback: {str(e)}", exc_info=True)
+                    logger.error(f"Error in error callback: {e!s}", exc_info=True)
 
             # If retriable, add back to queue
             if work_item.is_retriable():
@@ -986,11 +1057,11 @@ class WorkQueue(Generic[T, R]):
 
 async def run_in_thread_pool(
     func: Callable[[T], R],
-    items: List[T],
+    items: list[T],
     max_workers: int = 5,
-    on_complete: Optional[Callable[[WorkItem[T, R]], None]] = None,
-    on_error: Optional[Callable[[WorkItem[T, R]], None]] = None,
-) -> List[R]:
+    on_complete: Callable[[WorkItem[T, R]], None] | None = None,
+    on_error: Callable[[WorkItem[T, R]], None] | None = None,
+) -> list[R]:
     """
     Run a function on multiple items in a thread pool.
 
@@ -1003,6 +1074,7 @@ async def run_in_thread_pool(
 
     Returns:
         List of results in the same order as items
+
     """
     # Create work queue
     queue = WorkQueue[T, R](
@@ -1033,11 +1105,11 @@ async def run_in_thread_pool(
 
 async def run_in_process_pool(
     func: Callable[[T], R],
-    items: List[T],
+    items: list[T],
     max_workers: int = 5,
-    on_complete: Optional[Callable[[WorkItem[T, R]], None]] = None,
-    on_error: Optional[Callable[[WorkItem[T, R]], None]] = None,
-) -> List[R]:
+    on_complete: Callable[[WorkItem[T, R]], None] | None = None,
+    on_error: Callable[[WorkItem[T, R]], None] | None = None,
+) -> list[R]:
     """
     Run a function on multiple items in a process pool.
 
@@ -1050,6 +1122,7 @@ async def run_in_process_pool(
 
     Returns:
         List of results in the same order as items
+
     """
     # Create work queue
     queue = WorkQueue[T, R](
@@ -1080,11 +1153,11 @@ async def run_in_process_pool(
 
 async def run_with_asyncio(
     func: Callable[[T], asyncio.Future[R]],
-    items: List[T],
+    items: list[T],
     max_workers: int = 5,
-    on_complete: Optional[Callable[[WorkItem[T, R]], None]] = None,
-    on_error: Optional[Callable[[WorkItem[T, R]], None]] = None,
-) -> List[R]:
+    on_complete: Callable[[WorkItem[T, R]], None] | None = None,
+    on_error: Callable[[WorkItem[T, R]], None] | None = None,
+) -> list[R]:
     """
     Run a function on multiple items with asyncio.
 
@@ -1097,6 +1170,7 @@ async def run_with_asyncio(
 
     Returns:
         List of results in the same order as items
+
     """
     # Create work queue
     queue = WorkQueue[T, R](

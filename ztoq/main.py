@@ -5,6 +5,7 @@ See LICENSE file for details.
 """
 
 import uvicorn
+
 from ztoq.core.services import get_openapi_spec
 
 

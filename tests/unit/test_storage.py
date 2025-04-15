@@ -6,19 +6,21 @@ See LICENSE file for details.
 
 import json
 from datetime import datetime
+
 import pytest
+
 from ztoq.models import Case, TestCase  # Using compatibility alias
 from ztoq.storage import JSONStorage, SQLiteStorage
 
 
-@pytest.mark.unit()
+@pytest.mark.unit
 class TestSQLiteStorage:
-    @pytest.fixture()
+    @pytest.fixture
     def db_path(self, tmp_path):
         """Create a temporary database path."""
         return tmp_path / "test.db"
 
-    @pytest.fixture()
+    @pytest.fixture
     def storage(self, db_path):
         """Create a test SQLite storage instance."""
         storage = SQLiteStorage(db_path)
@@ -125,14 +127,14 @@ class TestSQLiteStorage:
         assert storage._serialize_value(None) is None
 
 
-@pytest.mark.unit()
+@pytest.mark.unit
 class TestJSONStorage:
-    @pytest.fixture()
+    @pytest.fixture
     def output_dir(self, tmp_path):
         """Create a temporary output directory."""
         return tmp_path / "output"
 
-    @pytest.fixture()
+    @pytest.fixture
     def storage(self, output_dir):
         """Create a test JSON storage instance."""
         return JSONStorage(output_dir)

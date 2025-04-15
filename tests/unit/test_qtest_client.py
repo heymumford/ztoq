@@ -5,25 +5,27 @@ See LICENSE file for details.
 """
 
 from unittest.mock import MagicMock, patch
+
 import pytest
+
 from ztoq.qtest_client import QTestClient, QTestPaginatedIterator
 from ztoq.qtest_models import (
     QTestAttachment,
     QTestConfig,
     QTestModule,
     QTestParameter,
-    QTestProject,
+    QTestPulseAction,
+    QTestPulseActionParameter,
+    QTestPulseConstant,
+    QTestPulseRule,
+    QTestPulseTrigger,
     QTestTestCase,
 )
-from ztoq.qtest_models import QTestPulseRule
-from ztoq.qtest_models import QTestPulseTrigger
-from ztoq.qtest_models import QTestPulseAction, QTestPulseActionParameter
-from ztoq.qtest_models import QTestPulseConstant
 
 
-@pytest.mark.unit()
+@pytest.mark.unit
 class TestQTestClient:
-    @pytest.fixture()
+    @pytest.fixture
     def config(self):
         """Create a test qTest configuration."""
         return QTestConfig(
@@ -33,11 +35,11 @@ class TestQTestClient:
             project_id=12345,
         )
 
-    @pytest.fixture()
+    @pytest.fixture
     def client(self, config):
         """Create a test qTest client with mocked authentication."""
         with patch("ztoq.qtest_client.requests.post") as mock_post, patch(
-            "ztoq.qtest_client.requests.request"
+            "ztoq.qtest_client.requests.request",
         ) as mock_request:
             # Mock post for authentication
             mock_response = MagicMock()
@@ -210,7 +212,7 @@ class TestQTestClient:
 
             # Get iterator
             iterator = QTestPaginatedIterator[QTestTestCase](
-                client=client, endpoint="/test-cases", model_class=QTestTestCase, page_size=2
+                client=client, endpoint="/test-cases", model_class=QTestTestCase, page_size=2,
             )
 
             # Patch QTestPaginatedResponse
@@ -235,7 +237,7 @@ class TestQTestClient:
 
                 # Now setup __next__ to iterate through the test cases without using 'get'
                 with patch(
-                    "ztoq.qtest_client.QTestPaginatedIterator.__next__", create=True
+                    "ztoq.qtest_client.QTestPaginatedIterator.__next__", create=True,
                 ) as mock_next:
                     mock_next.side_effect = [mock_tc1, mock_tc2, mock_tc3, StopIteration()]
 
@@ -286,7 +288,7 @@ class TestQTestClient:
 
         # Get iterator
         iterator = QTestPaginatedIterator[QTestParameter](
-            client=client, endpoint="/parameters", model_class=QTestParameter, page_size=2
+            client=client, endpoint="/parameters", model_class=QTestParameter, page_size=2,
         )
 
         # Iterate and verify
@@ -321,7 +323,7 @@ class TestQTestClient:
                             "description": "Navigate to login page",
                             "expectedResult": "Login page is displayed",
                             "order": 1,
-                        }
+                        },
                     ],
                 },
                 {
@@ -374,7 +376,7 @@ class TestQTestClient:
                     "description": "Navigate to login page",
                     "expectedResult": "Login page is displayed",
                     "order": 1,
-                }
+                },
             ],
         }
         mock_response.status_code = 200
@@ -456,7 +458,7 @@ class TestQTestClient:
 
         # Call the method
         result = client.upload_attachment(
-            object_type="test-cases", object_id=101, file_path=test_file
+            object_type="test-cases", object_id=101, file_path=test_file,
         )
 
         # Verify
@@ -744,7 +746,7 @@ class TestQTestClient:
 
         # For execute_pulse_rule_manually
         responses[("POST", "/pulse/rules/4001/execute")] = {
-            "data": {"message": "Rule executed successfully"}
+            "data": {"message": "Rule executed successfully"},
         }
 
         # Mock _make_request to return responses based on method and endpoint
@@ -1147,7 +1149,7 @@ class TestQTestClient:
                     "projectId": 12345,
                     "enabled": True,
                 },
-            ]
+            ],
         }
         mock_response.status_code = 200
         mock_request.return_value = mock_response
@@ -1193,7 +1195,7 @@ class TestQTestClient:
                     "projectId": 12345,
                     "content": "Feature: Shopping Cart...",
                 },
-            ]
+            ],
         }
         mock_response.status_code = 200
         mock_request.return_value = mock_response
@@ -1290,7 +1292,7 @@ class TestQTestClient:
             mock_response = MagicMock()
             mock_response.status_code = status_code
             mock_response.raise_for_status.side_effect = requests.exceptions.HTTPError(
-                f"{status_code} {status_text}", response=mock_response
+                f"{status_code} {status_text}", response=mock_response,
             )
             mock_response.text = f"Error: {status_text}"
             mock_request.return_value = mock_response

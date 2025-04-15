@@ -12,12 +12,14 @@ import json
 import tempfile
 from pathlib import Path
 from unittest.mock import MagicMock, patch
+
 import pytest
+
 from ztoq.openapi_parser import ZephyrApiSpecWrapper
 from ztoq.test_generator import ZephyrTestGenerator
 
 
-@pytest.fixture()
+@pytest.fixture
 def mock_spec_wrapper():
     """Create a mock ZephyrApiSpecWrapper for testing."""
     mock_wrapper = MagicMock(spec=ZephyrApiSpecWrapper)
@@ -35,10 +37,10 @@ def mock_spec_wrapper():
                     "in": "query",
                     "required": True,
                     "schema": {"type": "string"},
-                }
+                },
             ],
             "responses": {"200": {"description": "Success"}, "400": {"description": "Bad Request"}},
-        }
+        },
     }
 
     # Setup mock methods
@@ -60,7 +62,7 @@ def mock_spec_wrapper():
     return mock_wrapper
 
 
-@pytest.fixture()
+@pytest.fixture
 def test_generator(mock_spec_wrapper):
     """Create a test generator with mock wrapper."""
     return ZephyrTestGenerator(mock_spec_wrapper)
@@ -152,8 +154,8 @@ def test_export_test_suite_to_json(test_generator):
                         "path": "/testcases",
                         "method": "get",
                         "expected_status": 200,
-                    }
-                ]
+                    },
+                ],
             }
 
             test_generator.export_test_suite_to_json(output_path)
@@ -236,8 +238,8 @@ def test_generate_pytest_file(test_generator):
                         "params": {"projectKey": "TEST"},
                         "expected_status": 200,
                         "validate_schema": True,
-                    }
-                ]
+                    },
+                ],
             }
 
             test_generator.generate_pytest_file(output_path)

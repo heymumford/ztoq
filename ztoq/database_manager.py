@@ -19,6 +19,7 @@ from contextlib import contextmanager
 from datetime import datetime
 from pathlib import Path
 from typing import Any
+
 from ztoq.data_fetcher import FetchResult
 from ztoq.models import (
     Case,
@@ -48,6 +49,7 @@ class DatabaseManager:
 
         Args:
             db_path: Path to the SQLite database file
+
         """
         self.db_path = Path(db_path) if isinstance(db_path, str) else db_path
         self._ensure_parent_dir_exists()
@@ -67,6 +69,7 @@ class DatabaseManager:
 
         Yields:
             SQLite connection object
+
         """
         conn = None
         try:
@@ -85,9 +88,9 @@ class DatabaseManager:
         Creates all necessary database tables if they don't exist.
 
         This method establishes the schema for storing all Zephyr test data,
-                including tables for projects, test cases, test cycles, test executions,
-                folders, statuses, priorities, environments, and their relationships.
-            Also creates validation tables for tracking validation issues.
+        including tables for projects, test cases, test cycles, test executions,
+        folders, statuses, priorities, environments, and their relationships.
+        Also creates validation tables for tracking validation issues.
         """
         with self.get_connection() as conn:
             cursor = conn.cursor()
@@ -105,7 +108,7 @@ class DatabaseManager:
                         enabled INTEGER DEFAULT 1,
                         created_on TEXT NOT NULL
                 )
-                """
+                """,
             )
 
             cursor.execute(
@@ -127,7 +130,7 @@ class DatabaseManager:
                         FOREIGN KEY (rule_id) REFERENCES validation_rules(id) ON DELETE CASCADE,
                         FOREIGN KEY (project_key) REFERENCES projects(key) ON DELETE CASCADE
                 )
-                """
+                """,
             )
 
             cursor.execute(
@@ -141,7 +144,7 @@ class DatabaseManager:
                         details TEXT,  -- Full report details as JSON
                     FOREIGN KEY (project_key) REFERENCES projects(key) ON DELETE CASCADE
                 )
-                """
+                """,
             )
 
             # Projects table
@@ -153,7 +156,7 @@ class DatabaseManager:
                         name TEXT NOT NULL,
                         description TEXT
             )
-            """
+            """,
             )
 
             # Folders table
@@ -168,7 +171,7 @@ class DatabaseManager:
                         FOREIGN KEY (parent_id) REFERENCES folders(id) ON DELETE CASCADE,
                         FOREIGN KEY (project_key) REFERENCES projects(key) ON DELETE CASCADE
             )
-            """
+            """,
             )
 
             # Statuses table
@@ -183,7 +186,7 @@ class DatabaseManager:
                         project_key TEXT NOT NULL,
                         FOREIGN KEY (project_key) REFERENCES projects(key) ON DELETE CASCADE
             )
-            """
+            """,
             )
 
             # Priorities table
@@ -198,7 +201,7 @@ class DatabaseManager:
                         project_key TEXT NOT NULL,
                         FOREIGN KEY (project_key) REFERENCES projects(key) ON DELETE CASCADE
             )
-            """
+            """,
             )
 
             # Environments table
@@ -211,7 +214,7 @@ class DatabaseManager:
                         project_key TEXT NOT NULL,
                         FOREIGN KEY (project_key) REFERENCES projects(key) ON DELETE CASCADE
             )
-            """
+            """,
             )
 
             # Test cases table
@@ -251,7 +254,7 @@ class DatabaseManager:
                         FOREIGN KEY (folder_id) REFERENCES folders(id) ON DELETE SET NULL,
                         FOREIGN KEY (project_key) REFERENCES projects(key) ON DELETE CASCADE
             )
-            """
+            """,
             )
 
             # Test cycles table
@@ -279,7 +282,7 @@ class DatabaseManager:
                         FOREIGN KEY (folder_id) REFERENCES folders(id) ON DELETE SET NULL,
                         FOREIGN KEY (project_key) REFERENCES projects(key) ON DELETE CASCADE
             )
-            """
+            """,
             )
 
             # Test plans table
@@ -306,7 +309,7 @@ class DatabaseManager:
                         FOREIGN KEY (folder_id) REFERENCES folders(id) ON DELETE SET NULL,
                         FOREIGN KEY (project_key) REFERENCES projects(key) ON DELETE CASCADE
             )
-            """
+            """,
             )
 
             # Test executions table
@@ -340,40 +343,40 @@ class DatabaseManager:
                         FOREIGN KEY (environment_id) REFERENCES environments(id) ON DELETE SET NULL,
                         FOREIGN KEY (project_key) REFERENCES projects(key) ON DELETE CASCADE
             )
-            """
+            """,
             )
 
             # Create indexes for better query performance
             cursor.execute(
-                "CREATE INDEX IF NOT EXISTS idx_test_cases_project ON test_cases (project_key)"
+                "CREATE INDEX IF NOT EXISTS idx_test_cases_project ON test_cases (project_key)",
             )
             cursor.execute(
-                "CREATE INDEX IF NOT EXISTS idx_test_cycles_project ON test_cycles (project_key)"
+                "CREATE INDEX IF NOT EXISTS idx_test_cycles_project ON test_cycles (project_key)",
             )
             cursor.execute(
-                "CREATE INDEX IF NOT EXISTS idx_test_plans_project ON test_plans (project_key)"
+                "CREATE INDEX IF NOT EXISTS idx_test_plans_project ON test_plans (project_key)",
             )
             cursor.execute(
-                "CREATE INDEX IF NOT EXISTS idx_test_executions_project ON test_executions (project_key)"
+                "CREATE INDEX IF NOT EXISTS idx_test_executions_project ON test_executions (project_key)",
             )
             cursor.execute(
-                "CREATE INDEX IF NOT EXISTS idx_test_executions_cycle ON test_executions (cycle_id)"
+                "CREATE INDEX IF NOT EXISTS idx_test_executions_cycle ON test_executions (cycle_id)",
             )
             cursor.execute(
-                "CREATE INDEX IF NOT EXISTS idx_test_executions_case ON test_executions (test_case_key)"
+                "CREATE INDEX IF NOT EXISTS idx_test_executions_case ON test_executions (test_case_key)",
             )
             cursor.execute(
-                "CREATE INDEX IF NOT EXISTS idx_folders_project ON folders (project_key)"
+                "CREATE INDEX IF NOT EXISTS idx_folders_project ON folders (project_key)",
             )
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_folders_parent ON folders (parent_id)")
             cursor.execute(
-                "CREATE INDEX IF NOT EXISTS idx_statuses_project ON statuses (project_key)"
+                "CREATE INDEX IF NOT EXISTS idx_statuses_project ON statuses (project_key)",
             )
             cursor.execute(
-                "CREATE INDEX IF NOT EXISTS idx_priorities_project ON priorities (project_key)"
+                "CREATE INDEX IF NOT EXISTS idx_priorities_project ON priorities (project_key)",
             )
             cursor.execute(
-                "CREATE INDEX IF NOT EXISTS idx_environments_project ON environments (project_key)"
+                "CREATE INDEX IF NOT EXISTS idx_environments_project ON environments (project_key)",
             )
 
             conn.commit()
@@ -390,16 +393,17 @@ class DatabaseManager:
 
         Returns:
             Serialized version of the object suitable for database storage
+
         """
         if hasattr(obj, "model_dump"):
             return obj.model_dump()
-        elif hasattr(obj, "dict"):  # For backward compatibility
+        if hasattr(obj, "dict"):  # For backward compatibility
             return obj.dict()
-        elif isinstance(obj, datetime):
+        if isinstance(obj, datetime):
             return obj.isoformat()
-        elif isinstance(obj, list):
+        if isinstance(obj, list):
             return [self._serialize_object(item) for item in obj]
-        elif isinstance(obj, dict):
+        if isinstance(obj, dict):
             return {k: self._serialize_object(v) for k, v in obj.items()}
         return obj
 
@@ -415,12 +419,13 @@ class DatabaseManager:
 
         Returns:
             Database-friendly representation of the value
+
         """
         if value is None:
             return None
-        elif isinstance(value, dict | list):
+        if isinstance(value, dict | list):
             return json.dumps(self._serialize_object(value))
-        elif isinstance(value, datetime):
+        if isinstance(value, datetime):
             return value.isoformat()
         return value
 
@@ -430,6 +435,7 @@ class DatabaseManager:
 
         Args:
             project: The project to save
+
         """
         with self.get_connection() as conn:
             cursor = conn.cursor()
@@ -449,6 +455,7 @@ class DatabaseManager:
         Args:
             folder: The folder to save
             project_key: The project key the folder belongs to
+
         """
         with self.get_connection() as conn:
             cursor = conn.cursor()
@@ -468,6 +475,7 @@ class DatabaseManager:
         Args:
             status: The status to save
             project_key: The project key the status belongs to
+
         """
         with self.get_connection() as conn:
             cursor = conn.cursor()
@@ -494,6 +502,7 @@ class DatabaseManager:
         Args:
             priority: The priority to save
             project_key: The project key the priority belongs to
+
         """
         with self.get_connection() as conn:
             cursor = conn.cursor()
@@ -520,6 +529,7 @@ class DatabaseManager:
         Args:
             environment: The environment to save
             project_key: The project key the environment belongs to
+
         """
         with self.get_connection() as conn:
             cursor = conn.cursor()
@@ -542,6 +552,7 @@ class DatabaseManager:
         Args:
             test_case: The test case to save
             project_key: The project key the test case belongs to
+
         """
         # Handle complex objects by serializing to JSON
         labels_json = self._serialize_value(test_case.labels)
@@ -551,7 +562,7 @@ class DatabaseManager:
             [
                 step.model_dump() if hasattr(step, "model_dump") else step.dict()
                 for step in test_case.steps
-            ]
+            ],
         )
 
         # Serialize custom fields
@@ -559,7 +570,7 @@ class DatabaseManager:
             [
                 cf.model_dump() if hasattr(cf, "model_dump") else cf.dict()
                 for cf in test_case.custom_fields
-            ]
+            ],
         )
 
         # Serialize links
@@ -567,7 +578,7 @@ class DatabaseManager:
             [
                 link.model_dump() if hasattr(link, "model_dump") else link.dict()
                 for link in test_case.links
-            ]
+            ],
         )
 
         # Serialize scripts
@@ -575,7 +586,7 @@ class DatabaseManager:
             [
                 script.model_dump() if hasattr(script, "model_dump") else script.dict()
                 for script in test_case.scripts
-            ]
+            ],
         )
 
         # Serialize versions
@@ -585,7 +596,7 @@ class DatabaseManager:
             [
                 version.model_dump() if hasattr(version, "model_dump") else version.dict()
                 for version in versions
-            ]
+            ],
         )
 
         # Serialize attachments
@@ -593,7 +604,7 @@ class DatabaseManager:
             [
                 attachment.model_dump() if hasattr(attachment, "model_dump") else attachment.dict()
                 for attachment in test_case.attachments
-            ]
+            ],
         )
 
         # Handle priority - it could be an object or a dict
@@ -659,13 +670,14 @@ class DatabaseManager:
         Args:
             test_cycle: The test cycle to save
             project_key: The project key the test cycle belongs to
+
         """
         # Serialize custom fields
         custom_fields_json = self._serialize_value(
             [
                 cf.model_dump() if hasattr(cf, "model_dump") else cf.dict()
                 for cf in test_cycle.custom_fields
-            ]
+            ],
         )
 
         # Serialize links
@@ -673,7 +685,7 @@ class DatabaseManager:
             [
                 link.model_dump() if hasattr(link, "model_dump") else link.dict()
                 for link in test_cycle.links
-            ]
+            ],
         )
 
         # Serialize attachments
@@ -681,7 +693,7 @@ class DatabaseManager:
             [
                 attachment.model_dump() if hasattr(attachment, "model_dump") else attachment.dict()
                 for attachment in test_cycle.attachments
-            ]
+            ],
         )
 
         with self.get_connection() as conn:
@@ -726,13 +738,14 @@ class DatabaseManager:
         Args:
             test_execution: The test execution to save
             project_key: The project key the test execution belongs to
+
         """
         # Serialize steps
         steps_json = self._serialize_value(
             [
                 step.model_dump() if hasattr(step, "model_dump") else step.dict()
                 for step in test_execution.steps
-            ]
+            ],
         )
 
         # Serialize custom fields
@@ -740,7 +753,7 @@ class DatabaseManager:
             [
                 cf.model_dump() if hasattr(cf, "model_dump") else cf.dict()
                 for cf in test_execution.custom_fields
-            ]
+            ],
         )
 
         # Serialize links
@@ -748,7 +761,7 @@ class DatabaseManager:
             [
                 link.model_dump() if hasattr(link, "model_dump") else link.dict()
                 for link in test_execution.links
-            ]
+            ],
         )
 
         # Serialize attachments
@@ -756,7 +769,7 @@ class DatabaseManager:
             [
                 attachment.model_dump() if hasattr(attachment, "model_dump") else attachment.dict()
                 for attachment in test_execution.attachments
-            ]
+            ],
         )
 
         with self.get_connection() as conn:
@@ -801,7 +814,7 @@ class DatabaseManager:
             conn.commit()
 
     def save_project_data(
-        self, project_key: str, fetch_results: dict[str, FetchResult]
+        self, project_key: str, fetch_results: dict[str, FetchResult],
     ) -> dict[str, int]:
         """
         Save all fetched data for a project.
@@ -815,6 +828,7 @@ class DatabaseManager:
 
         Returns:
             Dictionary with counts of inserted records by entity type
+
         """
         counts = {}
 
@@ -907,7 +921,7 @@ class DatabaseManager:
         return counts
 
     def save_all_projects_data(
-        self, all_projects_data: dict[str, dict[str, FetchResult]]
+        self, all_projects_data: dict[str, dict[str, FetchResult]],
     ) -> dict[str, dict[str, int]]:
         """
         Save all fetched data for multiple projects.
@@ -917,6 +931,7 @@ class DatabaseManager:
 
         Returns:
             Dictionary mapping project keys to counts of inserted records by entity type
+
         """
         # Initialize database first
         self.initialize_database()
@@ -936,6 +951,7 @@ class DatabaseManager:
 
         Args:
             rule: The ValidationRule object to save
+
         """
         with self.get_connection() as conn:
             cursor = conn.cursor()
@@ -965,6 +981,7 @@ class DatabaseManager:
         Args:
             issue: The ValidationIssue object to save
             project_key: The project key the issue belongs to
+
         """
         context_json = self._serialize_value(issue.context)
 
@@ -1000,6 +1017,7 @@ class DatabaseManager:
         Args:
             issue_id: The ID of the issue to resolve
             resolution_note: Note explaining how the issue was resolved
+
         """
         with self.get_connection() as conn:
             cursor = conn.cursor()
@@ -1024,6 +1042,7 @@ class DatabaseManager:
         Args:
             project_key: The project key the report belongs to
             report: The validation report object/dictionary
+
         """
         issue_counts = report.get("issue_counts", {})
         issue_counts_json = self._serialize_value(issue_counts)
@@ -1059,6 +1078,7 @@ class DatabaseManager:
 
         Returns:
             List of validation issues
+
         """
         with self.get_connection() as conn:
             cursor = conn.cursor()
@@ -1103,6 +1123,7 @@ class DatabaseManager:
 
         Returns:
             List of validation reports
+
         """
         with self.get_connection() as conn:
             cursor = conn.cursor()
@@ -1148,6 +1169,7 @@ class DatabaseManager:
 
         Returns:
             List of active validation rules
+
         """
         with self.get_connection() as conn:
             cursor = conn.cursor()
@@ -1157,7 +1179,7 @@ class DatabaseManager:
                 SELECT *
                 FROM validation_rules
                 WHERE enabled = 1
-                """
+                """,
             )
 
             return [dict(row) for row in cursor.fetchall()]

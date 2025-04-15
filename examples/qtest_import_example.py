@@ -17,23 +17,22 @@ Usage:
     python qtest_import_example.py
 """
 
-import os
 import logging
+import os
 from pathlib import Path
-from typing import List, Dict, Any
 
-from ztoq.qtest_models import QTestConfig, QTestTestCase, QTestStep, QTestCustomField
-from ztoq.qtest_importer import QTestImporter, ImportConfig, ConflictResolution
+from ztoq.qtest_importer import ConflictResolution, ImportConfig, QTestImporter
+from ztoq.qtest_models import QTestConfig, QTestCustomField, QTestStep, QTestTestCase
 
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger(__name__)
 
 
-def create_sample_test_cases() -> List[QTestTestCase]:
+def create_sample_test_cases() -> list[QTestTestCase]:
     """Create a list of sample test cases for the example."""
     return [
         QTestTestCase(
@@ -44,33 +43,33 @@ def create_sample_test_cases() -> List[QTestTestCase]:
                 QTestStep(
                     description="Navigate to login page",
                     expected_result="Login page is displayed",
-                    order=1
+                    order=1,
                 ),
                 QTestStep(
                     description="Enter valid username and password",
                     expected_result="Credentials are accepted",
-                    order=2
+                    order=2,
                 ),
                 QTestStep(
                     description="Click login button",
                     expected_result="User is successfully logged in and redirected to dashboard",
-                    order=3
-                )
+                    order=3,
+                ),
             ],
             properties=[
                 QTestCustomField(
                     field_id=1,
                     field_name="Priority",
                     field_type="STRING",
-                    field_value="High"
+                    field_value="High",
                 ),
                 QTestCustomField(
                     field_id=2,
                     field_name="Automated",
                     field_type="CHECKBOX",
-                    field_value=True
-                )
-            ]
+                    field_value=True,
+                ),
+            ],
         ),
         QTestTestCase(
             name="Password Reset Test",
@@ -80,39 +79,39 @@ def create_sample_test_cases() -> List[QTestTestCase]:
                 QTestStep(
                     description="Navigate to login page",
                     expected_result="Login page is displayed",
-                    order=1
+                    order=1,
                 ),
                 QTestStep(
                     description="Click 'Forgot Password' link",
                     expected_result="Password reset page is displayed",
-                    order=2
+                    order=2,
                 ),
                 QTestStep(
                     description="Enter registered email address",
                     expected_result="Email field accepts input",
-                    order=3
+                    order=3,
                 ),
                 QTestStep(
                     description="Click 'Reset Password' button",
                     expected_result="Confirmation message is displayed",
-                    order=4
-                )
+                    order=4,
+                ),
             ],
             properties=[
                 QTestCustomField(
                     field_id=1,
                     field_name="Priority",
                     field_type="STRING",
-                    field_value="Medium"
+                    field_value="Medium",
                 ),
                 QTestCustomField(
                     field_id=2,
                     field_name="Automated",
                     field_type="CHECKBOX",
-                    field_value=False
-                )
-            ]
-        )
+                    field_value=False,
+                ),
+            ],
+        ),
     ]
 
 
@@ -144,7 +143,7 @@ def main():
     qtest_config = QTestConfig(
         base_url=base_url,
         bearer_token=api_token,
-        project_id=project_id
+        project_id=project_id,
     )
 
     # Create import configuration
@@ -154,7 +153,7 @@ def main():
         concurrency=2,
         batch_size=10,
         validate=True,
-        show_progress=True
+        show_progress=True,
     )
 
     # Initialize the importer
@@ -197,14 +196,14 @@ def main():
     logger.info(f"  Failed: {result.get('failed', 0)}")
 
     # Example of importing a test case with attachments
-    if test_cases and result['test_cases']:
+    if test_cases and result["test_cases"]:
         # Use the first test case
         test_case = test_cases[0]
 
         # Prepare attachment paths (these don't exist in this example)
         attachment_paths = [
             "examples/attachments/screenshot.png",
-            "examples/attachments/test_data.csv"
+            "examples/attachments/test_data.csv",
         ]
 
         # For demonstration purposes, create temporary files
@@ -220,12 +219,12 @@ def main():
         logger.info(f"Importing test case '{test_case.name}' with attachments...")
 
         attachment_result = importer.case_importer.import_test_case_with_attachments(
-            test_case, attachment_paths
+            test_case, attachment_paths,
         )
 
         # Print attachment results
         logger.info(f"Attachment import completed with {len(attachment_result['attachments'])} attachments:")
-        for i, attachment in enumerate(attachment_result['attachments']):
+        for i, attachment in enumerate(attachment_result["attachments"]):
             logger.info(f"  {i+1}. {attachment.name} (ID: {attachment.id})")
 
         # Clean up temporary files

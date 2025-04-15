@@ -19,7 +19,6 @@ import os
 import sys
 import time
 from pathlib import Path
-from typing import Dict, List, Optional
 
 # Add parent directory to path to import ztoq modules
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -27,10 +26,10 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from rich.console import Console
 from rich.progress import BarColumn, Progress, TaskProgressColumn, TextColumn, TimeElapsedColumn
 from sqlalchemy import create_engine
-from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.orm import sessionmaker
 
 from ztoq.core.db_models import Base
-from ztoq.migration import EntityBatchTracker, MigrationState, ZephyrToQTestMigration
+from ztoq.migration import ZephyrToQTestMigration
 from ztoq.models import ZephyrConfig
 from ztoq.qtest_models import QTestConfig
 
@@ -63,7 +62,7 @@ class DatabaseManager:
         """Initialize database schema."""
         Base.metadata.create_all(self.engine)
 
-    def get_migration_state(self, project_key: str) -> Optional[Dict]:
+    def get_migration_state(self, project_key: str) -> dict | None:
         """Get migration state for a project."""
         from ztoq.core.db_models import MigrationStateModel
 
@@ -130,7 +129,7 @@ class DatabaseManager:
         from ztoq.core.db_models import EntityBatchModel
 
         batches = self.session.query(EntityBatchModel).filter_by(
-            project_key=project_key, entity_type=entity_type
+            project_key=project_key, entity_type=entity_type,
         ).all()
 
         return [
@@ -150,7 +149,7 @@ class DatabaseManager:
         from ztoq.core.db_models import EntityBatchModel
 
         batches = self.session.query(EntityBatchModel).filter_by(
-            project_key=project_key, entity_type=entity_type, status="pending"
+            project_key=project_key, entity_type=entity_type, status="pending",
         ).all()
 
         return [
@@ -190,7 +189,7 @@ class DatabaseManager:
         from ztoq.core.db_models import EntityBatchModel
 
         batch = self.session.query(EntityBatchModel).filter_by(
-            project_key=project_key, entity_type=entity_type, batch_num=batch_num
+            project_key=project_key, entity_type=entity_type, batch_num=batch_num,
         ).first()
 
         if batch:
@@ -265,9 +264,9 @@ def run_migration_example(dry_run=True):
         attachments_dir = Path("./attachments")
         attachments_dir.mkdir(exist_ok=True)
 
-        console.print(f"[bold green]Starting migration example[/bold green]")
+        console.print("[bold green]Starting migration example[/bold green]")
         console.print(f"Project key: {zephyr_config.project_key}")
-        console.print(f"SQLite database: migration_example.db")
+        console.print("SQLite database: migration_example.db")
         console.print(f"Attachments directory: {attachments_dir}")
         console.print("")
 
@@ -370,7 +369,7 @@ def run_migration_example(dry_run=True):
 
             # Show final migration state
             state = db_manager.get_migration_state(zephyr_config.project_key)
-            console.print(f"\n[bold]Migration completed with final state:[/bold]")
+            console.print("\n[bold]Migration completed with final state:[/bold]")
             console.print(f"  Extraction: {state['extraction_status']}")
             console.print(f"  Transformation: {state['transformation_status']}")
             console.print(f"  Loading: {state['loading_status']}")
@@ -427,18 +426,18 @@ def run_migration_example(dry_run=True):
 
                 # Show final migration state
                 state = db_manager.get_migration_state(zephyr_config.project_key)
-                console.print(f"\n[bold]Migration completed with final state:[/bold]")
+                console.print("\n[bold]Migration completed with final state:[/bold]")
                 console.print(f"  Extraction: {state['extraction_status']}")
                 console.print(f"  Transformation: {state['transformation_status']}")
                 console.print(f"  Loading: {state['loading_status']}")
 
             except Exception as e:
                 progress_callback.finish()
-                console.print(f"[red]Migration failed with error: {str(e)}[/red]")
+                console.print(f"[red]Migration failed with error: {e!s}[/red]")
                 raise
 
     except Exception as e:
-        console.print(f"[red]Error: {str(e)}[/red]")
+        console.print(f"[red]Error: {e!s}[/red]")
         logger.exception("Migration example failed")
         raise
 

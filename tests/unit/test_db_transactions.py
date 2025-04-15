@@ -7,35 +7,27 @@ See LICENSE file for details.
 import os
 import tempfile
 from unittest.mock import MagicMock, patch
+
 import pytest
 from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
+
 from ztoq.core.db_manager import DatabaseConfig, SQLDatabaseManager
 from ztoq.core.db_models import Folder, Project, TestCase, TestCycle
+from ztoq.data_fetcher import FetchResult
 from ztoq.models import (
     Case as CaseModel,
-)
-from ztoq.models import (
     CaseStep as CaseStepModel,
-)
-from ztoq.models import (
     CustomField as CustomFieldModel,
-)
-from ztoq.models import (
     CycleInfo as CycleInfoModel,
-)
-from ztoq.models import (
     Folder as FolderModel,
-)
-from ztoq.models import (
     Project as ProjectModel,
 )
-from ztoq.data_fetcher import FetchResult
 
 
-@pytest.mark.unit()
+@pytest.mark.unit
 class TestDatabaseTransactions:
-    @pytest.fixture()
+    @pytest.fixture
     def db_config(self):
         """Create a database configuration for testing with SQLite."""
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -43,7 +35,7 @@ class TestDatabaseTransactions:
             config = DatabaseConfig(db_type="sqlite", db_path=db_path, echo=False)
             yield config
 
-    @pytest.fixture()
+    @pytest.fixture
     def db_manager(self, db_config):
         """Create a SQLDatabaseManager instance for testing."""
         manager = SQLDatabaseManager(config=db_config)
@@ -98,7 +90,7 @@ class TestDatabaseTransactions:
         db_manager.save_project(project)
 
         folder = FolderModel(
-            id="FOLD-1", name="Test Folder", folderType="TEST_CASE", projectKey="TEST"
+            id="FOLD-1", name="Test Folder", folderType="TEST_CASE", projectKey="TEST",
         )
         db_manager.save_folder(folder, "TEST")
 
@@ -135,7 +127,7 @@ class TestDatabaseTransactions:
         with db_manager.get_session() as session:
             # Add a folder
             folder = Folder(
-                id="FOLD-1", name="Test Folder", folder_type="TEST_CASE", project_key="TEST"
+                id="FOLD-1", name="Test Folder", folder_type="TEST_CASE", project_key="TEST",
             )
             session.add(folder)
 
@@ -194,13 +186,13 @@ class TestDatabaseTransactions:
 
         # Create folder
         folder = FolderModel(
-            id="FOLD-1", name="Test Folder", folderType="TEST_CASE", projectKey="TEST"
+            id="FOLD-1", name="Test Folder", folderType="TEST_CASE", projectKey="TEST",
         )
         db_manager.save_folder(folder, "TEST")
 
         # Create a test case
         case = CaseModel(
-            id="TC-1", key="TEST-1", name="Test Case", folder="FOLD-1", projectKey="TEST"
+            id="TC-1", key="TEST-1", name="Test Case", folder="FOLD-1", projectKey="TEST",
         )
         db_manager.save_test_case(case, "TEST")
 
@@ -264,7 +256,7 @@ class TestDatabaseTransactions:
             with db_manager.get_session() as session2:
                 # Add a folder
                 folder = Folder(
-                    id="FOLD-1", name="Test Folder", folder_type="TEST_CASE", project_key="TEST"
+                    id="FOLD-1", name="Test Folder", folder_type="TEST_CASE", project_key="TEST",
                 )
                 session2.add(folder)
                 # session2 commits here
@@ -319,7 +311,7 @@ class TestDatabaseTransactions:
 
         # Create folders with one invalid folder (no project_key)
         valid_folder = FolderModel(
-            id="FOLD-1", name="Valid Folder", folderType="TEST_CASE", projectKey="TEST"
+            id="FOLD-1", name="Valid Folder", folderType="TEST_CASE", projectKey="TEST",
         )
 
         # Use a MagicMock to avoid validation
@@ -331,7 +323,7 @@ class TestDatabaseTransactions:
 
         fetch_results = {
             "project": FetchResult(
-                entity_type="project", project_key="TEST", items=[project], count=1, success=True
+                entity_type="project", project_key="TEST", items=[project], count=1, success=True,
             ),
             "folders": FetchResult(
                 entity_type="folders",
@@ -359,9 +351,8 @@ class TestDatabaseTransactions:
             if folder_model.id == "FOLD-1":
                 # Save the valid folder
                 return original_save_folder(folder_model, project_key)
-            else:
-                # Raise error for the invalid folder
-                raise SQLAlchemyError("Invalid project_key")
+            # Raise error for the invalid folder
+            raise SQLAlchemyError("Invalid project_key")
 
         # Apply the patch and test
         with patch.object(db_manager, "save_folder", side_effect=mock_save_folder):
@@ -397,7 +388,7 @@ class TestDatabaseTransactions:
 
         # Create folder
         folder = FolderModel(
-            id="FOLD-1", name="Test Folder", folderType="TEST_CASE", projectKey="TEST"
+            id="FOLD-1", name="Test Folder", folderType="TEST_CASE", projectKey="TEST",
         )
         db_manager.save_folder(folder, "TEST")
 
@@ -435,7 +426,7 @@ class TestDatabaseTransactions:
 
         # Create folder for the test case
         folder = FolderModel(
-            id="FOLD-1", name="Test Folder", folderType="TEST_CASE", projectKey="TEST"
+            id="FOLD-1", name="Test Folder", folderType="TEST_CASE", projectKey="TEST",
         )
         db_manager.save_folder(folder, "TEST")
 
@@ -448,11 +439,11 @@ class TestDatabaseTransactions:
             projectKey="TEST",
             steps=[
                 CaseStepModel(
-                    id="STEP-1", index=0, description="Step 1", expected_result="Result 1"
-                )
+                    id="STEP-1", index=0, description="Step 1", expected_result="Result 1",
+                ),
             ],
             custom_fields=[
-                CustomFieldModel(id="CF-1", name="Field 1", type="text", value="Value 1")
+                CustomFieldModel(id="CF-1", name="Field 1", type="text", value="Value 1"),
             ],
         )
 
@@ -470,7 +461,7 @@ class TestDatabaseTransactions:
         with patch.object(db_manager, "_save_custom_fields") as mock_save_custom_fields:
             # Configure the mock to raise an error
             mock_save_custom_fields.side_effect = SQLAlchemyError(
-                "Simulated error in nested operation"
+                "Simulated error in nested operation",
             )
 
             try:

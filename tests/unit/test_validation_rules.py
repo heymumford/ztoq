@@ -10,8 +10,8 @@ Unit tests for validation rules.
 
 import unittest
 from unittest.mock import MagicMock, patch
+
 from ztoq.validation import (
-    ValidationIssue,
     ValidationLevel,
     ValidationPhase,
     ValidationScope,
@@ -558,7 +558,7 @@ class TestReferentialIntegrityRule(unittest.TestCase):
         self.assertEqual(len(issues), 1)
         self.assertTrue("has no mapping" in issues[0].message)
         mock_database.get_mapped_entity_id.assert_called_once_with(
-            "TEST", "folder_to_module", "456"
+            "TEST", "folder_to_module", "456",
         )
 
     def test_validate_with_valid_mapping(self):
@@ -573,7 +573,7 @@ class TestReferentialIntegrityRule(unittest.TestCase):
 
         self.assertEqual(len(issues), 0)
         mock_database.get_mapped_entity_id.assert_called_once_with(
-            "TEST", "folder_to_module", "456"
+            "TEST", "folder_to_module", "456",
         )
 
 

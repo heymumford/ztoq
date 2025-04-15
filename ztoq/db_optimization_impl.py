@@ -14,7 +14,8 @@ for improved performance with large datasets.
 import functools
 import logging
 import time
-from typing import Any, Callable, Dict, List
+from collections.abc import Callable
+from typing import Any
 
 from sqlalchemy import text
 from sqlalchemy.orm import Session
@@ -52,6 +53,7 @@ class DatabasePerformanceMonitor:
 
         Args:
             db_manager: Optimized database manager to monitor
+
         """
         current_time = time.time()
 
@@ -66,7 +68,7 @@ class DatabasePerformanceMonitor:
             logger.info("Database Performance Report:")
             logger.info(f"Total operations: {stats['summary']['total_operations']}")
             logger.info(
-                f"Average operation time: {stats['summary']['avg_operation_time']:.4f} seconds"
+                f"Average operation time: {stats['summary']['avg_operation_time']:.4f} seconds",
             )
 
             # Log slow operations
@@ -79,18 +81,19 @@ class DatabasePerformanceMonitor:
             if slow_ops:
                 logger.warning("Slow database operations detected:")
                 for op_name, op_stats in sorted(
-                    slow_ops, key=lambda x: x[1]["avg_time"], reverse=True
+                    slow_ops, key=lambda x: x[1]["avg_time"], reverse=True,
                 ):
                     logger.warning(
-                        f"  - {op_name}: {op_stats['avg_time']:.4f}s avg, {op_stats['count']} calls"
+                        f"  - {op_name}: {op_stats['avg_time']:.4f}s avg, {op_stats['count']} calls",
                     )
 
-    def get_optimization_recommendations(self) -> List[Dict[str, Any]]:
+    def get_optimization_recommendations(self) -> list[dict[str, Any]]:
         """
         Get database optimization recommendations.
 
         Returns:
             List of optimization recommendations
+
         """
         # Get performance report
         report = get_database_performance_report()
@@ -136,6 +139,7 @@ def optimize_database_queries(session: Session, query_type: str) -> None:
     Args:
         session: Database session
         query_type: Type of query to optimize
+
     """
     if query_type == "read":
         # Optimize for read operations
@@ -162,6 +166,7 @@ def optimize_database_access(query_type: str = "read"):
 
     Returns:
         Decorator function
+
     """
 
     def decorator(func: Callable) -> Callable:
@@ -201,7 +206,7 @@ def process_large_result_set(
     model_class: Any,
     filter_criteria: Any = None,
     batch_size: int = 1000,
-    processor: Callable[[List[Any]], None] = None,
+    processor: Callable[[list[Any]], None] | None = None,
 ) -> int:
     """
     Process a large result set in batches.
@@ -215,6 +220,7 @@ def process_large_result_set(
 
     Returns:
         Count of processed records
+
     """
     processed_count = 0
 
@@ -227,14 +233,14 @@ def process_large_result_set(
             query = query.filter(filter_criteria)
 
         # Get ID column for keyset pagination
-        id_column = getattr(model_class, "id")
+        id_column = model_class.id
 
         # Process records in batches
         last_id = None
         while True:
             # Use keyset pagination
             batch = keyset_pagination(
-                session, model_class, id_column, batch_size, last_id, filter_criteria
+                session, model_class, id_column, batch_size, last_id, filter_criteria,
             )
 
             if not batch:

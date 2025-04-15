@@ -4,7 +4,7 @@ version = "0.4.1"
 description = "A Python tool that extracts test data from Zephyr Scale and migrates it to qTest"
 authors = ["Eric C. Mumford (@heymumford)"]
 readme = "README.md"
-packages = [{include = "ztoq"}]
+packages = [{include = "ztoq"}, {include = "scripts"}]
 
 [tool.poetry.dependencies]
 python = "^3.11"
@@ -30,30 +30,25 @@ uvicorn = "^0.34.1"
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.0"
 pytest-cov = "^4.1"
-black = "^23.0"
-flake8 = "^6.0"
 mypy = "^1.5"
 tox = "^4.11"
 httpx = "^0.28.1"
 types-pyyaml = "^6.0.12.20250402"
 types-requests = "^2.32.0.20250328"
 uvicorn = "^0.34.1"
-ruff = "^0.0.292"
-isort = "^5.12.0"
+ruff = "^0.1.8"  # Updated to latest version for better linting coverage
 pre-commit = "^3.3.3"
-bandit = "^1.7.5"
 safety = "^2.3.5"
-pydocstyle = "^6.3.0"
 interrogate = "^1.5.0"
 radon = "^6.0.1"
 xenon = "^0.9.0"
-docformatter = "^1.7.5"
-pylint = "^3.0.1"
 pytest-benchmark = "^4.0.0"
 responses = "^0.25.7"
 matplotlib = "^3.10.1"
 numpy = "^2.2.4"
 pandas = "^2.2.3"
+# Removed: black, flake8, isort, bandit, pydocstyle, docformatter, pylint 
+# These are now handled by ruff
 
 [tool.poetry.group.docs.dependencies]
 sphinx = "^8.2"
@@ -80,6 +75,7 @@ markers = [
 
 [tool.poetry.scripts]
 ztoq = "ztoq.cli:app"
+ztoq_post_install = "scripts.post_install:main"
 
 [tool.black]
 line-length = 100
@@ -91,28 +87,68 @@ include = '\.pyi?$'
 [tool.ruff]
 line-length = 100
 target-version = "py311"
+# Format code using the rules compatible with Black
+respect-gitignore = true
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "auto"
+skip-magic-trailing-comma = false
 
 [tool.ruff.lint]
 select = [
-    "E",   # pycodestyle errors
+    # Pyflakes
     "F",   # pyflakes
+    # Pycodestyle
+    "E",   # pycodestyle errors
     "W",   # pycodestyle warnings
-    "C",   # flake8-comprehensions
-    "B",   # flake8-bugbear
+    # Isort
     "I",   # isort
-    "N",   # pep8-naming
+    # Pylint
+    "PL",  # pylint
+    # Pyupgrade
     "UP",  # pyupgrade
-    "S",   # flake8-bandit
-    "A",   # flake8-builtins
-    "T",   # flake8-print
-    "PT",  # flake8-pytest-style
-    "RET", # flake8-return
+    # Flake8-bugbear
+    "B",   # flake8-bugbear
+    # Flake8-comprehensions
+    "C",   # flake8-comprehensions
+    # Flake8-simplify
     "SIM", # flake8-simplify
+    # Flake8-bandit
+    "S",   # flake8-bandit
+    # PEP-8 Naming
+    "N",   # pep8-naming
+    # Flake8-builtins
+    "A",   # flake8-builtins
+    # Flake8-print
+    "T",   # flake8-print
+    # Pytest Style
+    "PT",  # flake8-pytest-style
+    # Return statements
+    "RET", # flake8-return
+    # Docstrings
     "D",   # pydocstyle
+    # Type annotations
     "ANN", # flake8-annotations
+    # Ruff-specific rules
+    "RUF", # ruff-specific rules
+    # String formatting
+    "F",   # string formatting
+    # Imports
+    "ICN", # import conventions  
+    "G",   # logging format
+    "INP", # implicit namespace packages
+    "PIE", # pie rules
+    "Q",   # quotes
+    "TID", # tidy imports
+    "TCH", # type checking
+    "RSE", # raise statement
+    "COM", # commas
+    "ERA", # eradicate commented-out code
 ]
 ignore = [
-    "E501",  # line too long (handled by black)
+    "E501",  # line too long (handled by ruff format)
     "S101",  # use of assert (acceptable in test files)
     "B008",  # function call in argument defaults (common pattern in FastAPI)
     "N815",  # mixed-case variable in class scope (common in SQLAlchemy models)
@@ -121,13 +157,19 @@ ignore = [
     "E402",  # module level import not at top of file (acceptable after license headers)
     "D100",  # Missing module docstring (we use module-level docstrings selectively)
     "D104",  # Missing docstring in package (we use __init__.py for imports)
-    "D200",  # One-line docstring should fit on one line (handled by docformatter)
-    "D202",  # No blank lines allowed after function docstring (handled by docformatter)
-    "D203",  # 1 blank line required before class docstring (handled by docformatter)
-    "D212",  # Multi-line docstring summary should start at the first line (handled by docformatter)
-    "D415",  # First line should end with a period, question mark, or exclamation point (handled by docformatter)
+    "D200",  # One-line docstring should fit on one line
+    "D202",  # No blank lines allowed after function docstring
+    "D203",  # 1 blank line required before class docstring
+    "D212",  # Multi-line docstring summary should start at the first line
+    "D415",  # First line should end with a period, question mark, or exclamation point
     "ANN101", # Missing type annotation for `self` in method
     "ANN102", # Missing type annotation for `cls` in classmethod
+    "PLC1901", # Compare to empty string
+    "PLR0913", # Too many arguments
+    "PLR0915", # Too many statements
+    "PLR0912", # Too many branches
+    "PLR0911", # Too many return statements
+    "PLC0414", # Useless import alias
 ]
 # Allow autofix for all enabled rules (when `--fix`) is provided
 fixable = ["ALL"]
@@ -136,22 +178,31 @@ unfixable = []
 [tool.ruff.lint.per-file-ignores]
 "tests/**/*.py" = [
     "S101",  # Allow assert in tests
+    "S105",  # Allow hardcoded passwords in tests
+    "S106",  # Allow hardcoded password arguments in tests  
     "T201",  # Allow print in tests
     "B011",  # Allow assert False in tests
     "PT012", # Allow pytest.raises() without match
     "ANN",   # Allow missing type annotations in tests
     "D",     # Allow missing docstrings in tests
     "N802",  # Allow function names with uppercase characters (like testCamelCase)
+    "PLR2004", # Allow magic numbers in tests
+    "PLW0603", # Allow global statements in tests
+    "E402",  # Allow module level imports not at top in tests
 ]
 "examples/**/*.py" = [
     "T201",  # Allow print in examples
     "ANN",   # Allow missing type annotations in examples
     "D",     # Allow missing docstrings in examples
     "S101",  # Allow assert in examples
+    "S105",  # Allow hardcoded passwords in examples
+    "S106",  # Allow hardcoded password arguments in examples
+    "PLR2004", # Allow magic numbers in examples
 ]
 "ztoq/cli.py" = [
     "T201",  # Allow print statements in CLI
     "ANN001", # Allow missing return type annotation in CLI (for click-decorated functions)
+    "PLR0915", # Allow many statements in CLI
 ]
 "ztoq/main.py" = [
     "T201",  # Allow print statements in main
@@ -165,11 +216,19 @@ unfixable = []
     "ANN",   # Allow missing type annotations in scripts
     "D",     # Allow missing docstrings in scripts
     "S",     # Allow security issues in scripts (these are development tools)
+    "PLR2004", # Allow magic numbers in scripts
+]
+"alembic/**/*.py" = [
+    "ANN",   # Allow missing type annotations in alembic
+    "D",     # Allow missing docstrings in alembic
+    "N",     # Allow naming violations in alembic
 ]
 
 [tool.ruff.lint.isort]
 known-first-party = ["ztoq"]
 known-third-party = ["pydantic", "fastapi", "sqlalchemy", "pytest", "typer", "requests"]
+section-order = ["future", "standard-library", "third-party", "first-party", "local-folder"]
+combine-as-imports = true
 
 [tool.mypy]
 python_version = "3.11"

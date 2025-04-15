@@ -11,15 +11,15 @@ This example demonstrates how to use the QTestImporter to create a hierarchy of
 test cycles, associate test cases with them, and handle conflict resolution.
 """
 
+import logging
 import os
 import sys
-import logging
-from typing import List, Dict, Any
+from typing import Any
 
 # Set up logging
 logging.basicConfig(
     level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger(__name__)
 
@@ -27,11 +27,13 @@ logger = logging.getLogger(__name__)
 if os.path.basename(os.getcwd()) == "examples":
     sys.path.insert(0, os.path.abspath(".."))
 
-from ztoq.qtest_client import QTestClient
+from ztoq.qtest_importer import ConflictResolution, ImportConfig, QTestImporter
 from ztoq.qtest_models import (
-    QTestConfig, QTestTestCycle, QTestTestCase, QTestCustomField
+    QTestConfig,
+    QTestCustomField,
+    QTestTestCase,
+    QTestTestCycle,
 )
-from ztoq.qtest_importer import QTestImporter, ImportConfig, ConflictResolution
 
 
 def get_config_from_env() -> QTestConfig:
@@ -44,11 +46,11 @@ def get_config_from_env() -> QTestConfig:
         # Create config using environment variables
         return QTestConfig.from_env(project_id=project_id)
     except Exception as e:
-        logger.error(f"Failed to get config from environment: {str(e)}")
+        logger.error(f"Failed to get config from environment: {e!s}")
         sys.exit(1)
 
 
-def create_hierarchical_test_cycles(release_id: int) -> Dict[str, Any]:
+def create_hierarchical_test_cycles(release_id: int) -> dict[str, Any]:
     """
     Create a hierarchical structure of test cycles.
 
@@ -68,9 +70,9 @@ def create_hierarchical_test_cycles(release_id: int) -> Dict[str, Any]:
                 field_id=1001,  # This should match a real field ID in your qTest instance
                 field_name="Priority",
                 field_type="STRING",
-                field_value="High"
-            )
-        ]
+                field_value="High",
+            ),
+        ],
     )
 
     # Create child test cycles for different test types
@@ -80,22 +82,22 @@ def create_hierarchical_test_cycles(release_id: int) -> Dict[str, Any]:
             description="Tests to verify existing functionality",
             # parent_id will be set after parent creation
             release_id=release_id,
-            properties=[]
+            properties=[],
         ),
         QTestTestCycle(
             name="New Feature Tests",
             description="Tests for new features in Sprint 15",
             # parent_id will be set after parent creation
             release_id=release_id,
-            properties=[]
+            properties=[],
         ),
         QTestTestCycle(
             name="Performance Tests",
             description="Tests to verify performance benchmarks",
             # parent_id will be set after parent creation
             release_id=release_id,
-            properties=[]
-        )
+            properties=[],
+        ),
     ]
 
     # Create grandchild cycles for the first child (Regression Tests)
@@ -105,25 +107,25 @@ def create_hierarchical_test_cycles(release_id: int) -> Dict[str, Any]:
             description="Regression tests for the user interface",
             # parent_id will be set after child creation
             release_id=release_id,
-            properties=[]
+            properties=[],
         ),
         QTestTestCycle(
             name="API Regression",
             description="Regression tests for the API endpoints",
             # parent_id will be set after child creation
             release_id=release_id,
-            properties=[]
-        )
+            properties=[],
+        ),
     ]
 
     return {
         "parent": parent_cycle,
         "children": child_cycles,
-        "grandchildren": grandchild_cycles
+        "grandchildren": grandchild_cycles,
     }
 
 
-def create_sample_test_cases(module_id: int) -> List[QTestTestCase]:
+def create_sample_test_cases(module_id: int) -> list[QTestTestCase]:
     """
     Create sample test cases to associate with test cycles.
 
@@ -143,15 +145,15 @@ def create_sample_test_cases(module_id: int) -> List[QTestTestCase]:
                     field_id=2001,  # This should match a real field ID in your qTest instance
                     field_name="Automated",
                     field_type="CHECKBOX",
-                    field_value=True
+                    field_value=True,
                 ),
                 QTestCustomField(
                     field_id=2002,  # This should match a real field ID in your qTest instance
                     field_name="Component",
                     field_type="STRING",
-                    field_value="Authentication"
-                )
-            ]
+                    field_value="Authentication",
+                ),
+            ],
         ),
         QTestTestCase(
             name="User Profile Update Test",
@@ -162,15 +164,15 @@ def create_sample_test_cases(module_id: int) -> List[QTestTestCase]:
                     field_id=2001,
                     field_name="Automated",
                     field_type="CHECKBOX",
-                    field_value=True
+                    field_value=True,
                 ),
                 QTestCustomField(
                     field_id=2002,
                     field_name="Component",
                     field_type="STRING",
-                    field_value="User Management"
-                )
-            ]
+                    field_value="User Management",
+                ),
+            ],
         ),
         QTestTestCase(
             name="API Response Time Test",
@@ -181,22 +183,22 @@ def create_sample_test_cases(module_id: int) -> List[QTestTestCase]:
                     field_id=2001,
                     field_name="Automated",
                     field_type="CHECKBOX",
-                    field_value=True
+                    field_value=True,
                 ),
                 QTestCustomField(
                     field_id=2002,
                     field_name="Component",
                     field_type="STRING",
-                    field_value="API"
+                    field_value="API",
                 ),
                 QTestCustomField(
                     field_id=2003,
                     field_name="Performance",
                     field_type="CHECKBOX",
-                    field_value=True
-                )
-            ]
-        )
+                    field_value=True,
+                ),
+            ],
+        ),
     ]
 
 
@@ -226,7 +228,7 @@ def main():
         conflict_resolution=ConflictResolution.RENAME,
         concurrency=2,
         validate=True,
-        show_progress=True
+        show_progress=True,
     )
     importer = QTestImporter(config, import_config)
 

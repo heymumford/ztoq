@@ -13,17 +13,19 @@ to ensure data quality and integrity.
 
 import re
 import time
+from typing import Any
+
 import jsonschema
-from typing import Any, Dict, List, Optional, Pattern, Tuple
+
+from ztoq.custom_field_mapping import get_default_field_mapper
 from ztoq.data_comparison import get_data_comparison_rules
-from ztoq.validation import (
+from ztoq.validation_types import (
     ValidationIssue,
     ValidationLevel,
     ValidationPhase,
     ValidationRule,
     ValidationScope,
 )
-from ztoq.custom_field_mapping import get_default_field_mapper
 
 
 class RequiredFieldRule(ValidationRule):
@@ -36,7 +38,7 @@ class RequiredFieldRule(ValidationRule):
         description: str,
         scope: ValidationScope,
         phase: ValidationPhase,
-        required_fields: List[str],
+        required_fields: list[str],
         level: ValidationLevel = ValidationLevel.ERROR,
     ):
         """
@@ -50,11 +52,12 @@ class RequiredFieldRule(ValidationRule):
             phase: Phase where the rule applies
             required_fields: List of field names that must be present and non-empty
             level: Validation level for issues found by this rule
+
         """
         super().__init__(id, name, description, scope, phase, level)
         self.required_fields = required_fields
 
-    def validate(self, entity: Any, context: Dict[str, Any]) -> List[ValidationIssue]:
+    def validate(self, entity: Any, context: dict[str, Any]) -> list[ValidationIssue]:
         """
         Validate that required fields are present and non-empty.
 
@@ -64,6 +67,7 @@ class RequiredFieldRule(ValidationRule):
 
         Returns:
             List of validation issues found
+
         """
         issues = []
 
@@ -122,7 +126,7 @@ class StringLengthRule(ValidationRule):
         description: str,
         scope: ValidationScope,
         phase: ValidationPhase,
-        field_limits: Dict[str, Dict[str, int]],
+        field_limits: dict[str, dict[str, int]],
         level: ValidationLevel = ValidationLevel.ERROR,
     ):
         """
@@ -136,11 +140,12 @@ class StringLengthRule(ValidationRule):
             phase: Phase where the rule applies
             field_limits: Dict mapping field names to min/max length limits
             level: Validation level for issues found by this rule
+
         """
         super().__init__(id, name, description, scope, phase, level)
         self.field_limits = field_limits
 
-    def validate(self, entity: Any, context: Dict[str, Any]) -> List[ValidationIssue]:
+    def validate(self, entity: Any, context: dict[str, Any]) -> list[ValidationIssue]:
         """
         Validate string field lengths.
 
@@ -150,6 +155,7 @@ class StringLengthRule(ValidationRule):
 
         Returns:
             List of validation issues found
+
         """
         issues = []
 
@@ -270,7 +276,7 @@ class PatternMatchRule(ValidationRule):
         description: str,
         scope: ValidationScope,
         phase: ValidationPhase,
-        field_patterns: Dict[str, str],
+        field_patterns: dict[str, str],
         level: ValidationLevel = ValidationLevel.ERROR,
     ):
         """
@@ -284,13 +290,14 @@ class PatternMatchRule(ValidationRule):
             phase: Phase where the rule applies
             field_patterns: Dict mapping field names to regex patterns
             level: Validation level for issues found by this rule
+
         """
         super().__init__(id, name, description, scope, phase, level)
         self.field_patterns = {
             field: re.compile(pattern) for field, pattern in field_patterns.items()
         }
 
-    def validate(self, entity: Any, context: Dict[str, Any]) -> List[ValidationIssue]:
+    def validate(self, entity: Any, context: dict[str, Any]) -> list[ValidationIssue]:
         """
         Validate field values match regex patterns.
 
@@ -300,6 +307,7 @@ class PatternMatchRule(ValidationRule):
 
         Returns:
             List of validation issues found
+
         """
         issues = []
 
@@ -392,12 +400,13 @@ class RelationshipRule(ValidationRule):
             relation_field: Field that should contain the related entity ID
             related_entity_type: Type of the related entity
             level: Validation level for issues found by this rule
+
         """
         super().__init__(id, name, description, scope, phase, level)
         self.relation_field = relation_field
         self.related_entity_type = related_entity_type
 
-    def validate(self, entity: Any, context: Dict[str, Any]) -> List[ValidationIssue]:
+    def validate(self, entity: Any, context: dict[str, Any]) -> list[ValidationIssue]:
         """
         Validate entity relationships.
 
@@ -407,6 +416,7 @@ class RelationshipRule(ValidationRule):
 
         Returns:
             List of validation issues found
+
         """
         issues = []
         database = context.get("database")
@@ -483,7 +493,7 @@ class UniqueValueRule(ValidationRule):
         description: str,
         scope: ValidationScope,
         phase: ValidationPhase,
-        unique_fields: List[str],
+        unique_fields: list[str],
         level: ValidationLevel = ValidationLevel.ERROR,
     ):
         """
@@ -497,11 +507,12 @@ class UniqueValueRule(ValidationRule):
             phase: Phase where the rule applies
             unique_fields: List of fields that should have unique values
             level: Validation level for issues found by this rule
+
         """
         super().__init__(id, name, description, scope, phase, level)
         self.unique_fields = unique_fields
 
-    def validate(self, entity: Any, context: Dict[str, Any]) -> List[ValidationIssue]:
+    def validate(self, entity: Any, context: dict[str, Any]) -> list[ValidationIssue]:
         """
         Validate field values are unique.
 
@@ -511,6 +522,7 @@ class UniqueValueRule(ValidationRule):
 
         Returns:
             List of validation issues found
+
         """
         issues = []
         database = context.get("database")
@@ -531,7 +543,7 @@ class UniqueValueRule(ValidationRule):
 
                     # Check if another entity has the same value for this field
                     duplicates = database.find_duplicates(
-                        entity_type, field, field_value, exclude_id=entity_id
+                        entity_type, field, field_value, exclude_id=entity_id,
                     )
 
                     if duplicates:
@@ -562,7 +574,7 @@ class UniqueValueRule(ValidationRule):
 
                     # Check if another entity has the same value for this field
                     duplicates = database.find_duplicates(
-                        entity_type, field, field_value, exclude_id=entity_id
+                        entity_type, field, field_value, exclude_id=entity_id,
                     )
 
                     if duplicates:
@@ -596,7 +608,7 @@ class CustomFieldRule(ValidationRule):
         description: str,
         scope: ValidationScope,
         phase: ValidationPhase,
-        field_constraints: Dict[str, Dict[str, Any]],
+        field_constraints: dict[str, dict[str, Any]],
         level: ValidationLevel = ValidationLevel.WARNING,
     ):
         """
@@ -610,11 +622,12 @@ class CustomFieldRule(ValidationRule):
             phase: Phase where the rule applies
             field_constraints: Dict mapping field names to constraints
             level: Validation level for issues found by this rule
+
         """
         super().__init__(id, name, description, scope, phase, level)
         self.field_constraints = field_constraints
 
-    def validate(self, entity: Any, context: Dict[str, Any]) -> List[ValidationIssue]:
+    def validate(self, entity: Any, context: dict[str, Any]) -> list[ValidationIssue]:
         """
         Validate custom fields.
 
@@ -624,6 +637,7 @@ class CustomFieldRule(ValidationRule):
 
         Returns:
             List of validation issues found
+
         """
         issues = []
 
@@ -638,7 +652,7 @@ class CustomFieldRule(ValidationRule):
         else:
             entity_id = getattr(entity, "id", None) or str(id(entity))
             custom_fields = getattr(entity, "custom_fields", None) or getattr(
-                entity, "customFields", {}
+                entity, "customFields", {},
             )
 
         if not custom_fields or not isinstance(custom_fields, dict):
@@ -742,8 +756,8 @@ class AttachmentRule(ValidationRule):
         name: str,
         description: str,
         phase: ValidationPhase,
-        max_size: Optional[int] = None,
-        allowed_extensions: Optional[List[str]] = None,
+        max_size: int | None = None,
+        allowed_extensions: list[str] | None = None,
         level: ValidationLevel = ValidationLevel.WARNING,
     ):
         """
@@ -757,12 +771,13 @@ class AttachmentRule(ValidationRule):
             max_size: Maximum allowed attachment size in bytes
             allowed_extensions: List of allowed file extensions
             level: Validation level for issues found by this rule
+
         """
         super().__init__(id, name, description, ValidationScope.ATTACHMENT, phase, level)
         self.max_size = max_size
         self.allowed_extensions = allowed_extensions
 
-    def validate(self, entity: Any, context: Dict[str, Any]) -> List[ValidationIssue]:
+    def validate(self, entity: Any, context: dict[str, Any]) -> list[ValidationIssue]:
         """
         Validate attachments.
 
@@ -772,6 +787,7 @@ class AttachmentRule(ValidationRule):
 
         Returns:
             List of validation issues found
+
         """
         issues = []
 
@@ -851,7 +867,7 @@ class JsonSchemaRule(ValidationRule):
         description: str,
         scope: ValidationScope,
         phase: ValidationPhase,
-        schema: Dict[str, Any],
+        schema: dict[str, Any],
         level: ValidationLevel = ValidationLevel.ERROR,
     ):
         """
@@ -865,17 +881,12 @@ class JsonSchemaRule(ValidationRule):
             phase: Phase where the rule applies
             schema: The JSON schema to validate against
             level: Validation level for issues found by this rule
+
         """
         super().__init__(id, name, description, scope, phase, level)
         self.schema = schema
-        try:
-            # Import jsonschema library if available
 
-            self.jsonschema = jsonschema
-        except ImportError:
-            self.jsonschema = None
-
-    def validate(self, entity: Any, context: Dict[str, Any]) -> List[ValidationIssue]:
+    def validate(self, entity: Any, context: dict[str, Any]) -> list[ValidationIssue]:
         """
         Validate entity against JSON schema.
 
@@ -885,20 +896,9 @@ class JsonSchemaRule(ValidationRule):
 
         Returns:
             List of validation issues found
+
         """
         issues = []
-
-        if not self.jsonschema:
-            # Cannot validate without jsonschema library
-            issue = ValidationIssue(
-                id=f"json_schema_missing_library_{int(time.time())}",
-                level=ValidationLevel.ERROR,
-                scope=ValidationScope.SYSTEM,
-                phase=self.phase,
-                message="Cannot validate JSON schema: jsonschema library not available",
-            )
-            issues.append(issue)
-            return issues
 
         # Extract entity information
         if isinstance(entity, dict):
@@ -937,7 +937,7 @@ class JsonSchemaRule(ValidationRule):
                         level=self.level,
                         scope=self.scope,
                         phase=self.phase,
-                        message=f"Error converting entity to dictionary: {str(e)}",
+                        message=f"Error converting entity to dictionary: {e!s}",
                         entity_id=str(entity_id),
                         entity_type=entity_type,
                     )
@@ -946,8 +946,8 @@ class JsonSchemaRule(ValidationRule):
 
         # Validate against schema
         try:
-            self.jsonschema.validate(entity, self.schema)
-        except self.jsonschema.exceptions.ValidationError as e:
+            jsonschema.validate(entity, self.schema)
+        except jsonschema.exceptions.ValidationError as e:
             # Create validation issue with details
             issue = ValidationIssue(
                 id=f"json_schema_validation_{entity_id}_{int(time.time())}",
@@ -989,10 +989,11 @@ class TestStepValidationRule(ValidationRule):
             description: Description of the rule
             phase: Phase where the rule applies
             level: Validation level for issues found by this rule
+
         """
         super().__init__(id, name, description, ValidationScope.TEST_CASE_STEP, phase, level)
 
-    def validate(self, entity: Any, context: Dict[str, Any]) -> List[ValidationIssue]:
+    def validate(self, entity: Any, context: dict[str, Any]) -> list[ValidationIssue]:
         """
         Validate test case steps.
 
@@ -1002,6 +1003,7 @@ class TestStepValidationRule(ValidationRule):
 
         Returns:
             List of validation issues found
+
         """
         issues = []
 
@@ -1064,7 +1066,7 @@ class TestStepValidationRule(ValidationRule):
             # Check for empty expected result if required
             if self.phase != ValidationPhase.PRE_MIGRATION:  # Skip for initial validation
                 expected_result = step_data.get("expected_result", "") or getattr(
-                    step, "expected_result", ""
+                    step, "expected_result", "",
                 )
                 if not expected_result or expected_result.strip() == "":
                     issue = ValidationIssue(
@@ -1092,7 +1094,7 @@ class DataIntegrityRule(ValidationRule):
         name: str,
         description: str,
         scope: ValidationScope,
-        fields_to_compare: List[Tuple[str, str]],
+        fields_to_compare: list[tuple[str, str]],
         level: ValidationLevel = ValidationLevel.ERROR,
     ):
         """
@@ -1105,11 +1107,12 @@ class DataIntegrityRule(ValidationRule):
             scope: Scope where the rule applies
             fields_to_compare: List of tuples (source_field, target_field) to compare
             level: Validation level for issues found by this rule
+
         """
         super().__init__(id, name, description, scope, ValidationPhase.TRANSFORMATION, level)
         self.fields_to_compare = fields_to_compare
 
-    def validate(self, entity: Any, context: Dict[str, Any]) -> List[ValidationIssue]:
+    def validate(self, entity: Any, context: dict[str, Any]) -> list[ValidationIssue]:
         """
         Validate data integrity during transformation.
 
@@ -1119,6 +1122,7 @@ class DataIntegrityRule(ValidationRule):
 
         Returns:
             List of validation issues found
+
         """
         issues = []
 
@@ -1198,7 +1202,7 @@ class TestStatusMappingRule(ValidationRule):
         id: str,
         name: str,
         description: str,
-        status_mappings: Dict[str, str],
+        status_mappings: dict[str, str],
         level: ValidationLevel = ValidationLevel.WARNING,
     ):
         """
@@ -1210,6 +1214,7 @@ class TestStatusMappingRule(ValidationRule):
             description: Description of the rule
             status_mappings: Dict mapping Zephyr statuses to qTest statuses
             level: Validation level for issues found by this rule
+
         """
         super().__init__(
             id,
@@ -1221,7 +1226,7 @@ class TestStatusMappingRule(ValidationRule):
         )
         self.status_mappings = status_mappings
 
-    def validate(self, entity: Any, context: Dict[str, Any]) -> List[ValidationIssue]:
+    def validate(self, entity: Any, context: dict[str, Any]) -> list[ValidationIssue]:
         """
         Validate test status mappings.
 
@@ -1231,6 +1236,7 @@ class TestStatusMappingRule(ValidationRule):
 
         Returns:
             List of validation issues found
+
         """
         issues = []
 
@@ -1308,12 +1314,13 @@ class ReferentialIntegrityRule(ValidationRule):
             reference_field: The field containing the reference ID
             mapping_type: The type of mapping to check
             level: Validation level for issues found by this rule
+
         """
         super().__init__(id, name, description, scope, ValidationPhase.TRANSFORMATION, level)
         self.reference_field = reference_field
         self.mapping_type = mapping_type
 
-    def validate(self, entity: Any, context: Dict[str, Any]) -> List[ValidationIssue]:
+    def validate(self, entity: Any, context: dict[str, Any]) -> list[ValidationIssue]:
         """
         Validate referential integrity.
 
@@ -1323,6 +1330,7 @@ class ReferentialIntegrityRule(ValidationRule):
 
         Returns:
             List of validation issues found
+
         """
         issues = []
         database = context.get("database")
@@ -1370,12 +1378,13 @@ class ReferentialIntegrityRule(ValidationRule):
         return issues
 
 
-def get_test_status_mappings() -> Dict[str, str]:
+def get_test_status_mappings() -> dict[str, str]:
     """
     Get default test status mappings from Zephyr to qTest.
 
     Returns:
         Dictionary mapping Zephyr statuses to qTest statuses
+
     """
     return {
         "PASS": "PASSED",
@@ -1409,13 +1418,14 @@ class CustomFieldTransformationRule(ValidationRule):
             scope: Scope where the rule applies
             phase: Phase where the rule applies
             level: Validation level for issues found by this rule
+
         """
         super().__init__(id, name, description, scope, phase, level)
         # Import the custom field mapper to test transformations
 
         self.field_mapper = get_default_field_mapper()
 
-    def validate(self, entity: Any, context: Dict[str, Any]) -> List[ValidationIssue]:
+    def validate(self, entity: Any, context: dict[str, Any]) -> list[ValidationIssue]:
         """
         Validate custom field transformations.
 
@@ -1425,6 +1435,7 @@ class CustomFieldTransformationRule(ValidationRule):
 
         Returns:
             List of validation issues found
+
         """
         issues = []
 
@@ -1439,7 +1450,7 @@ class CustomFieldTransformationRule(ValidationRule):
         else:
             entity_id = getattr(entity, "id", None) or str(id(entity))
             custom_fields = getattr(entity, "custom_fields", None) or getattr(
-                entity, "customFields", {}
+                entity, "customFields", {},
             )
 
         if not custom_fields:
@@ -1464,7 +1475,7 @@ class CustomFieldTransformationRule(ValidationRule):
             try:
                 # Test transformation
                 transformed_value = self.field_mapper.transform_field_value(
-                    field_name, field_type, field_value
+                    field_name, field_type, field_value,
                 )
 
                 # Check if transformation resulted in empty string when we had a value
@@ -1516,7 +1527,7 @@ class CustomFieldTransformationRule(ValidationRule):
                     level=ValidationLevel.ERROR,
                     scope=ValidationScope.CUSTOM_FIELD,
                     phase=self.phase,
-                    message=f"Error transforming custom field '{field_name}': {str(e)}",
+                    message=f"Error transforming custom field '{field_name}': {e!s}",
                     entity_id=str(entity_id),
                     entity_type=entity_type,
                     field_name=field_name,
@@ -1530,12 +1541,13 @@ class CustomFieldTransformationRule(ValidationRule):
         return issues
 
 
-def get_built_in_rules() -> List[ValidationRule]:
+def get_built_in_rules() -> list[ValidationRule]:
     """
     Get a list of built-in validation rules.
 
     Returns:
         List of validation rules
+
     """
     rules = []
 
@@ -1549,7 +1561,7 @@ def get_built_in_rules() -> List[ValidationRule]:
             phase=ValidationPhase.EXTRACTION,
             required_fields=["key", "name"],
             level=ValidationLevel.ERROR,
-        )
+        ),
     )
 
     # Test case validation rules
@@ -1562,7 +1574,7 @@ def get_built_in_rules() -> List[ValidationRule]:
             phase=ValidationPhase.EXTRACTION,
             required_fields=["key", "name"],
             level=ValidationLevel.ERROR,
-        )
+        ),
     )
 
     rules.append(
@@ -1574,7 +1586,7 @@ def get_built_in_rules() -> List[ValidationRule]:
             phase=ValidationPhase.TRANSFORMATION,
             field_limits={"name": {"min": 1, "max": 255}},
             level=ValidationLevel.WARNING,
-        )
+        ),
     )
 
     rules.append(
@@ -1586,7 +1598,7 @@ def get_built_in_rules() -> List[ValidationRule]:
             phase=ValidationPhase.EXTRACTION,
             field_patterns={"key": r"^[A-Z]+-\d+$"},
             level=ValidationLevel.WARNING,
-        )
+        ),
     )
 
     rules.append(
@@ -1596,7 +1608,7 @@ def get_built_in_rules() -> List[ValidationRule]:
             description="Validates test case steps are properly defined",
             phase=ValidationPhase.EXTRACTION,
             level=ValidationLevel.WARNING,
-        )
+        ),
     )
 
     # Test cycle validation rules
@@ -1609,7 +1621,7 @@ def get_built_in_rules() -> List[ValidationRule]:
             phase=ValidationPhase.EXTRACTION,
             required_fields=["key", "name"],
             level=ValidationLevel.ERROR,
-        )
+        ),
     )
 
     # Test execution validation rules
@@ -1622,7 +1634,7 @@ def get_built_in_rules() -> List[ValidationRule]:
             phase=ValidationPhase.EXTRACTION,
             required_fields=["id", "testCaseId"],
             level=ValidationLevel.ERROR,
-        )
+        ),
     )
 
     rules.append(
@@ -1632,7 +1644,7 @@ def get_built_in_rules() -> List[ValidationRule]:
             description="Validates test statuses are mapped correctly",
             status_mappings=get_test_status_mappings(),
             level=ValidationLevel.WARNING,
-        )
+        ),
     )
 
     # Attachment validation rules
@@ -1644,7 +1656,7 @@ def get_built_in_rules() -> List[ValidationRule]:
             phase=ValidationPhase.EXTRACTION,
             max_size=10 * 1024 * 1024,  # 10MB
             level=ValidationLevel.WARNING,
-        )
+        ),
     )
 
     rules.append(
@@ -1674,7 +1686,7 @@ def get_built_in_rules() -> List[ValidationRule]:
                 "xml",
             ],
             level=ValidationLevel.WARNING,
-        )
+        ),
     )
 
     # Custom field validation rules
@@ -1697,7 +1709,7 @@ def get_built_in_rules() -> List[ValidationRule]:
                 "automated": {"type": "boolean"},
             },
             level=ValidationLevel.WARNING,
-        )
+        ),
     )
 
     # Add custom field transformation validation
@@ -1709,7 +1721,7 @@ def get_built_in_rules() -> List[ValidationRule]:
             scope=ValidationScope.TEST_CASE,
             phase=ValidationPhase.TRANSFORMATION,
             level=ValidationLevel.WARNING,
-        )
+        ),
     )
 
     rules.append(
@@ -1720,7 +1732,7 @@ def get_built_in_rules() -> List[ValidationRule]:
             scope=ValidationScope.TEST_CYCLE,
             phase=ValidationPhase.TRANSFORMATION,
             level=ValidationLevel.WARNING,
-        )
+        ),
     )
 
     rules.append(
@@ -1731,7 +1743,7 @@ def get_built_in_rules() -> List[ValidationRule]:
             scope=ValidationScope.TEST_EXECUTION,
             phase=ValidationPhase.TRANSFORMATION,
             level=ValidationLevel.WARNING,
-        )
+        ),
     )
 
     # Referential integrity rules
@@ -1744,7 +1756,7 @@ def get_built_in_rules() -> List[ValidationRule]:
             reference_field="folderId",
             mapping_type="folder_to_module",
             level=ValidationLevel.ERROR,
-        )
+        ),
     )
 
     rules.append(
@@ -1756,7 +1768,7 @@ def get_built_in_rules() -> List[ValidationRule]:
             reference_field="testCaseId",
             mapping_type="testcase_to_testcase",
             level=ValidationLevel.ERROR,
-        )
+        ),
     )
 
     rules.append(
@@ -1768,7 +1780,7 @@ def get_built_in_rules() -> List[ValidationRule]:
             reference_field="cycleId",
             mapping_type="cycle_to_cycle",
             level=ValidationLevel.ERROR,
-        )
+        ),
     )
 
     # Data integrity rules
@@ -1785,7 +1797,7 @@ def get_built_in_rules() -> List[ValidationRule]:
                 ("status", "status"),
             ],
             level=ValidationLevel.ERROR,
-        )
+        ),
     )
 
     rules.append(
@@ -1799,7 +1811,7 @@ def get_built_in_rules() -> List[ValidationRule]:
                 ("description", "description"),
             ],
             level=ValidationLevel.ERROR,
-        )
+        ),
     )
 
     # Add data comparison rules

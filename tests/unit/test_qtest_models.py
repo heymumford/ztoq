@@ -6,8 +6,10 @@ See LICENSE file for details.
 
 import base64
 from datetime import datetime
+
 import pytest
 from pydantic import ValidationError
+
 from ztoq.qtest_models import (
     QTestAttachment,
     QTestConfig,
@@ -38,7 +40,7 @@ from ztoq.qtest_models import (
 )
 
 
-@pytest.mark.unit()
+@pytest.mark.unit
 class TestQTestModels:
     def test_qtest_config(self):
         """Test QTestConfig model."""
@@ -62,7 +64,7 @@ class TestQTestModels:
         """Test QTestPaginatedResponse model."""
         # Manager API style pagination
         manager_response = QTestPaginatedResponse(
-            items=[{"id": 1}, {"id": 2}], page=1, page_size=10, total=2, is_last=True
+            items=[{"id": 1}, {"id": 2}], page=1, page_size=10, total=2, is_last=True,
         )
         assert len(manager_response.items) == 2
         assert manager_response.page == 1
@@ -72,7 +74,7 @@ class TestQTestModels:
 
         # Parameters API style pagination
         params_response = QTestPaginatedResponse(
-            items=[{"id": 1}, {"id": 2}], offset=0, limit=10, total=2, is_last=True
+            items=[{"id": 1}, {"id": 2}], offset=0, limit=10, total=2, is_last=True,
         )
         assert len(params_response.items) == 2
         assert params_response.offset == 0
@@ -117,7 +119,7 @@ class TestQTestModels:
         """Test QTestCustomField model."""
         # Create with all fields
         custom_field = QTestCustomField(
-            id=1, name="Priority", type="STRING", value="High", required=True
+            id=1, name="Priority", type="STRING", value="High", required=True,
         )
         assert custom_field.field_id == 1  # Note the alias mapping
         assert custom_field.field_name == "Priority"
@@ -154,7 +156,7 @@ class TestQTestModels:
         # Test from_binary method
         binary_data = b"Test binary data"
         binary_attachment = QTestAttachment.from_binary(
-            name="test.txt", content_type="text/plain", binary_data=binary_data
+            name="test.txt", content_type="text/plain", binary_data=binary_data,
         )
         assert binary_attachment["name"] == "test.txt"
         assert binary_attachment["contentType"] == "text/plain"
@@ -191,7 +193,7 @@ class TestQTestModels:
         """Test QTestModule model."""
         # Create with all fields
         module = QTestModule(
-            id=1, name="Test Module", description="A test module", parent_id=None, pid="MD-1"
+            id=1, name="Test Module", description="A test module", parent_id=None, pid="MD-1",
         )
         assert module.id == 1
         assert module.name == "Test Module"
@@ -368,7 +370,7 @@ class TestQTestModels:
             test_cycle_id=201,
             status="Not Run",
             properties=[
-                QTestCustomField(id=1, name="Environment", type="STRING", value="Production")
+                QTestCustomField(id=1, name="Environment", type="STRING", value="Production"),
             ],
         )
         assert test_run.id == 1

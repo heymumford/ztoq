@@ -5,21 +5,12 @@ This module provides fixtures specifically designed for unit tests,
 focusing on isolation and mocking of dependencies.
 """
 
-import pytest
-from pathlib import Path
-from typing import Dict, Any, Generator, Optional
+from collections.abc import Generator
 from unittest.mock import MagicMock, patch
 
+import pytest
+
 # Import the base fixtures
-from tests.fixtures.base import (
-    base_test_env,
-    mock_env_vars,
-    temp_dir,
-    temp_file,
-    temp_db_path,
-    mock_response,
-    mock_requests_session,
-)
 
 
 @pytest.fixture
@@ -67,7 +58,7 @@ def mock_db_cursor(mock_db_connection: MagicMock) -> MagicMock:
 
 
 @pytest.fixture
-def mock_file_system() -> Generator[Dict[str, MagicMock], None, None]:
+def mock_file_system() -> Generator[dict[str, MagicMock], None, None]:
     """
     Mock file system operations for unit testing.
 
@@ -78,11 +69,11 @@ def mock_file_system() -> Generator[Dict[str, MagicMock], None, None]:
         Dict[str, MagicMock]: Dictionary of mocked file system functions
     """
     with patch("pathlib.Path.exists") as mock_exists, patch(
-        "pathlib.Path.is_file"
+        "pathlib.Path.is_file",
     ) as mock_is_file, patch("pathlib.Path.is_dir") as mock_is_dir, patch(
-        "pathlib.Path.open"
+        "pathlib.Path.open",
     ) as mock_open, patch(
-        "builtins.open"
+        "builtins.open",
     ) as mock_builtin_open:
         # Set default returns
         mock_exists.return_value = True

@@ -25,7 +25,7 @@ Key Findings from Mumford's Analysis
 The decision to open source software components represents a complex strategic calculation that must be tailored to specific business contexts rather than following a one-size-fits-all approach or purely ideological preferences.
 
 Scientifically Valid AI-Assisted Research
-----------------------------------------
+-----------------------------------------
 
 The analysis and framework were developed using a rigorous methodology for AI-assisted research:
 

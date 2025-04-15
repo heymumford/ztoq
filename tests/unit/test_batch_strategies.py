@@ -13,17 +13,16 @@ data processing performance in the ETL pipeline.
 
 import random
 import time
-from typing import Dict, List, Tuple, Any, Callable
-import unittest.mock
+from typing import Any
+
 import pytest
 
 from ztoq.batch_strategies import (
-    BatchStrategy,
-    SizeBatchStrategy,
-    TimeBatchStrategy,
     AdaptiveBatchStrategy,
     EntityTypeBatchStrategy,
     SimilarityBatchStrategy,
+    SizeBatchStrategy,
+    TimeBatchStrategy,
     configure_optimal_batch_size,
     create_batches,
     estimate_processing_time,
@@ -34,7 +33,7 @@ pytestmark = pytest.mark.unit
 
 
 # Sample data for testing
-def create_test_entities(count: int = 100) -> List[Dict[str, Any]]:
+def create_test_entities(count: int = 100) -> list[dict[str, Any]]:
     """Create sample test case entities for testing."""
     return [
         {
@@ -74,7 +73,7 @@ def test_time_batch_strategy():
     entities = create_test_entities(50)
 
     # Mock time estimator function
-    def mock_time_estimator(entity: Dict[str, Any]) -> float:
+    def mock_time_estimator(entity: dict[str, Any]) -> float:
         # Simple estimation based on complexity and steps
         return entity["complexity"] * 0.1 + entity["steps_count"] * 0.05
 
@@ -109,7 +108,7 @@ def test_adaptive_batch_strategy():
     # Mock adaptation function
     processing_times = []
 
-    def mock_process_batch(batch: List[Dict[str, Any]]) -> float:
+    def mock_process_batch(batch: list[dict[str, Any]]) -> float:
         """Simulate processing a batch, returning the processing time."""
         # Simulated processing time increases with batch size but has some randomness
         processing_time = 0.01 * len(batch) + random.uniform(0.01, 0.05)
@@ -166,7 +165,7 @@ def test_entity_type_batch_strategy():
     entities = create_test_entities(100)
 
     # Function to extract entity type
-    def extract_type(entity: Dict[str, Any]) -> str:
+    def extract_type(entity: dict[str, Any]) -> str:
         return entity["type"]
 
     strategy = EntityTypeBatchStrategy(type_extractor=extract_type)
@@ -188,7 +187,7 @@ def test_similarity_batch_strategy():
     entities = create_test_entities(100)
 
     # Function to extract feature vector for similarity calculation
-    def extract_features(entity: Dict[str, Any]) -> Tuple[float, float, float]:
+    def extract_features(entity: dict[str, Any]) -> tuple[float, float, float]:
         return (
             entity["complexity"],
             entity["steps_count"] / 20.0,  # Normalize to 0-1
@@ -196,7 +195,7 @@ def test_similarity_batch_strategy():
         )
 
     strategy = SimilarityBatchStrategy(
-        feature_extractor=extract_features, similarity_threshold=0.8, max_batch_size=20
+        feature_extractor=extract_features, similarity_threshold=0.8, max_batch_size=20,
     )
 
     batches = strategy.create_batches(entities)
@@ -220,7 +219,7 @@ def test_similarity_batch_strategy():
         for entity in batch[1:]:
             features = extract_features(entity)
             # Calculate Euclidean distance (simple similarity metric)
-            squared_diffs = sum((a - b) ** 2 for a, b in zip(first_features, features))
+            squared_diffs = sum((a - b) ** 2 for a, b in zip(first_features, features, strict=False))
             distance = squared_diffs**0.5
             # Convert to similarity (1 - normalized distance)
             # Max possible distance in 3D space with normalized 0-1 values is sqrt(3)
@@ -276,7 +275,7 @@ def test_create_batches():
         assert len(batch) == 10
 
     # Create variable-size batches based on entity complexity
-    def complexity_based_size(entities: List[Dict[str, Any]]) -> int:
+    def complexity_based_size(entities: list[dict[str, Any]]) -> int:
         # More complex entities = smaller batches
         avg_complexity = sum(e["complexity"] for e in entities) / len(entities)
         return int(20 / avg_complexity)
@@ -325,11 +324,11 @@ def test_combined_strategies():
     entities = create_test_entities(100)
 
     # Mock time estimator function
-    def mock_time_estimator(entity: Dict[str, Any]) -> float:
+    def mock_time_estimator(entity: dict[str, Any]) -> float:
         return entity["complexity"] * 0.1 + entity["steps_count"] * 0.05
 
     # Function to extract entity type
-    def extract_type(entity: Dict[str, Any]) -> str:
+    def extract_type(entity: dict[str, Any]) -> str:
         return entity["type"]
 
     # Create batches first by type then by time
@@ -380,7 +379,7 @@ def test_adaptive_learning_over_time():
                 "steps_count": 5,
                 "size": 5,
                 "type": "functional",
-            }
+            },
         )
 
     random.shuffle(entities)  # Shuffle to ensure no inherent order
@@ -395,7 +394,7 @@ def test_adaptive_learning_over_time():
 
     # Mock process function that simulates processing time based on complexity
     # Entities with higher complexity take longer to process
-    def mock_process(batch: List[Dict[str, Any]]) -> float:
+    def mock_process(batch: list[dict[str, Any]]) -> float:
         total_complexity = sum(e["complexity"] for e in batch)
         return total_complexity * 0.05  # 0.05 seconds per complexity unit
 
@@ -419,7 +418,7 @@ def test_adaptive_learning_over_time():
                 "batch_size": batch_size,
                 "time": processing_time,
                 "throughput": throughput,
-            }
+            },
         )
 
         strategy.adapt(processing_time)
@@ -449,7 +448,7 @@ def test_performance_measurement():
     ]
 
     # Simple "processing" function that simulates workload
-    def process_entity(entity: Dict[str, Any]) -> Dict[str, Any]:
+    def process_entity(entity: dict[str, Any]) -> dict[str, Any]:
         # Simulate work - more complex entities take longer
         complexity_factor = entity["complexity"] / 5.0  # Normalize to 0-1
         time.sleep(0.001 * complexity_factor)  # Very short sleep to avoid long tests

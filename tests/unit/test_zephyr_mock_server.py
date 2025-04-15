@@ -5,17 +5,11 @@ See LICENSE file for details.
 """
 
 import pytest
+
 from ztoq.zephyr_mock_server import ZephyrMockServer
-from ztoq.models import (
-    Case,
-    CycleInfo,
-    Execution,
-    Folder,
-    Project,
-)
 
 
-@pytest.mark.unit()
+@pytest.mark.unit
 class TestZephyrMockServer:
     """Test suite for the Zephyr mock server."""
 
@@ -43,7 +37,7 @@ class TestZephyrMockServer:
         """Test authentication endpoint."""
         # Test authentication request
         response = self.server.handle_request(
-            "POST", "/authorize", data={"username": "test_user", "password": "test_password"}
+            "POST", "/authorize", data={"username": "test_user", "password": "test_password"},
         )
 
         # Verify response format
@@ -63,7 +57,7 @@ class TestZephyrMockServer:
 
         # Test projects listing
         response = self.server.handle_request(
-            "GET", "/projects", headers={"Authorization": f"Bearer {token}"}
+            "GET", "/projects", headers={"Authorization": f"Bearer {token}"},
         )
 
         # Verify response format
@@ -91,7 +85,7 @@ class TestZephyrMockServer:
 
         # Test getting project by key
         response = self.server.handle_request(
-            "GET", f"/projects/{project_key}", headers={"Authorization": f"Bearer {token}"}
+            "GET", f"/projects/{project_key}", headers={"Authorization": f"Bearer {token}"},
         )
 
         # Verify project data
@@ -151,7 +145,7 @@ class TestZephyrMockServer:
         }
 
         response = self.server.handle_request(
-            "POST", "/folders", data=folder_data, headers={"Authorization": f"Bearer {token}"}
+            "POST", "/folders", data=folder_data, headers={"Authorization": f"Bearer {token}"},
         )
 
         # Verify folder was created
@@ -207,7 +201,7 @@ class TestZephyrMockServer:
 
         # Test getting test case by key
         response = self.server.handle_request(
-            "GET", f"/testcases/{test_case_key}", headers={"Authorization": f"Bearer {token}"}
+            "GET", f"/testcases/{test_case_key}", headers={"Authorization": f"Bearer {token}"},
         )
 
         # Verify test case data
@@ -258,7 +252,7 @@ class TestZephyrMockServer:
         }
 
         response = self.server.handle_request(
-            "POST", "/testcases", data=test_case_data, headers={"Authorization": f"Bearer {token}"}
+            "POST", "/testcases", data=test_case_data, headers={"Authorization": f"Bearer {token}"},
         )
 
         # Verify test case was created
@@ -361,7 +355,7 @@ class TestZephyrMockServer:
                     "expected_result": "Expected result 1",
                     "actual_result": "Actual result 1",
                     "status": "Passed",
-                }
+                },
             ],
         }
 
@@ -418,7 +412,7 @@ class TestZephyrMockServer:
 
         # Test statuses listing
         response = self.server.handle_request(
-            "GET", "/statuses", headers={"Authorization": f"Bearer {token}"}
+            "GET", "/statuses", headers={"Authorization": f"Bearer {token}"},
         )
 
         # Verify response format
@@ -444,7 +438,7 @@ class TestZephyrMockServer:
 
         # Test priorities listing
         response = self.server.handle_request(
-            "GET", "/priorities", headers={"Authorization": f"Bearer {token}"}
+            "GET", "/priorities", headers={"Authorization": f"Bearer {token}"},
         )
 
         # Verify response format
@@ -470,7 +464,7 @@ class TestZephyrMockServer:
 
         # Test environments listing
         response = self.server.handle_request(
-            "GET", "/environments", headers={"Authorization": f"Bearer {token}"}
+            "GET", "/environments", headers={"Authorization": f"Bearer {token}"},
         )
 
         # Verify response format
@@ -534,7 +528,7 @@ class TestZephyrMockServer:
 
         # Make request to invalid endpoint
         response = self.server.handle_request(
-            "GET", "/invalid-endpoint", headers={"Authorization": f"Bearer {token}"}
+            "GET", "/invalid-endpoint", headers={"Authorization": f"Bearer {token}"},
         )
 
         # Verify error response
@@ -550,7 +544,7 @@ class TestZephyrMockServer:
 
         # Make request with invalid method
         response = self.server.handle_request(
-            "PUT", "/projects", headers={"Authorization": f"Bearer {token}"}
+            "PUT", "/projects", headers={"Authorization": f"Bearer {token}"},
         )
 
         # Verify error response
@@ -566,7 +560,7 @@ class TestZephyrMockServer:
 
         # Test creating a test case with invalid data
         invalid_test_case_data = {
-            "name": "Test Case Without Required Key"
+            "name": "Test Case Without Required Key",
             # Missing required fields
         }
 

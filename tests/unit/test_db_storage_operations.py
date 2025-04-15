@@ -9,8 +9,10 @@ import os
 import tempfile
 from datetime import datetime
 from unittest.mock import MagicMock, patch
+
 import pytest
 from sqlalchemy import text
+
 from ztoq.core.db_manager import DatabaseConfig, SQLDatabaseManager
 from ztoq.core.db_models import (
     Attachment,
@@ -26,45 +28,23 @@ from ztoq.core.db_models import (
 from ztoq.data_fetcher import FetchResult
 from ztoq.models import (
     Attachment as AttachmentModel,
-)
-from ztoq.models import (
     Case as CaseModel,
-)
-from ztoq.models import (
     CaseStep as CaseStepModel,
-)
-from ztoq.models import (
     CustomField as CustomFieldModel,
-)
-from ztoq.models import (
     CycleInfo as CycleInfoModel,
-)
-from ztoq.models import (
     Environment as EnvironmentModel,
-)
-from ztoq.models import (
     Execution as ExecutionModel,
-)
-from ztoq.models import (
     Folder as FolderModel,
-)
-from ztoq.models import (
     Link as LinkModel,
-)
-from ztoq.models import (
     Priority as PriorityModel,
-)
-from ztoq.models import (
     Project as ProjectModel,
-)
-from ztoq.models import (
     Status as StatusModel,
 )
 
 
-@pytest.mark.unit()
+@pytest.mark.unit
 class TestDatabaseStorageOperations:
-    @pytest.fixture()
+    @pytest.fixture
     def db_config(self):
         """Create a database configuration for testing with SQLite."""
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -72,7 +52,7 @@ class TestDatabaseStorageOperations:
             config = DatabaseConfig(db_type="sqlite", db_path=db_path, echo=False)
             yield config
 
-    @pytest.fixture()
+    @pytest.fixture
     def db_manager(self, db_config):
         """Create a SQLDatabaseManager instance for testing."""
         manager = SQLDatabaseManager(config=db_config)
@@ -85,14 +65,14 @@ class TestDatabaseStorageOperations:
 
         return manager
 
-    @pytest.fixture()
+    @pytest.fixture
     def sample_project(self):
         """Create a sample project for testing."""
         return ProjectModel(
-            id="PRJ-1", key="TEST", name="Test Project", description="Test project description"
+            id="PRJ-1", key="TEST", name="Test Project", description="Test project description",
         )
 
-    @pytest.fixture()
+    @pytest.fixture
     def sample_folders(self):
         """Create sample folders for testing."""
         return [
@@ -106,7 +86,7 @@ class TestDatabaseStorageOperations:
             ),
         ]
 
-    @pytest.fixture()
+    @pytest.fixture
     def sample_statuses(self):
         """Create sample statuses for testing."""
         return [
@@ -133,22 +113,22 @@ class TestDatabaseStorageOperations:
             ),
         ]
 
-    @pytest.fixture()
+    @pytest.fixture
     def sample_priorities(self):
         """Create sample priorities for testing."""
         return [
             PriorityModel(
-                id="PRI-1", name="High", description="High priority", color="#FF0000", rank=1
+                id="PRI-1", name="High", description="High priority", color="#FF0000", rank=1,
             ),
             PriorityModel(
-                id="PRI-2", name="Medium", description="Medium priority", color="#FFFF00", rank=2
+                id="PRI-2", name="Medium", description="Medium priority", color="#FFFF00", rank=2,
             ),
             PriorityModel(
-                id="PRI-3", name="Low", description="Low priority", color="#00FF00", rank=3
+                id="PRI-3", name="Low", description="Low priority", color="#00FF00", rank=3,
             ),
         ]
 
-    @pytest.fixture()
+    @pytest.fixture
     def sample_environments(self):
         """Create sample environments for testing."""
         return [
@@ -203,7 +183,7 @@ class TestDatabaseStorageOperations:
             assert folder.name == "Updated Test Cases"
 
     def test_complex_entity_creation(
-        self, db_manager, sample_project, sample_folders, sample_priorities, sample_environments
+        self, db_manager, sample_project, sample_folders, sample_priorities, sample_environments,
     ):
         """Test creating complex entities with relationships."""
         # Save prerequisites
@@ -254,8 +234,8 @@ class TestDatabaseStorageOperations:
             ],
             links=[
                 LinkModel(
-                    id="LINK-1", name="Requirements", url="https://example.com/req", type="web"
-                )
+                    id="LINK-1", name="Requirements", url="https://example.com/req", type="web",
+                ),
             ],
             attachments=[
                 AttachmentModel(
@@ -266,7 +246,7 @@ class TestDatabaseStorageOperations:
                     created_on=datetime.now(),
                     created_by="user1",
                     content=base64.b64encode(b"test image data").decode("utf-8"),
-                )
+                ),
             ],
             scripts=[],
         )
@@ -291,7 +271,7 @@ class TestDatabaseStorageOperations:
             project_key=sample_project.key,
             projectKey=sample_project.key,  # Ensure both forms are provided
             custom_fields=[
-                CustomFieldModel(id="CF-3", name="Sprint", type="text", value="Sprint 1")
+                CustomFieldModel(id="CF-3", name="Sprint", type="text", value="Sprint 1"),
             ],
             links=[],
             attachments=[],
@@ -336,7 +316,7 @@ class TestDatabaseStorageOperations:
                 ),
             ],
             custom_fields=[
-                CustomFieldModel(id="CF-4", name="Browser", type="text", value="Chrome")
+                CustomFieldModel(id="CF-4", name="Browser", type="text", value="Chrome"),
             ],
             attachments=[],
             links=[],
@@ -406,7 +386,7 @@ class TestDatabaseStorageOperations:
         db_manager.save_project(sample_project)
 
         folder = FolderModel(
-            id="FOLD-1", name="Test Cases", folderType="TEST_CASE", projectKey="TEST"
+            id="FOLD-1", name="Test Cases", folderType="TEST_CASE", projectKey="TEST",
         )
         db_manager.save_folder(folder, sample_project.key)
 
@@ -437,7 +417,7 @@ class TestDatabaseStorageOperations:
                 ),
             ],
             custom_fields=[
-                CustomFieldModel(id="CF-1", name="Test Type", type="text", value="Original value")
+                CustomFieldModel(id="CF-1", name="Test Type", type="text", value="Original value"),
             ],
             links=[
                 LinkModel(
@@ -445,7 +425,7 @@ class TestDatabaseStorageOperations:
                     name="Original Link",
                     url="https://example.com/original",
                     type="web",
-                )
+                ),
             ],
         )
         db_manager.save_test_case(case, sample_project.key)
@@ -474,8 +454,8 @@ class TestDatabaseStorageOperations:
             ],
             links=[
                 LinkModel(
-                    id="LINK-2", name="Updated Link", url="https://example.com/updated", type="web"
-                )
+                    id="LINK-2", name="Updated Link", url="https://example.com/updated", type="web",
+                ),
             ],
         )
         db_manager.save_test_case(updated_case, sample_project.key)
@@ -520,7 +500,7 @@ class TestDatabaseStorageOperations:
 
         # Create parent folder
         parent_folder = FolderModel(
-            id="FOLD-PARENT", name="Parent Folder", folderType="TEST_CASE", projectKey="TEST"
+            id="FOLD-PARENT", name="Parent Folder", folderType="TEST_CASE", projectKey="TEST",
         )
         db_manager.save_folder(parent_folder, sample_project.key)
 
@@ -615,8 +595,8 @@ class TestDatabaseStorageOperations:
             projectKey=sample_project.key,
             custom_fields=[
                 CustomFieldModel(
-                    id="CF-SIMPLE", name="Simple Field", type="text", value="Simple value"
-                )
+                    id="CF-SIMPLE", name="Simple Field", type="text", value="Simple value",
+                ),
             ],
         )
         db_manager.save_test_case(case, sample_project.key)
@@ -648,7 +628,7 @@ class TestDatabaseStorageOperations:
                     content_type="text/plain",
                     size=len(binary_data),
                     content=base64_data,
-                )
+                ),
             ],
         )
         db_manager.save_test_case(case, sample_project.key)
@@ -763,8 +743,8 @@ class TestDatabaseStorageOperations:
                 ],
                 custom_fields=[
                     CustomFieldModel(
-                        id=f"CF-{i}", name=f"Field {i}", type="text", value=f"Value {i}"
-                    )
+                        id=f"CF-{i}", name=f"Field {i}", type="text", value=f"Value {i}",
+                    ),
                 ],
             )
             db_manager.save_test_case(case, sample_project.key)
@@ -783,7 +763,7 @@ class TestDatabaseStorageOperations:
         # Create 3 test executions
         for i in range(1, 4):
             execution = ExecutionModel(
-                id=f"EXEC-{i}", testCaseKey=f"TEST-{i}", cycleId="CYCLE-1", status="PASS"
+                id=f"EXEC-{i}", testCaseKey=f"TEST-{i}", cycleId="CYCLE-1", status="PASS",
             )
             db_manager.save_test_execution(execution, sample_project.key)
 
@@ -814,7 +794,7 @@ class TestDatabaseStorageOperations:
 
         # Execute a query with parameters
         folders = db_manager.execute_query(
-            "SELECT * FROM folders WHERE project_key = :project_key", {"project_key": "TEST"}
+            "SELECT * FROM folders WHERE project_key = :project_key", {"project_key": "TEST"},
         )
         assert len(folders) == 2
 

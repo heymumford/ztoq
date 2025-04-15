@@ -10,11 +10,11 @@ Unit tests for the custom field mapping module.
 
 import unittest
 from datetime import datetime
-from unittest.mock import MagicMock, patch
-from ztoq.custom_field_mapping import CustomFieldMapper, get_default_field_mapper
-from ztoq.models import CustomField, CustomFieldType
 
 import pytest
+
+from ztoq.custom_field_mapping import CustomFieldMapper, get_default_field_mapper
+from ztoq.models import CustomField, CustomFieldType
 
 
 @pytest.mark.unit
@@ -50,7 +50,7 @@ class TestCustomFieldMapper(unittest.TestCase):
         # Test list to string for multiple select
         self.assertEqual(
             self.mapper.transform_field_value(
-                "tags", CustomFieldType.MULTIPLE_SELECT, ["tag1", "tag2"]
+                "tags", CustomFieldType.MULTIPLE_SELECT, ["tag1", "tag2"],
             ),
             "tag1, tag2",
         )
@@ -58,44 +58,44 @@ class TestCustomFieldMapper(unittest.TestCase):
         # Test date formatting
         now = datetime.now()
         self.assertEqual(
-            self.mapper.transform_field_value("date", CustomFieldType.DATE, now), now.isoformat()
+            self.mapper.transform_field_value("date", CustomFieldType.DATE, now), now.isoformat(),
         )
 
         # Test boolean values
         self.assertTrue(
-            self.mapper.transform_field_value("automated", CustomFieldType.CHECKBOX, True)
+            self.mapper.transform_field_value("automated", CustomFieldType.CHECKBOX, True),
         )
         self.assertTrue(
-            self.mapper.transform_field_value("automated", CustomFieldType.CHECKBOX, "true")
+            self.mapper.transform_field_value("automated", CustomFieldType.CHECKBOX, "true"),
         )
         self.assertFalse(
-            self.mapper.transform_field_value("automated", CustomFieldType.CHECKBOX, "false")
+            self.mapper.transform_field_value("automated", CustomFieldType.CHECKBOX, "false"),
         )
 
         # Test numeric values
         self.assertEqual(self.mapper.transform_field_value("points", CustomFieldType.NUMERIC, 5), 5)
         self.assertEqual(
-            self.mapper.transform_field_value("points", CustomFieldType.NUMERIC, "5"), 5.0
+            self.mapper.transform_field_value("points", CustomFieldType.NUMERIC, "5"), 5.0,
         )
         self.assertEqual(
-            self.mapper.transform_field_value("points", CustomFieldType.NUMERIC, ""), 0
+            self.mapper.transform_field_value("points", CustomFieldType.NUMERIC, ""), 0,
         )
 
         # Test default string conversion
         self.assertEqual(
-            self.mapper.transform_field_value("name", CustomFieldType.TEXT, "Test"), "Test"
+            self.mapper.transform_field_value("name", CustomFieldType.TEXT, "Test"), "Test",
         )
 
         # Test status mapping
         self.assertEqual(self.mapper.transform_field_value("status", "TEXT", "PASS"), "PASSED")
         self.assertEqual(
-            self.mapper.transform_field_value("execution_status", "TEXT", "FAIL"), "FAILED"
+            self.mapper.transform_field_value("execution_status", "TEXT", "FAIL"), "FAILED",
         )
 
         # Test priority mapping
         self.assertEqual(self.mapper.transform_field_value("priority", "TEXT", "HIGH"), "HIGH")
         self.assertEqual(
-            self.mapper.transform_field_value("importance", "TEXT", "LOWEST"), "TRIVIAL"
+            self.mapper.transform_field_value("importance", "TEXT", "LOWEST"), "TRIVIAL",
         )
 
     def test_map_custom_fields(self):
@@ -104,7 +104,7 @@ class TestCustomFieldMapper(unittest.TestCase):
         zephyr_fields = [
             CustomField(id="1", name="Priority", type=CustomFieldType.DROPDOWN, value="High"),
             CustomField(
-                id="2", name="Labels", type=CustomFieldType.MULTIPLE_SELECT, value=["tag1", "tag2"]
+                id="2", name="Labels", type=CustomFieldType.MULTIPLE_SELECT, value=["tag1", "tag2"],
             ),
             CustomField(id="3", name="Automated", type=CustomFieldType.CHECKBOX, value=True),
         ]
@@ -166,7 +166,7 @@ class TestCustomFieldMapper(unittest.TestCase):
 
         # Verify results
         self.assertGreaterEqual(
-            len(qtest_fields), 5
+            len(qtest_fields), 5,
         )  # Key, status, estimated time, labels, and 2 custom fields
 
         # Check field mappings
@@ -209,7 +209,7 @@ class TestCustomFieldMapper(unittest.TestCase):
 
         # Verify results
         self.assertGreaterEqual(
-            len(qtest_fields), 4
+            len(qtest_fields), 4,
         )  # Key, status, environment, owner, and 1 custom field
 
         # Check field mappings
@@ -249,7 +249,7 @@ class TestCustomFieldMapper(unittest.TestCase):
 
         # Verify results
         self.assertGreaterEqual(
-            len(qtest_fields), 5
+            len(qtest_fields), 5,
         )  # Environment, executed by, execution date, actual time, defects, and 1 custom field
 
         # Check field mappings
@@ -258,7 +258,7 @@ class TestCustomFieldMapper(unittest.TestCase):
         self.assertEqual(env_field["field_value"], "Staging")
 
         executed_by_field = next(
-            (f for f in qtest_fields if f["field_name"] == "executed_by"), None
+            (f for f in qtest_fields if f["field_name"] == "executed_by"), None,
         )
         self.assertIsNotNone(executed_by_field)
         self.assertEqual(executed_by_field["field_value"], "jdoe")
@@ -411,18 +411,18 @@ class TestCustomFieldMapper(unittest.TestCase):
 
         # Test with type conversion
         self.assertEqual(
-            self.mapper.extract_and_map_field(entity, "points", target_type="NUMBER"), 5
+            self.mapper.extract_and_map_field(entity, "points", target_type="NUMBER"), 5,
         )
 
         # Test with default value for missing field
         self.assertEqual(
-            self.mapper.extract_and_map_field(entity, "missing_field", "default"), "default"
+            self.mapper.extract_and_map_field(entity, "missing_field", "default"), "default",
         )
 
         # Test with null value
         entity["null_field"] = None
         self.assertEqual(
-            self.mapper.extract_and_map_field(entity, "null_field", "default"), "default"
+            self.mapper.extract_and_map_field(entity, "null_field", "default"), "default",
         )
 
 

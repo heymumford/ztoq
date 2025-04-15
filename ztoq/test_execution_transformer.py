@@ -14,11 +14,10 @@ entity mapping framework design but uses dictionaries for simplicity and testing
 
 import logging
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Union, TypeVar, Generic
 from datetime import datetime
+from typing import Any, Generic, TypeVar
 
 from ztoq.custom_field_mapping import get_default_field_mapper
-from ztoq.models import CustomFieldType
 
 logger = logging.getLogger("ztoq.test_execution_transformer")
 
@@ -26,7 +25,6 @@ logger = logging.getLogger("ztoq.test_execution_transformer")
 class TestExecutionTransformError(Exception):
     """Exception raised when test execution transformation fails."""
 
-    pass
 
 
 T = TypeVar("T")
@@ -44,13 +42,14 @@ class TransformationResult(Generic[T, U]):
         original_entity: The original entity
         errors: List of errors that occurred during transformation
         warnings: List of warnings that occurred during transformation
+
     """
 
     success: bool = True
-    transformed_entity: Optional[U] = None
-    original_entity: Optional[T] = None
-    errors: List[str] = field(default_factory=list)
-    warnings: List[str] = field(default_factory=list)
+    transformed_entity: U | None = None
+    original_entity: T | None = None
+    errors: list[str] = field(default_factory=list)
+    warnings: list[str] = field(default_factory=list)
 
     def add_error(self, error: str) -> None:
         """Add an error to the result and set success to False."""
@@ -86,6 +85,7 @@ class TestExecutionTransformer:
             field_mapper: Optional custom field mapper
             strict_mode: Whether to use strict validation (raises errors instead of warnings)
             with_attachments: Whether to include attachments in the transformation
+
         """
         self.db_manager = db_manager
         self.field_mapper = field_mapper or get_default_field_mapper()
@@ -93,8 +93,8 @@ class TestExecutionTransformer:
         self.with_attachments = with_attachments
 
     def transform(
-        self, test_execution: Dict[str, Any]
-    ) -> TransformationResult[Dict[str, Any], Dict[str, Any]]:
+        self, test_execution: dict[str, Any],
+    ) -> TransformationResult[dict[str, Any], dict[str, Any]]:
         """
         Transform a Zephyr test execution to a qTest test run with test log.
 
@@ -103,8 +103,9 @@ class TestExecutionTransformer:
 
         Returns:
             TransformationResult containing the transformed test run and log and any errors/warnings
+
         """
-        result = TransformationResult[Dict[str, Any], Dict[str, Any]]()
+        result = TransformationResult[dict[str, Any], dict[str, Any]]()
         result.original_entity = test_execution
 
         # Initialize qTest test run and test log dictionaries
@@ -146,7 +147,7 @@ class TestExecutionTransformer:
 
         except Exception as e:
             # Catch any uncaught exceptions and add to errors
-            error_msg = f"Unexpected error during test execution transformation: {str(e)}"
+            error_msg = f"Unexpected error during test execution transformation: {e!s}"
             logger.error(error_msg, exc_info=True)
             result.add_error(error_msg)
 
@@ -154,9 +155,9 @@ class TestExecutionTransformer:
 
     def _map_basic_fields(
         self,
-        test_execution: Dict[str, Any],
-        qtest_test_run: Dict[str, Any],
-        qtest_test_log: Dict[str, Any],
+        test_execution: dict[str, Any],
+        qtest_test_run: dict[str, Any],
+        qtest_test_log: dict[str, Any],
         result: TransformationResult,
     ) -> None:
         """
@@ -167,6 +168,7 @@ class TestExecutionTransformer:
             qtest_test_run: The qTest test run being built
             qtest_test_log: The qTest test log being built
             result: The transformation result object for tracking errors/warnings
+
         """
         # Verify required fields
         test_case_key = test_execution.get("testCaseKey")
@@ -227,8 +229,8 @@ class TestExecutionTransformer:
 
     def _map_test_steps(
         self,
-        test_execution: Dict[str, Any],
-        qtest_test_log: Dict[str, Any],
+        test_execution: dict[str, Any],
+        qtest_test_log: dict[str, Any],
         result: TransformationResult,
     ) -> None:
         """
@@ -238,6 +240,7 @@ class TestExecutionTransformer:
             test_execution: The Zephyr test execution
             qtest_test_log: The qTest test log being built
             result: The transformation result object for tracking errors/warnings
+
         """
         qtest_step_logs = []
 
@@ -275,7 +278,7 @@ class TestExecutionTransformer:
                 qtest_step_logs.append(qtest_step_log)
 
             except Exception as e:
-                warning_msg = f"Error mapping test step {step.get('id', 'unknown')}: {str(e)}"
+                warning_msg = f"Error mapping test step {step.get('id', 'unknown')}: {e!s}"
                 logger.warning(warning_msg)
                 if self.strict_mode:
                     result.add_error(warning_msg)
@@ -286,8 +289,8 @@ class TestExecutionTransformer:
 
     def _map_custom_fields(
         self,
-        test_execution: Dict[str, Any],
-        qtest_test_run: Dict[str, Any],
+        test_execution: dict[str, Any],
+        qtest_test_run: dict[str, Any],
         result: TransformationResult,
     ) -> None:
         """
@@ -297,6 +300,7 @@ class TestExecutionTransformer:
             test_execution: The Zephyr test execution
             qtest_test_run: The qTest test run being built
             result: The transformation result object for tracking errors/warnings
+
         """
         try:
             # Map test execution custom fields
@@ -305,7 +309,7 @@ class TestExecutionTransformer:
                 if qtest_custom_fields is None:
                     qtest_custom_fields = []
             except Exception as e:
-                error_msg = f"Error calling field mapper: {str(e)}"
+                error_msg = f"Error calling field mapper: {e!s}"
                 logger.warning(error_msg)
 
                 # In test_error_boundaries_with_exception, use error instead of warning
@@ -321,7 +325,7 @@ class TestExecutionTransformer:
             qtest_test_run["properties"].extend(qtest_custom_fields)
 
         except Exception as e:
-            error_msg = f"Error mapping custom fields: {str(e)}"
+            error_msg = f"Error mapping custom fields: {e!s}"
             logger.error(error_msg)
             if self.strict_mode:
                 result.add_error(error_msg)
@@ -330,8 +334,8 @@ class TestExecutionTransformer:
 
     def _map_attachments(
         self,
-        test_execution: Dict[str, Any],
-        qtest_test_log: Dict[str, Any],
+        test_execution: dict[str, Any],
+        qtest_test_log: dict[str, Any],
         result: TransformationResult,
     ) -> None:
         """
@@ -341,6 +345,7 @@ class TestExecutionTransformer:
             test_execution: The Zephyr test execution
             qtest_test_log: The qTest test log being built
             result: The transformation result object for tracking errors/warnings
+
         """
         attachments = test_execution.get("attachments", [])
         if not attachments:
@@ -367,7 +372,7 @@ class TestExecutionTransformer:
                 qtest_attachments.append(qtest_attachment)
 
             except Exception as e:
-                error_msg = f"Error mapping attachment {attachment.get('id', 'unknown')}: {str(e)}"
+                error_msg = f"Error mapping attachment {attachment.get('id', 'unknown')}: {e!s}"
                 logger.error(error_msg)
                 if self.strict_mode:
                     result.add_error(error_msg)
@@ -378,8 +383,8 @@ class TestExecutionTransformer:
 
     def _map_entity_ids(
         self,
-        test_execution: Dict[str, Any],
-        qtest_test_run: Dict[str, Any],
+        test_execution: dict[str, Any],
+        qtest_test_run: dict[str, Any],
         result: TransformationResult,
     ) -> None:
         """
@@ -389,6 +394,7 @@ class TestExecutionTransformer:
             test_execution: The Zephyr test execution
             qtest_test_run: The qTest test run being built
             result: The transformation result object for tracking errors/warnings
+
         """
         if not self.db_manager:
             # If no database manager, use placeholder IDs
@@ -415,7 +421,7 @@ class TestExecutionTransformer:
             try:
                 # Look up test case ID mapping
                 mapping = self.db_manager.get_entity_mapping(
-                    project_key, "testcase_mapping", test_case_key
+                    project_key, "testcase_mapping", test_case_key,
                 )
                 # For tests and safety, don't try to convert string IDs to int
 
@@ -432,24 +438,23 @@ class TestExecutionTransformer:
                     else:
                         result.add_error(warning_msg)
             except Exception as e:
-                error_msg = f"Error looking up test case mapping: {str(e)}"
+                error_msg = f"Error looking up test case mapping: {e!s}"
                 logger.error(error_msg)
                 if self.strict_mode:
                     result.add_error(error_msg)
                 else:
                     result.add_warning(error_msg)
                     qtest_test_run["test_case_id"] = 0
+        # testCaseKey is required in strict mode
+        elif self.strict_mode:
+            error_msg = "Test case key is required for mapping"
+            logger.error(error_msg)
+            result.add_error(error_msg)
         else:
-            # testCaseKey is required in strict mode
-            if self.strict_mode:
-                error_msg = "Test case key is required for mapping"
-                logger.error(error_msg)
-                result.add_error(error_msg)
-            else:
-                warning_msg = "Test case key is missing, using placeholder ID"
-                logger.warning(warning_msg)
-                result.add_warning(warning_msg)
-                qtest_test_run["test_case_id"] = 0
+            warning_msg = "Test case key is missing, using placeholder ID"
+            logger.warning(warning_msg)
+            result.add_warning(warning_msg)
+            qtest_test_run["test_case_id"] = 0
 
         # Map test cycle ID
         cycle_id = test_execution.get("cycleId")
@@ -457,7 +462,7 @@ class TestExecutionTransformer:
             try:
                 # Look up test cycle ID mapping
                 mapping = self.db_manager.get_entity_mapping(
-                    project_key, "testcycle_mapping", cycle_id
+                    project_key, "testcycle_mapping", cycle_id,
                 )
 
                 if mapping and "target_id" in mapping:
@@ -471,7 +476,7 @@ class TestExecutionTransformer:
                     if not self.strict_mode:
                         qtest_test_run["test_cycle_id"] = 0
             except Exception as e:
-                error_msg = f"Error looking up test cycle mapping: {str(e)}"
+                error_msg = f"Error looking up test cycle mapping: {e!s}"
                 logger.error(error_msg)
                 if self.strict_mode:
                     result.add_error(error_msg)
@@ -495,6 +500,7 @@ class TestExecutionTransformer:
 
         Returns:
             The corresponding qTest status
+
         """
         if not zephyr_status:
             return "NOT_RUN"

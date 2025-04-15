@@ -11,9 +11,11 @@ These tests verify the mapping definitions and validation rules for entity mappi
 between Zephyr Scale and qTest.
 """
 
-import pytest
 from datetime import datetime
 
+import pytest
+
+from ztoq.custom_field_mapping import CustomFieldMapper
 from ztoq.entity_mapping import (
     EntityMapping,
     EntityType,
@@ -22,13 +24,12 @@ from ztoq.entity_mapping import (
     ValidationAction,
     get_mapping_registry,
     map_entity,
-    map_project,
     map_folder,
+    map_project,
     map_test_case,
     map_test_cycle,
     map_test_execution,
 )
-from ztoq.custom_field_mapping import CustomFieldMapper
 
 
 class TestFieldMapping:
@@ -340,7 +341,7 @@ class TestMappingRegistry:
             source_type=EntityType.PROJECT,  # Override existing
             target_type="CustomTarget",
             field_mappings=[
-                FieldMapping(source_field="custom_field", target_field="custom_target_field")
+                FieldMapping(source_field="custom_field", target_field="custom_target_field"),
             ],
             custom_field_mapping_enabled=False,
         )
@@ -441,7 +442,7 @@ class TestSpecificMappingRules:
                 "description": "Description",
                 "key": "PROJ",
                 "id": 123,  # Not mapped
-            }
+            },
         )
 
         assert mapped["name"] == "Project Name"
@@ -551,7 +552,7 @@ class TestSpecificMappingRules:
             return status_map.get(str(status).lower(), "NOT_RUN")
 
         status_field = FieldMapping(
-            source_field="status", target_field="status", transform_function=status_transform
+            source_field="status", target_field="status", transform_function=status_transform,
         )
 
         # Test the field mapping directly

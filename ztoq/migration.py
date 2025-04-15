@@ -18,13 +18,13 @@ import tempfile
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
+
 from ztoq.custom_field_mapping import get_default_field_mapper
 from ztoq.models import ZephyrConfig
 from ztoq.qtest_client import QTestClient
 from ztoq.qtest_models import (
     QTestConfig,
-    QTestCustomField,
     QTestModule,
     QTestProject,
     QTestStep,
@@ -43,11 +43,13 @@ class MigrationState:
     """Class for tracking the state and progress of the migration."""
 
     def __init__(self, project_key: str, database: Any):
-        """Initialize migration state tracker.
+        """
+        Initialize migration state tracker.
 
         Args:
             project_key: The Zephyr project key
             database: The database manager instance
+
         """
         self.project_key = project_key
         self.db = database
@@ -73,10 +75,12 @@ class MigrationState:
 
     @property
     def metadata_dict(self) -> dict:
-        """Get metadata as a dictionary.
+        """
+        Get metadata as a dictionary.
 
         Returns:
             Dict containing parsed metadata or empty dict if no metadata.
+
         """
         if not hasattr(self, "meta_data") or not self.meta_data:
             return {}
@@ -88,39 +92,45 @@ class MigrationState:
             return {}
 
     def update_extraction_status(self, status: str, error: str | None = None):
-        """Update the extraction phase status.
+        """
+        Update the extraction phase status.
 
         Args:
             status: The new status
             error: Optional error message
+
         """
         self.extraction_status = status
         if error:
             self.error_message = error
         self.db.update_migration_state(
-            self.project_key, extraction_status=status, error_message=error
+            self.project_key, extraction_status=status, error_message=error,
         )
 
     def update_transformation_status(self, status: str, error: str | None = None):
-        """Update the transformation phase status.
+        """
+        Update the transformation phase status.
 
         Args:
             status: The new status
             error: Optional error message
+
         """
         self.transformation_status = status
         if error:
             self.error_message = error
         self.db.update_migration_state(
-            self.project_key, transformation_status=status, error_message=error
+            self.project_key, transformation_status=status, error_message=error,
         )
 
     def update_loading_status(self, status: str, error: str | None = None):
-        """Update the loading phase status.
+        """
+        Update the loading phase status.
 
         Args:
             status: The new status
             error: Optional error message
+
         """
         self.loading_status = status
         if error:
@@ -128,25 +138,29 @@ class MigrationState:
         self.db.update_migration_state(self.project_key, loading_status=status, error_message=error)
 
     def update_rollback_status(self, status: str, error: str | None = None):
-        """Update the rollback phase status.
+        """
+        Update the rollback phase status.
 
         Args:
             status: The new status
             error: Optional error message
+
         """
         self.rollback_status = status
         if error:
             self.error_message = error
         self.db.update_migration_state(
-            self.project_key, rollback_status=status, error_message=error
+            self.project_key, rollback_status=status, error_message=error,
         )
 
     def update_loading_status(self, status: str, error: str | None = None):
-        """Update the loading phase status.
+        """
+        Update the loading phase status.
 
         Args:
             status: The new status
             error: Optional error message
+
         """
         self.loading_status = status
         if error:
@@ -154,18 +168,22 @@ class MigrationState:
         self.db.update_migration_state(self.project_key, loading_status=status, error_message=error)
 
     def can_extract(self) -> bool:
-        """Check if extraction can proceed.
+        """
+        Check if extraction can proceed.
 
         Returns:
             True if extraction can proceed, False otherwise
+
         """
         return self.extraction_status in ["not_started", "in_progress", "failed"]
 
     def can_transform(self) -> bool:
-        """Check if transformation can proceed.
+        """
+        Check if transformation can proceed.
 
         Returns:
             True if transformation can proceed, False otherwise
+
         """
         return self.extraction_status == "completed" and self.transformation_status in [
             "not_started",
@@ -174,10 +192,12 @@ class MigrationState:
         ]
 
     def can_load(self) -> bool:
-        """Check if loading can proceed.
+        """
+        Check if loading can proceed.
 
         Returns:
             True if loading can proceed, False otherwise
+
         """
         return self.transformation_status == "completed" and self.loading_status in [
             "not_started",
@@ -186,10 +206,12 @@ class MigrationState:
         ]
 
     def can_rollback(self) -> bool:
-        """Check if rollback can proceed.
+        """
+        Check if rollback can proceed.
 
         Returns:
             True if rollback can proceed, False otherwise
+
         """
         # We can rollback if there's anything to roll back (any completed phase)
         return (
@@ -203,23 +225,27 @@ class EntityBatchTracker:
     """Tracks and manages batches of entities during migration."""
 
     def __init__(self, project_key: str, entity_type: str, database: Any):
-        """Initialize batch tracker.
+        """
+        Initialize batch tracker.
 
         Args:
             project_key: The Zephyr project key
             entity_type: The type of entity being tracked
             database: The database manager instance
+
         """
         self.project_key = project_key
         self.entity_type = entity_type
         self.db = database
 
     def initialize_batches(self, total_items: int, batch_size: int = 50):
-        """Initialize batch tracking for a set of entities.
+        """
+        Initialize batch tracking for a set of entities.
 
         Args:
             total_items: Total number of items to process
             batch_size: Number of items per batch
+
         """
         total_batches = (total_items + batch_size - 1) // batch_size
 
@@ -229,35 +255,40 @@ class EntityBatchTracker:
             items_count = end_idx - start_idx
 
             self.db.create_entity_batch(
-                self.project_key, self.entity_type, batch_num, total_batches, items_count
+                self.project_key, self.entity_type, batch_num, total_batches, items_count,
             )
 
     def update_batch_status(
-        self, batch_num: int, processed_count: int, status: str, error: str | None = None
+        self, batch_num: int, processed_count: int, status: str, error: str | None = None,
     ):
-        """Update the status of a batch.
+        """
+        Update the status of a batch.
 
         Args:
             batch_num: The batch number
             processed_count: Number of items processed
             status: Current status of the batch
             error: Optional error message
+
         """
         self.db.update_entity_batch(
-            self.project_key, self.entity_type, batch_num, processed_count, status, error
+            self.project_key, self.entity_type, batch_num, processed_count, status, error,
         )
 
     def get_pending_batches(self) -> list[dict[str, Any]]:
-        """Get batches that are pending processing.
+        """
+        Get batches that are pending processing.
 
         Returns:
             List of pending batch information
+
         """
         return self.db.get_pending_entity_batches(self.project_key, self.entity_type)
 
 
 class ZephyrToQTestMigration:
-    """Main class for migrating data from Zephyr Scale to qTest.
+    """
+    Main class for migrating data from Zephyr Scale to qTest.
 
     This class implements the ETL (Extract, Transform, Load) operations for migrating
     test data from Zephyr Scale to qTest. It supports both standard and batch-based
@@ -274,7 +305,8 @@ class ZephyrToQTestMigration:
         attachments_dir: Path | None = None,
         enable_validation: bool = True,
     ):
-        """Initialize the migration manager.
+        """
+        Initialize the migration manager.
 
         Args:
             zephyr_config: The Zephyr API configuration
@@ -284,6 +316,7 @@ class ZephyrToQTestMigration:
             max_workers: Maximum number of concurrent workers
             attachments_dir: Optional directory for attachment storage
             enable_validation: Whether to enable enhanced validation (default: True)
+
         """
         self.zephyr_config = zephyr_config
         self.qtest_config = qtest_config
@@ -318,38 +351,40 @@ class ZephyrToQTestMigration:
         """Load existing entity mappings from the database."""
         # Load folder mappings
         folder_mappings = self.db.get_entity_mappings(
-            self.zephyr_config.project_key, "folder_to_module"
+            self.zephyr_config.project_key, "folder_to_module",
         )
         for mapping in folder_mappings:
             self.entity_mappings["folders"][mapping["source_id"]] = mapping["target_id"]
 
         # Load test case mappings
         testcase_mappings = self.db.get_entity_mappings(
-            self.zephyr_config.project_key, "testcase_to_testcase"
+            self.zephyr_config.project_key, "testcase_to_testcase",
         )
         for mapping in testcase_mappings:
             self.entity_mappings["test_cases"][mapping["source_id"]] = mapping["target_id"]
 
         # Load test cycle mappings
         cycle_mappings = self.db.get_entity_mappings(
-            self.zephyr_config.project_key, "cycle_to_cycle"
+            self.zephyr_config.project_key, "cycle_to_cycle",
         )
         for mapping in cycle_mappings:
             self.entity_mappings["test_cycles"][mapping["source_id"]] = mapping["target_id"]
 
         # Load test execution mappings
         execution_mappings = self.db.get_entity_mappings(
-            self.zephyr_config.project_key, "execution_to_run"
+            self.zephyr_config.project_key, "execution_to_run",
         )
         for mapping in execution_mappings:
             self.entity_mappings["test_executions"][mapping["source_id"]] = mapping["target_id"]
 
     def run_migration(self, phases: list[str] | None = None):
-        """Run the full migration process or specific phases.
+        """
+        Run the full migration process or specific phases.
 
         Args:
             phases: Optional list of phases to run ("extract", "transform", "load")
                    If None, all phases will be run in sequence
+
         """
         if not phases:
             phases = ["extract", "transform", "load"]
@@ -367,7 +402,7 @@ class ZephyrToQTestMigration:
             logger.info(f"Migration completed for project {self.zephyr_config.project_key}")
 
         except Exception as e:
-            logger.error(f"Migration failed: {str(e)}", exc_info=True)
+            logger.error(f"Migration failed: {e!s}", exc_info=True)
             # Update state based on which phase was running
             if self.state.extraction_status == "in_progress":
                 self.state.update_extraction_status("failed", str(e))
@@ -404,7 +439,7 @@ class ZephyrToQTestMigration:
 
         except Exception as e:
             self.state.update_extraction_status("failed", str(e))
-            logger.error(f"Extraction failed: {str(e)}", exc_info=True)
+            logger.error(f"Extraction failed: {e!s}", exc_info=True)
             raise
 
     def _extract_folders(self):
@@ -427,7 +462,7 @@ class ZephyrToQTestMigration:
                 folder_tracker.update_batch_status(batch_idx, len(batch), "completed")
             except Exception as e:
                 folder_tracker.update_batch_status(batch_idx, 0, "failed", str(e))
-                logger.error(f"Failed to save folder batch {batch_idx}: {str(e)}")
+                logger.error(f"Failed to save folder batch {batch_idx}: {e!s}")
 
         logger.info(f"Extracted {len(folders)} folders")
 
@@ -440,7 +475,7 @@ class ZephyrToQTestMigration:
 
         # Initialize batch tracking
         test_case_tracker = EntityBatchTracker(
-            self.zephyr_config.project_key, "test_cases", self.db
+            self.zephyr_config.project_key, "test_cases", self.db,
         )
         test_case_tracker.initialize_batches(len(test_cases), self.batch_size)
 
@@ -464,7 +499,7 @@ class ZephyrToQTestMigration:
                 test_case_tracker.update_batch_status(batch_idx, len(batch), "completed")
             except Exception as e:
                 test_case_tracker.update_batch_status(batch_idx, 0, "failed", str(e))
-                logger.error(f"Failed to save test case batch {batch_idx}: {str(e)}")
+                logger.error(f"Failed to save test case batch {batch_idx}: {e!s}")
 
         logger.info(f"Extracted {len(test_cases)} test cases")
 
@@ -497,7 +532,7 @@ class ZephyrToQTestMigration:
 
             except Exception as e:
                 logger.warning(
-                    f"Failed to download attachment {attachment.id} for test case {test_case.id}: {str(e)}"
+                    f"Failed to download attachment {attachment.id} for test case {test_case.id}: {e!s}",
                 )
 
     def _extract_test_cycles(self):
@@ -509,7 +544,7 @@ class ZephyrToQTestMigration:
 
         # Initialize batch tracking
         test_cycle_tracker = EntityBatchTracker(
-            self.zephyr_config.project_key, "test_cycles", self.db
+            self.zephyr_config.project_key, "test_cycles", self.db,
         )
         test_cycle_tracker.initialize_batches(len(test_cycles), self.batch_size)
 
@@ -524,7 +559,7 @@ class ZephyrToQTestMigration:
                 test_cycle_tracker.update_batch_status(batch_idx, len(batch), "completed")
             except Exception as e:
                 test_cycle_tracker.update_batch_status(batch_idx, 0, "failed", str(e))
-                logger.error(f"Failed to save test cycle batch {batch_idx}: {str(e)}")
+                logger.error(f"Failed to save test cycle batch {batch_idx}: {e!s}")
 
         logger.info(f"Extracted {len(test_cycles)} test cycles")
 
@@ -537,7 +572,7 @@ class ZephyrToQTestMigration:
 
         # Initialize batch tracking
         execution_tracker = EntityBatchTracker(
-            self.zephyr_config.project_key, "test_executions", self.db
+            self.zephyr_config.project_key, "test_executions", self.db,
         )
         execution_tracker.initialize_batches(len(test_executions), self.batch_size)
 
@@ -557,7 +592,7 @@ class ZephyrToQTestMigration:
                 execution_tracker.update_batch_status(batch_idx, len(batch), "completed")
             except Exception as e:
                 execution_tracker.update_batch_status(batch_idx, 0, "failed", str(e))
-                logger.error(f"Failed to save test execution batch {batch_idx}: {str(e)}")
+                logger.error(f"Failed to save test execution batch {batch_idx}: {e!s}")
 
         logger.info(f"Extracted {len(test_executions)} test executions")
 
@@ -590,7 +625,7 @@ class ZephyrToQTestMigration:
 
             except Exception as e:
                 logger.warning(
-                    f"Failed to download attachment {attachment.id} for execution {execution.id}: {str(e)}"
+                    f"Failed to download attachment {attachment.id} for execution {execution.id}: {e!s}",
                 )
 
     def transform_data(self):
@@ -619,7 +654,7 @@ class ZephyrToQTestMigration:
 
         except Exception as e:
             self.state.update_transformation_status("failed", str(e))
-            logger.error(f"Transformation failed: {str(e)}", exc_info=True)
+            logger.error(f"Transformation failed: {e!s}", exc_info=True)
             raise
 
     def _transform_project(self):
@@ -677,7 +712,7 @@ class ZephyrToQTestMigration:
 
             # Save transformed module to database
             module_id = self.db.save_transformed_module(
-                self.zephyr_config.project_key, folder_id, module
+                self.zephyr_config.project_key, folder_id, module,
             )
 
             # Process child folders recursively
@@ -700,7 +735,7 @@ class ZephyrToQTestMigration:
 
         # Initialize batch tracking
         test_case_tracker = EntityBatchTracker(
-            self.zephyr_config.project_key, "transformed_test_cases", self.db
+            self.zephyr_config.project_key, "transformed_test_cases", self.db,
         )
         test_case_tracker.initialize_batches(len(test_cases), self.batch_size)
 
@@ -719,7 +754,7 @@ class ZephyrToQTestMigration:
 
                     if folder_id:
                         module_mapping = self.db.get_entity_mapping(
-                            self.zephyr_config.project_key, "folder_to_module", folder_id
+                            self.zephyr_config.project_key, "folder_to_module", folder_id,
                         )
                         if module_mapping:
                             module_id = module_mapping.get("target_id")
@@ -761,7 +796,7 @@ class ZephyrToQTestMigration:
 
                     # Save transformed test case
                     self.db.save_transformed_test_case(
-                        self.zephyr_config.project_key, test_case.get("id"), qtest_test_case
+                        self.zephyr_config.project_key, test_case.get("id"), qtest_test_case,
                     )
 
                     transformed_batch.append(qtest_test_case)
@@ -769,7 +804,7 @@ class ZephyrToQTestMigration:
                 test_case_tracker.update_batch_status(batch_idx, len(batch), "completed")
             except Exception as e:
                 test_case_tracker.update_batch_status(batch_idx, 0, "failed", str(e))
-                logger.error(f"Failed to transform test case batch {batch_idx}: {str(e)}")
+                logger.error(f"Failed to transform test case batch {batch_idx}: {e!s}")
 
         logger.info(f"Transformed {len(test_cases)} test cases")
 
@@ -801,7 +836,7 @@ class ZephyrToQTestMigration:
 
         # Initialize batch tracking
         cycle_tracker = EntityBatchTracker(
-            self.zephyr_config.project_key, "transformed_test_cycles", self.db
+            self.zephyr_config.project_key, "transformed_test_cycles", self.db,
         )
         cycle_tracker.initialize_batches(len(test_cycles), self.batch_size)
 
@@ -820,7 +855,7 @@ class ZephyrToQTestMigration:
 
                     if folder_id:
                         folder_mapping = self.db.get_entity_mapping(
-                            self.zephyr_config.project_key, "folder_to_module", folder_id
+                            self.zephyr_config.project_key, "folder_to_module", folder_id,
                         )
                         if folder_mapping:
                             parent_id = folder_mapping.get("target_id")
@@ -840,7 +875,7 @@ class ZephyrToQTestMigration:
 
                     # Save transformed cycle
                     self.db.save_transformed_test_cycle(
-                        self.zephyr_config.project_key, cycle.get("id"), qtest_cycle
+                        self.zephyr_config.project_key, cycle.get("id"), qtest_cycle,
                     )
 
                     transformed_batch.append(qtest_cycle)
@@ -848,7 +883,7 @@ class ZephyrToQTestMigration:
                 cycle_tracker.update_batch_status(batch_idx, len(batch), "completed")
             except Exception as e:
                 cycle_tracker.update_batch_status(batch_idx, 0, "failed", str(e))
-                logger.error(f"Failed to transform test cycle batch {batch_idx}: {str(e)}")
+                logger.error(f"Failed to transform test cycle batch {batch_idx}: {e!s}")
 
         logger.info(f"Transformed {len(test_cycles)} test cycles")
 
@@ -861,7 +896,7 @@ class ZephyrToQTestMigration:
 
         # Initialize batch tracking
         execution_tracker = EntityBatchTracker(
-            self.zephyr_config.project_key, "transformed_test_executions", self.db
+            self.zephyr_config.project_key, "transformed_test_executions", self.db,
         )
         execution_tracker.initialize_batches(len(executions), self.batch_size)
 
@@ -883,14 +918,14 @@ class ZephyrToQTestMigration:
 
                     if test_case_id:
                         case_mapping = self.db.get_entity_mapping(
-                            self.zephyr_config.project_key, "testcase_to_testcase", test_case_id
+                            self.zephyr_config.project_key, "testcase_to_testcase", test_case_id,
                         )
                         if case_mapping:
                             qtest_test_case_id = case_mapping.get("target_id")
 
                     if test_cycle_id:
                         cycle_mapping = self.db.get_entity_mapping(
-                            self.zephyr_config.project_key, "cycle_to_cycle", test_cycle_id
+                            self.zephyr_config.project_key, "cycle_to_cycle", test_cycle_id,
                         )
                         if cycle_mapping:
                             qtest_test_cycle_id = cycle_mapping.get("target_id")
@@ -928,7 +963,7 @@ class ZephyrToQTestMigration:
                                 "order": idx + 1,
                                 "status": qtest_step_status,
                                 "actualResult": actual_result,
-                            }
+                            },
                         )
 
                     # Create test log model
@@ -942,7 +977,7 @@ class ZephyrToQTestMigration:
 
                     # Save transformed execution
                     self.db.save_transformed_execution(
-                        self.zephyr_config.project_key, execution.get("id"), qtest_run, qtest_log
+                        self.zephyr_config.project_key, execution.get("id"), qtest_run, qtest_log,
                     )
 
                     transformed_batch.append((qtest_run, qtest_log))
@@ -950,7 +985,7 @@ class ZephyrToQTestMigration:
                 execution_tracker.update_batch_status(batch_idx, len(batch), "completed")
             except Exception as e:
                 execution_tracker.update_batch_status(batch_idx, 0, "failed", str(e))
-                logger.error(f"Failed to transform execution batch {batch_idx}: {str(e)}")
+                logger.error(f"Failed to transform execution batch {batch_idx}: {e!s}")
 
         logger.info(f"Transformed {len(executions)} test executions")
 
@@ -1000,7 +1035,7 @@ class ZephyrToQTestMigration:
 
         except Exception as e:
             self.state.update_loading_status("failed", str(e))
-            logger.error(f"Loading failed: {str(e)}", exc_info=True)
+            logger.error(f"Loading failed: {e!s}", exc_info=True)
             raise
 
     def _load_modules(self):
@@ -1016,7 +1051,7 @@ class ZephyrToQTestMigration:
 
             # Initialize batch tracking
             module_tracker = EntityBatchTracker(
-                self.zephyr_config.project_key, f"loaded_modules_level_{level}", self.db
+                self.zephyr_config.project_key, f"loaded_modules_level_{level}", self.db,
             )
             module_tracker.initialize_batches(len(modules), self.batch_size)
 
@@ -1037,7 +1072,7 @@ class ZephyrToQTestMigration:
 
                             # Submit module creation task
                             future = executor.submit(
-                                self._create_module_in_qtest, source_id, module
+                                self._create_module_in_qtest, source_id, module,
                             )
                             futures.append((source_id, future))
 
@@ -1059,13 +1094,13 @@ class ZephyrToQTestMigration:
                                     created_count += 1
                             except Exception as e:
                                 logger.error(
-                                    f"Failed to create module for folder {source_id}: {str(e)}"
+                                    f"Failed to create module for folder {source_id}: {e!s}",
                                 )
 
                     module_tracker.update_batch_status(batch_idx, created_count, "completed")
                 except Exception as e:
                     module_tracker.update_batch_status(batch_idx, created_count, "failed", str(e))
-                    logger.error(f"Failed to process module batch {batch_idx}: {str(e)}")
+                    logger.error(f"Failed to process module batch {batch_idx}: {e!s}")
 
         logger.info("Modules loading completed")
 
@@ -1084,7 +1119,7 @@ class ZephyrToQTestMigration:
             logger.debug(f"Created module {created_module.id} for folder {source_id}")
             return created_module
         except Exception as e:
-            logger.error(f"Error creating module for folder {source_id}: {str(e)}")
+            logger.error(f"Error creating module for folder {source_id}: {e!s}")
             # Implement retry logic if needed
             raise
 
@@ -1097,7 +1132,7 @@ class ZephyrToQTestMigration:
 
         # Initialize batch tracking
         test_case_tracker = EntityBatchTracker(
-            self.zephyr_config.project_key, "loaded_test_cases", self.db
+            self.zephyr_config.project_key, "loaded_test_cases", self.db,
         )
         test_case_tracker.initialize_batches(len(test_cases), self.batch_size)
 
@@ -1118,7 +1153,7 @@ class ZephyrToQTestMigration:
 
                         # Submit test case creation task
                         future = executor.submit(
-                            self._create_test_case_in_qtest, source_id, test_case
+                            self._create_test_case_in_qtest, source_id, test_case,
                         )
                         futures.append((source_id, future))
 
@@ -1142,12 +1177,12 @@ class ZephyrToQTestMigration:
                                 # Upload attachments if any
                                 self._upload_test_case_attachments(source_id, qtest_test_case.id)
                         except Exception as e:
-                            logger.error(f"Failed to create test case {source_id}: {str(e)}")
+                            logger.error(f"Failed to create test case {source_id}: {e!s}")
 
                 test_case_tracker.update_batch_status(batch_idx, created_count, "completed")
             except Exception as e:
                 test_case_tracker.update_batch_status(batch_idx, created_count, "failed", str(e))
-                logger.error(f"Failed to process test case batch {batch_idx}: {str(e)}")
+                logger.error(f"Failed to process test case batch {batch_idx}: {e!s}")
 
         logger.info("Test cases loading completed")
 
@@ -1170,7 +1205,7 @@ class ZephyrToQTestMigration:
             logger.debug(f"Created test case {created_test_case.id} for source case {source_id}")
             return created_test_case
         except Exception as e:
-            logger.error(f"Error creating test case for source {source_id}: {str(e)}")
+            logger.error(f"Error creating test case for source {source_id}: {e!s}")
             # Implement retry logic if needed
             raise
 
@@ -1183,7 +1218,7 @@ class ZephyrToQTestMigration:
             try:
                 # Create temporary file
                 with tempfile.NamedTemporaryFile(
-                    delete=False, suffix=f"_{attachment['name']}"
+                    delete=False, suffix=f"_{attachment['name']}",
                 ) as tmp:
                     tmp.write(attachment["content"])
                     tmp_path = tmp.name
@@ -1191,10 +1226,10 @@ class ZephyrToQTestMigration:
                 # Upload to qTest
                 try:
                     self.qtest_client.upload_attachment(
-                        object_type="test-cases", object_id=qtest_test_case_id, file_path=tmp_path
+                        object_type="test-cases", object_id=qtest_test_case_id, file_path=tmp_path,
                     )
                     logger.debug(
-                        f"Uploaded attachment {attachment['name']} for test case {qtest_test_case_id}"
+                        f"Uploaded attachment {attachment['name']} for test case {qtest_test_case_id}",
                     )
                 finally:
                     # Clean up temporary file
@@ -1202,7 +1237,7 @@ class ZephyrToQTestMigration:
 
             except Exception as e:
                 logger.warning(
-                    f"Failed to upload attachment {attachment['name']} for test case {qtest_test_case_id}: {str(e)}"
+                    f"Failed to upload attachment {attachment['name']} for test case {qtest_test_case_id}: {e!s}",
                 )
 
     def _load_test_cycles(self):
@@ -1214,7 +1249,7 @@ class ZephyrToQTestMigration:
 
         # Initialize batch tracking
         cycle_tracker = EntityBatchTracker(
-            self.zephyr_config.project_key, "loaded_test_cycles", self.db
+            self.zephyr_config.project_key, "loaded_test_cycles", self.db,
         )
         cycle_tracker.initialize_batches(len(test_cycles), self.batch_size)
 
@@ -1254,12 +1289,12 @@ class ZephyrToQTestMigration:
                                 )
                                 created_count += 1
                         except Exception as e:
-                            logger.error(f"Failed to create test cycle {source_id}: {str(e)}")
+                            logger.error(f"Failed to create test cycle {source_id}: {e!s}")
 
                 cycle_tracker.update_batch_status(batch_idx, created_count, "completed")
             except Exception as e:
                 cycle_tracker.update_batch_status(batch_idx, created_count, "failed", str(e))
-                logger.error(f"Failed to process test cycle batch {batch_idx}: {str(e)}")
+                logger.error(f"Failed to process test cycle batch {batch_idx}: {e!s}")
 
         logger.info("Test cycles loading completed")
 
@@ -1282,7 +1317,7 @@ class ZephyrToQTestMigration:
             logger.debug(f"Created test cycle {created_cycle.id} for source cycle {source_id}")
             return created_cycle
         except Exception as e:
-            logger.error(f"Error creating test cycle for source {source_id}: {str(e)}")
+            logger.error(f"Error creating test cycle for source {source_id}: {e!s}")
             # Implement retry logic if needed
             raise
 
@@ -1295,7 +1330,7 @@ class ZephyrToQTestMigration:
 
         # Initialize batch tracking
         execution_tracker = EntityBatchTracker(
-            self.zephyr_config.project_key, "loaded_test_executions", self.db
+            self.zephyr_config.project_key, "loaded_test_executions", self.db,
         )
         execution_tracker.initialize_batches(len(executions), self.batch_size)
 
@@ -1317,7 +1352,7 @@ class ZephyrToQTestMigration:
 
                         # Submit test run and log creation task
                         future = executor.submit(
-                            self._create_execution_in_qtest, source_id, test_run, test_log
+                            self._create_execution_in_qtest, source_id, test_run, test_log,
                         )
                         futures.append((source_id, future))
 
@@ -1341,12 +1376,12 @@ class ZephyrToQTestMigration:
                                 # Upload attachments if any
                                 self._upload_execution_attachments(source_id, qtest_run_id)
                         except Exception as e:
-                            logger.error(f"Failed to create test execution {source_id}: {str(e)}")
+                            logger.error(f"Failed to create test execution {source_id}: {e!s}")
 
                 execution_tracker.update_batch_status(batch_idx, created_count, "completed")
             except Exception as e:
                 execution_tracker.update_batch_status(batch_idx, created_count, "failed", str(e))
-                logger.error(f"Failed to process execution batch {batch_idx}: {str(e)}")
+                logger.error(f"Failed to process execution batch {batch_idx}: {e!s}")
 
         logger.info("Test executions loading completed")
 
@@ -1384,7 +1419,7 @@ class ZephyrToQTestMigration:
             return run_id
 
         except Exception as e:
-            logger.error(f"Error creating test execution for source {source_id}: {str(e)}")
+            logger.error(f"Error creating test execution for source {source_id}: {e!s}")
             # Implement retry logic if needed
             raise
 
@@ -1397,7 +1432,7 @@ class ZephyrToQTestMigration:
             try:
                 # Create temporary file
                 with tempfile.NamedTemporaryFile(
-                    delete=False, suffix=f"_{attachment['name']}"
+                    delete=False, suffix=f"_{attachment['name']}",
                 ) as tmp:
                     tmp.write(attachment["content"])
                     tmp_path = tmp.name
@@ -1405,10 +1440,10 @@ class ZephyrToQTestMigration:
                 # Upload to qTest
                 try:
                     self.qtest_client.upload_attachment(
-                        object_type="test-runs", object_id=qtest_run_id, file_path=tmp_path
+                        object_type="test-runs", object_id=qtest_run_id, file_path=tmp_path,
                     )
                     logger.debug(
-                        f"Uploaded attachment {attachment['name']} for test run {qtest_run_id}"
+                        f"Uploaded attachment {attachment['name']} for test run {qtest_run_id}",
                     )
                 finally:
                     # Clean up temporary file
@@ -1416,7 +1451,7 @@ class ZephyrToQTestMigration:
 
             except Exception as e:
                 logger.warning(
-                    f"Failed to upload attachment {attachment['name']} for test run {qtest_run_id}: {str(e)}"
+                    f"Failed to upload attachment {attachment['name']} for test run {qtest_run_id}: {e!s}",
                 )
 
     def get_last_migration_timestamp(self) -> datetime:
@@ -1426,6 +1461,7 @@ class ZephyrToQTestMigration:
         Returns:
             datetime object representing the last migration time or a default date in the past
             if no previous migration was found.
+
         """
         try:
             # Attempt to retrieve the last migration timestamp from the database
@@ -1436,7 +1472,7 @@ class ZephyrToQTestMigration:
             # If no timestamp is found, return a default date in the past
             return datetime.min
         except Exception as e:
-            logger.warning(f"Error retrieving last migration timestamp: {str(e)}")
+            logger.warning(f"Error retrieving last migration timestamp: {e!s}")
             # In case of error, return a default date in the past
             return datetime.min
 
@@ -1450,9 +1486,9 @@ class ZephyrToQTestMigration:
             self.db.save_migration_timestamp(self.zephyr_config.project_key, current_time)
             logger.info(f"Saved migration timestamp: {current_time.isoformat()}")
         except Exception as e:
-            logger.error(f"Error saving migration timestamp: {str(e)}")
+            logger.error(f"Error saving migration timestamp: {e!s}")
 
-    def get_changed_entities_since_last_run(self, entity_type: str) -> List[Dict[str, Any]]:
+    def get_changed_entities_since_last_run(self, entity_type: str) -> list[dict[str, Any]]:
         """
         Get entities that have changed since the last migration run.
 
@@ -1461,6 +1497,7 @@ class ZephyrToQTestMigration:
 
         Returns:
             List of changed entities
+
         """
         # Get the timestamp of the last migration run
         last_migration_time = self.get_last_migration_timestamp()
@@ -1494,12 +1531,12 @@ class ZephyrToQTestMigration:
             else:
                 # If we can't determine when the entity was updated, include it to be safe
                 logger.warning(
-                    f"Could not determine update time for {entity_type} {entity.get('id')}"
+                    f"Could not determine update time for {entity_type} {entity.get('id')}",
                 )
                 changed_entities.append(entity)
 
         logger.info(
-            f"Found {len(changed_entities)} changed {entity_type} out of {len(all_entities)} total"
+            f"Found {len(changed_entities)} changed {entity_type} out of {len(all_entities)} total",
         )
         return changed_entities
 
@@ -1514,6 +1551,7 @@ class ZephyrToQTestMigration:
 
         Returns:
             Dict with resolved entities and their dependencies
+
         """
         logger.info("Resolving entity relationships for incremental migration")
 
@@ -1527,18 +1565,18 @@ class ZephyrToQTestMigration:
                 # Resolve test case relationships
                 test_case_entities = self.get_changed_entities_since_last_run("test_cases")
                 resolved_relationships["test_cases"] = self._resolve_test_case_relationships(
-                    test_case_entities
+                    test_case_entities,
                 )
 
                 # Resolve test cycle relationships
                 test_cycle_entities = self.get_changed_entities_since_last_run("test_cycles")
                 resolved_relationships["test_cycles"] = self._resolve_test_cycle_relationships(
-                    test_cycle_entities
+                    test_cycle_entities,
                 )
 
                 # Resolve test execution relationships
                 test_execution_entities = self.get_changed_entities_since_last_run(
-                    "test_executions"
+                    "test_executions",
                 )
                 resolved_relationships[
                     "test_executions"
@@ -1549,16 +1587,15 @@ class ZephyrToQTestMigration:
             # Entity type specific resolution
             if entity_type == "test_cases":
                 return self._resolve_test_case_relationships(changed_entities)
-            elif entity_type == "test_cycles":
+            if entity_type == "test_cycles":
                 return self._resolve_test_cycle_relationships(changed_entities)
-            elif entity_type == "test_executions":
+            if entity_type == "test_executions":
                 return self._resolve_test_execution_relationships(changed_entities)
-            else:
-                logger.warning(f"No relationship resolver for entity type: {entity_type}")
-                return {"entities": changed_entities, "dependencies": []}
+            logger.warning(f"No relationship resolver for entity type: {entity_type}")
+            return {"entities": changed_entities, "dependencies": []}
 
         except Exception as e:
-            logger.error(f"Error resolving entity relationships: {str(e)}", exc_info=True)
+            logger.error(f"Error resolving entity relationships: {e!s}", exc_info=True)
             raise
 
     def _resolve_test_case_relationships(self, changed_test_cases):
@@ -1570,6 +1607,7 @@ class ZephyrToQTestMigration:
 
         Returns:
             Dict with resolved entities and their dependencies
+
         """
         logger.info(f"Resolving relationships for {len(changed_test_cases)} test cases")
         test_case_dependencies = []
@@ -1591,7 +1629,7 @@ class ZephyrToQTestMigration:
                     folder = self.zephyr_client.get_folder(folder_id)
                     if folder:
                         test_case_dependencies.append(
-                            {"id": folder_id, "type": "folder", "entity": folder}
+                            {"id": folder_id, "type": "folder", "entity": folder},
                         )
 
             # Attachment dependencies
@@ -1600,7 +1638,7 @@ class ZephyrToQTestMigration:
                 attachment_id = attachment.get("id")
                 if attachment_id:
                     test_case_dependencies.append(
-                        {"id": attachment_id, "type": "attachment", "entity": attachment}
+                        {"id": attachment_id, "type": "attachment", "entity": attachment},
                     )
 
         return {"entities": changed_test_cases, "dependencies": test_case_dependencies}
@@ -1614,6 +1652,7 @@ class ZephyrToQTestMigration:
 
         Returns:
             Dict with resolved entities and their dependencies
+
         """
         logger.info(f"Resolving relationships for {len(changed_test_cycles)} test cycles")
         test_cycle_dependencies = []
@@ -1635,7 +1674,7 @@ class ZephyrToQTestMigration:
                     parent_cycle = self.zephyr_client.get_test_cycle(parent_id)
                     if parent_cycle:
                         test_cycle_dependencies.append(
-                            {"id": parent_id, "type": "test_cycle", "entity": parent_cycle}
+                            {"id": parent_id, "type": "test_cycle", "entity": parent_cycle},
                         )
 
             # Folder dependencies
@@ -1651,7 +1690,7 @@ class ZephyrToQTestMigration:
                     folder = self.zephyr_client.get_folder(folder_id)
                     if folder:
                         test_cycle_dependencies.append(
-                            {"id": folder_id, "type": "folder", "entity": folder}
+                            {"id": folder_id, "type": "folder", "entity": folder},
                         )
 
         return {"entities": changed_test_cycles, "dependencies": test_cycle_dependencies}
@@ -1665,6 +1704,7 @@ class ZephyrToQTestMigration:
 
         Returns:
             Dict with resolved entities and their dependencies
+
         """
         logger.info(f"Resolving relationships for {len(changed_test_executions)} test executions")
         test_execution_dependencies = []
@@ -1686,7 +1726,7 @@ class ZephyrToQTestMigration:
                     test_case = self.zephyr_client.get_test_case(test_case_id)
                     if test_case:
                         test_execution_dependencies.append(
-                            {"id": test_case_id, "type": "test_case", "entity": test_case}
+                            {"id": test_case_id, "type": "test_case", "entity": test_case},
                         )
 
             # Test cycle dependency
@@ -1702,7 +1742,7 @@ class ZephyrToQTestMigration:
                     test_cycle = self.zephyr_client.get_test_cycle(test_cycle_id)
                     if test_cycle:
                         test_execution_dependencies.append(
-                            {"id": test_cycle_id, "type": "test_cycle", "entity": test_cycle}
+                            {"id": test_cycle_id, "type": "test_cycle", "entity": test_cycle},
                         )
 
             # Attachment dependencies
@@ -1711,19 +1751,21 @@ class ZephyrToQTestMigration:
                 attachment_id = attachment.get("id")
                 if attachment_id:
                     test_execution_dependencies.append(
-                        {"id": attachment_id, "type": "attachment", "entity": attachment}
+                        {"id": attachment_id, "type": "attachment", "entity": attachment},
                     )
 
         return {"entities": changed_test_executions, "dependencies": test_execution_dependencies}
 
     def transform_test_cases_batch(self, batch):
-        """Transform a batch of Zephyr test cases to qTest format.
+        """
+        Transform a batch of Zephyr test cases to qTest format.
 
         Args:
             batch: A list of Zephyr test case entities to transform
 
         Returns:
             List of transformed qTest test case objects
+
         """
         logger.info(f"Transforming batch of {len(batch)} test cases")
         transformed_batch = []
@@ -1735,7 +1777,7 @@ class ZephyrToQTestMigration:
 
             if folder_id:
                 module_mapping = self.db.get_entity_mapping(
-                    self.zephyr_config.project_key, "folder_to_module", folder_id
+                    self.zephyr_config.project_key, "folder_to_module", folder_id,
                 )
                 if module_mapping:
                     module_id = module_mapping.get("target_id")
@@ -1779,7 +1821,7 @@ class ZephyrToQTestMigration:
             source_id = test_case.get("id")
             if source_id:
                 self.db.save_transformed_test_case(
-                    self.zephyr_config.project_key, source_id, qtest_test_case
+                    self.zephyr_config.project_key, source_id, qtest_test_case,
                 )
 
             transformed_batch.append(qtest_test_case)
@@ -1788,13 +1830,15 @@ class ZephyrToQTestMigration:
         return transformed_batch
 
     def transform_test_cycles_batch(self, batch):
-        """Transform a batch of Zephyr test cycles to qTest format.
+        """
+        Transform a batch of Zephyr test cycles to qTest format.
 
         Args:
             batch: A list of Zephyr test cycle entities to transform
 
         Returns:
             List of transformed qTest test cycle objects
+
         """
         logger.info(f"Transforming batch of {len(batch)} test cycles")
         transformed_batch = []
@@ -1806,7 +1850,7 @@ class ZephyrToQTestMigration:
 
             if folder_id:
                 folder_mapping = self.db.get_entity_mapping(
-                    self.zephyr_config.project_key, "folder_to_module", folder_id
+                    self.zephyr_config.project_key, "folder_to_module", folder_id,
                 )
                 if folder_mapping:
                     parent_id = folder_mapping.get("target_id")
@@ -1828,7 +1872,7 @@ class ZephyrToQTestMigration:
             source_id = cycle.get("id")
             if source_id:
                 self.db.save_transformed_test_cycle(
-                    self.zephyr_config.project_key, source_id, qtest_cycle
+                    self.zephyr_config.project_key, source_id, qtest_cycle,
                 )
 
             transformed_batch.append(qtest_cycle)
@@ -1837,13 +1881,15 @@ class ZephyrToQTestMigration:
         return transformed_batch
 
     def transform_test_executions_batch(self, batch):
-        """Transform a batch of Zephyr test executions to qTest format.
+        """
+        Transform a batch of Zephyr test executions to qTest format.
 
         Args:
             batch: A list of Zephyr test execution entities to transform
 
         Returns:
             List of tuples containing (QTestTestRun, QTestTestLog) objects
+
         """
         logger.info(f"Transforming batch of {len(batch)} test executions")
         transformed_batch = []
@@ -1858,14 +1904,14 @@ class ZephyrToQTestMigration:
 
             if test_case_id:
                 case_mapping = self.db.get_entity_mapping(
-                    self.zephyr_config.project_key, "testcase_to_testcase", test_case_id
+                    self.zephyr_config.project_key, "testcase_to_testcase", test_case_id,
                 )
                 if case_mapping:
                     qtest_test_case_id = case_mapping.get("target_id")
 
             if test_cycle_id:
                 cycle_mapping = self.db.get_entity_mapping(
-                    self.zephyr_config.project_key, "cycle_to_cycle", test_cycle_id
+                    self.zephyr_config.project_key, "cycle_to_cycle", test_cycle_id,
                 )
                 if cycle_mapping:
                     qtest_test_cycle_id = cycle_mapping.get("target_id")
@@ -1899,7 +1945,7 @@ class ZephyrToQTestMigration:
 
                 # Add step result to list
                 step_results.append(
-                    {"order": idx + 1, "status": qtest_step_status, "actualResult": actual_result}
+                    {"order": idx + 1, "status": qtest_step_status, "actualResult": actual_result},
                 )
 
             # Create test log model
@@ -1914,7 +1960,7 @@ class ZephyrToQTestMigration:
             source_id = execution.get("id")
             if source_id:
                 self.db.save_transformed_execution(
-                    self.zephyr_config.project_key, source_id, qtest_run, qtest_log
+                    self.zephyr_config.project_key, source_id, qtest_run, qtest_log,
                 )
 
             transformed_batch.append((qtest_run, qtest_log))
@@ -1946,6 +1992,7 @@ def create_migration(
 
     Returns:
         ZephyrToQTestMigration or EnhancedMigration: A migration instance
+
     """
     # Create base migration instance
     migration = ZephyrToQTestMigration(

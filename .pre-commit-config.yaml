@@ -19,17 +19,12 @@ repos:
     -   id: check-json
 
 -   repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.11.5
+    rev: v0.1.8
     hooks:
     -   id: ruff
         args: [--fix, --exit-non-zero-on-fix]
     -   id: ruff-format
-
--   repo: https://github.com/pycqa/isort
-    rev: 6.0.1
-    hooks:
-    -   id: isort
-        args: ["--profile", "black"]
+        args: [--config=pyproject.toml]
 
 -   repo: https://github.com/pre-commit/mirrors-mypy
     rev: v1.15.0
@@ -49,15 +44,7 @@ repos:
         exclude: '^tests/|^examples/'
         args: ["-c", "pyproject.toml"]
 
--   repo: local
-    hooks:
-    -   id: docformatter
-        name: docformatter
-        description: Format docstrings
-        entry: docformatter
-        language: system
-        types: [python]
-        args: ["--in-place", "--config", "./pyproject.toml"]
+# Docstring formatting is now handled by ruff
 
 -   repo: local
     hooks:

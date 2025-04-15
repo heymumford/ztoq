@@ -12,21 +12,19 @@ It shows different mocking approaches and common usage patterns.
 """
 
 import json
+
 import pytest
 import requests
-from typing import List, Dict, Any, Tuple
-
-from ztoq.qtest_client import QTestClient
-from ztoq.qtest_models import QTestConfig, QTestProject, QTestTestCase
-from ztoq.zephyr_client import ZephyrClient
-from ztoq.models import ZephyrConfig, Project, Case
 
 from tests.fixtures.mocks.api_harness import (
-    ZephyrAPIHarness,
-    QTestAPIHarness,
-    MockAPITestBase,
     FastAPIHarness,
+    MockAPITestBase,
+    ZephyrAPIHarness,
 )
+from ztoq.models import ZephyrConfig
+from ztoq.qtest_client import QTestClient
+from ztoq.qtest_models import QTestConfig, QTestTestCase
+from ztoq.zephyr_client import ZephyrClient
 
 
 # Example 1: Using the MockAPITestBase class
@@ -48,7 +46,7 @@ class TestAPIHarnessWithBaseClass(MockAPITestBase):
                 "values": [
                     {"id": "1001", "key": "DEMO", "name": "Demo Project"},
                     {"id": "1002", "key": "TEST", "name": "Test Project"},
-                ]
+                ],
             },
         )
 
@@ -133,7 +131,7 @@ class TestAPIHarnessWithFixtures:
         """Test handling API errors with the Zephyr harness."""
         # Configure mock to return an error response
         mock_zephyr_api.add_error_response(
-            "GET", "/testcases", "Invalid project key", status_code=400
+            "GET", "/testcases", "Invalid project key", status_code=400,
         )
 
         # Set error rate for random failures
@@ -188,7 +186,7 @@ class TestAPIHarnessWithFixtures:
                         "page": 2,
                         "pageSize": 2,
                         "items": [{"id": 103, "name": "Test Case 3"}],
-                    }
+                    },
                 }, 200
             return None, 404
 
@@ -222,7 +220,7 @@ class TestAPIHarnessWithContextManagers:
 
         # Configure test data
         zephyr_harness.add_response(
-            "GET", "/projects", {"values": [{"id": "1001", "key": "DEMO", "name": "Demo Project"}]}
+            "GET", "/projects", {"values": [{"id": "1001", "key": "DEMO", "name": "Demo Project"}]},
         )
 
         # Use context manager to patch requests
@@ -254,7 +252,7 @@ class TestAPIHarnessWithContextManagers:
 
         # Configure Zephyr responses
         zephyr_harness.add_response(
-            "GET", "/projects", {"values": [{"id": "1001", "key": "DEMO", "name": "Demo Project"}]}
+            "GET", "/projects", {"values": [{"id": "1001", "key": "DEMO", "name": "Demo Project"}]},
         )
 
         # Configure qTest responses
@@ -317,7 +315,7 @@ class TestWithFastAPIHarness:
         """Test using a real API server."""
         # Create clients using server URLs
         zephyr_config = ZephyrConfig(
-            base_url=f"{api_server.zephyr_url}", api_token="test-token", project_key="TEST"
+            base_url=f"{api_server.zephyr_url}", api_token="test-token", project_key="TEST",
         )
         zephyr_client = ZephyrClient(zephyr_config)
 
@@ -332,7 +330,7 @@ class TestWithFastAPIHarness:
         # Make requests to the running server
         # Note: These will hit the actual FastAPI server running locally
         zephyr_response = requests.get(
-            f"{api_server.zephyr_url}/projects", headers={"Authorization": "Bearer test-token"}
+            f"{api_server.zephyr_url}/projects", headers={"Authorization": "Bearer test-token"},
         )
         qtest_response = requests.post(
             f"{api_server.base_url}/oauth/token",
@@ -349,7 +347,7 @@ class TestWithFastAPIHarness:
 
 # Example a real-world scenario: Testing a migration function that uses both APIs
 def migrate_test_case(
-    zephyr_client: ZephyrClient, qtest_client: QTestClient, zephyr_case_key: str
+    zephyr_client: ZephyrClient, qtest_client: QTestClient, zephyr_case_key: str,
 ) -> int:
     """
     Migrate a test case from Zephyr Scale to qTest.
@@ -482,7 +480,7 @@ class TestMigrationFunction:
         assert len(zephyr_requests) == 1
 
         qtest_requests = qtest_harness.get_requests(
-            method="POST", path="/api/v3/projects/1/test-cases"
+            method="POST", path="/api/v3/projects/1/test-cases",
         )
         assert len(qtest_requests) == 1
         assert "Login Test" in json.dumps(qtest_requests[0]["data"])
@@ -499,7 +497,7 @@ class TestErrorConditions:
 
         # Add a rate limit error for the first request
         mock_zephyr_api.add_error_response(
-            "GET", "/testcases", "Rate limit exceeded", status_code=429
+            "GET", "/testcases", "Rate limit exceeded", status_code=429,
         )
 
         # Add success response for subsequent requests
@@ -569,7 +567,7 @@ class TestPerformanceSimulation:
 
         # Add response
         mock_zephyr_api.add_response(
-            "GET", "/projects", {"values": [{"id": "1001", "key": "DEMO", "name": "Demo Project"}]}
+            "GET", "/projects", {"values": [{"id": "1001", "key": "DEMO", "name": "Demo Project"}]},
         )
 
         # Create client

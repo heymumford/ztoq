@@ -1,8 +1,26 @@
 # Zephyr to qTest Migration - Kanban Board
 
-> For a historical record of completed work with reasoning and lessons learned, see [Kanban History](kanban-history.md)
+> For a historical record of completed work with reasoning and lessons learned, see [Kanban History](https://github.com/heymumford/ztoq/blob/main/docs/kanban-history.md)
 
 ## Backlog
+
+### Phase 16: Code Quality and Linting
+
+#### Linting Improvements
+- [x] **[LINT-1]** Consolidate linting tools in ruff configuration *(Removed redundant linters like black, flake8, isort, and standardized on ruff as the primary linting tool)*
+- [x] **[LINT-2]** Create utility scripts for common linting fixes *(Created scripts for removing unused imports and fixing logging statements)*
+- [x] **[LINT-3]** Fix import-related linting issues *(Fixed hundreds of unused import issues across the codebase)*
+- [x] **[LINT-4]** Fix formatting and style issues *(Addressed trailing commas, whitespace, quotes consistency, and other style issues)*
+- [ ] **[LINT-5]** Fix logging format issues (G004) *(Convert f-string logging to correct string interpolation)*
+- [ ] **[LINT-6]** Add missing type annotations for public APIs
+- [ ] **[LINT-7]** Update pytest assertions to follow pytest style
+- [ ] **[LINT-8]** Add missing __init__.py files to namespace packages
+- [ ] **[LINT-9]** Refactor complex functions to improve maintainability
+
+#### Test Coverage Improvements
+- [x] **[TEST-COV-1]** Implement negative tests for ETL error handling *(Created comprehensive test suite focused on error handling in extraction, transformation, and loading phases)*
+- [x] **[TEST-COV-2]** Implement tests for database error handling *(Added robust tests for database connection errors, constraint violations, transaction failures, and recovery mechanisms)*
+- [x] **[TEST-COV-3]** Implement tests for concurrent operation error handling *(Created test suite focusing on thread pool errors, partial batch failures, and parallel processing edge cases)*
 
 ### Phase 1: Core Infrastructure
 
@@ -11,21 +29,55 @@
 - [x] **[TEST-INFRA-3]** Implement test harness for API mocking
 
 #### Unit Tests First
-- [ ] **[TEST-UNIT-1]** Write unit tests for project structure and configuration
-- [ ] **[SETUP-1]** Set up project structure and dependencies
-- [ ] **[TEST-UNIT-2]** Write unit tests for CLI framework and command parsing
-- [ ] **[SETUP-2]** Create configuration management module with environment variable support
-- [ ] **[SETUP-3]** Implement CLI framework with debug mode flag
+- [x] **[TEST-UNIT-1]** Write unit tests for project structure and configuration *(Implemented comprehensive tests for project structure, configuration validation, environment variable handling, and CLI command structure)*
+- [x] **[SETUP-1]** Set up project structure and dependencies *(Implemented a comprehensive utilities module with package information, dependency management, version management, and project structure verification)*
+- [x] **[TEST-UNIT-2]** Write unit tests for CLI framework and command parsing *(Implemented tests for CLI version flags, command parsing, debug mode, and environment variable handling)*
+- [x] **[SETUP-2]** Create configuration management module with environment variable support *(Implemented a complete configuration management module with support for environment variables, validation, and nested configurations for different components)*
+- [x] **[SETUP-3]** Implement CLI framework with debug mode flag *(Enhanced CLI framework with debug mode flag, version information, and proper logging configuration)*
 
 #### Integration Tests
-- [ ] **[TEST-INT-1]** Write integration tests for SQL database schema and migrations
-- [ ] **[SETUP-4]** Design PostgreSQL/SQLite database schema with migration scripts
-- [ ] **[SETUP-5]** Create database connection manager with pooling and transaction support
+- [x] **[TEST-INT-1]** Write integration tests for SQL database schema and migrations
+- [x] **[SETUP-4]** Design PostgreSQL/SQLite database schema with migration scripts *(Implemented comprehensive database schema with SQLAlchemy ORM models, migration scripts for both PostgreSQL and SQLite, and performance optimizations)*
+- [x] **[SETUP-5]** Create database connection manager with pooling and transaction support *(Implemented a robust database connection manager with support for both PostgreSQL and SQLite, connection pooling, transaction management with isolation levels, and performance monitoring)*
 
 #### Acceptance Tests
-- [ ] **[TEST-E2E-1]** Write acceptance tests for CLI commands
-- [ ] **[SETUP-6]** Set up logging infrastructure with contextual error tracking
+- [x] **[TEST-E2E-1]** Write acceptance tests for CLI commands *(Implemented comprehensive acceptance tests for both the main CLI commands and workflow CLI commands, including thorough test fixtures and mock configurations)*
+- [x] **[SETUP-6]** Set up logging infrastructure with contextual error tracking
 - [ ] **[SETUP-7]** Implement test fixtures for acceptance testing
+
+### Phase 14: Resource Management and Performance Optimization
+
+#### Connection Pooling Improvements
+- [x] **[PERF-10]** Enhance connection pooling for thread safety and resource cleanup *(Implemented improved connection pooling with daemon threads, deadlock prevention, and proper async cleanup mechanisms)*
+- [x] **[PERF-11]** Add timeout management for asynchronous tasks *(Added configurable timeouts for all async worker tasks to prevent resource leaks and ensure bounded execution time)*
+
+#### Memory Management
+- [x] **[PERF-12]** Implement automatic cleanup for completed work items *(Added a configurable cleanup mechanism for work queues to prevent unbounded memory growth with completed items)*
+- [x] **[PERF-13]** Add circuit breaker cleanup to prevent unbounded growth *(Implemented periodic cleanup of idle circuit breakers to prevent memory leaks in long-running applications)*
+
+#### Session Management
+- [x] **[PERF-14]** Enhance thread-local session management *(Improved thread-local session handling with automatic cleanup on thread exit and proper exception handling)*
+- [x] **[PERF-15]** Improve transaction isolation and error handling *(Enhanced transaction management with better error handling, proper session state checking, and improved resource cleanup)*
+
+#### Documentation
+- [x] **[DOC-9]** Create comprehensive resource management guide *(Developed resource-management.md with detailed best practices for connection pooling, session management, thread safety, and memory optimization with practical code examples)*
+- [x] **[DOC-10]** Update client documentation with cleanup methods *(Enhanced client documentation with explicit cleanup methods, resource management patterns, and comprehensive examples for proper resource handling)*
+
+### Phase 15: Data Vacuum and Export
+
+#### Unit Tests
+- [ ] **[TEST-UNIT-40]** Write unit tests for Zephyr data vacuum functionality
+- [ ] **[VACUUM-1]** Implement Zephyr data vacuum functionality using URL and token
+- [ ] **[TEST-UNIT-41]** Write unit tests for data review CLI commands
+- [ ] **[VACUUM-2]** Create CLI commands for reviewing vacuumed data
+- [ ] **[TEST-UNIT-42]** Write unit tests for qTest export functionality
+- [ ] **[EXPORT-1]** Implement qTest export functionality with project selection
+
+#### Integration Tests
+- [ ] **[TEST-INT-26]** Write integration tests for data pipeline with retries
+- [ ] **[EXPORT-2]** Implement data pipeline with individual record retries
+- [ ] **[TEST-INT-27]** Write integration tests for destination validation
+- [ ] **[EXPORT-3]** Add validation to ensure destination qTest has valid data copies
 
 ### Phase 2: Extraction Service
 
@@ -202,24 +254,28 @@
 - [x] **[TEST-INT-21]** Create integration tests for resume capability *(Implemented comprehensive tests for checkpoint and resume capability, including file and database storage backends)*
 - [x] **[PERF-3]** Add resume capability with checkpointing *(Implemented a modular checkpoint system with file and database storage, automated checkpointing, and seamless workflow resumption)*
 - [x] **[TEST-INT-22]** Create integration tests for database access patterns *(Implemented comprehensive tests for various database access patterns including indexed queries, batch loading, bulk operations, pandas integration, and prepared statements for optimized database performance)*
-- [x] **[PERF-4]** Optimize database access patterns *(Implemented comprehensive database optimization system with query caching, keyset pagination, batch operations, performance monitoring, and optimized transaction management; integrated with database factory for easy adoption; see [database-optimization.md](database-optimization.md) for detailed documentation)*
+- [x] **[PERF-4]** Optimize database access patterns *(Implemented comprehensive database optimization system with query caching, keyset pagination, batch operations, performance monitoring, and optimized transaction management; integrated with database factory for easy adoption; see [Database Optimization](https://github.com/heymumford/ztoq/blob/main/docs/database-optimization.md) for detailed documentation)*
 - [x] **[TEST-INT-23]** Create integration tests for connection pooling *(Implemented comprehensive tests for connection reuse, pool size limits, concurrent requests, cleanup mechanisms, error handling, and metrics tracking)*
 - [x] **[PERF-5]** Implement connection pooling for API clients *(Created a robust connection pooling system with dedicated pool management per host, automatic retry handling, connection reuse, and proper cleanup; integrated with both Zephyr and qTest clients for optimal performance with high-volume API requests)*
 
 #### Performance Tests
 - [x] **[TEST-PERF-3]** Create performance test suite *(Implemented comprehensive performance testing framework with base test infrastructure, database tests, and API client tests, including metrics collection, visualization, and statistical analysis)*
 - [x] **[TEST-PERF-4]** Benchmark migration throughput *(Implemented comprehensive migration throughput benchmarking with multiple test configurations, phase-specific performance analysis, optimal configuration reporting, and advanced profiling capabilities with cProfile integration)*
-- [ ] **[TEST-PERF-5]** Profile and optimize critical paths
-- [ ] **[PERF-6]** Implement SQL database indexing for performance
-- [ ] **[PERF-7]** Optimize data transformation with numpy/pandas
+- [x] **[TEST-PERF-5]** Profile and optimize critical paths *(Created a CriticalPathOptimizer that analyzes profiling data to identify bottlenecks, generates specific optimization recommendations, and visualizes hotspots with comprehensive reporting)*
+- [x] **[PERF-6]** Implement SQL database indexing for performance
+- [x] **[PERF-7]** Optimize data transformation with numpy/pandas
+- [ ] **[TEST-PERF-6]** Implement large-scale load testing framework for 500,000 records
+- [ ] **[PERF-16]** Develop configurable API rate limiting for Zephyr and qTest endpoints
+- [ ] **[TEST-PERF-7]** Benchmark performance metrics for large-scale migrations (records/min)
 
-### Phase 10: Snowflake Integration (Future)
+### Phase 13: Snowflake Integration (Future)
 
 #### Unit Tests
-- [ ] **[TEST-UNIT-37]** Write unit tests for Snowflake connection
+- [x] **[TEST-UNIT-37]** Write unit tests for Snowflake connection
 - [ ] **[SNOW-1]** Implement Snowflake connection management
 - [ ] **[TEST-UNIT-38]** Write unit tests for SQL to Snowflake schema mapping
 - [ ] **[SNOW-2]** Create SQL to Snowflake schema mapping
+- [ ] **[SNOW-5]** Analyze canonical schema for Snowflake compatibility and refactoring opportunities
 
 #### Integration Tests
 - [ ] **[TEST-INT-24]** Write integration tests for data export
@@ -229,13 +285,8 @@
 
 ### Phase 11: Documentation and Deployment
 
-- [ ] **[DOC-1]** Create comprehensive README with setup instructions
-- [ ] **[DOC-2]** Document error handling strategies and debug procedures
-- [ ] **[DOC-3]** Generate API documentation for maintenance
-- [x] **[DOC-4]** Create database schema documentation (canonical-schema.md)
-- [x] **[DOC-5]** Document SQL schema to Snowflake mapping
-- [ ] **[DOC-6]** Document troubleshooting procedures for production issues
-- [ ] **[DOC-7]** Add CLI command reference with examples
+- [ ] **[DOC-12]** Create database configuration documentation
+- [ ] **[DOC-13]** Create scheduled migrations documentation
 - [ ] **[DEPLOY-1]** Create Docker setup for containerized deployment
 - [ ] **[DEPLOY-2]** Add CI/CD pipelines for automated testing
 - [ ] **[DEPLOY-3]** Create production deployment procedures
@@ -268,6 +319,22 @@
 ## Review
 
 ## Completed
+- [x] **[DOC-1]** Create comprehensive README with setup instructions *(Enhanced README with detailed installation steps, feature overview, test coverage information, and usage examples)*
+- [x] **[DOC-2]** Document error handling strategies and debug procedures *(Created comprehensive troubleshooting guide with detailed error handling and debugging procedures)*
+- [x] **[DOC-3]** Generate API documentation for maintenance *(Generated comprehensive API documentation with Sphinx autodoc)*
+- [x] **[DOC-4]** Create database schema documentation (canonical-schema.md)
+- [x] **[DOC-5]** Document SQL schema to Snowflake mapping
+- [x] **[DOC-6]** Document troubleshooting procedures for production issues *(Created detailed troubleshooting guide with common issues and their solutions)*
+- [x] **[DOC-7]** Add CLI command reference with examples *(Created comprehensive CLI command reference with all commands, options, and examples)*
+- [x] **[DOC-8]** Create getting started guide for new users *(Created beginner-friendly guide with quick installation and first migration walkthrough)*
+- [x] **[DOC-9]** Create detailed usage guide *(Enhanced usage documentation with comprehensive information on all features)*
+- [x] **[DOC-10]** Create migration workflow guide *(Created detailed guide covering the complete migration process)*
+- [x] **[DOC-11]** Improve Sphinx documentation structure *(Reorganized Sphinx documentation with a more intuitive structure and better navigation)*
+- [x] **[TEST-E2E-1]** Write acceptance tests for CLI commands *(Implemented comprehensive acceptance tests for both the main CLI commands and workflow CLI commands, including thorough test fixtures and mock configurations)*
+- [x] **[TEST-UNIT-37]** Write unit tests for Snowflake connection *(Created comprehensive test suite for Snowflake database connection functionality following test-driven development principles to guide future implementation)*
+- [x] **[PERF-7]** Optimize data transformation with numpy/pandas *(Implemented comprehensive data transformation optimizations using pandas and numpy to significantly improve throughput and memory efficiency across the ETL pipeline)*
+- [x] **[PERF-6]** Implement SQL database indexing for performance *(Implemented a comprehensive database indexing system with index recommendation, creation, validation, and performance analysis capabilities for both SQLite and PostgreSQL databases)*
+- [x] **[TEST-PERF-5]** Profile and optimize critical paths *(Created a CriticalPathOptimizer that analyzes profiling data to identify bottlenecks, generates specific optimization recommendations, and visualizes hotspots with comprehensive reporting)*
 - [x] **[TEST-PERF-4]** Benchmark migration throughput *(Implemented comprehensive migration throughput benchmarking with multiple test configurations, phase-specific performance analysis, optimal configuration reporting, and advanced profiling capabilities with cProfile integration)*
 - [x] **[TEST-PERF-3]** Create performance test suite *(Implemented comprehensive performance testing framework with base test infrastructure, database tests, and API client tests, including metrics collection, visualization, and statistical analysis)*
 - [x] **[TEST-INT-22]** Create integration tests for database access patterns *(Implemented comprehensive tests for various database access patterns including indexed queries, batch loading, bulk operations, pandas integration, and prepared statements for optimized database performance)*
@@ -614,4 +681,4 @@ CREATE TABLE Attachment (
 - SQL database provides future path to Snowflake migration
 
 ---
-*Copyright (c) 2025 Eric C. Mumford (@heymumford) - Licensed under [MIT License](../../LICENSE)*
+*Copyright (c) 2025 Eric C. Mumford (@heymumford) - Licensed under [MIT License](https://github.com/heymumford/ztoq/blob/main/LICENSE)*

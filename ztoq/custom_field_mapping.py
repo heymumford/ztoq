@@ -13,10 +13,11 @@ entity-mapping.md document.
 
 import logging
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Union
-from ztoq.models import CustomField, CustomFieldType
-from ztoq.qtest_models import QTestCustomField
+from typing import Any
+
 from dateutil import parser
+
+from ztoq.models import CustomField, CustomFieldType
 
 logger = logging.getLogger("ztoq.custom_field_mapping")
 
@@ -29,13 +30,14 @@ class CustomFieldMapper:
     to qTest format, including type conversions and special field handling.
     """
 
-    def __init__(self, field_mappings: Optional[Dict[str, Dict[str, Any]]] = None):
+    def __init__(self, field_mappings: dict[str, dict[str, Any]] | None = None):
         """
         Initialize the custom field mapper.
 
         Args:
             field_mappings: Optional dictionary of custom field mappings.
                 If not provided, default mappings will be used.
+
         """
         # Default field type mappings from Zephyr to qTest
         self.type_mappings = {
@@ -119,6 +121,7 @@ class CustomFieldMapper:
 
         Returns:
             The corresponding qTest field name
+
         """
         # Check if this is a special field with a direct mapping
         if zephyr_field_name in self.field_name_mappings:
@@ -143,6 +146,7 @@ class CustomFieldMapper:
 
         Returns:
             The corresponding qTest field type
+
         """
         # Check if we have a direct mapping for this type
         if zephyr_field_type in self.type_mappings:
@@ -172,6 +176,7 @@ class CustomFieldMapper:
 
         Returns:
             The transformed value in qTest format
+
         """
         # Check custom transformations first
         if self.custom_mappings and field_name in self.custom_mappings:
@@ -180,7 +185,7 @@ class CustomFieldMapper:
                 try:
                     return mapping["transform_function"](value)
                 except Exception as e:
-                    logger.error(f"Error applying custom transformation for {field_name}: {str(e)}")
+                    logger.error(f"Error applying custom transformation for {field_name}: {e!s}")
 
         # Handle null values
         if value is None:
@@ -200,7 +205,7 @@ class CustomFieldMapper:
                 return ", ".join(str(v) for v in value)
             return str(value)
 
-        elif field_type in (CustomFieldType.DATE, CustomFieldType.DATETIME):
+        if field_type in (CustomFieldType.DATE, CustomFieldType.DATETIME):
             # Format date as ISO string
             if isinstance(value, datetime):
                 return value.isoformat()
@@ -218,11 +223,11 @@ class CustomFieldMapper:
 
             return str(value)
 
-        elif field_type == CustomFieldType.TABLE:
+        if field_type == CustomFieldType.TABLE:
             # Enhanced table formatting
             return self._transform_table_field(value)
 
-        elif field_type in (
+        if field_type in (
             CustomFieldType.HIERARCHICAL_SELECT,
             CustomFieldType.USER_GROUP,
             CustomFieldType.COMPONENT,
@@ -233,7 +238,7 @@ class CustomFieldMapper:
             # Handle hierarchical and complex structured fields
             return self._transform_hierarchical_field(value)
 
-        elif field_type == CustomFieldType.CHECKBOX:
+        if field_type == CustomFieldType.CHECKBOX:
             # Ensure boolean values
             if isinstance(value, bool):
                 return value
@@ -241,7 +246,7 @@ class CustomFieldMapper:
                 return value.lower() in ("true", "yes", "1", "on")
             return bool(value)
 
-        elif field_type == CustomFieldType.NUMERIC:
+        if field_type == CustomFieldType.NUMERIC:
             # Ensure numeric values
             try:
                 if isinstance(value, (int, float)):
@@ -258,11 +263,11 @@ class CustomFieldMapper:
             if isinstance(value, dict):
                 # Extract username or display name
                 for key in ("name", "displayName", "username", "value"):
-                    if key in value and value[key]:
+                    if value.get(key):
                         return str(value[key])
                 # If no name found, return the ID or first available value
                 for key in ("id", "accountId"):
-                    if key in value and value[key]:
+                    if value.get(key):
                         return str(value[key])
             return str(value)
 
@@ -278,6 +283,7 @@ class CustomFieldMapper:
 
         Returns:
             A formatted string representation of the table
+
         """
         if not value:
             return ""
@@ -320,7 +326,7 @@ class CustomFieldMapper:
             return "\n".join(rows)
 
         # Case: List of lists (matrix format)
-        elif isinstance(first_item, list):
+        if isinstance(first_item, list):
             # Consider first row as headers if it has string values
             has_headers = all(isinstance(cell, str) for cell in first_item)
 
@@ -353,8 +359,7 @@ class CustomFieldMapper:
             return "\n".join(rows)
 
         # Case: Simple list of values
-        else:
-            return "\n".join(str(item) for item in value)
+        return "\n".join(str(item) for item in value)
 
     def _transform_hierarchical_field(self, value: Any) -> str:
         """
@@ -365,6 +370,7 @@ class CustomFieldMapper:
 
         Returns:
             A string representation of the hierarchical field
+
         """
         if not value:
             return ""
@@ -375,14 +381,13 @@ class CustomFieldMapper:
             if "id" in value and "name" in value:
                 # Common format for hierarchical items
                 return value.get("name", "")
-            elif "value" in value and "label" in value:
+            if "value" in value and "label" in value:
                 # Another common format
                 return value.get("label", "")
-            else:
-                # Generic dictionary format
-                return " > ".join(f"{k}: {v}" for k, v in value.items())
+            # Generic dictionary format
+            return " > ".join(f"{k}: {v}" for k, v in value.items())
 
-        elif isinstance(value, list):
+        if isinstance(value, list):
             # Case: List of hierarchical items
             if all(isinstance(item, dict) for item in value):
                 # Try to extract the hierarchy path
@@ -413,6 +418,7 @@ class CustomFieldMapper:
 
         Returns:
             The corresponding qTest status
+
         """
         if not zephyr_status:
             return "NOT_RUN"
@@ -432,6 +438,7 @@ class CustomFieldMapper:
 
         Returns:
             The corresponding qTest priority
+
         """
         if not zephyr_priority:
             return "MEDIUM"
@@ -444,10 +451,10 @@ class CustomFieldMapper:
 
     def extract_and_map_field(
         self,
-        entity: Dict[str, Any],
+        entity: dict[str, Any],
         field_name: str,
         default_value: Any = None,
-        target_type: str = None,
+        target_type: str | None = None,
     ) -> Any:
         """
         Extract a field from an entity and apply mapping if needed.
@@ -460,6 +467,7 @@ class CustomFieldMapper:
 
         Returns:
             The extracted and mapped field value
+
         """
         # Check if field exists
         if field_name not in entity:
@@ -480,7 +488,7 @@ class CustomFieldMapper:
         if target_type:
             if target_type == "STRING":
                 return str(value)
-            elif target_type == "NUMBER":
+            if target_type == "NUMBER":
                 try:
                     return float(value)
                 except (ValueError, TypeError):
@@ -496,8 +504,8 @@ class CustomFieldMapper:
         return value
 
     def map_custom_fields(
-        self, zephyr_fields: List[Union[CustomField, Dict[str, Any]]]
-    ) -> List[Dict[str, Any]]:
+        self, zephyr_fields: list[CustomField | dict[str, Any]],
+    ) -> list[dict[str, Any]]:
         """
         Map Zephyr custom fields to qTest custom fields.
 
@@ -506,6 +514,7 @@ class CustomFieldMapper:
 
         Returns:
             List of qTest custom fields as dictionaries
+
         """
         qtest_fields = []
 
@@ -546,7 +555,7 @@ class CustomFieldMapper:
 
         return qtest_fields
 
-    def map_zephyr_key_to_custom_field(self, zephyr_key: str) -> Dict[str, Any]:
+    def map_zephyr_key_to_custom_field(self, zephyr_key: str) -> dict[str, Any]:
         """
         Create a qTest custom field to store the Zephyr key for reference.
 
@@ -555,6 +564,7 @@ class CustomFieldMapper:
 
         Returns:
             A qTest custom field dictionary containing the Zephyr key
+
         """
         return {
             "field_id": 0,
@@ -563,7 +573,7 @@ class CustomFieldMapper:
             "field_value": zephyr_key,
         }
 
-    def map_testcase_fields(self, zephyr_testcase: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def map_testcase_fields(self, zephyr_testcase: dict[str, Any]) -> list[dict[str, Any]]:
         """
         Map Zephyr test case fields to qTest custom fields.
 
@@ -572,6 +582,7 @@ class CustomFieldMapper:
 
         Returns:
             List of qTest custom fields as dictionaries
+
         """
         qtest_fields = []
 
@@ -580,7 +591,7 @@ class CustomFieldMapper:
             qtest_fields.append(self.map_zephyr_key_to_custom_field(zephyr_testcase["key"]))
 
         # Map labels if present
-        if "labels" in zephyr_testcase and zephyr_testcase["labels"]:
+        if zephyr_testcase.get("labels"):
             labels_str = ", ".join(zephyr_testcase["labels"])
             qtest_fields.append(
                 {
@@ -588,50 +599,50 @@ class CustomFieldMapper:
                     "field_name": "Tags",
                     "field_type": "STRING",
                     "field_value": labels_str,
-                }
+                },
             )
 
         # Map status if present
-        if "status" in zephyr_testcase and zephyr_testcase["status"]:
+        if zephyr_testcase.get("status"):
             qtest_fields.append(
                 {
                     "field_id": 0,
                     "field_name": "status",
                     "field_type": "STRING",
                     "field_value": zephyr_testcase["status"],
-                }
+                },
             )
 
         # Map estimated time if present
-        if "estimatedTime" in zephyr_testcase and zephyr_testcase["estimatedTime"]:
+        if zephyr_testcase.get("estimatedTime"):
             qtest_fields.append(
                 {
                     "field_id": 0,
                     "field_name": "estimated_time",
                     "field_type": "NUMBER",
                     "field_value": zephyr_testcase["estimatedTime"],
-                }
+                },
             )
 
         # Map component if present
-        if "component" in zephyr_testcase and zephyr_testcase["component"]:
+        if zephyr_testcase.get("component"):
             qtest_fields.append(
                 {
                     "field_id": 0,
                     "field_name": "Components",
                     "field_type": "STRING",
                     "field_value": zephyr_testcase["component"],
-                }
+                },
             )
 
         # Map custom fields
-        if "customFields" in zephyr_testcase and zephyr_testcase["customFields"]:
+        if zephyr_testcase.get("customFields"):
             custom_fields = self.map_custom_fields(zephyr_testcase["customFields"])
             qtest_fields.extend(custom_fields)
 
         return qtest_fields
 
-    def map_testcycle_fields(self, zephyr_cycle: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def map_testcycle_fields(self, zephyr_cycle: dict[str, Any]) -> list[dict[str, Any]]:
         """
         Map Zephyr test cycle fields to qTest custom fields.
 
@@ -640,6 +651,7 @@ class CustomFieldMapper:
 
         Returns:
             List of qTest custom fields as dictionaries
+
         """
         qtest_fields = []
 
@@ -648,46 +660,46 @@ class CustomFieldMapper:
             qtest_fields.append(self.map_zephyr_key_to_custom_field(zephyr_cycle["key"]))
 
         # Map environment if present
-        if "environment" in zephyr_cycle and zephyr_cycle["environment"]:
+        if zephyr_cycle.get("environment"):
             qtest_fields.append(
                 {
                     "field_id": 0,
                     "field_name": "environment",
                     "field_type": "STRING",
                     "field_value": zephyr_cycle["environment"],
-                }
+                },
             )
 
         # Map status if present
-        if "status" in zephyr_cycle and zephyr_cycle["status"]:
+        if zephyr_cycle.get("status"):
             qtest_fields.append(
                 {
                     "field_id": 0,
                     "field_name": "status",
                     "field_type": "STRING",
                     "field_value": zephyr_cycle["status"],
-                }
+                },
             )
 
         # Map owner if present
-        if "owner" in zephyr_cycle and zephyr_cycle["owner"]:
+        if zephyr_cycle.get("owner"):
             qtest_fields.append(
                 {
                     "field_id": 0,
                     "field_name": "owner",
                     "field_type": "STRING",
                     "field_value": zephyr_cycle["owner"],
-                }
+                },
             )
 
         # Map custom fields
-        if "customFields" in zephyr_cycle and zephyr_cycle["customFields"]:
+        if zephyr_cycle.get("customFields"):
             custom_fields = self.map_custom_fields(zephyr_cycle["customFields"])
             qtest_fields.extend(custom_fields)
 
         return qtest_fields
 
-    def map_testrun_fields(self, zephyr_execution: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def map_testrun_fields(self, zephyr_execution: dict[str, Any]) -> list[dict[str, Any]]:
         """
         Map Zephyr test execution fields to qTest test run custom fields.
 
@@ -696,57 +708,58 @@ class CustomFieldMapper:
 
         Returns:
             List of qTest custom fields as dictionaries
+
         """
         qtest_fields = []
 
         # Map environment if present
-        if "environment" in zephyr_execution and zephyr_execution["environment"]:
+        if zephyr_execution.get("environment"):
             qtest_fields.append(
                 {
                     "field_id": 0,
                     "field_name": "environment",
                     "field_type": "STRING",
                     "field_value": zephyr_execution["environment"],
-                }
+                },
             )
 
         # Map actual time if present
-        if "actualTime" in zephyr_execution and zephyr_execution["actualTime"]:
+        if zephyr_execution.get("actualTime"):
             qtest_fields.append(
                 {
                     "field_id": 0,
                     "field_name": "actual_time",
                     "field_type": "NUMBER",
                     "field_value": zephyr_execution["actualTime"],
-                }
+                },
             )
 
         # Map executed by if present
-        if "executedBy" in zephyr_execution and zephyr_execution["executedBy"]:
+        if zephyr_execution.get("executedBy"):
             qtest_fields.append(
                 {
                     "field_id": 0,
                     "field_name": "executed_by",
                     "field_type": "STRING",
                     "field_value": zephyr_execution["executedBy"],
-                }
+                },
             )
 
         # Map execution date if present
-        if "executedOn" in zephyr_execution and zephyr_execution["executedOn"]:
+        if zephyr_execution.get("executedOn"):
             qtest_fields.append(
                 {
                     "field_id": 0,
                     "field_name": "execution_date",
                     "field_type": "DATE",
                     "field_value": str(zephyr_execution["executedOn"]),
-                }
+                },
             )
 
         # Map defects if present
-        if "defects" in zephyr_execution and zephyr_execution["defects"]:
+        if zephyr_execution.get("defects"):
             defects_str = ", ".join(
-                [defect.get("key", "") for defect in zephyr_execution["defects"]]
+                [defect.get("key", "") for defect in zephyr_execution["defects"]],
             )
             if defects_str:
                 qtest_fields.append(
@@ -755,11 +768,11 @@ class CustomFieldMapper:
                         "field_name": "defects",
                         "field_type": "STRING",
                         "field_value": defects_str,
-                    }
+                    },
                 )
 
         # Map custom fields
-        if "customFields" in zephyr_execution and zephyr_execution["customFields"]:
+        if zephyr_execution.get("customFields"):
             custom_fields = self.map_custom_fields(zephyr_execution["customFields"])
             qtest_fields.extend(custom_fields)
 
@@ -772,5 +785,6 @@ def get_default_field_mapper() -> CustomFieldMapper:
 
     Returns:
         CustomFieldMapper: The default field mapper
+
     """
     return CustomFieldMapper()

@@ -8,10 +8,11 @@ import os
 import tempfile
 from pathlib import Path
 from unittest.mock import MagicMock, patch
+
 import pytest
-import sqlalchemy
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+
 from ztoq.core.db_models import Base, MigrationStateModel
 from ztoq.database_manager import DatabaseManager
 from ztoq.migration import ZephyrToQTestMigration
@@ -19,11 +20,11 @@ from ztoq.models import ZephyrConfig
 from ztoq.qtest_models import QTestConfig
 
 
-@pytest.mark.integration()
+@pytest.mark.integration
 class TestMigrationETLIntegration:
     """Integration tests for the full ETL migration workflow with a real SQLite database."""
 
-    @pytest.fixture()
+    @pytest.fixture
     def db_path(self):
         """Create a temporary SQLite database file for testing."""
         temp_db_file = tempfile.NamedTemporaryFile(delete=False, suffix=".db")
@@ -37,7 +38,7 @@ class TestMigrationETLIntegration:
         # Clean up the database file after tests
         os.unlink(temp_db_file.name)
 
-    @pytest.fixture()
+    @pytest.fixture
     def db_manager(self, db_path):
         """Create a real database manager with a SQLite database."""
         # Create engine and initialize database
@@ -52,7 +53,7 @@ class TestMigrationETLIntegration:
 
         return db_manager
 
-    @pytest.fixture()
+    @pytest.fixture
     def zephyr_config(self):
         """Create a test Zephyr configuration."""
         return ZephyrConfig(
@@ -61,7 +62,7 @@ class TestMigrationETLIntegration:
             project_key="DEMO",
         )
 
-    @pytest.fixture()
+    @pytest.fixture
     def qtest_config(self):
         """Create a test qTest configuration."""
         return QTestConfig(
@@ -71,11 +72,11 @@ class TestMigrationETLIntegration:
             project_id=12345,
         )
 
-    @pytest.fixture()
+    @pytest.fixture
     def migration(self, zephyr_config, qtest_config, db_manager):
         """Create a migration manager with mocked API clients but real database."""
         with patch("ztoq.migration.ZephyrClient") as mock_zephyr, patch(
-            "ztoq.migration.QTestClient"
+            "ztoq.migration.QTestClient",
         ) as mock_qtest:
             # Configure mocks
             mock_zephyr_client = MagicMock()
@@ -113,11 +114,11 @@ class TestMigrationETLIntegration:
                     "folderId": "folder-2",
                     "priority": "high",
                     "attachments": [],
-                }
+                },
             ]
 
             mock_zephyr_client.get_test_steps.return_value = [
-                {"id": "step-1", "description": "Step 1", "expectedResult": "Result 1"}
+                {"id": "step-1", "description": "Step 1", "expectedResult": "Result 1"},
             ]
 
             mock_zephyr_client.get_test_cycles.return_value = [
@@ -128,7 +129,7 @@ class TestMigrationETLIntegration:
                     "folderId": "folder-1",
                     "startDate": "2025-01-01",
                     "endDate": "2025-01-15",
-                }
+                },
             ]
 
             mock_zephyr_client.get_test_executions.return_value = [
@@ -140,7 +141,7 @@ class TestMigrationETLIntegration:
                     "executionTime": "2025-01-02",
                     "comment": "All tests passed",
                     "attachments": [],
-                }
+                },
             ]
 
             # Configure qTest client mock responses for entity creation
@@ -210,22 +211,22 @@ class TestMigrationETLIntegration:
 
         # Check that entity mappings were created
         folder_mappings = db_manager.get_entity_mappings(
-            migration.zephyr_config.project_key, "folder_to_module"
+            migration.zephyr_config.project_key, "folder_to_module",
         )
         assert len(folder_mappings) == 2
 
         testcase_mappings = db_manager.get_entity_mappings(
-            migration.zephyr_config.project_key, "testcase_to_testcase"
+            migration.zephyr_config.project_key, "testcase_to_testcase",
         )
         assert len(testcase_mappings) == 1
 
         cycle_mappings = db_manager.get_entity_mappings(
-            migration.zephyr_config.project_key, "cycle_to_cycle"
+            migration.zephyr_config.project_key, "cycle_to_cycle",
         )
         assert len(cycle_mappings) == 1
 
         execution_mappings = db_manager.get_entity_mappings(
-            migration.zephyr_config.project_key, "execution_to_run"
+            migration.zephyr_config.project_key, "execution_to_run",
         )
         assert len(execution_mappings) == 1
 
@@ -281,27 +282,27 @@ class TestMigrationETLIntegration:
 
         # Check batch records in database
         folder_batches = db_manager.get_entity_batches(
-            migration.zephyr_config.project_key, "folders"
+            migration.zephyr_config.project_key, "folders",
         )
         assert len(folder_batches) == 1  # 2 folders / 10 batch size = 1 batch
         assert folder_batches[0]["status"] == "completed"
 
         test_case_batches = db_manager.get_entity_batches(
-            migration.zephyr_config.project_key, "test_cases"
+            migration.zephyr_config.project_key, "test_cases",
         )
         assert len(test_case_batches) == 1  # 1 test case / 10 batch size = 1 batch
         assert test_case_batches[0]["status"] == "completed"
 
         # Check transformed entity batches
         transformed_test_case_batches = db_manager.get_entity_batches(
-            migration.zephyr_config.project_key, "transformed_test_cases"
+            migration.zephyr_config.project_key, "transformed_test_cases",
         )
         assert len(transformed_test_case_batches) == 1
         assert transformed_test_case_batches[0]["status"] == "completed"
 
         # Check loaded entity batches
         loaded_test_case_batches = db_manager.get_entity_batches(
-            migration.zephyr_config.project_key, "loaded_test_cases"
+            migration.zephyr_config.project_key, "loaded_test_cases",
         )
         assert len(loaded_test_case_batches) == 1
         assert loaded_test_case_batches[0]["status"] == "completed"

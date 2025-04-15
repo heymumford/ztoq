@@ -18,6 +18,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 from typing import Any
+
 from ztoq.data_fetcher import create_authenticated_client, fetch_all_projects_data, fetch_projects
 from ztoq.database_manager import DatabaseManager
 from ztoq.models import ZephyrConfig
@@ -57,6 +58,7 @@ class ImportProgress:
 
         Args:
             verbose: Whether to print detailed progress information
+
         """
         self.start_time = datetime.now()
         self.verbose = verbose
@@ -79,6 +81,7 @@ class ImportProgress:
             event_type: Type of event (project_start, project_complete)
             project_key: The project key
             success: Whether the operation was successful
+
         """
         if event_type == "project_start":
             self.current_project = project_key
@@ -104,6 +107,7 @@ class ImportProgress:
             entity_type: Type of entity (test_cases, test_cycles, etc.)
             project_key: The project key
             success: Whether the operation was successful
+
         """
         if entity_type not in ("project_start", "project_complete"):
             if success:
@@ -123,6 +127,7 @@ class ImportProgress:
             entity_type: Type of entity or event
             project_key: The project key
             success: Whether the operation was successful
+
         """
         if entity_type in ("project_start", "project_complete"):
             self.project_callback(entity_type, project_key, success)
@@ -135,6 +140,7 @@ class ImportProgress:
 
         Returns:
             Dictionary containing summary statistics
+
         """
         end_time = datetime.now()
         duration = end_time - self.start_time
@@ -172,6 +178,7 @@ def import_zephyr_data(config: ImportConfig) -> dict[str, Any]:
 
     Returns:
         Dictionary containing import summary statistics
+
     """
     # Configure progress tracking
     progress = ImportProgress(config.verbose)
@@ -203,7 +210,7 @@ def import_zephyr_data(config: ImportConfig) -> dict[str, Any]:
 
     # Fetch data for all projects
     all_projects_data = fetch_all_projects_data(
-        client, project_keys, progress_callback=progress.callback
+        client, project_keys, progress_callback=progress.callback,
     )
 
     # Initialize database manager
@@ -227,9 +234,10 @@ def parse_args() -> ImportConfig:
 
     Returns:
         ImportConfig object with parsed arguments
+
     """
     parser = argparse.ArgumentParser(
-        description="Import Zephyr Scale test data into a SQL database"
+        description="Import Zephyr Scale test data into a SQL database",
     )
 
     parser.add_argument(
@@ -249,11 +257,11 @@ def parse_args() -> ImportConfig:
     )
 
     parser.add_argument(
-        "--db-path", type=str, default="zephyr_data.db", help="Path to SQLite database file"
+        "--db-path", type=str, default="zephyr_data.db", help="Path to SQLite database file",
     )
 
     parser.add_argument(
-        "--concurrency", type=int, default=5, help="Number of concurrent operations"
+        "--concurrency", type=int, default=5, help="Number of concurrent operations",
     )
 
     parser.add_argument("--verbose", action="store_true", help="Enable verbose logging")
@@ -276,6 +284,7 @@ def main() -> int:
 
     Returns:
         Exit code (0 for success, 1 for failure)
+
     """
     try:
         # Parse command line arguments
@@ -295,7 +304,7 @@ def main() -> int:
         logger.info("Import cancelled by user.")
         return 1
     except Exception as e:
-        logger.exception(f"Import failed with error: {str(e)}")
+        logger.exception(f"Import failed with error: {e!s}")
         return 1
 
 

@@ -4,19 +4,19 @@ This file is part of ZTOQ, licensed under the MIT License.
 See LICENSE file for details.
 """
 
-import os
-import sys
+import argparse
 import json
 import logging
-import argparse
+import os
+import sys
+
 import requests
-from pathlib import Path
 
 # Set up logging
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    handlers=[logging.StreamHandler()]
+    handlers=[logging.StreamHandler()],
 )
 logger = logging.getLogger("qtest_direct_api_check")
 
@@ -27,7 +27,7 @@ def check_qtest_api(base_url, token, no_verify_ssl=False, debug=False):
         logger.setLevel(logging.DEBUG)
 
     # Ensure URL has proper prefix
-    if not base_url.startswith(('http://', 'https://')):
+    if not base_url.startswith(("http://", "https://")):
         base_url = f"https://{base_url}"
         logger.debug(f"Added https:// prefix: {base_url}")
 
@@ -46,7 +46,7 @@ def check_qtest_api(base_url, token, no_verify_ssl=False, debug=False):
     # Create headers
     headers = {
         "Authorization": f"Bearer {token}",
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
     }
 
     # Log request details (without sensitive data)
@@ -66,7 +66,7 @@ def check_qtest_api(base_url, token, no_verify_ssl=False, debug=False):
             url=url,
             headers=headers,
             timeout=30,
-            verify=verify_ssl
+            verify=verify_ssl,
         )
 
         # Log response details
@@ -157,26 +157,25 @@ def main():
         logger.info("Original request failed. Trying alternative domain formats...")
 
         # Parse domain
-        domain_parts = qtest_url.split('.')
-        if 'http' in domain_parts[0]:
+        domain_parts = qtest_url.split(".")
+        if "http" in domain_parts[0]:
             # Extract domain from URL
-            if '://' in qtest_url:
-                domain_parts = qtest_url.split('://')[1].split('.')
+            if "://" in qtest_url:
+                domain_parts = qtest_url.split("://")[1].split(".")
             else:
-                domain_parts = qtest_url.split('.')
+                domain_parts = qtest_url.split(".")
 
         alternatives = []
 
         # Handle qtest.net case
-        if len(domain_parts) >= 2 and domain_parts[-2].lower() == 'qtest' and domain_parts[-1].lower() == 'net':
+        if len(domain_parts) >= 2 and domain_parts[-2].lower() == "qtest" and domain_parts[-1].lower() == "net":
             company = domain_parts[0]
             alternatives.append(f"{company}.qtestnet.com")
-        else:
-            # Generic alternatives
-            if len(domain_parts) >= 1:
-                company = domain_parts[0]
-                alternatives.append(f"{company}.qtestnet.com")
-                alternatives.append(f"{company}.qtest.com")
+        # Generic alternatives
+        elif len(domain_parts) >= 1:
+            company = domain_parts[0]
+            alternatives.append(f"{company}.qtestnet.com")
+            alternatives.append(f"{company}.qtest.com")
 
         # Try each alternative
         for alt_domain in alternatives:

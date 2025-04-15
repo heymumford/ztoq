@@ -5,6 +5,7 @@ See LICENSE file for details.
 """
 
 from typing import Any
+
 from pydantic import BaseModel
 
 

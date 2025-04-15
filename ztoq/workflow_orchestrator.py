@@ -13,33 +13,33 @@ phase coordination, state management, error handling, and logging.
 """
 
 import asyncio
+import json
 import logging
 import os
 import time
-import json
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Tuple, Union
+from typing import Any
+
 from rich.console import Console
-from rich.progress import BarColumn, Progress, TaskProgressColumn, TextColumn, TimeElapsedColumn
+from rich.progress import Progress
 from rich.table import Table
+
 from ztoq.batch_strategies import (
-    BatchStrategy,
-    SizeBatchStrategy,
-    TimeBatchStrategy,
     AdaptiveBatchStrategy,
+    BatchStrategy,
     EntityTypeBatchStrategy,
     SimilarityBatchStrategy,
-    configure_optimal_batch_size,
+    SizeBatchStrategy,
+    TimeBatchStrategy,
     create_batches,
-    estimate_processing_time,
 )
-from ztoq.database_factory import DatabaseFactory, DatabaseType, get_database_manager
-from ztoq.migration import EntityBatchTracker, MigrationState, ZephyrToQTestMigration
+from ztoq.database_factory import DatabaseType, get_database_manager
+from ztoq.migration import MigrationState, ZephyrToQTestMigration
 from ztoq.models import ZephyrConfig
 from ztoq.qtest_models import QTestConfig
-from ztoq.validation import ValidationManager, ValidationPhase, ValidationScope
+from ztoq.validation import ValidationManager, ValidationPhase
 
 logger = logging.getLogger("ztoq.workflow")
 console = Console()
@@ -84,21 +84,21 @@ class WorkflowConfig:
         self,
         project_key: str,
         db_type: str = "sqlite",
-        db_path: Optional[str] = None,
-        pg_host: Optional[str] = None,
-        pg_port: Optional[int] = None,
-        pg_username: Optional[str] = None,
-        pg_password: Optional[str] = None,
-        pg_database: Optional[str] = None,
+        db_path: str | None = None,
+        pg_host: str | None = None,
+        pg_port: int | None = None,
+        pg_username: str | None = None,
+        pg_password: str | None = None,
+        pg_database: str | None = None,
         batch_size: int = 50,
         max_workers: int = 5,
         validation_enabled: bool = True,
         rollback_enabled: bool = True,
-        attachments_dir: Optional[Path] = None,
-        output_dir: Optional[Path] = None,
+        attachments_dir: Path | None = None,
+        output_dir: Path | None = None,
         timeout: int = 3600,  # Default timeout is 1 hour
-        zephyr_config: Optional[ZephyrConfig] = None,
-        qtest_config: Optional[QTestConfig] = None,
+        zephyr_config: ZephyrConfig | None = None,
+        qtest_config: QTestConfig | None = None,
         use_batch_transformer: bool = True,  # Enable batch transformer by default
         batching_strategy: str = BatchingStrategy.FIXED,  # Default batching strategy
         max_batch_memory_mb: int = 100,  # Maximum batch memory footprint in MB
@@ -130,6 +130,7 @@ class WorkflowConfig:
             batching_strategy: Strategy to use for batch creation (fixed, size, time, adaptive, entity_type, similarity)
             max_batch_memory_mb: Maximum memory footprint per batch in MB (for size-based strategy)
             target_batch_time: Target processing time per batch in seconds (for time-based and adaptive strategies)
+
         """
         self.project_key = project_key
         self.db_type = db_type
@@ -169,12 +170,12 @@ class WorkflowEvent:
         phase: str,
         status: str,
         message: str,
-        entity_type: Optional[str] = None,
-        entity_count: Optional[int] = None,
-        batch_number: Optional[int] = None,
-        total_batches: Optional[int] = None,
-        timestamp: Optional[datetime] = None,
-        metadata: Optional[Dict[str, Any]] = None,
+        entity_type: str | None = None,
+        entity_count: int | None = None,
+        batch_number: int | None = None,
+        total_batches: int | None = None,
+        timestamp: datetime | None = None,
+        metadata: dict[str, Any] | None = None,
     ):
         """
         Initialize workflow event.
@@ -189,6 +190,7 @@ class WorkflowEvent:
             total_batches: Total number of batches
             timestamp: Event timestamp
             metadata: Additional metadata
+
         """
         self.phase = phase
         self.status = status
@@ -200,7 +202,7 @@ class WorkflowEvent:
         self.timestamp = timestamp or datetime.now()
         self.metadata = metadata or {}
 
-    def as_dict(self) -> Dict[str, Any]:
+    def as_dict(self) -> dict[str, Any]:
         """Convert event to dictionary."""
         return {
             "phase": self.phase,
@@ -236,10 +238,11 @@ class WorkflowOrchestrator:
 
         Args:
             config: Workflow configuration
+
         """
         self.config = config
-        self.events: List[WorkflowEvent] = []
-        self.rollback_points: Dict[str, Any] = {}
+        self.events: list[WorkflowEvent] = []
+        self.rollback_points: dict[str, Any] = {}
         self.rollback_enabled = config.rollback_enabled
 
         # For adaptive batch strategy
@@ -296,6 +299,7 @@ class WorkflowOrchestrator:
 
         Returns:
             The configured batch strategy instance
+
         """
         strategy_type = self.config.batching_strategy
 
@@ -303,7 +307,7 @@ class WorkflowOrchestrator:
             # Simple fixed-size batching
             return lambda entities: create_batches(entities, batch_size=self.config.batch_size)
 
-        elif strategy_type == BatchingStrategy.SIZE:
+        if strategy_type == BatchingStrategy.SIZE:
             # Size-based batching
             def entity_size_estimator(entity):
                 # Estimate size based on entity type and content
@@ -312,19 +316,18 @@ class WorkflowOrchestrator:
                     steps = len(entity.get("steps", []))
                     attachments = len(entity.get("attachments", []))
                     return 0.1 + (steps * 0.02) + (attachments * 0.5)  # Size in MB
-                elif entity_type == "test_cycle":
+                if entity_type == "test_cycle":
                     # Test cycles with more test cases are larger
                     test_cases = len(entity.get("test_cases", []))
                     return 0.05 + (test_cases * 0.01)  # Size in MB
-                else:
-                    # Default size estimation
-                    return 0.1  # Default 100KB per entity
+                # Default size estimation
+                return 0.1  # Default 100KB per entity
 
             return SizeBatchStrategy(
-                max_batch_size=self.config.max_batch_memory_mb, size_estimator=entity_size_estimator
+                max_batch_size=self.config.max_batch_memory_mb, size_estimator=entity_size_estimator,
             )
 
-        elif strategy_type == BatchingStrategy.TIME:
+        if strategy_type == BatchingStrategy.TIME:
             # Time-based batching
             def entity_time_estimator(entity):
                 # Estimate processing time based on entity type and complexity
@@ -333,19 +336,18 @@ class WorkflowOrchestrator:
                     steps = len(entity.get("steps", []))
                     attachments = len(entity.get("attachments", []))
                     return 0.05 + (steps * 0.01) + (attachments * 0.2)  # Time in seconds
-                elif entity_type == "test_cycle":
+                if entity_type == "test_cycle":
                     # Test cycles with more test cases take longer
                     test_cases = len(entity.get("test_cases", []))
                     return 0.02 + (test_cases * 0.005)  # Time in seconds
-                else:
-                    # Default time estimation
-                    return 0.05  # Default 50ms per entity
+                # Default time estimation
+                return 0.05  # Default 50ms per entity
 
             return TimeBatchStrategy(
-                time_estimator=entity_time_estimator, max_batch_time=self.config.target_batch_time
+                time_estimator=entity_time_estimator, max_batch_time=self.config.target_batch_time,
             )
 
-        elif strategy_type == BatchingStrategy.ADAPTIVE:
+        if strategy_type == BatchingStrategy.ADAPTIVE:
             # Adaptive learning batching
             if not self.adaptive_strategy:
                 self.adaptive_strategy = AdaptiveBatchStrategy(
@@ -357,25 +359,24 @@ class WorkflowOrchestrator:
                 )
             return self.adaptive_strategy
 
-        elif strategy_type == BatchingStrategy.ENTITY_TYPE:
+        if strategy_type == BatchingStrategy.ENTITY_TYPE:
             # Entity type batching
             def type_extractor(entity):
                 # Extract a type or category from the entity
                 if entity_type == "test_case":
                     # Group test cases by folder
                     return entity.get("folder_id", "default")
-                elif entity_type == "test_cycle":
+                if entity_type == "test_cycle":
                     # Group test cycles by owner
                     return entity.get("owner", "default")
-                else:
-                    # Default grouping
-                    return "default"
+                # Default grouping
+                return "default"
 
             return EntityTypeBatchStrategy(
-                type_extractor=type_extractor, max_batch_size=self.config.batch_size * 2
+                type_extractor=type_extractor, max_batch_size=self.config.batch_size * 2,
             )
 
-        elif strategy_type == BatchingStrategy.SIMILARITY:
+        if strategy_type == BatchingStrategy.SIMILARITY:
             # Similarity-based batching
             def feature_extractor(entity):
                 # Extract features for similarity comparison
@@ -389,7 +390,7 @@ class WorkflowOrchestrator:
                         attachments / 5,  # Normalize attachments
                         priority / 5,  # Normalize priority
                     )
-                elif entity_type == "test_cycle":
+                if entity_type == "test_cycle":
                     # Features: test cases count, duration, status
                     test_cases = len(entity.get("test_cases", []))
                     duration = entity.get("duration", 0)
@@ -399,9 +400,8 @@ class WorkflowOrchestrator:
                         duration / 86400,  # Normalize duration (seconds in a day)
                         status_id / 5,  # Normalize status
                     )
-                else:
-                    # Default features
-                    return (0.5, 0.5, 0.5)
+                # Default features
+                return (0.5, 0.5, 0.5)
 
             return SimilarityBatchStrategy(
                 feature_extractor=feature_extractor,
@@ -409,23 +409,22 @@ class WorkflowOrchestrator:
                 max_batch_size=self.config.batch_size,
             )
 
-        else:
-            # Default to fixed-size batching
-            logger.warning(
-                f"Unknown batching strategy '{strategy_type}', using fixed-size batching"
-            )
-            return lambda entities: create_batches(entities, batch_size=self.config.batch_size)
+        # Default to fixed-size batching
+        logger.warning(
+            f"Unknown batching strategy '{strategy_type}', using fixed-size batching",
+        )
+        return lambda entities: create_batches(entities, batch_size=self.config.batch_size)
 
     def _add_event(
         self,
         phase: str,
         status: str,
         message: str,
-        entity_type: Optional[str] = None,
-        entity_count: Optional[int] = None,
-        batch_number: Optional[int] = None,
-        total_batches: Optional[int] = None,
-        metadata: Optional[Dict[str, Any]] = None,
+        entity_type: str | None = None,
+        entity_count: int | None = None,
+        batch_number: int | None = None,
+        total_batches: int | None = None,
+        metadata: dict[str, Any] | None = None,
     ) -> WorkflowEvent:
         """
         Add a workflow event.
@@ -442,6 +441,7 @@ class WorkflowOrchestrator:
 
         Returns:
             The created workflow event
+
         """
         event = WorkflowEvent(
             phase=phase,
@@ -466,8 +466,8 @@ class WorkflowOrchestrator:
         return event
 
     async def run_workflow(
-        self, phases: Optional[List[str]] = None, progress: Optional[Progress] = None
-    ) -> Dict[str, Any]:
+        self, phases: list[str] | None = None, progress: Progress | None = None,
+    ) -> dict[str, Any]:
         """
         Run the migration workflow.
 
@@ -477,6 +477,7 @@ class WorkflowOrchestrator:
 
         Returns:
             Dictionary with workflow results and statistics
+
         """
         phases = phases or [WorkflowPhase.ALL.value]
 
@@ -499,7 +500,7 @@ class WorkflowOrchestrator:
             self.tasks = {}
             for phase in phases:
                 self.tasks[phase] = self.progress.add_task(
-                    f"Running {phase.capitalize()} phase...", total=None
+                    f"Running {phase.capitalize()} phase...", total=None,
                 )
 
         # Validate configuration
@@ -522,7 +523,7 @@ class WorkflowOrchestrator:
                     # Don't skip rollback phase if explicitly requested
                     if phase != WorkflowPhase.ROLLBACK.value:
                         self._add_event(
-                            phase, "skipped", f"Skipping {phase} phase (already completed)"
+                            phase, "skipped", f"Skipping {phase} phase (already completed)",
                         )
                         if self.progress and phase in self.tasks:
                             self.progress.update(
@@ -553,7 +554,7 @@ class WorkflowOrchestrator:
                 elif phase == WorkflowPhase.ROLLBACK.value:
                     if not self.rollback_enabled:
                         self._add_event(
-                            phase, "skipped", "Skipping rollback phase (rollback is disabled)"
+                            phase, "skipped", "Skipping rollback phase (rollback is disabled)",
                         )
                         results[phase] = {"status": "skipped", "reason": "Rollback is disabled"}
                     else:
@@ -576,8 +577,8 @@ class WorkflowOrchestrator:
             return results
 
         except Exception as e:
-            logger.error(f"Workflow error: {str(e)}", exc_info=True)
-            self._add_event("workflow", "failed", f"Workflow failed: {str(e)}")
+            logger.error(f"Workflow error: {e!s}", exc_info=True)
+            self._add_event("workflow", "failed", f"Workflow failed: {e!s}")
 
             # Update progress to show failure
             if self.progress:
@@ -601,17 +602,18 @@ class WorkflowOrchestrator:
 
         Returns:
             True if the phase can be skipped
+
         """
         if phase == WorkflowPhase.EXTRACT.value:
             return self.state.extraction_status == "completed"
-        elif phase == WorkflowPhase.TRANSFORM.value:
+        if phase == WorkflowPhase.TRANSFORM.value:
             return self.state.transformation_status == "completed"
-        elif phase == WorkflowPhase.LOAD.value:
+        if phase == WorkflowPhase.LOAD.value:
             return self.state.loading_status == "completed"
-        elif phase == WorkflowPhase.VALIDATE.value:
+        if phase == WorkflowPhase.VALIDATE.value:
             # Currently we always run validation
             return False
-        elif phase == WorkflowPhase.ROLLBACK.value:
+        if phase == WorkflowPhase.ROLLBACK.value:
             # Never skip rollback if explicitly requested
             return False
         return False
@@ -634,14 +636,13 @@ class WorkflowOrchestrator:
             # Check if we're in incremental mode
             if self.state.is_incremental:
                 self._add_event(
-                    phase, "in_progress", "Running incremental extraction (changed entities only)"
+                    phase, "in_progress", "Running incremental extraction (changed entities only)",
                 )
 
                 # Run incremental extraction
                 await asyncio.to_thread(self._run_incremental_extraction)
             else:
                 # Run full extraction using optimized work queue
-                from ztoq.work_queue import WorkQueue, WorkerType, WorkStatus, WorkItem
 
                 self._add_event(
                     phase,
@@ -661,7 +662,7 @@ class WorkflowOrchestrator:
             )
 
         except Exception as e:
-            error_msg = f"Data extraction failed: {str(e)}"
+            error_msg = f"Data extraction failed: {e!s}"
             self._add_event(phase, "failed", error_msg)
             self.state.update_extraction_status("failed", str(e))
             raise
@@ -674,7 +675,7 @@ class WorkflowOrchestrator:
         of different entity types and batches, providing better performance and
         resource utilization compared to the previous approach.
         """
-        from ztoq.work_queue import WorkQueue, WorkerType, WorkStatus, run_in_thread_pool
+        from ztoq.work_queue import run_in_thread_pool
 
         logger.info("Starting extraction with work queue")
 
@@ -703,7 +704,7 @@ class WorkflowOrchestrator:
         # Run the tasks in parallel
         task_items = [(name, func) for name, func in extraction_tasks.items()]
         results = await run_in_thread_pool(
-            task_worker, task_items, max_workers=min(len(task_items), self.config.max_workers)
+            task_worker, task_items, max_workers=min(len(task_items), self.config.max_workers),
         )
 
         # Process the results
@@ -732,12 +733,13 @@ class WorkflowOrchestrator:
 
         return extraction_results
 
-    def _run_incremental_extraction(self) -> Dict[str, Any]:
+    def _run_incremental_extraction(self) -> dict[str, Any]:
         """
         Execute incremental extraction, only retrieving changed entities.
 
         Returns:
             Dictionary with extraction results
+
         """
         logger.info("Starting incremental extraction")
 
@@ -799,7 +801,7 @@ class WorkflowOrchestrator:
             return extraction_results
 
         except Exception as e:
-            logger.error(f"Incremental extraction failed: {str(e)}", exc_info=True)
+            logger.error(f"Incremental extraction failed: {e!s}", exc_info=True)
             self.state.update_extraction_status("failed", str(e))
             raise
 
@@ -837,7 +839,7 @@ class WorkflowOrchestrator:
             elif use_batch_transformer:
                 # Import here to avoid circular imports
                 from ztoq.sql_test_case_transformer import SQLTestCaseTransformer
-                from ztoq.work_queue import WorkQueue, WorkerType, WorkStatus, run_in_thread_pool
+                from ztoq.work_queue import run_in_thread_pool
 
                 self._add_event(
                     phase,
@@ -854,7 +856,7 @@ class WorkflowOrchestrator:
 
                 # Get all batches that need transformation
                 batches = self.db.get_entity_batches_by_status(
-                    project_key=self.config.project_key, entity_type="test_case", status="extracted"
+                    project_key=self.config.project_key, entity_type="test_case", status="extracted",
                 )
 
                 if not batches:
@@ -927,11 +929,11 @@ class WorkflowOrchestrator:
                         self.state.update_transformation_status("completed")
                     elif successful > 0:
                         self.state.update_transformation_status(
-                            "partial", f"{failed} test cases failed transformation"
+                            "partial", f"{failed} test cases failed transformation",
                         )
                     else:
                         self.state.update_transformation_status(
-                            "failed", "All test cases failed transformation"
+                            "failed", "All test cases failed transformation",
                         )
             else:
                 # Use optimized parallel transformation instead of the standard approach
@@ -951,7 +953,7 @@ class WorkflowOrchestrator:
             )
 
         except Exception as e:
-            error_msg = f"Data transformation failed: {str(e)}"
+            error_msg = f"Data transformation failed: {e!s}"
             self._add_event(phase, "failed", error_msg)
             self.state.update_transformation_status("failed", str(e))
             raise
@@ -968,14 +970,14 @@ class WorkflowOrchestrator:
 
         if self.progress and phase in self.tasks:
             self.progress.update(
-                self.tasks[phase], description="Loading data to qTest...", total=None
+                self.tasks[phase], description="Loading data to qTest...", total=None,
             )
 
         try:
             # Check if we're in incremental mode
             if self.state.is_incremental:
                 self._add_event(
-                    phase, "in_progress", "Running incremental loading (changed entities only)"
+                    phase, "in_progress", "Running incremental loading (changed entities only)",
                 )
 
                 # Run incremental loading
@@ -998,7 +1000,7 @@ class WorkflowOrchestrator:
             )
 
         except Exception as e:
-            error_msg = f"Data loading failed: {str(e)}"
+            error_msg = f"Data loading failed: {e!s}"
             self._add_event(phase, "failed", error_msg)
             self.state.update_loading_status("failed", str(e))
             raise
@@ -1011,7 +1013,7 @@ class WorkflowOrchestrator:
         that can be processed in parallel, improving performance for large datasets.
         It uses intelligent batching strategies to optimize throughput.
         """
-        from ztoq.work_queue import WorkQueue, WorkerType, WorkStatus, run_in_thread_pool
+        from ztoq.work_queue import run_in_thread_pool
 
         logger.info("Starting parallel transformation with intelligent batching")
 
@@ -1026,7 +1028,7 @@ class WorkflowOrchestrator:
 
             # Get entities to transform
             entities = self.db.get_untransformed_entities(
-                project_key=self.config.project_key, entity_type=entity_type_clean
+                project_key=self.config.project_key, entity_type=entity_type_clean,
             )
 
             if not entities:
@@ -1054,7 +1056,7 @@ class WorkflowOrchestrator:
 
             batch_count = len(batches)
             logger.info(
-                f"Created {batch_count} batches of {entity_type} using {self.config.batching_strategy} strategy"
+                f"Created {batch_count} batches of {entity_type} using {self.config.batching_strategy} strategy",
             )
 
             # Define worker function for batch transformation
@@ -1091,7 +1093,7 @@ class WorkflowOrchestrator:
 
             # Run batch transformations in parallel
             batch_results = await run_in_thread_pool(
-                transform_batch, batches, max_workers=min(batch_count, self.config.max_workers)
+                transform_batch, batches, max_workers=min(batch_count, self.config.max_workers),
             )
 
             # Process results
@@ -1143,12 +1145,13 @@ class WorkflowOrchestrator:
         logger.info(f"Completed parallel transformation in {total_time:.2f} seconds")
         return transformation_results
 
-    def _run_incremental_transformation(self) -> Dict[str, Any]:
+    def _run_incremental_transformation(self) -> dict[str, Any]:
         """
         Execute incremental transformation, only transforming changed entities.
 
         Returns:
             Dictionary with transformation results
+
         """
         logger.info("Starting incremental transformation")
 
@@ -1194,7 +1197,7 @@ class WorkflowOrchestrator:
             return transformation_results
 
         except Exception as e:
-            logger.error(f"Incremental transformation failed: {str(e)}", exc_info=True)
+            logger.error(f"Incremental transformation failed: {e!s}", exc_info=True)
             self.state.update_transformation_status("failed", str(e))
             raise
 
@@ -1207,7 +1210,7 @@ class WorkflowOrchestrator:
         resource utilization compared to the previous approach. It also uses
         intelligent batching strategies for optimized throughput.
         """
-        from ztoq.work_queue import WorkQueue, WorkerType, WorkStatus, run_in_thread_pool
+        from ztoq.work_queue import run_in_thread_pool
 
         logger.info("Starting parallel loading with intelligent batching")
 
@@ -1235,7 +1238,7 @@ class WorkflowOrchestrator:
 
             # Get all transformed entities for this entity type
             entities = self.db.get_transformed_entities(
-                project_key=self.config.project_key, entity_type=db_type
+                project_key=self.config.project_key, entity_type=db_type,
             )
 
             if not entities:
@@ -1299,7 +1302,7 @@ class WorkflowOrchestrator:
 
             # Process batches in parallel
             batch_results = await run_in_thread_pool(
-                load_batch, batches, max_workers=min(batch_count, self.config.max_workers)
+                load_batch, batches, max_workers=min(batch_count, self.config.max_workers),
             )
 
             # Process results
@@ -1355,12 +1358,13 @@ class WorkflowOrchestrator:
 
         logger.info("Parallel loading completed")
 
-    def _run_incremental_loading(self) -> Dict[str, Any]:
+    def _run_incremental_loading(self) -> dict[str, Any]:
         """
         Execute incremental loading, only loading changed entities.
 
         Returns:
             Dictionary with loading results
+
         """
         logger.info("Starting incremental loading")
 
@@ -1381,7 +1385,7 @@ class WorkflowOrchestrator:
                 # Use the migration's load method but with specific batches
                 # We could also implement a more selective loading strategy
                 loaded_count = self.migration.load_test_cases(
-                    batch_ids=[batch.get("batch_id") for batch in transformed_batches]
+                    batch_ids=[batch.get("batch_id") for batch in transformed_batches],
                 )
 
                 loading_results["test_cases"] = {
@@ -1399,11 +1403,11 @@ class WorkflowOrchestrator:
             return loading_results
 
         except Exception as e:
-            logger.error(f"Incremental loading failed: {str(e)}", exc_info=True)
+            logger.error(f"Incremental loading failed: {e!s}", exc_info=True)
             self.state.update_loading_status("failed", str(e))
             raise
 
-    async def _run_rollback_phase(self) -> Dict[str, Any]:
+    async def _run_rollback_phase(self) -> dict[str, Any]:
         """
         Run the rollback phase of the workflow.
 
@@ -1411,6 +1415,7 @@ class WorkflowOrchestrator:
 
         Returns:
             Dictionary with rollback results
+
         """
         phase = WorkflowPhase.ROLLBACK.value
         self.state.update_rollback_status("in_progress")
@@ -1418,7 +1423,7 @@ class WorkflowOrchestrator:
 
         if self.progress and phase in self.tasks:
             self.progress.update(
-                self.tasks[phase], description="Rolling back migration...", total=None
+                self.tasks[phase], description="Rolling back migration...", total=None,
             )
 
         try:
@@ -1480,7 +1485,7 @@ class WorkflowOrchestrator:
             }
 
         except Exception as e:
-            error_msg = f"Migration rollback failed: {str(e)}"
+            error_msg = f"Migration rollback failed: {e!s}"
             self._add_event(phase, "failed", error_msg)
             self.state.update_rollback_status("failed", str(e))
             return {"status": "failed", "error": str(e), "timestamp": datetime.now().isoformat()}
@@ -1511,7 +1516,7 @@ class WorkflowOrchestrator:
                     try:
                         self.migration.qtest_client.delete_test_run(target_id)
                     except Exception as e:
-                        logger.warning(f"Failed to delete test run {target_id}: {str(e)}")
+                        logger.warning(f"Failed to delete test run {target_id}: {e!s}")
 
             # Then delete test cycles
             cycle_mappings = [m for m in mappings if m["entity_type"] == "cycle_to_cycle"]
@@ -1523,7 +1528,7 @@ class WorkflowOrchestrator:
                     try:
                         self.migration.qtest_client.delete_test_cycle(target_id)
                     except Exception as e:
-                        logger.warning(f"Failed to delete test cycle {target_id}: {str(e)}")
+                        logger.warning(f"Failed to delete test cycle {target_id}: {e!s}")
 
             # Finally delete test cases
             case_mappings = [m for m in mappings if m["entity_type"] == "testcase_to_testcase"]
@@ -1535,13 +1540,13 @@ class WorkflowOrchestrator:
                     try:
                         self.migration.qtest_client.delete_test_case(target_id)
                     except Exception as e:
-                        logger.warning(f"Failed to delete test case {target_id}: {str(e)}")
+                        logger.warning(f"Failed to delete test case {target_id}: {e!s}")
 
             # Update loading status to reflect the rollback
             self.state.update_loading_status("rolled_back")
 
         except Exception as e:
-            logger.error(f"Error rolling back loaded data: {str(e)}", exc_info=True)
+            logger.error(f"Error rolling back loaded data: {e!s}", exc_info=True)
             raise
 
     def _rollback_transformed_data(self) -> None:
@@ -1557,7 +1562,7 @@ class WorkflowOrchestrator:
             self.state.update_transformation_status("rolled_back")
 
         except Exception as e:
-            logger.error(f"Error rolling back transformed data: {str(e)}", exc_info=True)
+            logger.error(f"Error rolling back transformed data: {e!s}", exc_info=True)
             raise
 
     def _rollback_extracted_data(self) -> None:
@@ -1573,10 +1578,10 @@ class WorkflowOrchestrator:
             self.state.update_extraction_status("rolled_back")
 
         except Exception as e:
-            logger.error(f"Error rolling back extracted data: {str(e)}", exc_info=True)
+            logger.error(f"Error rolling back extracted data: {e!s}", exc_info=True)
             raise
 
-    async def _run_validation_phase(self) -> Dict[str, Any]:
+    async def _run_validation_phase(self) -> dict[str, Any]:
         """
         Run the validation phase of the workflow.
 
@@ -1584,13 +1589,14 @@ class WorkflowOrchestrator:
 
         Returns:
             Dictionary with validation results
+
         """
         phase = WorkflowPhase.VALIDATE.value
         self._add_event(phase, "in_progress", "Starting data validation")
 
         if self.progress and phase in self.tasks:
             self.progress.update(
-                self.tasks[phase], description="Validating migration...", total=None
+                self.tasks[phase], description="Validating migration...", total=None,
             )
 
         try:
@@ -1603,7 +1609,7 @@ class WorkflowOrchestrator:
             # This should validate that the migration was successful by comparing
             # the source and target data, checking relationships, etc.
             validation_results = await asyncio.to_thread(
-                self._run_validation_checks, self.config.project_key
+                self._run_validation_checks, self.config.project_key,
             )
 
             # Generate validation report
@@ -1635,11 +1641,11 @@ class WorkflowOrchestrator:
             return validation_results
 
         except Exception as e:
-            error_msg = f"Data validation failed: {str(e)}"
+            error_msg = f"Data validation failed: {e!s}"
             self._add_event(phase, "failed", error_msg)
             raise
 
-    def _run_validation_checks(self, project_key: str) -> Dict[str, Any]:
+    def _run_validation_checks(self, project_key: str) -> dict[str, Any]:
         """
         Run validation checks on the migrated data.
 
@@ -1648,6 +1654,7 @@ class WorkflowOrchestrator:
 
         Returns:
             Dictionary with validation results
+
         """
         if not self.validation_manager:
             return {"status": "skipped", "reason": "Validation is disabled"}
@@ -1681,17 +1688,17 @@ class WorkflowOrchestrator:
                             "rule_id": rule.id,
                             "rule_name": rule.name,
                             "issues_count": len(rule_result),
-                        }
+                        },
                     )
             except Exception as e:
-                logger.error(f"Error executing validation rule {rule.id}: {str(e)}", exc_info=True)
+                logger.error(f"Error executing validation rule {rule.id}: {e!s}", exc_info=True)
                 # Create a validation issue for the rule execution error
                 issue = ValidationIssue(
                     id=f"rule_execution_error_{int(time.time())}",
                     level=rule.level,
                     scope=rule.scope,
                     phase=ValidationPhase.POST_MIGRATION,
-                    message=f"Error executing rule: {str(e)}",
+                    message=f"Error executing rule: {e!s}",
                     details={"rule_id": rule.id, "error": str(e)},
                 )
                 self.validation_manager.add_issue(issue)
@@ -1704,12 +1711,12 @@ class WorkflowOrchestrator:
             # Run enhanced validation if available
             logger.info("Running enhanced post-migration validation checks")
             validator = self.validator or MigrationValidator(
-                self.validation_manager, project_key=project_key, db_manager=self.db
+                self.validation_manager, project_key=project_key, db_manager=self.db,
             )
 
             post_validator = PostMigrationValidator(validator)
             enhanced_results = post_validator.run_post_migration_validation(
-                self.migration.qtest_client if self.migration else None
+                self.migration.qtest_client if self.migration else None,
             )
 
             # Include enhanced validation results
@@ -1723,25 +1730,24 @@ class WorkflowOrchestrator:
                     enhanced_results["report_id"] = reports[0]["id"]
 
             logger.info(
-                f"Enhanced validation completed with {enhanced_results.get('total_issues', 0)} issues"
+                f"Enhanced validation completed with {enhanced_results.get('total_issues', 0)} issues",
             )
             logger.info(
-                f"Validation report ID: {enhanced_results.get('report_id', 'Not available')}"
+                f"Validation report ID: {enhanced_results.get('report_id', 'Not available')}",
             )
 
             # Log the validation success status
             if enhanced_results.get("success", False):
                 logger.info("Post-migration validation successful!")
+            elif enhanced_results.get("has_critical_issues", False):
+                logger.error("Post-migration validation FAILED with CRITICAL issues")
+            elif enhanced_results.get("has_error_issues", False):
+                logger.warning("Post-migration validation FAILED with ERROR issues")
             else:
-                if enhanced_results.get("has_critical_issues", False):
-                    logger.error("Post-migration validation FAILED with CRITICAL issues")
-                elif enhanced_results.get("has_error_issues", False):
-                    logger.warning("Post-migration validation FAILED with ERROR issues")
-                else:
-                    logger.info("Post-migration validation completed with warnings")
+                logger.info("Post-migration validation completed with warnings")
 
         except (ImportError, Exception) as e:
-            logger.warning(f"Could not run enhanced post-migration validation: {str(e)}")
+            logger.warning(f"Could not run enhanced post-migration validation: {e!s}")
             enhanced_validation_performed = False
             enhanced_results = {}
 
@@ -1797,12 +1803,13 @@ class WorkflowOrchestrator:
 
         return validation_results
 
-    def _generate_workflow_summary(self) -> Dict[str, Any]:
+    def _generate_workflow_summary(self) -> dict[str, Any]:
         """
         Generate a summary of the workflow execution.
 
         Returns:
             Dictionary with workflow summary
+
         """
         summary = {
             "project_key": self.config.project_key,
@@ -1822,7 +1829,7 @@ class WorkflowOrchestrator:
 
         return summary
 
-    def _calculate_phase_duration(self, phase: str) -> Optional[float]:
+    def _calculate_phase_duration(self, phase: str) -> float | None:
         """
         Calculate the duration of a workflow phase.
 
@@ -1831,6 +1838,7 @@ class WorkflowOrchestrator:
 
         Returns:
             Duration in seconds or None if phase not run
+
         """
         # Find start event
         start_event = None
@@ -1856,12 +1864,13 @@ class WorkflowOrchestrator:
         duration = (end_event.timestamp - start_event.timestamp).total_seconds()
         return duration
 
-    def _get_entity_counts(self) -> Dict[str, Dict[str, int]]:
+    def _get_entity_counts(self) -> dict[str, dict[str, int]]:
         """
         Get counts of entities before and after migration.
 
         Returns:
             Dictionary with entity counts
+
         """
         counts = {
             "source": {},
@@ -1883,16 +1892,17 @@ class WorkflowOrchestrator:
             counts["mappings"] = mapping_counts
 
         except Exception as e:
-            logger.error(f"Error getting entity counts: {str(e)}", exc_info=True)
+            logger.error(f"Error getting entity counts: {e!s}", exc_info=True)
 
         return counts
 
-    def get_workflow_status(self) -> Dict[str, Any]:
+    def get_workflow_status(self) -> dict[str, Any]:
         """
         Get the current status of the workflow.
 
         Returns:
             Dictionary with workflow status
+
         """
         status = {
             "project_key": self.config.project_key,
@@ -1917,6 +1927,7 @@ class WorkflowOrchestrator:
 
         Returns:
             Validation status (not_started, in_progress, completed, failed)
+
         """
         # Check for validation events
         validation_events = [e for e in self.events if e.phase == WorkflowPhase.VALIDATE.value]
@@ -1928,12 +1939,13 @@ class WorkflowOrchestrator:
         latest_event = max(validation_events, key=lambda e: e.timestamp)
         return latest_event.status
 
-    def _get_incomplete_batches(self) -> Dict[str, List[Dict[str, Any]]]:
+    def _get_incomplete_batches(self) -> dict[str, list[dict[str, Any]]]:
         """
         Get information about incomplete batches.
 
         Returns:
             Dictionary with incomplete batches by entity type
+
         """
         try:
             # Get all incomplete batches
@@ -1950,10 +1962,10 @@ class WorkflowOrchestrator:
             return batches_by_type
 
         except Exception as e:
-            logger.error(f"Error getting incomplete batches: {str(e)}", exc_info=True)
+            logger.error(f"Error getting incomplete batches: {e!s}", exc_info=True)
             return {}
 
-    def run_incremental_migration(self, phases: Optional[List[str]] = None) -> Dict[str, Any]:
+    def run_incremental_migration(self, phases: list[str] | None = None) -> dict[str, Any]:
         """
         Run an incremental migration that only processes entities changed since last run.
 
@@ -1966,6 +1978,7 @@ class WorkflowOrchestrator:
 
         Returns:
             Dictionary with workflow results
+
         """
         # Update state to indicate this is an incremental migration
         self.state.is_incremental = True
@@ -1996,11 +2009,11 @@ class WorkflowOrchestrator:
             return result
 
         except Exception as e:
-            logger.error(f"Incremental migration error: {str(e)}", exc_info=True)
-            self._add_event("workflow", "failed", f"Incremental migration failed: {str(e)}")
+            logger.error(f"Incremental migration error: {e!s}", exc_info=True)
+            self._add_event("workflow", "failed", f"Incremental migration failed: {e!s}")
             raise
 
-    def resume_workflow(self, phases: Optional[List[str]] = None) -> Dict[str, Any]:
+    def resume_workflow(self, phases: list[str] | None = None) -> dict[str, Any]:
         """
         Resume a previously interrupted workflow.
 
@@ -2009,6 +2022,7 @@ class WorkflowOrchestrator:
 
         Returns:
             Dictionary with workflow results
+
         """
         # Determine which phases need to be resumed
         if not phases:
@@ -2036,13 +2050,13 @@ class WorkflowOrchestrator:
 
         # Resume each phase
         self._add_event(
-            "workflow", "in_progress", f"Resuming workflow with phases: {', '.join(phases)}"
+            "workflow", "in_progress", f"Resuming workflow with phases: {', '.join(phases)}",
         )
 
         # Use the run_workflow method to execute the phases
         return asyncio.run(self.run_workflow(phases))
 
-    def get_entity_batches(self, entity_type: Optional[str] = None) -> List[Dict[str, Any]]:
+    def get_entity_batches(self, entity_type: str | None = None) -> list[dict[str, Any]]:
         """
         Get information about entity batches.
 
@@ -2051,14 +2065,15 @@ class WorkflowOrchestrator:
 
         Returns:
             List of batch information dictionaries
+
         """
         try:
             return self.db.get_entity_batches(self.config.project_key, entity_type)
         except Exception as e:
-            logger.error(f"Error getting entity batches: {str(e)}", exc_info=True)
+            logger.error(f"Error getting entity batches: {e!s}", exc_info=True)
             return []
 
-    def create_workflow_report(self, output_path: Optional[str] = None) -> str:
+    def create_workflow_report(self, output_path: str | None = None) -> str:
         """
         Create a comprehensive workflow report.
 
@@ -2067,6 +2082,7 @@ class WorkflowOrchestrator:
 
         Returns:
             Path to the saved report or the report content
+
         """
         # Get workflow status and summary
         status = self.get_workflow_status()
@@ -2080,7 +2096,7 @@ class WorkflowOrchestrator:
             if reports:
                 validation_info = reports[0]
         except Exception as e:
-            logger.error(f"Error getting validation reports: {str(e)}", exc_info=True)
+            logger.error(f"Error getting validation reports: {e!s}", exc_info=True)
 
         # Combine all information into a comprehensive report
         report = {
@@ -2108,16 +2124,16 @@ class WorkflowOrchestrator:
                 json.dump(report, f, indent=2)
 
             return output_path
-        else:
-            # Otherwise, just return the report as a JSON string
-            return json.dumps(report, indent=2)
+        # Otherwise, just return the report as a JSON string
+        return json.dumps(report, indent=2)
 
-    def print_workflow_status(self, console: Optional[Console] = None) -> None:
+    def print_workflow_status(self, console: Console | None = None) -> None:
         """
         Print the current workflow status to the console.
 
         Args:
             console: Optional rich console to use
+
         """
         console = console or Console()
 
@@ -2208,7 +2224,7 @@ class WorkflowOrchestrator:
         console.print(events_table)
 
         # Print validation summary if available
-        if "validation" in status and status["validation"]:
+        if status.get("validation"):
             validation = status["validation"]
 
             validation_table = Table(title="Validation Summary")
@@ -2216,13 +2232,13 @@ class WorkflowOrchestrator:
             validation_table.add_column("Count")
 
             validation_table.add_row(
-                "Critical", str(validation.get("critical_issues", 0)), style="red"
+                "Critical", str(validation.get("critical_issues", 0)), style="red",
             )
             validation_table.add_row(
-                "Error", str(validation.get("error_issues", 0)), style="yellow"
+                "Error", str(validation.get("error_issues", 0)), style="yellow",
             )
             validation_table.add_row(
-                "Warning", str(validation.get("warning_issues", 0)), style="blue"
+                "Warning", str(validation.get("warning_issues", 0)), style="blue",
             )
             validation_table.add_row("Info", str(validation.get("info_issues", 0)), style="green")
 
@@ -2236,4 +2252,3 @@ class WorkflowOrchestrator:
     def __exit__(self, exc_type, exc_val, exc_tb):
         """Exit the context manager."""
         # Clean up resources if needed
-        pass

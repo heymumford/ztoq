@@ -37,24 +37,24 @@ def upgrade() -> None:
         sa.Column("migration_phase", sa.String(20), nullable=True),
         sa.Column("entity_type", sa.String(50), nullable=True),
         sa.Column("meta_data", JSON(), nullable=True),
-        sa.PrimaryKeyConstraint("id")
+        sa.PrimaryKeyConstraint("id"),
     )
 
     # Create indexes for frequent query patterns
     op.create_index(
         "ix_recommendation_history_project_timestamp",
         "recommendation_history",
-        ["project_key", "timestamp"]
+        ["project_key", "timestamp"],
     )
     op.create_index(
         "ix_recommendation_history_priority",
         "recommendation_history",
-        ["priority"]
+        ["priority"],
     )
     op.create_index(
         "ix_recommendation_history_status",
         "recommendation_history",
-        ["status"]
+        ["status"],
     )
 
     # Make recommendation_id unique within a project
@@ -62,7 +62,7 @@ def upgrade() -> None:
         "ix_recommendation_history_project_rec_id",
         "recommendation_history",
         ["project_key", "recommendation_id"],
-        unique=True
+        unique=True,
     )
 
 

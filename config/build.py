@@ -38,7 +38,7 @@ class BuildCommand(Enum):
 def run_command(cmd: list[str], env: dict[str, Any] | None = None) -> bool:
     """Run a command and return True if successful, False otherwise."""
     print(f"Running: {' '.join(cmd)}")
-    result = subprocess.run(cmd, env=env, capture_output=True, text=True)
+    result = subprocess.run(cmd, env=env, capture_output=True, text=True, check=False)
     if result.returncode != 0:
         print(f"Error: {result.stderr}")
         return False

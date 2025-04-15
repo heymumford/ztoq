@@ -4,10 +4,10 @@ This file is part of ZTOQ, licensed under the MIT License.
 See LICENSE file for details.
 """
 
+import argparse
+import logging
 import os
 import sys
-import logging
-import argparse
 from pathlib import Path
 
 # Add the project root to the Python path to enable imports
@@ -21,7 +21,7 @@ from ztoq.qtest_models import QTestConfig
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    handlers=[logging.StreamHandler()]
+    handlers=[logging.StreamHandler()],
 )
 logger = logging.getLogger("qtest_verify_token")
 
@@ -35,7 +35,7 @@ def verify_token(base_url, token, no_verify_ssl=False, debug=False):
 
     try:
         # Ensure URL has proper prefix
-        if not base_url.startswith(('http://', 'https://')):
+        if not base_url.startswith(("http://", "https://")):
             base_url = f"https://{base_url}"
             logger.debug(f"Added https:// prefix: {base_url}")
 
@@ -48,7 +48,7 @@ def verify_token(base_url, token, no_verify_ssl=False, debug=False):
         config = QTestConfig(
             base_url=base_url,
             bearer_token=token,
-            project_id=1  # Dummy value, not used for token verification
+            project_id=1,  # Dummy value, not used for token verification
         )
 
         # Create qTest client
@@ -93,17 +93,16 @@ def verify_token(base_url, token, no_verify_ssl=False, debug=False):
 
             logger.info(f"Found {len(projects)} projects")
             for i, project in enumerate(projects[:5]):  # Show only first 5 projects
-                project_id = project.get('id', 'Unknown')
-                project_name = project.get('name', 'Unnamed')
+                project_id = project.get("id", "Unknown")
+                project_name = project.get("name", "Unnamed")
                 logger.info(f"  {i+1}. Project {project_id}: {project_name}")
 
             if len(projects) > 5:
                 logger.info(f"  ... and {len(projects) - 5} more projects")
 
             return True
-        else:
-            logger.error("✗ Token verification failed - API access denied")
-            return False
+        logger.error("✗ Token verification failed - API access denied")
+        return False
 
     except Exception as e:
         logger.error(f"Error verifying token: {e}")
@@ -146,9 +145,8 @@ def main():
     if success:
         logger.info("✓ Token verification completed successfully")
         return 0
-    else:
-        logger.error("✗ Token verification failed")
-        return 1
+    logger.error("✗ Token verification failed")
+    return 1
 
 
 if __name__ == "__main__":

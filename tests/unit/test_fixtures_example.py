@@ -6,24 +6,16 @@ serving as a reference for implementing other tests.
 """
 
 import pytest
-from ztoq.models import Project, Case as TestCase
-from ztoq.domain.models import OpenAPISpec
 
 # Import fixtures and factories from the fixtures package
 from tests.fixtures import (
-    # Core fixtures
-    base_test_env,
-    mock_env_vars,
-    temp_dir,
-    temp_file,
-    # Unit test fixtures
-    mock_db_connection,
-    mock_file_system,
+    OpenAPISpecFactory,
     # Factories
     ProjectFactory,
     TestCaseFactory,
-    OpenAPISpecFactory,
 )
+from ztoq.domain.models import OpenAPISpec
+from ztoq.models import Case as TestCase, Project
 
 
 @pytest.mark.unit
@@ -90,7 +82,7 @@ def test_factories_basic():
 
     # Create a project with specific attributes
     custom_project = ProjectFactory.create(
-        id="123", name="Custom Project", description="Custom description"
+        id="123", name="Custom Project", description="Custom description",
     )
 
     assert custom_project.id == "123"
@@ -129,10 +121,10 @@ def test_factories_relationships():
     # - 2 test cases under the project
     project = ProjectFactory.create()
     test_case1 = TestCaseFactory.create(
-        folder=project.id, folder_name="Folder-Project", name="First Test Case"
+        folder=project.id, folder_name="Folder-Project", name="First Test Case",
     )
     test_case2 = TestCaseFactory.create(
-        folder=project.id, folder_name="Folder-Project", name="Second Test Case"
+        folder=project.id, folder_name="Folder-Project", name="Second Test Case",
     )
 
     assert test_case1.folder == project.id

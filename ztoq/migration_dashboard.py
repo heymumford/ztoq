@@ -10,18 +10,15 @@ import argparse
 import json
 import os
 import sys
-import time
 from datetime import datetime
-from pathlib import Path
-from typing import Dict, List, Optional, Any, Union, Tuple
+from typing import Any
 
-from flask import Flask, render_template, jsonify, request
-import pandas as pd
+from flask import Flask, jsonify, render_template, request
 from rich.console import Console
 from sqlalchemy import create_engine, text
-from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.orm import sessionmaker
 
-from ztoq.core.db_models import Base, EntityBatchState, MigrationState
+from ztoq.core.db_models import EntityBatchState, MigrationState
 
 # Configure rich console
 console = Console()
@@ -40,22 +37,26 @@ class MigrationDashboardData:
     """Class for fetching and processing migration data for the dashboard."""
 
     def __init__(self, db_url: str, project_key: str):
-        """Initialize the dashboard data provider.
+        """
+        Initialize the dashboard data provider.
 
         Args:
             db_url: SQLAlchemy database URL (e.g., 'sqlite:///migration.db')
             project_key: The Zephyr project key to generate the report for
+
         """
         self.db_url = db_url
         self.project_key = project_key
         self.engine = create_engine(db_url)
         self.Session = sessionmaker(bind=self.engine)
 
-    def get_migration_state(self) -> Dict[str, Any]:
-        """Get the current migration state.
+    def get_migration_state(self) -> dict[str, Any]:
+        """
+        Get the current migration state.
 
         Returns:
             Dictionary containing migration state information
+
         """
         with self.Session() as session:
             state = session.query(MigrationState).filter_by(project_key=self.project_key).first()
@@ -84,11 +85,13 @@ class MigrationDashboardData:
                 "current_timestamp": datetime.now().isoformat(),
             }
 
-    def get_entity_counts(self) -> Dict[str, Dict[str, int]]:
-        """Get counts of migrated entities.
+    def get_entity_counts(self) -> dict[str, dict[str, int]]:
+        """
+        Get counts of migrated entities.
 
         Returns:
             Dictionary containing entity counts by type and stage
+
         """
         entity_counts = {"source": {}, "transformed": {}, "loaded": {}, "mappings": {}}
 
@@ -111,7 +114,7 @@ class MigrationDashboardData:
                         FROM entity_mappings
                         WHERE project_key = :project_key
                         AND mapping_type = :mapping_type
-                        """
+                        """,
                             ),
                             {"project_key": self.project_key, "mapping_type": mapping_type},
                         ).scalar()
@@ -192,11 +195,13 @@ class MigrationDashboardData:
 
         return entity_counts
 
-    def get_batch_statistics(self) -> Dict[str, Dict[str, Union[int, float]]]:
-        """Get statistics about batch processing.
+    def get_batch_statistics(self) -> dict[str, dict[str, int | float]]:
+        """
+        Get statistics about batch processing.
 
         Returns:
             Dictionary containing batch processing statistics by entity type
+
         """
         batch_stats = {}
 
@@ -209,7 +214,7 @@ class MigrationDashboardData:
                 SELECT DISTINCT entity_type
                 FROM entity_batch_state
                 WHERE project_key = :project_key
-                """
+                """,
                 ),
                 {"project_key": self.project_key},
             )
@@ -265,14 +270,16 @@ class MigrationDashboardData:
 
         return batch_stats
 
-    def get_recent_activity(self, limit: int = 10) -> List[Dict[str, Any]]:
-        """Get recent migration activity from the database.
+    def get_recent_activity(self, limit: int = 10) -> list[dict[str, Any]]:
+        """
+        Get recent migration activity from the database.
 
         Args:
             limit: Maximum number of records to return
 
         Returns:
             List of dictionaries containing recent activity data
+
         """
         activity = []
 
@@ -297,7 +304,7 @@ class MigrationDashboardData:
                         "processed_count": batch.processed_count,
                         "total_count": batch.items_count,
                         "error_message": batch.error_message,
-                    }
+                    },
                 )
 
             # Get recent validation issues
@@ -312,8 +319,8 @@ class MigrationDashboardData:
                     UNION
                     SELECT tablename FROM pg_catalog.pg_tables
                     WHERE schemaname='public' AND tablename='validation_issues'
-                    """
-                    )
+                    """,
+                    ),
                 )
 
                 for row in result:
@@ -330,7 +337,7 @@ class MigrationDashboardData:
                         WHERE project_key = :project_key AND resolved = 0
                         ORDER BY created_on DESC
                         LIMIT :limit
-                        """
+                        """,
                         ),
                         {"project_key": self.project_key, "limit": limit},
                     ).fetchall()
@@ -356,10 +363,10 @@ class MigrationDashboardData:
                                 "entity_id": issue.entity_id,
                                 "rule_id": issue.rule_id,
                                 "context": context,
-                            }
+                            },
                         )
             except Exception as e:
-                logger.error(f"Error retrieving validation issues: {str(e)}")
+                logger.error(f"Error retrieving validation issues: {e!s}")
 
         # Sort combined activity by timestamp (most recent first)
         activity.sort(key=lambda x: x["timestamp"] if x["timestamp"] else "", reverse=True)
@@ -367,11 +374,13 @@ class MigrationDashboardData:
         # Limit to requested number of items
         return activity[:limit]
 
-    def get_validation_statistics(self) -> Dict[str, Any]:
-        """Get statistics about validation issues.
+    def get_validation_statistics(self) -> dict[str, Any]:
+        """
+        Get statistics about validation issues.
 
         Returns:
             Dictionary containing validation issue statistics
+
         """
         validation_stats = {
             "issues_by_level": {},
@@ -398,8 +407,8 @@ class MigrationDashboardData:
                     UNION
                     SELECT tablename FROM pg_catalog.pg_tables
                     WHERE schemaname='public' AND tablename='validation_issues'
-                    """
-                    )
+                    """,
+                    ),
                 )
 
                 for row in result:
@@ -417,7 +426,7 @@ class MigrationDashboardData:
                     SELECT COUNT(*)
                     FROM validation_issues
                     WHERE project_key = :project_key AND resolved = 0
-                    """
+                    """,
                         ),
                         {"project_key": self.project_key},
                     ).scalar()
@@ -434,7 +443,7 @@ class MigrationDashboardData:
                     FROM validation_issues
                     WHERE project_key = :project_key AND resolved = 0
                     GROUP BY level
-                    """
+                    """,
                     ),
                     {"project_key": self.project_key},
                 ).fetchall()
@@ -463,7 +472,7 @@ class MigrationDashboardData:
                     FROM validation_issues
                     WHERE project_key = :project_key AND resolved = 0
                     GROUP BY scope
-                    """
+                    """,
                     ),
                     {"project_key": self.project_key},
                 ).fetchall()
@@ -479,7 +488,7 @@ class MigrationDashboardData:
                     FROM validation_issues
                     WHERE project_key = :project_key AND resolved = 0
                     GROUP BY phase
-                    """
+                    """,
                     ),
                     {"project_key": self.project_key},
                 ).fetchall()
@@ -498,7 +507,7 @@ class MigrationDashboardData:
                     AND level IN ('critical', 'error')
                     ORDER BY created_on DESC
                     LIMIT 5
-                    """
+                    """,
                     ),
                     {"project_key": self.project_key},
                 ).fetchall()
@@ -516,19 +525,21 @@ class MigrationDashboardData:
                             "created_on": issue.created_on
                             if isinstance(issue.created_on, str)
                             else issue.created_on.isoformat(),
-                        }
+                        },
                     )
 
             except Exception as e:
-                logger.error(f"Error retrieving validation statistics: {str(e)}")
+                logger.error(f"Error retrieving validation statistics: {e!s}")
 
         return validation_stats
 
-    def get_status_summary(self) -> Dict[str, Any]:
-        """Get a summary of the migration status.
+    def get_status_summary(self) -> dict[str, Any]:
+        """
+        Get a summary of the migration status.
 
         Returns:
             Dictionary containing migration status summary
+
         """
         # Get data from other methods
         state = self.get_migration_state()
@@ -605,7 +616,7 @@ class MigrationDashboardData:
 def index():
     """Render the dashboard page."""
     return render_template(
-        "dashboard.html", project_key=project_key, refresh_interval=refresh_interval
+        "dashboard.html", project_key=project_key, refresh_interval=refresh_interval,
     )
 
 
@@ -708,7 +719,7 @@ def get_validation_issues():
                         if isinstance(issue.created_on, str)
                         else issue.created_on.isoformat(),
                         "context": context,
-                    }
+                    },
                 )
 
             return jsonify(issues)
@@ -728,7 +739,7 @@ def get_all_data():
             "batches": data_provider.get_batch_statistics(),
             "activity": data_provider.get_recent_activity(),
             "validation": data_provider.get_validation_statistics(),
-        }
+        },
     )
 
 
@@ -1732,14 +1743,15 @@ def create_dashboard_templates():
 
 def parse_db_url(
     db_type: str,
-    host: Optional[str] = None,
-    port: Optional[int] = None,
-    name: Optional[str] = None,
-    user: Optional[str] = None,
-    password: Optional[str] = None,
-    path: Optional[str] = None,
+    host: str | None = None,
+    port: int | None = None,
+    name: str | None = None,
+    user: str | None = None,
+    password: str | None = None,
+    path: str | None = None,
 ) -> str:
-    """Parse database connection parameters into a SQLAlchemy URL.
+    """
+    Parse database connection parameters into a SQLAlchemy URL.
 
     Args:
         db_type: Database type (sqlite or postgresql)
@@ -1752,18 +1764,18 @@ def parse_db_url(
 
     Returns:
         SQLAlchemy database URL
+
     """
     if db_type == "sqlite":
         if not path:
             path = "ztoq_data.db"
         return f"sqlite:///{path}"
-    elif db_type == "postgresql":
+    if db_type == "postgresql":
         if not all([host, name, user, password]):
             raise ValueError("PostgreSQL connection requires host, name, user, and password")
         port_str = f":{port}" if port else ""
         return f"postgresql://{user}:{password}@{host}{port_str}/{name}"
-    else:
-        raise ValueError(f"Unsupported database type: {db_type}")
+    raise ValueError(f"Unsupported database type: {db_type}")
 
 
 def main() -> None:
@@ -1788,7 +1800,7 @@ def main() -> None:
     parser.add_argument("--project-key", required=True, help="Zephyr project key")
     parser.add_argument("--port", type=int, default=5000, help="Web server port")
     parser.add_argument(
-        "--refresh", type=int, default=10, help="Dashboard refresh interval in seconds"
+        "--refresh", type=int, default=10, help="Dashboard refresh interval in seconds",
     )
     parser.add_argument("--debug", action="store_true", help="Run in debug mode")
 
@@ -1822,7 +1834,7 @@ def main() -> None:
         project_key = args.project_key
         refresh_interval = args.refresh
     except ValueError as e:
-        console.print(f"[bold red]Error:[/bold red] {str(e)}")
+        console.print(f"[bold red]Error:[/bold red] {e!s}")
         sys.exit(1)
 
     # Start the web server

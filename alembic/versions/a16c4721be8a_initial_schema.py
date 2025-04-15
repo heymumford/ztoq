@@ -47,7 +47,7 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("id"),
     )
     op.create_index(
-        "idx_attachment_entity", "attachments", ["entity_type", "entity_id"], unique=False
+        "idx_attachment_entity", "attachments", ["entity_type", "entity_id"], unique=False,
     )
     op.create_table(
         "case_versions",
@@ -128,7 +128,7 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("id"),
     )
     op.create_index(
-        op.f("ix_migration_state_project_key"), "migration_state", ["project_key"], unique=True
+        op.f("ix_migration_state_project_key"), "migration_state", ["project_key"], unique=True,
     )
     op.create_table(
         "projects",
@@ -149,7 +149,7 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("id"),
     )
     op.create_index(
-        "idx_custom_field_project", "custom_field_definitions", ["project_key"], unique=False
+        "idx_custom_field_project", "custom_field_definitions", ["project_key"], unique=False,
     )
     op.create_table(
         "environments",
@@ -233,7 +233,7 @@ def upgrade() -> None:
         unique=False,
     )
     op.create_index(
-        "idx_custom_field_value_field", "custom_field_values", ["field_id"], unique=False
+        "idx_custom_field_value_field", "custom_field_values", ["field_id"], unique=False,
     )
     op.create_table(
         "test_cases",
@@ -329,7 +329,7 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(["test_case_id"], ["test_cases.id"], ondelete="CASCADE"),
     )
     op.create_index(
-        "idx_case_label", "case_label_association", ["test_case_id", "label_id"], unique=False
+        "idx_case_label", "case_label_association", ["test_case_id", "label_id"], unique=False,
     )
     op.create_table(
         "case_version_association",
@@ -339,7 +339,7 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(["version_id"], ["case_versions.id"], ondelete="CASCADE"),
     )
     op.create_index(
-        "idx_case_version", "case_version_association", ["test_case_id", "version_id"], unique=False
+        "idx_case_version", "case_version_association", ["test_case_id", "version_id"], unique=False,
     )
     op.create_table(
         "script_files",
@@ -381,7 +381,7 @@ def upgrade() -> None:
     op.create_index("idx_test_execution_case", "test_executions", ["test_case_key"], unique=False)
     op.create_index("idx_test_execution_cycle", "test_executions", ["cycle_id"], unique=False)
     op.create_index(
-        "idx_test_execution_environment", "test_executions", ["environment_id"], unique=False
+        "idx_test_execution_environment", "test_executions", ["environment_id"], unique=False,
     )
     op.create_index("idx_test_execution_project", "test_executions", ["project_key"], unique=False)
     op.create_index("idx_test_execution_status", "test_executions", ["status"], unique=False)

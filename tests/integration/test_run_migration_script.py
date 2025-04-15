@@ -3,8 +3,9 @@ import os
 import subprocess
 import tempfile
 from pathlib import Path
+from unittest.mock import MagicMock, patch
+
 import pytest
-from unittest.mock import patch, MagicMock
 
 # Mark all tests in this module as integration tests
 pytestmark = [pytest.mark.integration, pytest.mark.docker]
@@ -31,7 +32,7 @@ class TestRunMigrationScript:
                 "QTEST_BASE_URL=https://qtest.example.com\n"
                 "QTEST_USERNAME=test_user\n"
                 "QTEST_PASSWORD=test_password\n"
-                "QTEST_PROJECT_ID=12345\n"
+                "QTEST_PROJECT_ID=12345\n",
             )
             env_path = f.name
 
@@ -42,7 +43,7 @@ class TestRunMigrationScript:
     def test_help_text(self, script_path):
         """Test that the script provides help text when --help flag is used."""
         result = subprocess.run(
-            [script_path, "--help"], capture_output=True, text=True, check=False
+            [script_path, "--help"], capture_output=True, text=True, check=False,
         )
 
         assert result.returncode == 0, "Script should exit successfully when help is requested"
@@ -74,7 +75,7 @@ class TestRunMigrationScript:
     def test_invalid_command(self, script_path):
         """Test that the script handles invalid commands."""
         result = subprocess.run(
-            [script_path, "invalid_command"], capture_output=True, text=True, check=False
+            [script_path, "invalid_command"], capture_output=True, text=True, check=False,
         )
 
         assert result.returncode != 0, "Script should exit with error for invalid command"
@@ -132,7 +133,7 @@ class TestRunMigrationScript:
     @patch("os.chmod")
     @patch("subprocess.run")
     def test_setup_command_creates_directories(
-        self, mock_run, mock_chmod, mock_makedirs, script_path, temp_env_file
+        self, mock_run, mock_chmod, mock_makedirs, script_path, temp_env_file,
     ):
         """Test that the setup command creates the necessary directories."""
         # Configure the mock to return a successful result

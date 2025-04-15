@@ -9,7 +9,8 @@ Integration tests for validation framework.
 """
 
 import unittest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
+
 from ztoq.validation import (
     MigrationValidator,
     ValidationIssue,
@@ -19,8 +20,6 @@ from ztoq.validation import (
     ValidationRule,
     ValidationScope,
 )
-from ztoq.validation_integration import EnhancedMigration
-from ztoq.validation_rules import get_built_in_rules
 
 
 class MockRule(ValidationRule):
@@ -69,19 +68,19 @@ class TestValidationIntegration(unittest.TestCase):
         # Create mock migration
         self.mock_migration = MagicMock()
         self.mock_migration.extract_data.return_value = {
-            "test_cases": [{"id": "123", "name": "Test Case"}]
+            "test_cases": [{"id": "123", "name": "Test Case"}],
         }
         self.mock_migration.transform_data.return_value = {
-            "test_cases": [{"id": "456", "name": "Test Case in qTest"}]
+            "test_cases": [{"id": "456", "name": "Test Case in qTest"}],
         }
         self.mock_migration.load_data.return_value = {"success": True}
 
         # Add custom mock rules
         self.extract_rule = MockRule(
-            "test_extract", ValidationPhase.EXTRACTION, ValidationScope.TEST_CASE
+            "test_extract", ValidationPhase.EXTRACTION, ValidationScope.TEST_CASE,
         )
         self.transform_rule = MockRule(
-            "test_transform", ValidationPhase.TRANSFORMATION, ValidationScope.TEST_CASE
+            "test_transform", ValidationPhase.TRANSFORMATION, ValidationScope.TEST_CASE,
         )
         self.load_rule = MockRule("test_load", ValidationPhase.LOADING, ValidationScope.TEST_CASE)
 
@@ -99,17 +98,17 @@ class TestValidationIntegration(unittest.TestCase):
 
         # Verify rules are organized by scope and phase
         self.assertTrue(
-            len(validation_manager.registry.rules_by_scope[ValidationScope.TEST_CASE]) > 0
+            len(validation_manager.registry.rules_by_scope[ValidationScope.TEST_CASE]) > 0,
         )
         self.assertTrue(
-            len(validation_manager.registry.rules_by_phase[ValidationPhase.EXTRACTION]) > 0
+            len(validation_manager.registry.rules_by_phase[ValidationPhase.EXTRACTION]) > 0,
         )
 
         # Verify we can get rules by scope and phase
         test_case_rules = validation_manager.registry.get_rules_for_scope(ValidationScope.TEST_CASE)
         self.assertTrue(len(test_case_rules) > 0)
         extraction_rules = validation_manager.registry.get_rules_for_phase(
-            ValidationPhase.EXTRACTION
+            ValidationPhase.EXTRACTION,
         )
         self.assertTrue(len(extraction_rules) > 0)
 
@@ -168,7 +167,7 @@ class TestValidationIntegration(unittest.TestCase):
 
         # Execute validation
         issues = self.validation_manager.execute_validation(
-            entity, ValidationScope.TEST_CASE, ValidationPhase.EXTRACTION, context
+            entity, ValidationScope.TEST_CASE, ValidationPhase.EXTRACTION, context,
         )
 
         # Verify rule was called and issue was added
@@ -205,13 +204,13 @@ class TestValidationIntegration(unittest.TestCase):
 
         # Execute extraction validation
         self.validation_manager.execute_validation(
-            test_case, ValidationScope.TEST_CASE, ValidationPhase.EXTRACTION, context
+            test_case, ValidationScope.TEST_CASE, ValidationPhase.EXTRACTION, context,
         )
 
         # Execute transformation validation
         transformed_case = {"id": "456", "name": "Test Case in qTest"}
         self.validation_manager.execute_validation(
-            transformed_case, ValidationScope.TEST_CASE, ValidationPhase.TRANSFORMATION, context
+            transformed_case, ValidationScope.TEST_CASE, ValidationPhase.TRANSFORMATION, context,
         )
 
         # Verify rules were called
@@ -235,7 +234,7 @@ class TestValidationIntegration(unittest.TestCase):
                 message="Test issue 1",
                 entity_id="123",
                 entity_type="test_case",
-            )
+            ),
         )
 
         self.validation_manager.add_issue(
@@ -247,7 +246,7 @@ class TestValidationIntegration(unittest.TestCase):
                 message="Test issue 2",
                 entity_id="456",
                 entity_type="test_cycle",
-            )
+            ),
         )
 
         # Generate report

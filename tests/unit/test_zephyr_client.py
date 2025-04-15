@@ -7,8 +7,10 @@ See LICENSE file for details.
 import time
 from pathlib import Path
 from unittest.mock import MagicMock, patch
+
 import pytest
 import requests
+
 from ztoq.models import (
     Attachment,
     Case,
@@ -19,9 +21,9 @@ from ztoq.models import (
 from ztoq.zephyr_client import PaginatedIterator, ZephyrClient, configure_logging
 
 
-@pytest.mark.unit()
+@pytest.mark.unit
 class TestZephyrClient:
-    @pytest.fixture()
+    @pytest.fixture
     def config(self):
         """Create a test Zephyr configuration."""
         return ZephyrConfig(
@@ -30,7 +32,7 @@ class TestZephyrClient:
             project_key="TEST",
         )
 
-    @pytest.fixture()
+    @pytest.fixture
     def client(self, config):
         """Create a test Zephyr client."""
         return ZephyrClient(config)
@@ -369,7 +371,7 @@ class TestZephyrClient:
         # Apply retry decorator to the make_request function for this test
         original_make_request = client._make_request
         client._make_request = retry_with_backoff(max_retries=3, initial_delay=0.01)(
-            original_make_request
+            original_make_request,
         )
 
         try:
@@ -395,7 +397,7 @@ class TestZephyrClient:
         # Create a mock response with an HTTP error
         mock_error_response = MagicMock()
         mock_error_response.raise_for_status.side_effect = requests.exceptions.HTTPError(
-            "404 Client Error"
+            "404 Client Error",
         )
         mock_error_response.status_code = 404
         mock_error_response.json.return_value = {
@@ -461,7 +463,7 @@ class TestZephyrClient:
         # Create a mock response with an HTTP error but non-JSON content
         mock_error_response = MagicMock()
         mock_error_response.raise_for_status.side_effect = requests.exceptions.HTTPError(
-            "500 Server Error"
+            "500 Server Error",
         )
         mock_error_response.status_code = 500
         # Simulate a ValueError when trying to parse as JSON
@@ -514,7 +516,7 @@ class TestZephyrClient:
 
         # Make request - should validate request and response
         result = client_with_spec._make_request(
-            "POST", "/validated-endpoint", json_data={"test": "data"}
+            "POST", "/validated-endpoint", json_data={"test": "data"},
         )
 
         # Verify validation was called
@@ -719,7 +721,7 @@ class TestZephyrClient:
                     "get": {
                         "summary": "Get test cases",
                         "parameters": [{"name": "projectKey", "in": "query", "required": True}],
-                    }
+                    },
                 },
                 "/folders": {"get": {"summary": "Get folders"}},
             },
