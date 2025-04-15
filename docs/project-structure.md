@@ -24,19 +24,18 @@ ztoq/                 # Root Project Directory
 │   ├── sphinx/       # Sphinx documentation source
 │   └── *.md          # Markdown documentation files
 │
-├── utils/            # Utility scripts
+├── config/           # Configuration and utility files
+│   ├── scripts/                 # Development scripts
+│   │   ├── add_license_headers.py   # License header management
+│   │   ├── fix_imports.py           # Import style corrections
+│   │   ├── fix_spacing.py           # Code formatting helper
+│   │   ├── init_db.py               # Database initialization
+│   │   └── master_build.py          # CI/CD build script
 │   ├── build.py                 # Build automation script
 │   ├── test_install.py          # Installation verification
 │   ├── run-migration.sh         # Migration execution script
 │   ├── test_docs.sh             # Documentation testing script
-│   └── ztoq_data.db             # Sample database for testing
-│
-├── scripts/          # Development scripts
-│   ├── add_license_headers.py   # License header management
-│   ├── fix_imports.py           # Import style corrections
-│   ├── fix_spacing.py           # Code formatting helper
-│   ├── init_db.py               # Database initialization
-│   └── master_build.py          # CI/CD build script
+│   └── .flake8                  # Flake8 linting configuration
 │
 ├── migration-config/ # Migration configuration
 │   ├── settings.json            # Global migration settings

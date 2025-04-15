@@ -140,7 +140,7 @@ warn_no_return = true
 warn_unreachable = true
 exclude = [
     '^tests/.*$',
-    '^scripts/.*$',
+    '^config/scripts/.*$',
 ]
 
 [[tool.mypy.overrides]]
@@ -149,7 +149,7 @@ disallow_untyped_defs = false
 disallow_incomplete_defs = false
 
 [tool.bandit]
-exclude_dirs = ["tests", "venv", "scripts"]
+exclude_dirs = ["tests", "venv", "config/scripts"]
 skips = ["B101"]  # Skip assert detection
 
 [tool.interrogate]
@@ -164,7 +164,7 @@ ignore-nested-functions = true
 ignore-nested-classes = true
 ignore-setters = true
 fail-under = 80  # Minimum percentage of docstring coverage
-exclude = ["tests", "venv", "scripts", "examples"]
+exclude = ["tests", "venv", "config/scripts", "examples"]
 verbose = 0
 omit-covered-files = false
 
@@ -175,7 +175,7 @@ pre-summary-newline = true
 wrap-descriptions = 80
 
 [tool.pylint.master]
-ignore = ["tests", "venv", "scripts"]
+ignore = ["tests", "venv", "config/scripts"]
 ignore-patterns = ["^\\.#"]
 extension-pkg-whitelist = ["pydantic"]
 
@@ -198,7 +198,7 @@ warmup = true
 
 [tool.coverage.run]
 source = ["ztoq"]
-omit = ["tests/*", "venv/*", "scripts/*", "examples/*"]
+omit = ["tests/*", "venv/*", "config/scripts/*", "examples/*"]
 
 [tool.coverage.report]
 exclude_lines = [

@@ -7,9 +7,9 @@
 
 > [!NOTE]
 > This project follows a standard organization structure with:
-> - `config/` - Configuration files (Dockerfiles, docker-compose, ini, config)
+> - `config/` - Configuration files, scripts, and utilities
+>   - `config/scripts/` - Utility scripts for development
 > - `docs/` - Documentation files
-> - `utils/` - Utility scripts and tools
 > - See [Project Structure](docs/project-structure.md) for details.
 
 A Python CLI tool that extracts test data from Zephyr Scale and migrates it to qTest. This tool reads the Zephyr Scale OpenAPI specification and provides a complete migration pathway between these two test management systems.
@@ -456,31 +456,31 @@ For running migrations in a containerized environment, ZTOQ provides a specializ
 
 ```bash
 # Set up the migration environment (creates directories and initializes DB)
-./run-migration.sh setup
+./config/run-migration.sh setup
 
 # Run a migration with default settings
-./run-migration.sh run
+./config/run-migration.sh run
 
 # Run a migration with custom batch size and workers
-./run-migration.sh run --batch-size 100 --workers 8 --phase extract
+./config/run-migration.sh run --batch-size 100 --workers 8 --phase extract
 
 # Check migration status
-./run-migration.sh status
+./config/run-migration.sh status
 
 # Generate a migration report
-./run-migration.sh report
+./config/run-migration.sh report
 
 # Start an interactive migration dashboard
-./run-migration.sh dashboard
+./config/run-migration.sh dashboard
 
 # Stop all containers
-./run-migration.sh stop
+./config/run-migration.sh stop
 
 # Clean up containers and networks (keeps data)
-./run-migration.sh clean
+./config/run-migration.sh clean
 
 # Clean up everything including data
-./run-migration.sh purge
+./config/run-migration.sh purge
 ```
 
 This approach simplifies the migration process by handling all dependencies and configurations automatically. See the [Migration Guide](docs/migration-guide.md#using-docker-for-migration) for detailed instructions.
@@ -515,13 +515,13 @@ See [Scheduled Migrations](docs/scheduled-migrations.md) for comprehensive docum
 make build
 
 # Run all build steps with original build script
-python build.py all
+python config/build.py all
 
 # Run tests with documentation
-python build.py test --with-docs
+python config/build.py test --with-docs
 
 # Generate documentation only
-python build.py docs
+python config/build.py docs
 
 # Create a new commit with version update
 make checkin message="Your commit message"

@@ -59,7 +59,7 @@ Many files have lines exceeding the 100-character limit, including:
 ## Recommended Next Steps
 
 1. **Fix Unused Imports**:
-   - Use the `scripts/fix_unused_imports.py` script to systematically remove unused imports
+   - Use the `config/scripts/fix_unused_imports.py` script to systematically remove unused imports
    - Update the script's `FILES_WITH_UNUSED_IMPORTS` dictionary with current findings
 
 2. **Fix Undefined Names**:
@@ -85,7 +85,7 @@ To check for linting issues:
 
 ```bash
 # Run critical linting checks only
-./scripts/run_critical_lint.sh
+./config/scripts/run_critical_lint.sh
 
 # Run full linting checks
 poetry run flake8 ztoq tests
