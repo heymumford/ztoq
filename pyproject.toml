@@ -49,6 +49,7 @@ xenon = "^0.9.0"
 docformatter = "^1.7.5"
 pylint = "^3.0.1"
 pytest-benchmark = "^4.0.0"
+responses = "^0.25.7"
 
 [tool.poetry.group.docs.dependencies]
 sphinx = "^8.2"
