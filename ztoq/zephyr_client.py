@@ -439,6 +439,9 @@ class ZephyrClient:
         Returns:
             API response as dictionary
         """
+        # Import the connection pool lazily to avoid circular imports
+        from ztoq.connection_pool import connection_pool
+
         # Check rate limits
         if self.rate_limit_remaining <= 0:
             wait_time = max(0, self.rate_limit_reset - time.time())
@@ -510,102 +513,104 @@ class ZephyrClient:
         start_time = time.time()
 
         try:
-            # Make the request with timeout
-            response = requests.request(
-                method=method,
-                url=url,
-                headers=request_headers,
-                params=params,
-                json=json_data,
-                files=files,
-                timeout=timeout,
-            )
-
-            # Calculate request duration
-            duration = time.time() - start_time
-
-            # Update rate limits
-            if "X-Rate-Limit-Remaining" in response.headers:
-                self.rate_limit_remaining = int(response.headers["X-Rate-Limit-Remaining"])
-                logger.debug(f"Rate limit remaining [{request_id}]: {self.rate_limit_remaining}")
-            if "X-Rate-Limit-Reset" in response.headers:
-                self.rate_limit_reset = int(response.headers["X-Rate-Limit-Reset"])
-
-            # Log response metadata
-            logger.debug(
-                f"Response [{request_id}] received in {duration:.2f}s - "
-                f"Status: {response.status_code}"
-            )
-
-            # Log headers at trace level (requires DEBUG or lower)
-            if logger.isEnabledFor(logging.DEBUG):
-                logger.debug(f"Response Headers [{request_id}]: {dict(response.headers)}")
-
-            # Check response status - will raise HTTPError for 4xx/5xx responses
-            response.raise_for_status()
-
-            try:
-                # Parse JSON response
-                response_json = response.json()
-            except ValueError as e:
-                logger.error(f"JSON Parsing Error [{request_id}]: {e}")
-                logger.error(f"Response Text [{request_id}]: {response.text[:500]}")
-                raise ValueError(
-                    f"Could not parse JSON response: {e}. "
-                    f"Response text: {response.text[:100]}..."
+            # Use connection pool to get a session and make the request
+            with connection_pool.get_session(url) as session:
+                # Make the request with timeout
+                response = session.request(
+                    method=method,
+                    url=url,
+                    headers=request_headers,
+                    params=params,
+                    json=json_data,
+                    files=files,
+                    timeout=timeout,
                 )
 
-            # Validate response against OpenAPI spec if available and validation is enabled
-            if validate and hasattr(self, "spec_wrapper"):
-                status_code = str(response.status_code)
-                valid_response, response_error = self.spec_wrapper.validate_response(
-                    endpoint, method.lower(), status_code, response_json
+                # Calculate request duration
+                duration = time.time() - start_time
+
+                # Update rate limits
+                if "X-Rate-Limit-Remaining" in response.headers:
+                    self.rate_limit_remaining = int(response.headers["X-Rate-Limit-Remaining"])
+                    logger.debug(f"Rate limit remaining [{request_id}]: {self.rate_limit_remaining}")
+                if "X-Rate-Limit-Reset" in response.headers:
+                    self.rate_limit_reset = int(response.headers["X-Rate-Limit-Reset"])
+
+                # Log response metadata
+                logger.debug(
+                    f"Response [{request_id}] received in {duration:.2f}s - "
+                    f"Status: {response.status_code}"
                 )
-                if not valid_response:
-                    logger.warning(f"Response validation failed [{request_id}]: {response_error}")
-                    if logger.isEnabledFor(logging.DEBUG):
-                        # Truncate very large responses for logging
-                        if isinstance(response_json, dict) and "values" in response_json:
-                            values_count = len(response_json["values"])
-                            if values_count > 10:
-                                log_response = response_json.copy()
-                                log_response["values"] = log_response["values"][:3]
-                                log_response["values"].append("... truncated for logging")
-                                logger.debug(
-                                    f"Invalid response body [{request_id}] (truncated): "
-                                    f"{json.dumps(log_response)}"
-                                )
+
+                # Log headers at trace level (requires DEBUG or lower)
+                if logger.isEnabledFor(logging.DEBUG):
+                    logger.debug(f"Response Headers [{request_id}]: {dict(response.headers)}")
+
+                # Check response status - will raise HTTPError for 4xx/5xx responses
+                response.raise_for_status()
+
+                try:
+                    # Parse JSON response
+                    response_json = response.json()
+                except ValueError as e:
+                    logger.error(f"JSON Parsing Error [{request_id}]: {e}")
+                    logger.error(f"Response Text [{request_id}]: {response.text[:500]}")
+                    raise ValueError(
+                        f"Could not parse JSON response: {e}. "
+                        f"Response text: {response.text[:100]}..."
+                    )
+
+                # Validate response against OpenAPI spec if available and validation is enabled
+                if validate and hasattr(self, "spec_wrapper"):
+                    status_code = str(response.status_code)
+                    valid_response, response_error = self.spec_wrapper.validate_response(
+                        endpoint, method.lower(), status_code, response_json
+                    )
+                    if not valid_response:
+                        logger.warning(f"Response validation failed [{request_id}]: {response_error}")
+                        if logger.isEnabledFor(logging.DEBUG):
+                            # Truncate very large responses for logging
+                            if isinstance(response_json, dict) and "values" in response_json:
+                                values_count = len(response_json["values"])
+                                if values_count > 10:
+                                    log_response = response_json.copy()
+                                    log_response["values"] = log_response["values"][:3]
+                                    log_response["values"].append("... truncated for logging")
+                                    logger.debug(
+                                        f"Invalid response body [{request_id}] (truncated): "
+                                        f"{json.dumps(log_response)}"
+                                    )
+                                else:
+                                    logger.debug(
+                                        f"Invalid response body [{request_id}]: "
+                                        f"{json.dumps(response_json)}"
+                                    )
                             else:
                                 logger.debug(
                                     f"Invalid response body [{request_id}]: "
                                     f"{json.dumps(response_json)}"
                                 )
-                        else:
-                            logger.debug(
-                                f"Invalid response body [{request_id}]: "
-                                f"{json.dumps(response_json)}"
-                            )
 
-            # Log response data at trace level
-            if logger.isEnabledFor(logging.DEBUG):
-                # Truncate very large responses for logging
-                if isinstance(response_json, dict) and "values" in response_json:
-                    values_count = len(response_json["values"])
-                    # Create a truncated version for logging if there are many values
-                    if values_count > 10:
-                        log_response = response_json.copy()
-                        log_response["values"] = log_response["values"][:3]
-                        log_response["values"].append("... truncated for logging")
-                        logger.debug(
-                            f"Response Body [{request_id}] (truncated): "
-                            f"{json.dumps(log_response)}"
-                        )
+                # Log response data at trace level
+                if logger.isEnabledFor(logging.DEBUG):
+                    # Truncate very large responses for logging
+                    if isinstance(response_json, dict) and "values" in response_json:
+                        values_count = len(response_json["values"])
+                        # Create a truncated version for logging if there are many values
+                        if values_count > 10:
+                            log_response = response_json.copy()
+                            log_response["values"] = log_response["values"][:3]
+                            log_response["values"].append("... truncated for logging")
+                            logger.debug(
+                                f"Response Body [{request_id}] (truncated): "
+                                f"{json.dumps(log_response)}"
+                            )
+                        else:
+                            logger.debug(f"Response Body [{request_id}]: {json.dumps(response_json)}")
                     else:
                         logger.debug(f"Response Body [{request_id}]: {json.dumps(response_json)}")
-                else:
-                    logger.debug(f"Response Body [{request_id}]: {json.dumps(response_json)}")
 
-            return response_json
+                return response_json
 
         except requests.exceptions.HTTPError as e:
             # Enhanced HTTP error logging

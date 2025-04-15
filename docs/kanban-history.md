@@ -2,6 +2,55 @@
 
 This document tracks completed kanban tickets, providing context, reasoning, and lessons learned for each implementation phase. It serves as a historical record and learning resource for understanding how and why the project evolved.
 
+### [PERF-5] Implement Connection Pooling for API Clients
+
+**Completed**: 2025-04-20
+**Summary**: Created a robust connection pooling system to optimize HTTP connections for high-volume API interactions with Zephyr and qTest.
+
+**Context**: During large migrations, thousands of API calls are made to both Zephyr (source) and qTest (destination) systems. Without connection pooling, each request creates a new TCP connection with the overhead of DNS resolution, TCP handshakes, and SSL handshakes. This significantly slows down the migration process and increases resource usage. Additionally, TCP slow start means new connections initially have limited throughput. Connection pooling addresses these issues by reusing existing connections.
+
+**Implementation Details**:
+1. Created a dedicated `connection_pool.py` module with:
+   - Pool management per host to maximize connection reuse
+   - Thread-safe implementation for concurrent access
+   - Automatic retry with exponential backoff
+   - Connection cleanup to prevent resource leaks
+   - Performance metrics tracking for monitoring
+   - Support for both synchronous and asynchronous clients
+
+2. Integrated the connection pool with both Zephyr and qTest clients:
+   - Updated the `_make_request` method to use pooled connections
+   - Maintained backward compatibility with existing error handling
+   - Ensured proper correlation ID propagation
+
+3. Created comprehensive integration tests to validate:
+   - Connection reuse behavior
+   - Pool size limits
+   - Concurrent request handling
+   - Cleanup mechanisms
+   - Error handling
+   - Performance metrics tracking
+
+**Challenges and Solutions**:
+- **Challenge**: Maintaining backward compatibility with existing retry mechanisms and error handling.
+  **Solution**: Implemented the pool to work seamlessly with existing decorator patterns for retry and circuit breaker functionality.
+
+- **Challenge**: Ensuring thread safety without creating bottlenecks.
+  **Solution**: Used fine-grained locking only for critical sections and separate pools per host to reduce contention.
+
+- **Challenge**: Handling authentication token refresh with pooled connections.
+  **Solution**: Maintained the existing token refresh pattern while working within the connection pool framework.
+
+**Lessons Learned**:
+1. Connection pooling provides significant benefits for high-volume ETL operations with APIs.
+2. The biggest performance gains come from reusing connections to the same host.
+3. Proper cleanup is essential to prevent resource leaks in long-running processes.
+4. Tracking metrics is valuable for identifying optimization opportunities and potential issues.
+
+**Documentation Updates**:
+- Created `connection-pooling.md` with comprehensive documentation on the implementation, benefits, and usage.
+- Added integration with existing `work_queue.py` for optimal parallel processing.
+
 ### [PERF-4] Optimize Database Access Patterns
 
 **Completed**: 2025-04-19

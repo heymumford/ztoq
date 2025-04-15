@@ -462,6 +462,9 @@ class QTestClient:
         Returns:
             API response as dictionary
         """
+        # Import the connection pool lazily to avoid circular imports
+        from ztoq.connection_pool import connection_pool
+
         # Generate a request-specific ID for correlation if not provided
         # This allows tracing individual requests even when retried
         request_id = _request_id or f"req-{generate_correlation_id()}"
@@ -522,119 +525,121 @@ class QTestClient:
         start_time = time.time()
 
         try:
-            # Make the request
-            response = requests.request(
-                method=method,
-                url=url,
-                headers=request_headers,
-                params=params,
-                json=json_data,
-                files=files,
-                verify=verify,
-                timeout=timeout,
-            )
+            # Use connection pool to get a session and make the request
+            with connection_pool.get_session(url) as session:
+                # Make the request
+                response = session.request(
+                    method=method,
+                    url=url,
+                    headers=request_headers,
+                    params=params,
+                    json=json_data,
+                    files=files,
+                    verify=verify,
+                    timeout=timeout,
+                )
 
-            # Calculate request duration
-            duration = time.time() - start_time
+                # Calculate request duration
+                duration = time.time() - start_time
 
-            # Update request metrics
-            self.last_request_time = duration
-            self.total_request_time += duration
+                # Update request metrics
+                self.last_request_time = duration
+                self.total_request_time += duration
 
-            # Update rate limits if provided in headers
-            if "X-RateLimit-Remaining" in response.headers:
-                self.rate_limit_remaining = int(response.headers["X-RateLimit-Remaining"])
-                logger.debug(f"Rate limit remaining: {self.rate_limit_remaining}")
-            if "X-RateLimit-Reset" in response.headers:
-                self.rate_limit_reset = int(response.headers["X-RateLimit-Reset"])
+                # Update rate limits if provided in headers
+                if "X-RateLimit-Remaining" in response.headers:
+                    self.rate_limit_remaining = int(response.headers["X-RateLimit-Remaining"])
+                    logger.debug(f"Rate limit remaining: {self.rate_limit_remaining}")
+                if "X-RateLimit-Reset" in response.headers:
+                    self.rate_limit_reset = int(response.headers["X-RateLimit-Reset"])
 
-            # Extract correlation ID from response if present
-            response_correlation_id = response.headers.get("X-Correlation-ID", "")
-            if response_correlation_id and response_correlation_id != get_correlation_id():
-                logger.debug(f"Server correlation ID: {response_correlation_id}")
+                # Extract correlation ID from response if present
+                response_correlation_id = response.headers.get("X-Correlation-ID", "")
+                if response_correlation_id and response_correlation_id != get_correlation_id():
+                    logger.debug(f"Server correlation ID: {response_correlation_id}")
 
-            # Log response metadata
-            logger.info(
-                f"Response #{request_number} received in {duration:.2f}s - "
-                + f"Status: {response.status_code} - {method} {endpoint}"
-            )
+                # Log response metadata
+                logger.info(
+                    f"Response #{request_number} received in {duration:.2f}s - "
+                    + f"Status: {response.status_code} - {method} {endpoint}"
+                )
 
-            # Log headers at trace level
-            if logger.isEnabledFor(logging.DEBUG):
-                logger.debug(f"Response Headers: {dict(response.headers)}")
+                # Log headers at trace level
+                if logger.isEnabledFor(logging.DEBUG):
+                    logger.debug(f"Response Headers: {dict(response.headers)}")
 
-            # Special handling for 401 Unauthorized - likely token expiration
-            # This is outside the retry decorator to handle token refresh specially
-            if response.status_code == 401:
-                if _retry_count < _max_retries:
-                    logger.info(
-                        f"Authentication failed (attempt {_retry_count + 1}/{_max_retries}). Re-authenticating..."
-                    )
+                # Special handling for 401 Unauthorized - likely token expiration
+                # This is outside the retry decorator to handle token refresh specially
+                if response.status_code == 401:
+                    if _retry_count < _max_retries:
+                        logger.info(
+                            f"Authentication failed (attempt {_retry_count + 1}/{_max_retries}). Re-authenticating..."
+                        )
 
-                    # Increment retry counter
-                    _retry_count += 1
+                        # Increment retry counter
+                        _retry_count += 1
 
-                    # Reset token to force re-authentication
-                    self.auth_token = None
-                    self._authenticate()
+                        # Reset token to force re-authentication
+                        self.auth_token = None
+                        self._authenticate()
 
-                    # Update headers with the new token if custom headers weren't provided
-                    if not headers:
-                        request_headers = self.headers.copy()
-                        # Preserve correlation ID
-                        request_headers["X-Correlation-ID"] = get_correlation_id()
+                        # Update headers with the new token if custom headers weren't provided
+                        if not headers:
+                            request_headers = self.headers.copy()
+                            # Preserve correlation ID
+                            request_headers["X-Correlation-ID"] = get_correlation_id()
 
-                    # Retry the request with new token and incremented retry counter
-                    # Note: This will bypass the retry decorator since we're handling this case specially
-                    return self._make_request(
-                        method,
-                        endpoint,
-                        params,
-                        json_data,
-                        files,
-                        headers,
-                        verify,
-                        timeout,
-                        _retry_count=_retry_count,
-                        _max_retries=_max_retries,
-                        _request_id=request_id,
-                    )
-                else:
-                    # Max auth retries reached - this is terminal
-                    logger.error(f"Authentication failed after {_max_retries} attempts")
-                    self.error_count += 1
-                    response.raise_for_status()
+                        # Retry the request with new token and incremented retry counter
+                        # Note: This will bypass the retry decorator since we're handling this case specially
+                        return self._make_request(
+                            method,
+                            endpoint,
+                            params,
+                            json_data,
+                            files,
+                            headers,
+                            verify,
+                            timeout,
+                            _retry_count=_retry_count,
+                            _max_retries=_max_retries,
+                            _request_id=request_id,
+                        )
+                    else:
+                        # Max auth retries reached - this is terminal
+                        logger.error(f"Authentication failed after {_max_retries} attempts")
+                        self.error_count += 1
+                        response.raise_for_status()
 
-            # Handle errors with detailed logging
-            response.raise_for_status()
+                # Handle errors with detailed logging
+                response.raise_for_status()
 
-            # Check if response is empty
-            if response.status_code == 204 or not response.content:
-                return {}
+                # Check if response is empty
+                if response.status_code == 204 or not response.content:
+                    return {}
 
-            # Parse JSON response
-            response_json = response.json()
+                # Parse JSON response
+                response_json = response.json()
 
-            # Log response data at trace level
-            if logger.isEnabledFor(logging.DEBUG):
-                # Truncate very large responses for logging
-                if isinstance(response_json, dict) and (
-                    "items" in response_json or "data" in response_json
-                ):
-                    data_key = "items" if "items" in response_json else "data"
-                    values_count = len(response_json[data_key])
-                    # Create a truncated version for logging if there are many values
-                    if values_count > 10:
-                        log_response = response_json.copy()
-                        log_response[data_key] = log_response[data_key][:3]
-                        log_response[data_key].append("... truncated for logging")
-                        logger.debug(f"Response Body (truncated): {json.dumps(log_response)}")
+                # Log response data at trace level
+                if logger.isEnabledFor(logging.DEBUG):
+                    # Truncate very large responses for logging
+                    if isinstance(response_json, dict) and (
+                        "items" in response_json or "data" in response_json
+                    ):
+                        data_key = "items" if "items" in response_json else "data"
+                        values_count = len(response_json[data_key])
+                        # Create a truncated version for logging if there are many values
+                        if values_count > 10:
+                            log_response = response_json.copy()
+                            log_response[data_key] = log_response[data_key][:3]
+                            log_response[data_key].append("... truncated for logging")
+                            logger.debug(f"Response Body (truncated): {json.dumps(log_response)}")
+                        else:
+                            logger.debug(f"Response Body: {json.dumps(response_json)}")
                     else:
                         logger.debug(f"Response Body: {json.dumps(response_json)}")
-                else:
-                    logger.debug(f"Response Body: {json.dumps(response_json)}")
 
-            return response_json
+                return response_json
 
         except requests.exceptions.HTTPError as e:
             # Enhanced HTTP error logging
