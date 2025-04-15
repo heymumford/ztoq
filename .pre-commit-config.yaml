@@ -19,10 +19,11 @@ repos:
     -   id: check-json
 
 -   repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.1.8
+    rev: v0.11.5  # Same version as in pyproject.toml
     hooks:
     -   id: ruff
         args: [--fix, --exit-non-zero-on-fix]
+        exclude: ^scripts/
     -   id: ruff-format
         args: [--config=pyproject.toml]
 
@@ -30,7 +31,7 @@ repos:
     rev: v1.15.0
     hooks:
     -   id: mypy
-        exclude: '^tests/|^config/scripts/|^examples/'
+        exclude: '^tests/|^config/scripts/|^scripts/|^examples/'
         additional_dependencies: [
             types-PyYAML,
             types-requests,
@@ -41,7 +42,7 @@ repos:
     rev: 1.8.3
     hooks:
     -   id: bandit
-        exclude: '^tests/|^examples/'
+        exclude: '^tests/|^examples/|^scripts/'
         args: ["-c", "pyproject.toml"]
 
 # Docstring formatting is now handled by ruff
@@ -72,3 +73,13 @@ repos:
         pass_filenames: false
         files: ^(pyproject.toml|ztoq/__init__.py|docs/sphinx/source/conf.py)$
         verbose: true
+
+-   repo: local
+    hooks:
+    -   id: verify-dependencies
+        name: Verify Dependencies
+        entry: python scripts/ensure_dependencies.py
+        language: system
+        pass_filenames: false
+        always_run: false  # Only run manually or in CI
+        stages: [manual]

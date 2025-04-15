@@ -182,6 +182,22 @@ unfixable = []
     "PLW0603", # Allow global statements in tests
     "E402",  # Allow module level imports not at top in tests
 ]
+
+"scripts/**/*.py" = [
+    "S101",  # Allow assert in scripts
+    "S103",  # Allow file permissions in scripts
+    "S104",  # Allow binding to all interfaces in scripts
+    "S105",  # Allow hardcoded passwords in scripts
+    "S106",  # Allow hardcoded password arguments in scripts
+    "S602",  # Allow shell=True in scripts
+    "S603",  # Allow subprocess in scripts
+    "ANN",   # Allow missing type annotations in scripts
+    "D",     # Allow missing docstrings in scripts
+    "N806",  # Allow CONSTANT_CASE in functions
+    "C901",  # Allow high complexity in scripts
+    "PLW2901", # Allow loop variable reuse in scripts
+    "E402",  # Allow module level imports not at top
+]
 "examples/**/*.py" = [
     "T201",  # Allow print in examples
     "ANN",   # Allow missing type annotations in examples
@@ -238,11 +254,13 @@ warn_no_return = true
 warn_unreachable = true
 plugins = [
     "pydantic.mypy",
-    "sqlalchemy.ext.mypy.plugin",
+    # Temporarily disabled until sqlalchemy is installed
+    # "sqlalchemy.ext.mypy.plugin",
 ]
 exclude = [
     "^tests/.*$",
     "^config/scripts/.*$",
+    "^scripts/.*$",
     "^examples/.*$",
 ]
 

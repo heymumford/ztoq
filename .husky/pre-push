@@ -1,0 +1,39 @@
+#!/bin/sh
+
+# Pre-push hook to ensure all dependencies are installed and tests pass
+
+# Verify dependencies
+echo "Verifying dependencies..."
+python scripts/ensure_dependencies.py
+if [ $? -ne 0 ]; then
+    echo "ERROR: Some dependencies are missing. Please run 'python scripts/setup.py' to install them."
+    exit 1
+fi
+
+# Run ruff linting
+echo "Running linting checks..."
+poetry run ruff check .
+if [ $? -ne 0 ]; then
+    echo "ERROR: Linting checks failed. Please fix the issues and try again."
+    echo "You can run 'poetry run ruff check --fix .' to attempt to automatically fix some issues."
+    exit 1
+fi
+
+# Run ruff format check
+echo "Checking code formatting..."
+poetry run ruff format --check .
+if [ $? -ne 0 ]; then
+    echo "ERROR: Code formatting checks failed. Please run 'poetry run ruff format .' to fix the issues."
+    exit 1
+fi
+
+# Run unit tests
+echo "Running unit tests..."
+poetry run pytest tests/unit/
+if [ $? -ne 0 ]; then
+    echo "ERROR: Unit tests failed. Please fix the issues and try again."
+    exit 1
+fi
+
+echo "All checks passed. Proceeding with push."
+exit 0

@@ -2,22 +2,45 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Project Setup
+
+To set up the development environment properly, always ensure all dependencies are installed:
+
+```bash
+# Initial setup (installs all dependencies, sets up pre-commit hooks, verifies dependencies)
+python scripts/setup.py
+
+# Alternative shorter path using Make
+make setup
+```
+
+When working on this project, always use the Makefile commands where possible. It ensures consistent environment across all systems.
+
 ## Quality Check Commands
 
 When making changes to code, always run the following quality checks before finalizing:
 
 ```bash
+# Run all checks at once (recommended)
+make all-checks
+
+# Or run individual checks
+
 # Run all linters and fixers
-poetry run pre-commit run --all-files
+make lint-fix
+# or: poetry run pre-commit run --all-files
 
 # Check types with mypy
-poetry run mypy ztoq/
+make type
+# or: poetry run mypy ztoq/
 
 # Run the test suite
-poetry run pytest
+make test
+# or: poetry run pytest
 
 # Check docstring coverage
-poetry run interrogate -c pyproject.toml ztoq/
+make doc
+# or: poetry run interrogate -c pyproject.toml ztoq/
 
 # Generate coverage report
 poetry run pytest --cov=ztoq --cov-report=term-missing
@@ -27,39 +50,42 @@ poetry run pytest --cov=ztoq --cov-report=term-missing
 
 ```bash
 # Install dependencies
-poetry install
+make install-dev
+# or: poetry install
 
 # Run all tests
-poetry run pytest
+make test
+# or: poetry run pytest
 
 # Run unit tests only
 poetry run pytest -m unit
 
-# Run single test 
+# Run single test
 poetry run pytest tests/path/to/test_file.py::TestClass::test_function
 
 # Run linting and auto-fix issues
-poetry run ruff check --fix ztoq/
+make lint-fix
+# or: poetry run ruff check --fix ztoq/
 
 # Format code
-poetry run ruff format ztoq/
+make format
+# or: poetry run ruff format ztoq/
 
-# Sort imports
-poetry run isort ztoq/
+# Sort imports (now handled by ruff)
+poetry run ruff check --select I --fix ztoq/
 
 # Check type annotations
-poetry run mypy ztoq
+make type
+# or: poetry run mypy ztoq
 
 # Check for security issues
 poetry run bandit -c pyproject.toml -r ztoq/
 
-# Format docstrings
-poetry run docformatter --in-place --config ./pyproject.toml ztoq/
+# Verify all dependencies are correctly installed
+python scripts/ensure_dependencies.py
 
-# Using Makefile for convenience
-make test
-make format
-make lint
+# Clean build artifacts
+make clean
 ```
 
 ## Code Style Guidelines
