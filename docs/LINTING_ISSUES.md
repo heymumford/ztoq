@@ -1,18 +1,130 @@
-# Linting Issues and Code Quality Improvements
+# ZTOQ Linting Guide
 
-This document outlines the current linting issues and code quality improvements needed in the ZTOQ codebase.
+This document outlines the linting configuration and common issues that need to be addressed in the codebase.
 
-## Recent Improvements
+## Linting Setup
 
-- Added `RecommendationHistory` model and corresponding database migration
-- Enhanced API token diagnostics in `verify_api_tokens.py`
-- Fixed unused imports in database optimization modules
-- Updated flake8 configuration for better error handling
-- Applied `black` formatting to the entire codebase for consistent style
+The project uses several linting and code quality tools:
 
-## Remaining Linting Issues
+1. **Ruff** - Fast Python linter that includes flake8, isort, pyupgrade and more
+2. **mypy** - Static type checking 
+3. **docformatter** - Format docstrings consistently
+4. **interrogate** - Check docstring coverage 
+5. **bandit** - Security linting
+6. **pre-commit** - Run checks before commits
 
-The codebase still contains several types of linting issues that should be addressed:
+Configuration is primarily in:
+- `pyproject.toml` - Main configuration file
+- `.pre-commit-config.yaml` - Pre-commit hooks configuration
+- `config/setup.cfg` - Supplementary flake8 configuration
+
+## Running Linters
+
+```bash
+# Run all linters via pre-commit
+poetry run pre-commit run --all-files
+
+# Run just Ruff (fixes issues automatically with --fix)
+poetry run ruff check --fix ztoq/
+
+# Run type checking
+poetry run mypy ztoq/
+
+# Check docstring coverage
+poetry run interrogate -c pyproject.toml ztoq/
+
+# Format docstrings
+poetry run docformatter --in-place --config ./pyproject.toml ztoq/
+
+# Check for security issues
+poetry run bandit -c pyproject.toml -r ztoq/
+```
+
+## Common Issues
+
+### 1. Type Annotations
+
+We're using mypy for type checking. Common issues are:
+
+- Missing function return types (`ANN201` for public functions, `ANN202` for private)
+- Missing parameter types (`ANN001` for regular params, `ANN002` for `*args`, `ANN003` for `**kwargs`)
+- No need to annotate `self` or `cls` (we ignore `ANN101` and `ANN102`)
+
+Example fix:
+```python
+# Before
+def process_data(data, extra=None):
+    return data
+
+# After
+from typing import Any, Dict, Optional
+
+def process_data(data: Dict[str, Any], extra: Optional[str] = None) -> Dict[str, Any]:
+    return data
+```
+
+### 2. Docstrings
+
+We use Google-style docstrings. Common issues:
+
+- Missing docstrings for classes, methods, functions (`D101`, `D102`, `D103`)
+- Missing docstrings for `__init__` methods (`D107`) 
+- First line should be imperative mood (`D401`)
+- Need blank line between summary and description (`D205`)
+
+Example fix:
+```python
+# Before
+def transform_data(data):
+    """This function transforms the data.
+    It applies several processing steps."""
+    return data
+
+# After
+def transform_data(data: dict) -> dict:
+    """Transform the data.
+    
+    It applies several processing steps.
+    
+    Args:
+        data: The data to transform
+        
+    Returns:
+        The transformed data
+    """
+    return data
+```
+
+### 3. Code Complexity
+
+- Functions with too many branches or too complex control flow (`C901`)
+- Functions with too many parameters
+- Too many nested blocks
+
+### 4. Naming
+
+- Function/method names shadowing built-ins (`A003`)
+- Using variable names that are too short or not descriptive
+
+### 5. Import Order
+
+We use isort with a Black-compatible profile for import sorting. Imports should be in this order:
+1. Standard library  
+2. Third-party libraries
+3. ZTOQ modules
+
+## Ignored Rules
+
+We've ignored some rules where appropriate:
+
+- `E501` - Line length (handled by Black/Ruff formatter)
+- `S101` - Use of assert (acceptable in test files)
+- `E402` - Module level import not at top of file (for imports after license headers)
+- Various docstring rules that docformatter handles
+
+## Previous Linting Issues
+
+The following issues have been previously identified:
 
 ### Unused Imports (F401)
 
@@ -56,42 +168,32 @@ Many files have lines exceeding the 100-character limit, including:
 - `ztoq/migration.py`
 - `ztoq/zephyr_mock_server.py`
 
-## Recommended Next Steps
+## Per-file Exceptions
 
-1. **Fix Unused Imports**:
-   - Use the `config/scripts/fix_unused_imports.py` script to systematically remove unused imports
-   - Update the script's `FILES_WITH_UNUSED_IMPORTS` dictionary with current findings
+We have special exceptions for certain files:
 
-2. **Fix Undefined Names**:
-   - Add missing imports in test files
-   - Fix typos in variable names
+- Test files ignore many docstring and annotation rules
+- Example files allow prints and missing annotations
+- CLI files allow print statements
+- Script files have relaxed linting
 
-3. **Fix Unused Variables**:
-   - Remove unused variable assignments or use them where appropriate
-   - Replace with `_` for intentionally ignored values
+## Migration Strategy
 
-4. **Fix Line Length Issues**:
-   - Break long lines into multiple lines
-   - Consider factoring out complex expressions into separate variables
-   - For strings, use multiple f-strings with line continuation
+When fixing linting issues:
 
-5. **Add to Pre-commit Hooks**:
-   - Configure pre-commit hooks to automatically run black and flake8
-   - Prevent commits with critical linting issues
+1. Start with files that are actively being modified
+2. Focus on new code to ensure it meets standards
+3. Fix existing code incrementally when touching those files
+4. Prioritize type annotations and docstrings for public interfaces
 
-## Running Linting Checks
+## Running All Quality Checks
 
-To check for linting issues:
+To run all quality checks before a PR:
 
 ```bash
-# Run critical linting checks only
-./config/scripts/run_critical_lint.sh
-
-# Run full linting checks
-poetry run flake8 ztoq tests
-
-# Format code with black
-poetry run black ztoq tests
+# In project root
+cd /home/emumford/NativeLinuxProjects/ztoq
+make validate-all
 ```
 
 ---

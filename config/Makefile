@@ -1,6 +1,6 @@
 # Makefile for ZTOQ project
 
-.PHONY: setup install test lint format clean docs docs-clean build checkin security pre-commit docker-build docker-run validate-all test-unit test-integration test-docker test-docker-no-containers
+.PHONY: setup install test lint lint-strict format clean docs docs-clean build checkin security pre-commit docker-build docker-run validate-all test-unit test-integration test-docker test-docker-no-containers docstring-check
 
 setup:
 	pip install poetry
@@ -31,16 +31,28 @@ test-cov:
 lint:
 	poetry run ruff check .
 	poetry run mypy ztoq
+	poetry run interrogate -c pyproject.toml ztoq
+	poetry run bandit -c pyproject.toml -r ztoq
+
+lint-strict:
+	poetry run ruff check .
+	poetry run mypy ztoq
+	poetry run interrogate -c pyproject.toml ztoq
+	poetry run bandit -c pyproject.toml -r ztoq
 	poetry run pylint ztoq
 
 format:
 	poetry run ruff format .
 	poetry run ruff check --fix .
 	poetry run isort .
+	poetry run docformatter --in-place --config ./pyproject.toml ztoq
 
 security:
 	poetry run bandit -r ztoq -c pyproject.toml
 	poetry run safety check
+	
+docstring-check:
+	poetry run interrogate -v -c pyproject.toml ztoq
 
 pre-commit:
 	poetry run pre-commit run --all-files
@@ -51,7 +63,7 @@ docker-build:
 docker-run:
 	docker run --rm -it ztoq:latest
 
-validate-all: format lint test security
+validate-all: format lint test-cov security docstring-check
 
 validate:
 	poetry run ztoq validate z-openapi.yml
