@@ -2,6 +2,57 @@
 
 This document tracks completed kanban tickets, providing context, reasoning, and lessons learned for each implementation phase. It serves as a historical record and learning resource for understanding how and why the project evolved.
 
+### [TEST-PERF-4] Benchmark Migration Throughput
+
+**Completed**: 2025-04-22
+**Summary**: Implemented comprehensive migration throughput benchmarking with multiple test configurations, phase-specific performance analysis, optimal configuration reporting, and advanced profiling capabilities.
+
+**Context**: After establishing the performance testing framework, we needed to specifically benchmark migration throughput to identify optimal configurations and bottlenecks. This was critical for making data-driven decisions about performance optimization efforts.
+
+**Implementation Details**:
+1. Created a comprehensive migration throughput benchmarking system with:
+   - `EndToEndThroughputTest` class for testing end-to-end migration throughput
+   - `PhasePerformanceTest` class for phase-specific performance analysis (extraction, transformation, loading)
+   - `ProfiledMigrationTest` class for detailed profiling using cProfile
+   - Mocked API clients and test data generation for reproducible benchmarks
+   - Configurable batch sizes, concurrency levels, and test case counts
+
+2. Implemented advanced analysis and visualization capabilities:
+   - Batch size comparison plots to identify optimal batch sizes
+   - Concurrency comparison plots to determine optimal worker counts
+   - Phase comparison charts to identify bottlenecks in the migration pipeline
+   - Optimal configuration reports with recommendations based on dataset size
+   - Critical path analysis using cProfile with hotspot identification
+
+3. Enhanced profiling capabilities:
+   - Integration with Python's cProfile for detailed function-level profiling
+   - Profile visualization and analysis tools
+   - Common hotspot identification across different configurations
+   - Performance optimization recommendations based on profiling data
+
+**Challenges and Solutions**:
+- **Challenge**: Creating reproducible benchmarks without external dependencies
+  **Solution**: Implemented a comprehensive mock system with configurable test data generators
+
+- **Challenge**: Identifying bottlenecks across different phases of the migration
+  **Solution**: Created phase-specific tests and comparative visualizations to isolate performance issues
+
+- **Challenge**: Making profiling data actionable for developers
+  **Solution**: Developed an automated critical path analysis report with specific optimization recommendations
+
+**Lessons Learned**:
+1. Different migration phases (extraction, transformation, loading) have distinct performance characteristics and bottlenecks
+2. Optimal batch size and concurrency levels vary significantly based on dataset size and complexity
+3. The transformation phase was consistently the most CPU-intensive phase, while extraction and loading were more I/O-bound
+4. Visual comparison of different configurations makes performance patterns more apparent than raw numbers
+5. Detailed profiling combined with higher-level throughput metrics provides a complete performance picture
+6. For smaller datasets (<500 test cases), smaller batch sizes (20-50) with moderate concurrency (2-4) work best
+7. For larger datasets (>500 test cases), larger batch sizes (100-200) with higher concurrency (4-8) are more efficient
+
+**Documentation Updates**:
+- Added detailed documentation on optimal migration configurations for different dataset sizes
+- Created a comprehensive guide to performance testing and profiling in the codebase
+
 ### [TEST-PERF-3] Create Performance Test Suite
 
 **Completed**: 2025-04-21
