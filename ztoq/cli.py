@@ -16,31 +16,68 @@ from rich.progress import BarColumn, Progress, TaskProgressColumn, TextColumn, T
 from rich.table import Table
 from alembic import command
 from alembic.config import Config
-from ztoq.core.db_manager import DatabaseConfig, SQLDatabaseManager
+from ztoq.core.config import init_app_config, get_app_config, AppConfig, DatabaseConfig, ZephyrConfig, QTestConfig
+from ztoq.core.db_manager import SQLDatabaseManager
 from ztoq.database_factory import DatabaseFactory, DatabaseType
 from ztoq.workflow_cli import workflow_app
 from ztoq.exporter import ZephyrExportManager
 from ztoq.migration import ZephyrToQTestMigration
-from ztoq.models import ZephyrConfig
 from ztoq.openapi_parser import extract_api_endpoints, load_openapi_spec, validate_zephyr_spec
-from ztoq.qtest_models import QTestConfig
 from ztoq.zephyr_client import ZephyrClient
+
+# Version info
+__version__ = "0.4.1"
 
 # Update spec file paths
 ZEPHYR_SPEC_PATH = Path(__file__).parent.parent / "docs" / "specs" / "z-openapi.yml"
 QTEST_SPEC_PATH = Path(__file__).parent.parent / "docs" / "specs" / "qtest-openapi.yml"
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(message)s",
-    datefmt="[%X]",
-    handlers=[RichHandler(rich_tracebacks=True)],
-)
-logger = logging.getLogger("ztoq")
-
-app = typer.Typer(help="ZTOQ - Zephyr to qTest")
+# Initialize console for rich output
 console = Console()
+
+# Initialize the CLI app
+app = typer.Typer(help="ZTOQ - Zephyr to qTest")
+
+def configure_app(debug: bool = False):
+    """
+    Configure the application with the specified settings.
+    
+    Args:
+        debug: Whether to enable debug mode
+    """
+    # Initialize the application configuration
+    config = init_app_config(debug=debug, app_version=__version__)
+    
+    # Configure logging directly
+    from ztoq.core.config import configure_logging
+    configure_logging(debug=debug)
+    
+    return config
+
+# Add CLI callback for global options
+@app.callback()
+def callback(
+    debug: bool = typer.Option(
+        False, "--debug", help="Enable debug mode with verbose logging"
+    ),
+    version: bool = typer.Option(
+        False, "--version", help="Show the application version and exit"
+    ),
+):
+    """
+    ZTOQ - A tool for migrating test data from Zephyr Scale to qTest.
+    
+    Use --debug to enable verbose logging.
+    """
+    if version:
+        console.print(f"ZTOQ version: {__version__}")
+        raise typer.Exit()
+    
+    # Configure application with debug mode if set
+    configure_app(debug=debug)
+
+# Get the logger after configuration
+logger = logging.getLogger("ztoq")
 
 
 class OutputFormat(str, Enum):

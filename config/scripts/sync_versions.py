@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
 """
-Utility script to synchronize version numbers across different files in the ZTOQ project.
-This ensures that all version references (pyproject.toml, __init__.py, Sphinx conf.py)
-are consistent.
+Utility script to synchronize version numbers across different files in the ZTOQ
+project.
+
+This ensures that all version references (pyproject.toml, __init__.py, Sphinx
+conf.py) are consistent.
+
 """
 
 import re
@@ -17,13 +20,15 @@ SPHINX_CONF_PATH = ROOT_DIR / "docs" / "sphinx" / "source" / "conf.py"
 
 # Additional version files to check - add more as discovered
 ADDITIONAL_VERSION_PATHS = [
-    # Add other files that might contain version references
-    # {"path": ROOT_DIR / "path" / "to" / "file", "pattern": r'version\s*=\s*["\']([^"\']+)["\']', "replacement": r'version = "{version}"'}
+    # CLI file with version reference
+    {"path": ROOT_DIR / "ztoq" / "cli.py", "pattern": r'__version__\s*=\s*["\']([^"\']+)["\']', "replacement": r'__version__ = "{version}"'},
 ]
 
 
 def get_version_from_pyproject() -> str | None:
-    """Get version from pyproject.toml."""
+    """
+    Get version from pyproject.toml.
+    """
     if not PYPROJECT_PATH.exists():
         print(f"Warning: {PYPROJECT_PATH} not found")
         return None
@@ -41,7 +46,9 @@ def get_version_from_pyproject() -> str | None:
 
 
 def get_version_from_init() -> str | None:
-    """Get version from __init__.py."""
+    """
+    Get version from __init__.py.
+    """
     if not VERSION_PATH.exists():
         print(f"Warning: {VERSION_PATH} not found")
         return None
@@ -59,7 +66,9 @@ def get_version_from_init() -> str | None:
 
 
 def get_version_from_sphinx() -> str | None:
-    """Get version from Sphinx conf.py."""
+    """
+    Get version from Sphinx conf.py.
+    """
     if not SPHINX_CONF_PATH.exists():
         print(f"Warning: {SPHINX_CONF_PATH} not found")
         return None
@@ -77,13 +86,15 @@ def get_version_from_sphinx() -> str | None:
 
 
 def is_valid_version(version: str) -> bool:
-    """Check if the string is a valid semantic version.
+    """
+    Check if the string is a valid semantic version.
 
     Args:
         version: The version string to check
 
     Returns:
         bool: True if the version is valid, False otherwise
+
     """
     # Simple check for common placeholders
     placeholders = ["{", "}", "<", ">", "version", "new_version"]
@@ -92,7 +103,7 @@ def is_valid_version(version: str) -> bool:
             return False
 
     # Basic semver check - more restrictive than full semver but catches most cases
-    semver_pattern = r'^\d+\.\d+\.\d+(?:[-+].+)?$'
+    semver_pattern = r"^\d+\.\d+\.\d+(?:[-+].+)?$"
     if re.match(semver_pattern, version):
         return True
 
@@ -100,13 +111,15 @@ def is_valid_version(version: str) -> bool:
 
 
 def get_version_from_file(file_info: dict) -> str | None:
-    """Get version from an arbitrary file using a pattern.
+    """
+    Get version from an arbitrary file using a pattern.
 
     Args:
         file_info: Dict with 'path' and 'pattern' keys
 
     Returns:
         Version string or None if not found or invalid
+
     """
     path = file_info["path"]
     pattern = file_info["pattern"]
@@ -132,13 +145,15 @@ def get_version_from_file(file_info: dict) -> str | None:
 
 
 def find_potential_version_files() -> list:
-    """Scan project for files likely to contain version information."""
+    """
+    Scan project for files likely to contain version information.
+    """
     potential_files = []
     common_patterns = [
         r'version\s*=\s*["\']([^"\']+)["\']',
         r'__version__\s*=\s*["\']([^"\']+)["\']',
         r'VERSION\s*=\s*["\']([^"\']+)["\']',
-        r'release\s*=\s*["\']([^"\']+)["\']'
+        r'release\s*=\s*["\']([^"\']+)["\']',
     ]
 
     # Look in common locations for version references
@@ -147,7 +162,7 @@ def find_potential_version_files() -> list:
         ROOT_DIR / "setup.cfg",
         ROOT_DIR / "docs",
         ROOT_DIR / "scripts",
-        ROOT_DIR / "ztoq"
+        ROOT_DIR / "ztoq",
     ]
 
     for location in locations:
@@ -160,11 +175,13 @@ def find_potential_version_files() -> list:
                     with open(location) as f:
                         content = f.read()
                     if re.search(pattern, content):
-                        potential_files.append({
-                            "path": location,
-                            "pattern": pattern,
-                            "replacement": pattern.replace(r'([^"\']+)', r'{version}')
-                        })
+                        potential_files.append(
+                            {
+                                "path": location,
+                                "pattern": pattern,
+                                "replacement": pattern.replace(r'([^"\']+)', r"{version}"),
+                            }
+                        )
                 except Exception:
                     pass
         elif location.is_dir():
@@ -175,11 +192,13 @@ def find_potential_version_files() -> list:
                         with open(py_file) as f:
                             content = f.read()
                         if re.search(pattern, content):
-                            potential_files.append({
-                                "path": py_file,
-                                "pattern": pattern,
-                                "replacement": pattern.replace(r'([^"\']+)', r'{version}')
-                            })
+                            potential_files.append(
+                                {
+                                    "path": py_file,
+                                    "pattern": pattern,
+                                    "replacement": pattern.replace(r'([^"\']+)', r"{version}"),
+                                }
+                            )
                             break  # Only add the file once with the first matching pattern
                     except Exception:
                         pass
@@ -188,7 +207,9 @@ def find_potential_version_files() -> list:
 
 
 def update_version_in_file(file_path: Path, pattern: str, replacement: str, version: str) -> bool:
-    """Update version in a file with the given pattern and replacement template."""
+    """
+    Update version in a file with the given pattern and replacement template.
+    """
     if not file_path.exists():
         print(f"Warning: {file_path} not found")
         return False
@@ -214,7 +235,8 @@ def update_version_in_file(file_path: Path, pattern: str, replacement: str, vers
 
 
 def synchronize_versions(scan_for_version_files: bool = False, verbose: bool = False) -> bool:
-    """Synchronize versions across all relevant files.
+    """
+    Synchronize versions across all relevant files.
 
     Args:
         scan_for_version_files: Whether to scan the project for additional version files
@@ -222,6 +244,7 @@ def synchronize_versions(scan_for_version_files: bool = False, verbose: bool = F
 
     Returns:
         bool: True if synchronization succeeded, False otherwise
+
     """
     # Start with our known version files
     versions = {
@@ -232,9 +255,21 @@ def synchronize_versions(scan_for_version_files: bool = False, verbose: bool = F
 
     # Keep track of all version files for updating
     version_files = [
-        {"path": VERSION_PATH, "pattern": r'__version__\s*=\s*["\']([^"\']+)["\']', "replacement": r'__version__ = "{version}"'},
-        {"path": PYPROJECT_PATH, "pattern": r'version\s*=\s*["\']([^"\']+)["\']', "replacement": r'version = "{version}"'},
-        {"path": SPHINX_CONF_PATH, "pattern": r'release\s*=\s*["\']([^"\']+)["\']', "replacement": r'release = "{version}"'}
+        {
+            "path": VERSION_PATH,
+            "pattern": r'__version__\s*=\s*["\']([^"\']+)["\']',
+            "replacement": r'__version__ = "{version}"',
+        },
+        {
+            "path": PYPROJECT_PATH,
+            "pattern": r'version\s*=\s*["\']([^"\']+)["\']',
+            "replacement": r'version = "{version}"',
+        },
+        {
+            "path": SPHINX_CONF_PATH,
+            "pattern": r'release\s*=\s*["\']([^"\']+)["\']',
+            "replacement": r'release = "{version}"',
+        },
     ]
 
     # Add our predefined additional version paths
@@ -249,8 +284,10 @@ def synchronize_versions(scan_for_version_files: bool = False, verbose: bool = F
         potential_files = find_potential_version_files()
 
         # Filter out files we already know about
-        known_paths = set([str(VERSION_PATH), str(PYPROJECT_PATH), str(SPHINX_CONF_PATH)] +
-                          [str(file_info["path"]) for file_info in ADDITIONAL_VERSION_PATHS])
+        known_paths = set(
+            [str(VERSION_PATH), str(PYPROJECT_PATH), str(SPHINX_CONF_PATH)]
+            + [str(file_info["path"]) for file_info in ADDITIONAL_VERSION_PATHS]
+        )
         new_files = [f for f in potential_files if str(f["path"]) not in known_paths]
 
         if verbose:
@@ -309,17 +346,15 @@ def synchronize_versions(scan_for_version_files: bool = False, verbose: bool = F
             file_version = get_version_from_file(file_info)
             if file_version != canonical_version:
                 success = success and update_version_in_file(
-                    path,
-                    pattern,
-                    replacement,
-                    canonical_version
+                    path, pattern, replacement, canonical_version
                 )
 
     return success
 
 
 def print_versions(scan_for_version_files: bool = False, verbose: bool = False) -> dict:
-    """Print all version information for different files.
+    """
+    Print all version information for different files.
 
     Args:
         scan_for_version_files: Whether to scan for additional version files
@@ -327,6 +362,7 @@ def print_versions(scan_for_version_files: bool = False, verbose: bool = False) 
 
     Returns:
         dict: Dictionary of versions keyed by file name
+
     """
     print("ZTOQ Version Information:")
 
@@ -334,7 +370,7 @@ def print_versions(scan_for_version_files: bool = False, verbose: bool = False) 
     versions = {
         "pyproject.toml": get_version_from_pyproject(),
         "__init__.py": get_version_from_init(),
-        "Sphinx conf.py": get_version_from_sphinx()
+        "Sphinx conf.py": get_version_from_sphinx(),
     }
 
     # Print known versions
@@ -354,8 +390,10 @@ def print_versions(scan_for_version_files: bool = False, verbose: bool = False) 
         potential_files = find_potential_version_files()
 
         # Filter out files we already know about
-        known_paths = set([str(VERSION_PATH), str(PYPROJECT_PATH), str(SPHINX_CONF_PATH)] +
-                          [str(file_info["path"]) for file_info in ADDITIONAL_VERSION_PATHS])
+        known_paths = set(
+            [str(VERSION_PATH), str(PYPROJECT_PATH), str(SPHINX_CONF_PATH)]
+            + [str(file_info["path"]) for file_info in ADDITIONAL_VERSION_PATHS]
+        )
         new_files = [f for f in potential_files if str(f["path"]) not in known_paths]
 
         if new_files:
@@ -374,7 +412,8 @@ def print_versions(scan_for_version_files: bool = False, verbose: bool = False) 
 
 
 def bump_version(current_version: str, bump_type: str = "patch") -> str:
-    """Bump the version according to semantic versioning.
+    """
+    Bump the version according to semantic versioning.
 
     Args:
         current_version: Current version string
@@ -382,13 +421,14 @@ def bump_version(current_version: str, bump_type: str = "patch") -> str:
 
     Returns:
         str: New version string
+
     """
     if not current_version:
         return "0.1.0"  # Default for new projects
 
     try:
         # Parse the version
-        match = re.match(r'^(\d+)\.(\d+)\.(\d+)(?:[-+](.+))?$', current_version)
+        match = re.match(r"^(\d+)\.(\d+)\.(\d+)(?:[-+](.+))?$", current_version)
         if not match:
             print(f"Warning: Could not parse version '{current_version}'. Using default bump.")
             return "0.1.0"
@@ -419,30 +459,29 @@ def bump_version(current_version: str, bump_type: str = "patch") -> str:
 
 
 def main() -> int:
-    """Main entry point for the script."""
+    """
+    Main entry point for the script.
+    """
     import argparse
 
     try:
         parser = argparse.ArgumentParser(description="ZTOQ Version Synchronization Script")
         parser.add_argument(
-            "--check", action="store_true",
-            help="Only check version consistency without making changes"
+            "--check",
+            action="store_true",
+            help="Only check version consistency without making changes",
         )
         parser.add_argument(
-            "--scan", action="store_true",
-            help="Scan the project for additional version files"
+            "--scan", action="store_true", help="Scan the project for additional version files"
+        )
+        parser.add_argument("--verbose", action="store_true", help="Show more detailed output")
+        parser.add_argument(
+            "--update", type=str, metavar="VERSION", help="Update to a specific version"
         )
         parser.add_argument(
-            "--verbose", action="store_true",
-            help="Show more detailed output"
-        )
-        parser.add_argument(
-            "--update", type=str, metavar="VERSION",
-            help="Update to a specific version"
-        )
-        parser.add_argument(
-            "--bump", choices=["major", "minor", "patch"],
-            help="Bump version according to semantic versioning"
+            "--bump",
+            choices=["major", "minor", "patch"],
+            help="Bump version according to semantic versioning",
         )
         args = parser.parse_args()
 
@@ -451,7 +490,9 @@ def main() -> int:
 
         if args.bump:
             # Get current version and bump it
-            current_version = get_version_from_pyproject() or get_version_from_init() or get_version_from_sphinx()
+            current_version = (
+                get_version_from_pyproject() or get_version_from_init() or get_version_from_sphinx()
+            )
             if not current_version:
                 print("Error: No current version found to bump")
                 return 1
@@ -467,7 +508,7 @@ def main() -> int:
                 VERSION_PATH,
                 r'__version__\s*=\s*["\']([^"\']+)["\']',
                 r'__version__ = "{version}"',
-                new_version
+                new_version,
             )
 
             # Update pyproject.toml
@@ -475,7 +516,7 @@ def main() -> int:
                 PYPROJECT_PATH,
                 r'version\s*=\s*["\']([^"\']+)["\']',
                 r'version = "{version}"',
-                new_version
+                new_version,
             )
 
             # Update Sphinx conf.py
@@ -483,13 +524,15 @@ def main() -> int:
                 SPHINX_CONF_PATH,
                 r'release\s*=\s*["\']([^"\']+)["\']',
                 r'release = "{version}"',
-                new_version
+                new_version,
             )
 
             # Update additional versions if requested
             if scan_mode:
                 print("\nSynchronizing additional files...")
-                success = success and synchronize_versions(scan_for_version_files=True, verbose=verbose_mode)
+                success = success and synchronize_versions(
+                    scan_for_version_files=True, verbose=verbose_mode
+                )
 
             if success:
                 print(f"\nSuccessfully bumped version to {new_version}")
@@ -514,18 +557,16 @@ def main() -> int:
                 return 0
             else:
                 print("\nWarning: Versions are inconsistent across files")
-                print(f"Found {len(unique_versions)} different versions: {', '.join(unique_versions)}")
+                print(
+                    f"Found {len(unique_versions)} different versions: {', '.join(unique_versions)}"
+                )
                 return 1
         elif args.update:
             # Update to a specific version
             print(f"Updating to version {args.update}")
 
             # Create a temporary versions dictionary with the key files
-            temp_versions = {
-                "pyproject": args.update,
-                "init": args.update,
-                "sphinx": args.update
-            }
+            temp_versions = {"pyproject": args.update, "init": args.update, "sphinx": args.update}
 
             # Update main version files
             success = True
@@ -535,7 +576,7 @@ def main() -> int:
                 VERSION_PATH,
                 r'__version__\s*=\s*["\']([^"\']+)["\']',
                 r'__version__ = "{version}"',
-                args.update
+                args.update,
             )
 
             # Update pyproject.toml
@@ -543,7 +584,7 @@ def main() -> int:
                 PYPROJECT_PATH,
                 r'version\s*=\s*["\']([^"\']+)["\']',
                 r'version = "{version}"',
-                args.update
+                args.update,
             )
 
             # Update Sphinx conf.py
@@ -551,14 +592,16 @@ def main() -> int:
                 SPHINX_CONF_PATH,
                 r'release\s*=\s*["\']([^"\']+)["\']',
                 r'release = "{version}"',
-                args.update
+                args.update,
             )
 
             # Update additional versions
             if scan_mode:
                 print("\nSynchronizing additional files...")
                 # Additional synchronization is handled by the synchronize_versions function
-                success = success and synchronize_versions(scan_for_version_files=True, verbose=verbose_mode)
+                success = success and synchronize_versions(
+                    scan_for_version_files=True, verbose=verbose_mode
+                )
 
             if success:
                 print("\nVersion update completed successfully")
