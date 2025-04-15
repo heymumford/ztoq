@@ -2,6 +2,60 @@
 
 This document tracks completed kanban tickets, providing context, reasoning, and lessons learned for each implementation phase. It serves as a historical record and learning resource for understanding how and why the project evolved.
 
+### [PERF-2] Implement Intelligent Batching Strategies
+
+**Completed**: 2025-04-16
+**Summary**: Implemented a modular batching strategy system with various batching approaches to optimize performance for different entity types and processing scenarios.
+
+**Context**: To optimize ETL performance, we needed a more intelligent approach to batching than fixed-size batches. Different entities have varying characteristics, and optimal batch sizes depend on multiple factors including memory constraints, processing time, and entity similarities.
+
+**Decision**: Implemented a comprehensive batching strategy system with multiple approaches:
+1. `SizeBatchStrategy`: Creates batches based on memory footprint or entity size constraints
+2. `TimeBatchStrategy`: Groups entities based on estimated processing time
+3. `AdaptiveBatchStrategy`: Learns optimal batch size during execution based on performance
+4. `EntityTypeBatchStrategy`: Groups similar entities together (e.g., by folder, priority)
+5. `SimilarityBatchStrategy`: Groups entities with similar characteristics using feature vectors
+
+**Rationale**:
+- Different entity types have different processing characteristics (memory footprint, complexity)
+- Adaptive strategies can learn the optimal batch size during execution
+- Grouping similar entities can improve CPU cache utilization
+- A modular design allows selecting the best strategy for each situation
+
+**Lessons**:
+- Different entity types benefit from different batching strategies
+- Adaptive approaches perform best for long-running migrations with variable workloads
+- Entity similarity-based batching significantly improves CPU cache utilization
+- Memory footprint estimation is crucial for preventing OOM errors during large migrations
+- Recording and analyzing batch processing metrics enables continual optimization
+
+### [TEST-UNIT-36] Create Unit Tests for Batching Strategies
+
+**Completed**: 2025-04-16
+**Summary**: Implemented comprehensive test suite for various batching strategies, including size-based, time-based, adaptive, entity-type, and similarity-based approaches.
+
+**Context**: To ensure the reliability of the intelligent batching strategies, we needed thorough test coverage for all aspects of the batching functionality.
+
+**Decision**: Created extensive test suite in test_batch_strategies.py with test cases for:
+1. Size-based batching with various entity sizes and constraints
+2. Time-based batching with estimated processing times
+3. Adaptive learning and batch size optimization
+4. Entity type categorization and grouping
+5. Similarity-based entity batching
+6. Combining multiple strategies for complex workflows
+7. Performance measurement and comparison between strategies
+
+**Rationale**:
+- Each batching strategy has different behaviors that need validation
+- Testing edge cases ensures robust behavior under all conditions
+- Performance tests verify the actual improvements from different strategies
+
+**Lessons**:
+- Testing adaptive strategies requires simulating multiple processing cycles
+- Similarity-based batching tests need careful design of sample entity features
+- Visual performance comparison in test output helps identify the best strategy
+- Simulating realistic workloads is essential for meaningful test results
+
 ### [FLOW-7] Implement the Full ETL Pipeline in the Migrate Command
 **Completed**: 2025-04-17
 **Summary**: Implemented the comprehensive ETL pipeline for the migrate command, integrating all phases including extract, transform, load, validate, and rollback capabilities into a unified CLI interface.

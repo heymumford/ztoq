@@ -24,6 +24,11 @@ from typing import Any, Dict, List, Optional, Set, Tuple, Union
 from rich.console import Console
 from rich.progress import BarColumn, Progress, TaskProgressColumn, TextColumn, TimeElapsedColumn
 from rich.table import Table
+from ztoq.batch_strategies import (
+    BatchStrategy, SizeBatchStrategy, TimeBatchStrategy, AdaptiveBatchStrategy,
+    EntityTypeBatchStrategy, SimilarityBatchStrategy, configure_optimal_batch_size,
+    create_batches, estimate_processing_time,
+)
 from ztoq.database_factory import DatabaseFactory, DatabaseType, get_database_manager
 from ztoq.migration import EntityBatchTracker, MigrationState, ZephyrToQTestMigration
 from ztoq.models import ZephyrConfig
@@ -55,6 +60,17 @@ class WorkflowStatus(str, Enum):
     PARTIAL = "partial"  # Some batches completed, some failed
 
 
+class BatchingStrategy(str, Enum):
+    """Batching strategy to use for optimization."""
+
+    FIXED = "fixed"  # Fixed-size batches
+    SIZE = "size"  # Size-based batches
+    TIME = "time"  # Time-based batches
+    ADAPTIVE = "adaptive"  # Adaptive learning batches
+    ENTITY_TYPE = "entity_type"  # Group by entity type
+    SIMILARITY = "similarity"  # Group by entity similarity
+
+
 class WorkflowConfig:
     """Configuration for the workflow orchestrator."""
 
@@ -78,6 +94,9 @@ class WorkflowConfig:
         zephyr_config: Optional[ZephyrConfig] = None,
         qtest_config: Optional[QTestConfig] = None,
         use_batch_transformer: bool = True,  # Enable batch transformer by default
+        batching_strategy: str = BatchingStrategy.FIXED,  # Default batching strategy
+        max_batch_memory_mb: int = 100,  # Maximum batch memory footprint in MB
+        target_batch_time: float = 2.0,  # Target processing time per batch in seconds
     ):
         """
         Initialize workflow configuration.
@@ -102,6 +121,9 @@ class WorkflowConfig:
             qtest_config: qTest configuration
             use_batch_transformer: Whether to use the SQL-based batch transformer for
                                   the transformation phase
+            batching_strategy: Strategy to use for batch creation (fixed, size, time, adaptive, entity_type, similarity)
+            max_batch_memory_mb: Maximum memory footprint per batch in MB (for size-based strategy)
+            target_batch_time: Target processing time per batch in seconds (for time-based and adaptive strategies)
         """
         self.project_key = project_key
         self.db_type = db_type
@@ -120,6 +142,9 @@ class WorkflowConfig:
         self.zephyr_config = zephyr_config
         self.qtest_config = qtest_config
         self.use_batch_transformer = use_batch_transformer
+        self.batching_strategy = batching_strategy
+        self.max_batch_memory_mb = max_batch_memory_mb
+        self.target_batch_time = target_batch_time
 
         # Set up output directory
         if self.output_dir:
@@ -211,6 +236,10 @@ class WorkflowOrchestrator:
         self.rollback_points: Dict[str, Any] = {}
         self.rollback_enabled = config.rollback_enabled
 
+        # For adaptive batch strategy
+        self.adaptive_strategy = None
+        self.batch_processing_history = []
+
         # Initialize database manager
         if config.db_type == DatabaseType.POSTGRESQL:
             self.db = get_database_manager(
@@ -251,6 +280,136 @@ class WorkflowOrchestrator:
         # Progress tracking
         self.progress = None
         self.tasks = {}
+
+    def _create_batch_strategy(self, entity_type: str) -> BatchStrategy:
+        """
+        Create the appropriate batch strategy based on configuration.
+
+        Args:
+            entity_type: Type of entity being processed (for entity-type strategy)
+
+        Returns:
+            The configured batch strategy instance
+        """
+        strategy_type = self.config.batching_strategy
+
+        if strategy_type == BatchingStrategy.FIXED:
+            # Simple fixed-size batching
+            return lambda entities: create_batches(entities, batch_size=self.config.batch_size)
+
+        elif strategy_type == BatchingStrategy.SIZE:
+            # Size-based batching
+            def entity_size_estimator(entity):
+                # Estimate size based on entity type and content
+                if entity_type == "test_case":
+                    # Test cases with more steps and attachments are larger
+                    steps = len(entity.get("steps", []))
+                    attachments = len(entity.get("attachments", []))
+                    return 0.1 + (steps * 0.02) + (attachments * 0.5)  # Size in MB
+                elif entity_type == "test_cycle":
+                    # Test cycles with more test cases are larger
+                    test_cases = len(entity.get("test_cases", []))
+                    return 0.05 + (test_cases * 0.01)  # Size in MB
+                else:
+                    # Default size estimation
+                    return 0.1  # Default 100KB per entity
+
+            return SizeBatchStrategy(
+                max_batch_size=self.config.max_batch_memory_mb,
+                size_estimator=entity_size_estimator
+            )
+
+        elif strategy_type == BatchingStrategy.TIME:
+            # Time-based batching
+            def entity_time_estimator(entity):
+                # Estimate processing time based on entity type and complexity
+                if entity_type == "test_case":
+                    # Test cases with more steps and attachments take longer
+                    steps = len(entity.get("steps", []))
+                    attachments = len(entity.get("attachments", []))
+                    return 0.05 + (steps * 0.01) + (attachments * 0.2)  # Time in seconds
+                elif entity_type == "test_cycle":
+                    # Test cycles with more test cases take longer
+                    test_cases = len(entity.get("test_cases", []))
+                    return 0.02 + (test_cases * 0.005)  # Time in seconds
+                else:
+                    # Default time estimation
+                    return 0.05  # Default 50ms per entity
+
+            return TimeBatchStrategy(
+                time_estimator=entity_time_estimator,
+                max_batch_time=self.config.target_batch_time
+            )
+
+        elif strategy_type == BatchingStrategy.ADAPTIVE:
+            # Adaptive learning batching
+            if not self.adaptive_strategy:
+                self.adaptive_strategy = AdaptiveBatchStrategy(
+                    initial_batch_size=self.config.batch_size,
+                    min_batch_size=max(1, self.config.batch_size // 5),
+                    max_batch_size=self.config.batch_size * 3,
+                    target_processing_time=self.config.target_batch_time,
+                    adaptation_rate=0.2
+                )
+            return self.adaptive_strategy
+
+        elif strategy_type == BatchingStrategy.ENTITY_TYPE:
+            # Entity type batching
+            def type_extractor(entity):
+                # Extract a type or category from the entity
+                if entity_type == "test_case":
+                    # Group test cases by folder
+                    return entity.get("folder_id", "default")
+                elif entity_type == "test_cycle":
+                    # Group test cycles by owner
+                    return entity.get("owner", "default")
+                else:
+                    # Default grouping
+                    return "default"
+
+            return EntityTypeBatchStrategy(
+                type_extractor=type_extractor,
+                max_batch_size=self.config.batch_size * 2
+            )
+
+        elif strategy_type == BatchingStrategy.SIMILARITY:
+            # Similarity-based batching
+            def feature_extractor(entity):
+                # Extract features for similarity comparison
+                if entity_type == "test_case":
+                    # Features: steps count, attachments count, priority
+                    steps = len(entity.get("steps", []))
+                    attachments = len(entity.get("attachments", []))
+                    priority = entity.get("priority", {}).get("id", 0)
+                    return (
+                        steps / 50,  # Normalize steps
+                        attachments / 5,  # Normalize attachments
+                        priority / 5,  # Normalize priority
+                    )
+                elif entity_type == "test_cycle":
+                    # Features: test cases count, duration, status
+                    test_cases = len(entity.get("test_cases", []))
+                    duration = entity.get("duration", 0)
+                    status_id = entity.get("status", {}).get("id", 0)
+                    return (
+                        test_cases / 100,  # Normalize test cases count
+                        duration / 86400,  # Normalize duration (seconds in a day)
+                        status_id / 5,  # Normalize status
+                    )
+                else:
+                    # Default features
+                    return (0.5, 0.5, 0.5)
+
+            return SimilarityBatchStrategy(
+                feature_extractor=feature_extractor,
+                similarity_threshold=0.7,
+                max_batch_size=self.config.batch_size
+            )
+
+        else:
+            # Default to fixed-size batching
+            logger.warning(f"Unknown batching strategy '{strategy_type}', using fixed-size batching")
+            return lambda entities: create_batches(entities, batch_size=self.config.batch_size)
 
     def _add_event(
         self,
@@ -849,66 +1008,133 @@ class WorkflowOrchestrator:
 
         This method breaks down the transformation process into smaller chunks
         that can be processed in parallel, improving performance for large datasets.
+        It uses intelligent batching strategies to optimize throughput.
         """
         from ztoq.work_queue import WorkQueue, WorkerType, WorkStatus, run_in_thread_pool
 
-        logger.info("Starting parallel transformation")
+        logger.info("Starting parallel transformation with intelligent batching")
 
         # Define transformation tasks for different entity types
-        transformation_tasks = {
-            "test_cases": self.migration.transform_test_cases,
-            "test_cycles": self.migration.transform_test_cycles,
-            "test_executions": self.migration.transform_test_executions,
-        }
-
-        # Define worker function to run a task
-        def transform_worker(task_info):
-            entity_type, transform_func = task_info
-            logger.info(f"Transforming {entity_type}...")
-            start_time = time.time()
-            result = transform_func()
-            end_time = time.time()
-            duration = end_time - start_time
-            logger.info(f"Transformed {entity_type} in {duration:.2f} seconds")
-            return {
-                "entity_type": entity_type,
-                "result": result,
-                "time": duration
-            }
-
-        # Run the tasks in parallel
-        tasks = [(entity_type, func) for entity_type, func in transformation_tasks.items()]
-        results = await run_in_thread_pool(
-            transform_worker,
-            tasks,
-            max_workers=min(len(tasks), self.config.max_workers)
-        )
-
-        # Process the results
-        transformation_results = {}
+        entity_types = ["test_cases", "test_cycles", "test_executions"]
         total_time = 0
-        for result in results:
-            entity_type = result["entity_type"]
-            transformation_results[entity_type] = result["result"]
-            total_time += result["time"]
+        transformation_results = {}
 
-            # Add event
-            count = 0
-            if isinstance(result["result"], dict) and "count" in result["result"]:
-                count = result["result"]["count"]
-            elif isinstance(result["result"], list):
-                count = len(result["result"])
+        # Process each entity type with appropriate batching strategy
+        for entity_type in entity_types:
+            entity_type_clean = entity_type.rstrip('s')  # Remove trailing 's' for type extraction
 
+            # Get entities to transform
+            entities = self.db.get_untransformed_entities(
+                project_key=self.config.project_key,
+                entity_type=entity_type_clean
+            )
+
+            if not entities:
+                logger.info(f"No {entity_type} to transform")
+                continue
+
+            # Log entity count
             self._add_event(
                 WorkflowPhase.TRANSFORM.value,
                 "in_progress",
-                f"Transformed {count} {entity_type} in {result['time']:.2f} seconds",
+                f"Preparing to transform {len(entities)} {entity_type} with {self.config.batching_strategy} batching strategy",
                 entity_type=entity_type,
-                entity_count=count,
+                entity_count=len(entities),
             )
+
+            # Get appropriate batch strategy for this entity type
+            batch_strategy = self._create_batch_strategy(entity_type_clean)
+
+            # Create batches using the strategy
+            if isinstance(batch_strategy, BatchStrategy):
+                batches = batch_strategy.create_batches(entities)
+            else:
+                # Handle the case where _create_batch_strategy returns a function
+                batches = batch_strategy(entities)
+
+            batch_count = len(batches)
+            logger.info(f"Created {batch_count} batches of {entity_type} using {self.config.batching_strategy} strategy")
+
+            # Define worker function for batch transformation
+            def transform_batch(batch):
+                batch_start_time = time.time()
+                batch_size = len(batch)
+
+                # Transform batch (implementation depends on entity type)
+                if entity_type == "test_cases":
+                    result = self.migration.transform_test_cases_batch(batch)
+                elif entity_type == "test_cycles":
+                    result = self.migration.transform_test_cycles_batch(batch)
+                elif entity_type == "test_executions":
+                    result = self.migration.transform_test_executions_batch(batch)
+
+                batch_end_time = time.time()
+                batch_duration = batch_end_time - batch_start_time
+
+                # Record processing time for adaptive strategy
+                if self.config.batching_strategy == BatchingStrategy.ADAPTIVE and self.adaptive_strategy:
+                    self.batch_processing_history.append((batch_size, batch_duration))
+                    # Adapt batch size for future batches
+                    self.adaptive_strategy.adapt(batch_duration)
+
+                return {
+                    "entity_type": entity_type,
+                    "batch_size": batch_size,
+                    "result": result,
+                    "time": batch_duration
+                }
+
+            # Run batch transformations in parallel
+            batch_results = await run_in_thread_pool(
+                transform_batch,
+                batches,
+                max_workers=min(batch_count, self.config.max_workers)
+            )
+
+            # Process results
+            entity_type_time = 0
+            entity_type_count = 0
+
+            for result in batch_results:
+                entity_type_time += result["time"]
+                if isinstance(result["result"], dict) and "count" in result["result"]:
+                    entity_type_count += result["result"]["count"]
+                elif isinstance(result["result"], list):
+                    entity_type_count += len(result["result"])
+                else:
+                    entity_type_count += result["batch_size"]
+
+            # Add event for this entity type
+            self._add_event(
+                WorkflowPhase.TRANSFORM.value,
+                "in_progress",
+                f"Transformed {entity_type_count} {entity_type} in {entity_type_time:.2f} seconds using {batch_count} batches",
+                entity_type=entity_type,
+                entity_count=entity_type_count,
+            )
+
+            # Add to total time and results
+            total_time += entity_type_time
+            transformation_results[entity_type] = {
+                "count": entity_type_count,
+                "time": entity_type_time,
+                "batches": batch_count
+            }
 
         # Update transformation status
         self.state.update_transformation_status("completed")
+
+        # Add summary event
+        self._add_event(
+            WorkflowPhase.TRANSFORM.value,
+            "in_progress",
+            f"Completed parallel transformation in {total_time:.2f} seconds using {self.config.batching_strategy} strategy",
+            metadata={
+                "total_time": total_time,
+                "strategy": self.config.batching_strategy,
+                "results": transformation_results
+            }
+        )
 
         # Log overall results
         logger.info(f"Completed parallel transformation in {total_time:.2f} seconds")
@@ -975,11 +1201,12 @@ class WorkflowOrchestrator:
 
         This method leverages the WorkQueue implementation to parallelize loading
         of different entity types and batches, providing better performance and
-        resource utilization compared to the previous approach.
+        resource utilization compared to the previous approach. It also uses
+        intelligent batching strategies for optimized throughput.
         """
         from ztoq.work_queue import WorkQueue, WorkerType, WorkStatus, run_in_thread_pool
 
-        logger.info("Starting parallel loading")
+        logger.info("Starting parallel loading with intelligent batching")
 
         # Group the loading tasks by their dependencies
         # Test cases must be loaded first, then test cycles, then test executions
@@ -987,14 +1214,17 @@ class WorkflowOrchestrator:
             {
                 "name": "test_cases",
                 "func": self.migration.load_test_cases,
+                "type": "testcase"  # Type name in the database
             },
             {
                 "name": "test_cycles",
                 "func": self.migration.load_test_cycles,
+                "type": "testcycle"
             },
             {
                 "name": "test_executions",
                 "func": self.migration.load_test_executions,
+                "type": "execution"
             },
         ]
 
@@ -1002,15 +1232,15 @@ class WorkflowOrchestrator:
         for phase in loading_phases:
             entity_type = phase["name"]
             load_func = phase["func"]
+            db_type = phase["type"]
 
-            # Get all transformed batches for this entity type
-            batches = self.db.get_entity_batches_by_status(
+            # Get all transformed entities for this entity type
+            entities = self.db.get_transformed_entities(
                 project_key=self.config.project_key,
-                entity_type=entity_type.replace("_", ""),  # Remove underscores for database naming
-                status="transformed"
+                entity_type=db_type
             )
 
-            if not batches:
+            if not entities:
                 self._add_event(
                     WorkflowPhase.LOAD.value,
                     "in_progress",
@@ -1019,62 +1249,115 @@ class WorkflowOrchestrator:
                 )
                 continue
 
-            batch_ids = [batch.get("batch_id") for batch in batches]
+            # Get appropriate batch strategy for this entity type
+            entity_type_clean = entity_type.rstrip('s')  # Remove trailing 's'
+            batch_strategy = self._create_batch_strategy(entity_type_clean)
+
+            # Create batches using the strategy
+            if isinstance(batch_strategy, BatchStrategy):
+                batches = batch_strategy.create_batches(entities)
+            else:
+                # Handle the case where _create_batch_strategy returns a function
+                batches = batch_strategy(entities)
+
+            batch_count = len(batches)
 
             self._add_event(
                 WorkflowPhase.LOAD.value,
                 "in_progress",
-                f"Loading {len(batch_ids)} batches of {entity_type} with work queue",
+                f"Loading {len(entities)} {entity_type} in {batch_count} batches with {self.config.batching_strategy} strategy",
                 entity_type=entity_type,
+                entity_count=len(entities),
                 batch_number=0,
-                total_batches=len(batch_ids),
+                total_batches=batch_count,
             )
 
             # Define batch loading worker
-            def load_batch(batch_id):
+            def load_batch(batch):
                 start_time = time.time()
-                result = load_func(batch_ids=[batch_id])
+                batch_size = len(batch)
+
+                # Extract batch IDs if needed by the load function
+                if hasattr(batch[0], 'get') and callable(batch[0].get) and 'batch_id' in batch[0]:
+                    batch_ids = [item.get('batch_id') for item in batch]
+                    result = load_func(batch_ids=batch_ids)
+                else:
+                    # Direct loading of batched entities
+                    result = load_func(entities=batch)
+
                 end_time = time.time()
+                batch_duration = end_time - start_time
+
+                # Record processing time for adaptive strategy
+                if self.config.batching_strategy == BatchingStrategy.ADAPTIVE and self.adaptive_strategy:
+                    self.batch_processing_history.append((batch_size, batch_duration))
+                    # Adapt batch size for future batches
+                    self.adaptive_strategy.adapt(batch_duration)
+
                 return {
-                    "batch_id": batch_id,
+                    "batch_size": batch_size,
                     "result": result,
-                    "time": end_time - start_time
+                    "time": batch_duration
                 }
 
             # Process batches in parallel
             batch_results = await run_in_thread_pool(
                 load_batch,
-                batch_ids,
-                max_workers=min(len(batch_ids), self.config.max_workers)
+                batches,
+                max_workers=min(batch_count, self.config.max_workers)
             )
 
             # Process results
             success_count = 0
             failed_count = 0
             total_time = 0
+            entities_loaded = 0
 
             for result in batch_results:
-                success_count += 1 if result.get("result", 0) > 0 else 0
-                failed_count += 1 if result.get("result", 0) == 0 else 0
+                if isinstance(result.get("result"), int) and result.get("result") > 0:
+                    success_count += 1
+                    entities_loaded += result.get("result", 0)
+                else:
+                    failed_count += 1
+
                 total_time += result["time"]
 
             # Log results
             self._add_event(
                 WorkflowPhase.LOAD.value,
                 "in_progress",
-                f"Loaded {success_count} batches of {entity_type} in {total_time:.2f} seconds ({failed_count} failed)",
+                f"Loaded {entities_loaded} {entity_type} in {total_time:.2f} seconds "
+                f"({success_count} successful batches, {failed_count} failed batches)",
                 entity_type=entity_type,
-                batch_number=len(batch_ids),
-                total_batches=len(batch_ids),
+                entity_count=entities_loaded,
+                batch_number=batch_count,
+                total_batches=batch_count,
                 metadata={
                     "success_count": success_count,
                     "failed_count": failed_count,
-                    "total_time": total_time
+                    "total_time": total_time,
+                    "strategy": self.config.batching_strategy
                 }
             )
 
         # Mark loading as completed
         self.state.update_loading_status("completed")
+
+        # Add summary event
+        self._add_event(
+            WorkflowPhase.LOAD.value,
+            "completed",
+            f"Parallel loading completed with {self.config.batching_strategy} batching strategy",
+            metadata={
+                "strategy": self.config.batching_strategy,
+                "config": {
+                    "max_batch_memory_mb": self.config.max_batch_memory_mb,
+                    "target_batch_time": self.config.target_batch_time,
+                    "max_workers": self.config.max_workers
+                }
+            }
+        )
+
         logger.info("Parallel loading completed")
 
     def _run_incremental_loading(self) -> Dict[str, Any]:

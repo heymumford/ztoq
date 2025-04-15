@@ -195,8 +195,8 @@
 #### Unit Tests
 - [x] **[TEST-UNIT-35]** Create unit tests for parallel processing *(Implemented comprehensive tests for WorkQueue including priority scheduling, dependency resolution, error handling, and retry mechanisms)*
 - [x] **[PERF-1]** Optimize parallel processing with asyncio and work queues *(Created a robust WorkQueue implementation with priority scheduling, dependency management, and support for thread/process/asyncio workers)*
-- [ ] **[TEST-UNIT-36]** Create unit tests for batching strategies
-- [ ] **[PERF-2]** Implement intelligent batching strategies
+- [x] **[TEST-UNIT-36]** Create unit tests for batching strategies *(Implemented comprehensive tests for various batching strategies including size-based, time-based, adaptive, entity-type, and similarity-based batching)*
+- [x] **[PERF-2]** Implement intelligent batching strategies *(Created a modular batching strategy system with size-based, time-based, adaptive, entity-type, and similarity-based batching, integrated with ETL pipeline for optimal performance)*
 
 #### Integration Tests
 - [ ] **[TEST-INT-21]** Create integration tests for resume capability
@@ -268,6 +268,8 @@
 ## Review
 
 ## Completed
+- [x] **[TEST-UNIT-36]** Create unit tests for batching strategies *(Implemented comprehensive tests for various batching strategies including size-based, time-based, adaptive, entity-type, and similarity-based batching)*
+- [x] **[PERF-2]** Implement intelligent batching strategies *(Created a modular batching strategy system with size-based, time-based, adaptive, entity-type, and similarity-based batching, integrated with ETL pipeline for optimal performance)*
 - [x] **[TEST-UNIT-35]** Create unit tests for parallel processing *(Implemented comprehensive tests for WorkQueue including priority scheduling, dependency resolution, error handling, and retry mechanisms)*
 - [x] **[PERF-1]** Optimize parallel processing with asyncio and work queues *(Created a robust WorkQueue implementation with priority scheduling, dependency management, and support for thread/process/asyncio workers)*
 - [x] **[TEST-E2E-5]** Write acceptance tests for the migrate CLI command *(Implemented comprehensive tests for migrate CLI command with test coverage for various phases, configurations, and error scenarios)*
