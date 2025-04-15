@@ -10,7 +10,7 @@ import sys
 from pathlib import Path
 
 # Constants
-ROOT_DIR = Path(__file__).parent.parent.absolute()
+ROOT_DIR = Path(__file__).parent.parent.parent.absolute()  # Up to project root
 VERSION_PATH = ROOT_DIR / "ztoq" / "__init__.py"
 PYPROJECT_PATH = ROOT_DIR / "pyproject.toml"
 SPHINX_CONF_PATH = ROOT_DIR / "docs" / "sphinx" / "source" / "conf.py"

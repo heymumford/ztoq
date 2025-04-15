@@ -1,11 +1,11 @@
 # Makefile for ZTOQ project
 
-.PHONY: setup install test lint lint-strict format clean docs docs-clean build checkin security pre-commit docker-build docker-run validate-all test-unit test-integration test-docker test-docker-no-containers docstring-check
+.PHONY: setup install test lint lint-strict format clean docs docs-clean build checkin security pre-commit docker-build docker-run validate-all test-unit test-integration test-docker test-docker-no-containers docstring-check hooks bump-version
 
 setup:
 	pip install poetry
 	poetry install
-	poetry run pre-commit install
+	./bin/setup-hooks
 
 install:
 	poetry install
@@ -56,6 +56,12 @@ docstring-check:
 
 pre-commit:
 	poetry run pre-commit run --all-files
+	
+hooks:
+	./bin/setup-hooks
+	
+bump-version:
+	./bin/bump-version
 
 docker-build:
 	docker build -t ztoq:latest .

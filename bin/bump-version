@@ -1,0 +1,109 @@
+#!/bin/bash
+# bump-version: A script to bump and synchronize version numbers across the project
+# Usage: bin/bump-version [major|minor|patch|--version=X.Y.Z]
+
+set -e  # Exit on error
+
+# Ensure we're in the project root
+cd "$(dirname "$0")/.." || exit 1
+
+# Determine the version bump type
+BUMP_TYPE="patch"  # Default
+VERSION=""
+
+# Parse arguments
+for arg in "$@"; do
+    case $arg in
+        major|minor|patch)
+            BUMP_TYPE="$arg"
+            ;;
+        --version=*)
+            VERSION="${arg#*=}"
+            ;;
+        --help|-h)
+            echo "Usage: bin/bump-version [major|minor|patch|--version=X.Y.Z]"
+            echo "  major    Bump the major version (X.0.0)"
+            echo "  minor    Bump the minor version (x.Y.0)"
+            echo "  patch    Bump the patch version (x.y.Z) [default]"
+            echo "  --version=X.Y.Z  Set to a specific version"
+            exit 0
+            ;;
+        *)
+            echo "Unknown argument: $arg"
+            echo "Use --help for usage information"
+            exit 1
+            ;;
+    esac
+done
+
+# Check for uncommitted changes
+if [[ -n $(git status --porcelain) ]]; then
+    echo "Warning: You have uncommitted changes."
+    echo "It's recommended to commit or stash your changes before bumping versions."
+    read -p "Do you want to continue anyway? [y/N] " -n 1 -r
+    echo
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+        exit 1
+    fi
+fi
+
+# Check if pre-commit is installed
+if ! command -v pre-commit &> /dev/null; then
+    echo "Error: pre-commit is not installed."
+    echo "Please run: pip install pre-commit"
+    exit 1
+fi
+
+# Check if poetry is installed
+if ! command -v poetry &> /dev/null; then
+    echo "Error: poetry is not installed."
+    echo "Please run: pip install poetry"
+    exit 1
+fi
+
+echo "Running pre-commit hooks to ensure code quality..."
+pre-commit run --all-files || {
+    echo "Pre-commit hooks failed. Please fix the issues before bumping the version."
+    exit 1
+}
+
+# Update versions using our sync_versions.py script
+if [[ -n "$VERSION" ]]; then
+    echo "Setting version to $VERSION and synchronizing across all files..."
+    python config/scripts/sync_versions.py --update "$VERSION" --scan --verbose
+else
+    echo "Bumping $BUMP_TYPE version and synchronizing across all files..."
+    python config/scripts/sync_versions.py --bump "$BUMP_TYPE" --scan --verbose
+fi
+
+# Ensure poetry.lock is up to date with pyproject.toml
+echo "Updating poetry.lock..."
+poetry lock --no-update
+
+# Get the new version for the commit message
+NEW_VERSION=$(poetry version -s)
+
+# Stage the modified files
+echo "Staging version-related files..."
+git add pyproject.toml poetry.lock ztoq/__init__.py docs/sphinx/source/conf.py
+
+# Check if other files were modified by the version sync
+if [[ -n $(git status --porcelain | grep -v "^[AM] .*\(pyproject.toml\|poetry.lock\|ztoq/__init__.py\|docs/sphinx/source/conf.py\)") ]]; then
+    echo "Additional files were modified by version synchronization."
+    git status --porcelain
+    
+    read -p "Do you want to stage these files too? [y/N] " -n 1 -r
+    echo
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        git add -u
+    fi
+fi
+
+echo "Version bump complete! New version: $NEW_VERSION"
+echo
+echo "To commit this change:"
+echo "  git commit -m \"Bump version to $NEW_VERSION\""
+echo
+echo "To undo these changes:"
+echo "  git reset HEAD"
+echo "  git checkout -- pyproject.toml poetry.lock ztoq/__init__.py docs/sphinx/source/conf.py"

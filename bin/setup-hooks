@@ -1,0 +1,54 @@
+#!/bin/bash
+# setup-hooks: A script to install and configure git hooks and pre-commit
+# Usage: bin/setup-hooks
+
+set -e  # Exit on error
+
+# Ensure we're in the project root
+cd "$(dirname "$0")/.." || exit 1
+
+echo "Setting up Git hooks and pre-commit for ZTOQ..."
+
+# Check if pre-commit is installed
+if ! command -v pre-commit &> /dev/null; then
+    echo "Error: pre-commit is not installed."
+    echo "Installing pre-commit..."
+    pip install pre-commit
+fi
+
+# Check if poetry is installed
+if ! command -v poetry &> /dev/null; then
+    echo "Error: poetry is not installed."
+    echo "Installing poetry..."
+    pip install poetry
+fi
+
+# Make sure we have the latest dependencies
+echo "Ensuring dependencies are up to date..."
+poetry install
+
+# Update pre-commit hooks
+echo "Installing pre-commit hooks..."
+pre-commit install
+pre-commit install --hook-type commit-msg
+pre-commit install --hook-type pre-push
+
+# Run pre-commit autoupdate to get the latest versions of hooks
+echo "Updating pre-commit hook versions..."
+pre-commit autoupdate
+
+# Check version consistency
+echo "Checking version consistency..."
+python config/scripts/sync_versions.py --check --scan
+
+# Make our scripts executable
+echo "Making scripts executable..."
+chmod +x bin/*
+
+echo "Hook setup complete! Pre-commit hooks are now installed."
+echo
+echo "You can run pre-commit manually with:"
+echo "  pre-commit run --all-files"
+echo
+echo "To bump the version, use:"
+echo "  bin/bump-version [major|minor|patch|--version=X.Y.Z]"
