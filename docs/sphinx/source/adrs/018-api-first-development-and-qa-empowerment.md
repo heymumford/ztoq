@@ -1,0 +1,1 @@
+../../../../docs/adr/018-api-first-development-and-qa-empowerment.md

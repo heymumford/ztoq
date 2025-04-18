@@ -1,0 +1,1 @@
+../../../../docs/adr/015-strategic-design-preferences.md
