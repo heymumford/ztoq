@@ -66,7 +66,7 @@ markers = [
 ]
 
 [tool.poetry.scripts]
-ztoq = "ztoq.cli:app"
+ztoq = "ztoq.cli:run_cli"
 ztoq_post_install = "scripts.post_install:main"
 
 [tool.black]

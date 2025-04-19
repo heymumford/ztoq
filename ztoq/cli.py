@@ -52,21 +52,21 @@ except ImportError as e:
     # Print error for debugging
     print(f"Failed to import alembic: {e}")
     print(f"Python path: {sys.path}")
-    
+
     # For CLI usage, let's create a fallback implementation
     class DummyCommand:
         def upgrade(self, config, revision, *args, **kwargs):
             print("WARNING: Using dummy alembic implementation")
             return True
-    
+
     class DummyConfig:
         def __init__(self, config_file):
             self.config_file = config_file
             self.main_option_map = {}
-        
+
         def set_main_option(self, name, value):
             self.main_option_map[name] = value
-    
+
     alembic_command = DummyCommand()
     alembic_config = type('DummyConfigModule', (), {'Config': DummyConfig})
 
@@ -1463,5 +1463,10 @@ def migration_status(
         raise typer.Exit(code=1)
 
 
+def run_cli():
+    """Entry point for the CLI when run directly."""
+    import sys
+    sys.exit(app())
+
 if __name__ == "__main__":
-    app()
+    run_cli()

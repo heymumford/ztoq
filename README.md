@@ -10,15 +10,12 @@ A Python CLI tool that extracts test data from Zephyr Scale and migrates it to q
 ## Quick Start
 
 ```bash
-# Install with pip
-pip install ztoq
-
-# Or with Poetry
+# Install with Poetry
 pip install poetry
 poetry install
 
 # Verify installation
-ztoq --version
+ztoq --version  # Works on both Windows and WSL
 
 # View documentation
 ztoq docs serve
