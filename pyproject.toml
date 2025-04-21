@@ -49,7 +49,7 @@ recommonmark = "^0.7"
 myst-parser = "^4.0.1"
 sphinx-autoapi = "^3.6.0"
 pygments = "^2.19.0"
-docutils = "^0.20.0"
+docutils = "^0.21.2"
 plantuml = "^0.3.0"
 
 [tool.pytest.ini_options]
