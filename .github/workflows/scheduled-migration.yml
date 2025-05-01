@@ -508,7 +508,7 @@ jobs:
 
       - name: Trigger next project migration
         if: steps.check-projects.outputs.has_more_projects == 'true'
-        uses: peter-evans/repository-dispatch@v2
+        uses: peter-evans/repository-dispatch@v3
         with:
           token: ${{ secrets.REPO_ACCESS_TOKEN }}
           event-type: trigger-migration
